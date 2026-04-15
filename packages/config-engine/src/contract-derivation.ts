@@ -6,7 +6,7 @@ export interface PackageJsonInput {
   name: string;
   version?: string | undefined;
   description?: string | undefined;
-  ghost?: { configNamespace?: string | undefined } | undefined;
+  weaver?: { configNamespace?: string | undefined } | undefined;
 }
 
 export interface ContractMetadata {
@@ -21,7 +21,7 @@ export interface ContractMetadata {
  *
  * - pluginId: the package name as-is
  * - namespace: derived from the package name via deriveNamespace(),
- *   or from ghost.configNamespace if explicitly provided
+ *   or from weaver.configNamespace if explicitly provided
  * - version: from pkg.version, defaults to "0.0.0"
  * - description: from pkg.description, defaults to ""
  */
@@ -29,7 +29,7 @@ export function deriveContractFromPackageJson(
   pkg: PackageJsonInput,
 ): ContractMetadata {
   const namespace =
-    pkg.ghost?.configNamespace ?? deriveNamespace(pkg.name);
+    pkg.weaver?.configNamespace ?? deriveNamespace(pkg.name);
 
   return {
     pluginId: pkg.name,

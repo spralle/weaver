@@ -47,11 +47,11 @@ export interface JsonSchemaProperty {
   anyOf?: JsonSchemaProperty[] | undefined;
   allOf?: JsonSchemaProperty[] | undefined;
   not?: JsonSchemaProperty | undefined;
-  "x-ghost-changePolicy"?: string | undefined;
-  "x-ghost-visibility"?: string | undefined;
-  "x-ghost-reloadBehavior"?: string | undefined;
-  "x-ghost-namespace"?: string | undefined;
-  "x-ghost-category"?: string | undefined;
+  "x-weaver-changePolicy"?: string | undefined;
+  "x-weaver-visibility"?: string | undefined;
+  "x-weaver-reloadBehavior"?: string | undefined;
+  "x-weaver-namespace"?: string | undefined;
+  "x-weaver-category"?: string | undefined;
 }
 
 const TYPE_MAP: Record<string, string> = {
@@ -153,19 +153,19 @@ export function generateSinglePropertySchema(
   const { schema, ownerId } = entry;
   const prop = generateNestedPropertySchema(schema);
 
-  // x-ghost-* extension fields
+  // x-weaver-* extension fields
   if (schema.changePolicy !== undefined) {
-    prop["x-ghost-changePolicy"] = schema.changePolicy;
+    prop["x-weaver-changePolicy"] = schema.changePolicy;
   }
   if (schema.visibility !== undefined) {
-    prop["x-ghost-visibility"] = schema.visibility;
+    prop["x-weaver-visibility"] = schema.visibility;
   }
   if (schema.reloadBehavior !== undefined) {
-    prop["x-ghost-reloadBehavior"] = schema.reloadBehavior;
+    prop["x-weaver-reloadBehavior"] = schema.reloadBehavior;
   }
 
   // Derive namespace from ownerId
-  prop["x-ghost-namespace"] = ownerId;
+  prop["x-weaver-namespace"] = ownerId;
 
   return prop;
 }
@@ -185,7 +185,7 @@ export function generateJsonSchema(
 
   return {
     $schema: "http://json-schema.org/draft-07/schema#",
-    title: options?.title ?? "Ghost Configuration Schema",
+    title: options?.title ?? "Weaver Configuration Schema",
     type: "object",
     properties,
     additionalProperties: false,

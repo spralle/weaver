@@ -30,11 +30,11 @@ describe("deriveContractFromPackageJson", () => {
     assert.equal(result.pluginId, "my-config-tool");
   });
 
-  it("uses explicit ghost.configNamespace override", () => {
+  it("uses explicit weaver.configNamespace override", () => {
     const result = deriveContractFromPackageJson({
       name: "@weaver/some-plugin",
       version: "1.0.0",
-      ghost: { configNamespace: "custom.namespace" },
+      weaver: { configNamespace: "custom.namespace" },
     });
     assert.equal(result.namespace, "custom.namespace");
     assert.equal(result.pluginId, "@weaver/some-plugin");
@@ -85,10 +85,10 @@ describe("deriveContractFromPackageJson", () => {
     assert.equal(result.namespace, "scope.myFancy");
   });
 
-  it("handles ghost field with no configNamespace", () => {
+  it("handles weaver field with no configNamespace", () => {
     const result = deriveContractFromPackageJson({
       name: "@weaver/nav-plugin",
-      ghost: {},
+      weaver: {},
     });
     assert.equal(result.namespace, "weaver.nav");
     assert.equal(result.version, "0.0.0");

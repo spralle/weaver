@@ -2,7 +2,7 @@
 
 /**
  * Combines a namespace and a relative key with a dot separator.
- * e.g., qualifyKey("ghost.vesselView", "map.defaultZoom") → "ghost.vesselView.map.defaultZoom"
+ * e.g., qualifyKey("app.vesselView", "map.defaultZoom") → "app.vesselView.map.defaultZoom"
  */
 export function qualifyKey(namespace: string, relativeKey: string): string {
   return `${namespace}.${relativeKey}`;
@@ -21,7 +21,7 @@ function kebabToCamel(segment: string): string {
 /**
  * Derives a configuration namespace from a plugin ID.
  *
- * - "ghost.vessel-view" → "ghost.vesselView" (kebab segments to camelCase)
+ * - "myScope.vessel-view" → "myScope.vesselView" (kebab segments to camelCase)
  * - "@weaver/vessel-view-plugin" → "weaver.vesselView" (scoped package name)
  * - Already in namespace format → pass-through
  */
@@ -42,7 +42,7 @@ export function deriveNamespace(pluginId: string): string {
     return `${kebabToCamel(scope)}.${kebabToCamel(name)}`;
   }
 
-  // Dotted plugin ID: ghost.vessel-view → ghost.vesselView
+  // Dotted plugin ID: myScope.vessel-view → myScope.vesselView
   const segments = pluginId.split(".");
   return segments.map((s) => kebabToCamel(s)).join(".");
 }
@@ -86,7 +86,7 @@ export function validateKeyFormat(key: string): {
 
 /**
  * Extracts the namespace (first two segments) from a fully-qualified key.
- * "ghost.vesselView.map.zoom" → "ghost.vesselView"
+ * "app.vesselView.map.zoom" → "app.vesselView"
  */
 export function extractNamespace(fullyQualifiedKey: string): string {
   const segments = fullyQualifiedKey.split(".");

@@ -125,7 +125,7 @@ describe("generateSinglePropertySchema", () => {
     assert.equal(result.minimum, 10);
   });
 
-  it("populates x-ghost-* extension fields", () => {
+  it("populates x-weaver-* extension fields", () => {
     const result = generateSinglePropertySchema(
       "ghost.shell.theme",
       entry("ghost.shell", {
@@ -135,10 +135,10 @@ describe("generateSinglePropertySchema", () => {
         reloadBehavior: "hot",
       }),
     );
-    assert.equal(result["x-ghost-changePolicy"], "full-pipeline");
-    assert.equal(result["x-ghost-visibility"], "public");
-    assert.equal(result["x-ghost-reloadBehavior"], "hot");
-    assert.equal(result["x-ghost-namespace"], "ghost.shell");
+    assert.equal(result["x-weaver-changePolicy"], "full-pipeline");
+    assert.equal(result["x-weaver-visibility"], "public");
+    assert.equal(result["x-weaver-reloadBehavior"], "hot");
+    assert.equal(result["x-weaver-namespace"], "ghost.shell");
   });
 
   it("omits optional fields when not present in schema", () => {
@@ -151,7 +151,7 @@ describe("generateSinglePropertySchema", () => {
     assert.equal(result.enum, undefined);
     assert.equal(result.minimum, undefined);
     assert.equal(result.maximum, undefined);
-    assert.equal(result["x-ghost-changePolicy"], undefined);
+    assert.equal(result["x-weaver-changePolicy"], undefined);
   });
 });
 
@@ -171,7 +171,7 @@ describe("generateJsonSchema", () => {
 
     const doc = generateJsonSchema(schemas);
     assert.equal(doc.$schema, "http://json-schema.org/draft-07/schema#");
-    assert.equal(doc.title, "Ghost Configuration Schema");
+    assert.equal(doc.title, "Weaver Configuration Schema");
     assert.equal(doc.type, "object");
     assert.equal(doc.additionalProperties, false);
     assert.equal(Object.keys(doc.properties).length, 2);

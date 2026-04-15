@@ -36,7 +36,7 @@ test("load returns empty entries for empty storage", async () => {
   const provider = new LocalStorageProvider({
     id: "ls-1",
     layer: "user",
-    storageKey: "ghost-config",
+    storageKey: "weaver-config",
     storage,
   });
   const data = await provider.load();
@@ -45,11 +45,11 @@ test("load returns empty entries for empty storage", async () => {
 
 test("load returns existing data from storage", async () => {
   const storage = createMapStorage();
-  storage.setItem("ghost-config", JSON.stringify({ theme: "dark" }));
+  storage.setItem("weaver-config", JSON.stringify({ theme: "dark" }));
   const provider = new LocalStorageProvider({
     id: "ls-2",
     layer: "user",
-    storageKey: "ghost-config",
+    storageKey: "weaver-config",
     storage,
   });
   const data = await provider.load();
@@ -58,11 +58,11 @@ test("load returns existing data from storage", async () => {
 
 test("load handles corrupt JSON gracefully", async () => {
   const storage = createMapStorage();
-  storage.setItem("ghost-config", "not valid json{{{");
+  storage.setItem("weaver-config", "not valid json{{{");
   const provider = new LocalStorageProvider({
     id: "ls-3",
     layer: "user",
-    storageKey: "ghost-config",
+    storageKey: "weaver-config",
     storage,
   });
   const data = await provider.load();
@@ -71,11 +71,11 @@ test("load handles corrupt JSON gracefully", async () => {
 
 test("load handles non-object JSON gracefully", async () => {
   const storage = createMapStorage();
-  storage.setItem("ghost-config", JSON.stringify([1, 2, 3]));
+  storage.setItem("weaver-config", JSON.stringify([1, 2, 3]));
   const provider = new LocalStorageProvider({
     id: "ls-4",
     layer: "user",
-    storageKey: "ghost-config",
+    storageKey: "weaver-config",
     storage,
   });
   const data = await provider.load();
@@ -87,7 +87,7 @@ test("write adds entry and persists", async () => {
   const provider = new LocalStorageProvider({
     id: "ls-5",
     layer: "user",
-    storageKey: "ghost-config",
+    storageKey: "weaver-config",
     storage,
   });
   const result = await provider.write("theme", "light");
@@ -101,7 +101,7 @@ test("write persists across load calls", async () => {
   const provider = new LocalStorageProvider({
     id: "ls-6",
     layer: "device",
-    storageKey: "ghost-device",
+    storageKey: "weaver-device",
     storage,
   });
   await provider.write("a", 1);
@@ -111,7 +111,7 @@ test("write persists across load calls", async () => {
   const provider2 = new LocalStorageProvider({
     id: "ls-6b",
     layer: "device",
-    storageKey: "ghost-device",
+    storageKey: "weaver-device",
     storage,
   });
   const data = await provider2.load();
@@ -123,7 +123,7 @@ test("write handles QuotaExceededError", async () => {
   const storage = createMapStorage();
   const originalSetItem = storage.setItem.bind(storage);
   storage.setItem = (key, value) => {
-    if (key === "ghost-config") {
+    if (key === "weaver-config") {
       const err = new Error("QuotaExceededError");
       err.name = "QuotaExceededError";
       throw err;
@@ -133,7 +133,7 @@ test("write handles QuotaExceededError", async () => {
   const provider = new LocalStorageProvider({
     id: "ls-7",
     layer: "user",
-    storageKey: "ghost-config",
+    storageKey: "weaver-config",
     storage,
   });
   const result = await provider.write("key", "value");
@@ -143,11 +143,11 @@ test("write handles QuotaExceededError", async () => {
 
 test("remove deletes entry", async () => {
   const storage = createMapStorage();
-  storage.setItem("ghost-config", JSON.stringify({ a: 1, b: 2 }));
+  storage.setItem("weaver-config", JSON.stringify({ a: 1, b: 2 }));
   const provider = new LocalStorageProvider({
     id: "ls-8",
     layer: "user",
-    storageKey: "ghost-config",
+    storageKey: "weaver-config",
     storage,
   });
   const result = await provider.remove("a");
@@ -162,7 +162,7 @@ test("writable is true", () => {
   const provider = new LocalStorageProvider({
     id: "ls-9",
     layer: "user",
-    storageKey: "ghost-config",
+    storageKey: "weaver-config",
     storage,
   });
   assert.equal(provider.writable, true);
@@ -173,7 +173,7 @@ test("onExternalChange returns cleanup function in Node", () => {
   const provider = new LocalStorageProvider({
     id: "ls-10",
     layer: "user",
-    storageKey: "ghost-config",
+    storageKey: "weaver-config",
     storage,
   });
   // In Node.js, globalThis.addEventListener may not exist for storage events.
