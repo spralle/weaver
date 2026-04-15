@@ -1,4 +1,13 @@
 {
   "files": [],
-  "references": []
+  "references": [
+    { "path": "packages/config-types" },
+    { "path": "packages/config-engine" },
+    { "path": "packages/config-sync" },
+    { "path": "packages/config-providers" },
+    { "path": "packages/config-server" },
+    { "path": "packages/config-auth" },
+    { "path": "packages/config-policy" },
+    { "path": "packages/config-sessions" }
+  ]
 }

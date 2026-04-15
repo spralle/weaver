@@ -11,6 +11,92 @@
         "typescript": "^5.8.3",
       },
     },
+    "packages/config-auth": {
+      "name": "@weaver/config-auth",
+      "version": "0.0.0",
+      "dependencies": {
+        "@weaver/config-engine": "workspace:*",
+        "@weaver/config-types": "workspace:*",
+      },
+      "devDependencies": {
+        "typescript": "^5.8.3",
+      },
+    },
+    "packages/config-engine": {
+      "name": "@weaver/config-engine",
+      "version": "0.0.0",
+      "dependencies": {
+        "@weaver/config-types": "workspace:*",
+      },
+      "devDependencies": {
+        "typescript": "^5.8.3",
+      },
+    },
+    "packages/config-policy": {
+      "name": "@weaver/config-policy",
+      "version": "0.0.0",
+      "dependencies": {
+        "@weaver/config-engine": "workspace:*",
+        "@weaver/config-types": "workspace:*",
+      },
+      "devDependencies": {
+        "typescript": "^5.8.3",
+      },
+    },
+    "packages/config-providers": {
+      "name": "@weaver/config-providers",
+      "version": "0.0.0",
+      "dependencies": {
+        "@weaver/config-engine": "workspace:*",
+        "@weaver/config-sync": "workspace:*",
+        "@weaver/config-types": "workspace:*",
+      },
+      "devDependencies": {
+        "typescript": "^5.8.3",
+      },
+    },
+    "packages/config-server": {
+      "name": "@weaver/config-server",
+      "version": "0.0.0",
+      "dependencies": {
+        "@weaver/config-engine": "workspace:*",
+        "@weaver/config-types": "workspace:*",
+      },
+      "devDependencies": {
+        "typescript": "^5.8.3",
+      },
+    },
+    "packages/config-sessions": {
+      "name": "@weaver/config-sessions",
+      "version": "0.0.0",
+      "dependencies": {
+        "@weaver/config-providers": "workspace:*",
+        "@weaver/config-types": "workspace:*",
+      },
+      "devDependencies": {
+        "typescript": "^5.8.3",
+      },
+    },
+    "packages/config-sync": {
+      "name": "@weaver/config-sync",
+      "version": "0.0.0",
+      "dependencies": {
+        "@weaver/config-types": "workspace:*",
+      },
+      "devDependencies": {
+        "typescript": "^5.8.3",
+      },
+    },
+    "packages/config-types": {
+      "name": "@weaver/config-types",
+      "version": "0.0.0",
+      "dependencies": {
+        "zod": "^3.24.0",
+      },
+      "devDependencies": {
+        "typescript": "^5.8.3",
+      },
+    },
   },
   "packages": {
     "@babel/runtime": ["@babel/runtime@7.29.2", "", {}, "sha512-JiDShH45zKHWyGe4ZNVRrCjBz8Nh9TMmZG1kh4QTK8hCBTWBi8Da+i7s1fJw7/lYpM4ccepSNfqzZ/QvABBi5g=="],
@@ -78,6 +164,22 @@
     "@turbo/windows-arm64": ["@turbo/windows-arm64@2.9.6", "", { "os": "win32", "cpu": "arm64" }, "sha512-1XUUyWW0W6FTSqGEhU8RHVqb2wP1SPkr7hIvBlMEwH9jr+sJQK5kqeosLJ/QaUv4ecSAd1ZhIrLoW7qslAzT4A=="],
 
     "@types/node": ["@types/node@12.20.55", "", {}, "sha512-J8xLz7q2OFulZ2cyGTLE1TbbZcjpno7FaN6zdJNrgAdrJ+DZzh/uFR6YrTb4C+nXakvud8Q4+rbhoIWlYQbUFQ=="],
+
+    "@weaver/config-auth": ["@weaver/config-auth@workspace:packages/config-auth"],
+
+    "@weaver/config-engine": ["@weaver/config-engine@workspace:packages/config-engine"],
+
+    "@weaver/config-policy": ["@weaver/config-policy@workspace:packages/config-policy"],
+
+    "@weaver/config-providers": ["@weaver/config-providers@workspace:packages/config-providers"],
+
+    "@weaver/config-server": ["@weaver/config-server@workspace:packages/config-server"],
+
+    "@weaver/config-sessions": ["@weaver/config-sessions@workspace:packages/config-sessions"],
+
+    "@weaver/config-sync": ["@weaver/config-sync@workspace:packages/config-sync"],
+
+    "@weaver/config-types": ["@weaver/config-types@workspace:packages/config-types"],
 
     "ansi-colors": ["ansi-colors@4.1.3", "", {}, "sha512-/6w/C21Pm1A7aZitlI5Ni/2J6FFQN8i1Cvz3kHABAAbw93v/NlvKdVOqz7CCWz/3iv/JplRSEEZ83XION15ovw=="],
 
@@ -236,6 +338,8 @@
     "whatwg-url": ["whatwg-url@5.0.0", "", { "dependencies": { "tr46": "~0.0.3", "webidl-conversions": "^3.0.0" } }, "sha512-saE57nupxk6v3HY35+jzBwYa0rKSy0XR8JSxZPwgLr7ys0IBzhGviA1/TUGJLmSVqs8pb9AnvICXEuOHLprYTw=="],
 
     "which": ["which@2.0.2", "", { "dependencies": { "isexe": "^2.0.0" }, "bin": { "node-which": "./bin/node-which" } }, "sha512-BLI3Tl1TW3Pvl70l3yq3Y64i+awpwXqsGBYWkkqMtnbXgrMD+yj7rhW0kuEDxzJaYXGjEW5ogapKNMEKNMjibA=="],
+
+    "zod": ["zod@3.25.76", "", {}, "sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ=="],
 
     "@manypkg/find-root/fs-extra": ["fs-extra@8.1.0", "", { "dependencies": { "graceful-fs": "^4.2.0", "jsonfile": "^4.0.0", "universalify": "^0.1.0" } }, "sha512-yhlQgA6mnOJUKOsRUFsgJdQCvkKhcz8tlZG5HBQfReYZy46OwLcY+Zia0mtdHsOo9y/hP+CxMN0TU9QxoOtG4g=="],
 

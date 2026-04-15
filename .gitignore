@@ -1,5 +1,7 @@
 # Dependencies and build artifacts
 node_modules/
+.turbo/
+**/.turbo/
 **/dist/
 **/dist-test/
 **/*.tsbuildinfo
