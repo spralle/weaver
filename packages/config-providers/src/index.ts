@@ -29,11 +29,4 @@ export { createScopedConfigurationService } from "./scoped-service.js";
 
 export { createViewConfigurationService } from "./view-service.js";
 
-export {
-  createGodModeSessionProvider,
-  type AuditEntry,
-  type GodModeSessionProviderOptions,
-  type GodModeSessionController,
-} from "./session-provider.js";
-
 export { MemoryDurableConfigCacheAdapter } from "./sync/durable-cache-memory.js";

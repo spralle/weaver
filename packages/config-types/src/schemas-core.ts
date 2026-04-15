@@ -151,12 +151,7 @@ export const expressionValidationResultSchema = z.object({
 
 // --- Session schemas ---
 
-export const sessionTypeSchema = z.enum([
-  "debug",
-  "god-mode",
-  "preview",
-  "support",
-]);
+export const sessionTypeSchema = z.string();
 
 /** @deprecated Use `sessionTypeSchema` instead. */
 export const sessionModeSchema = sessionTypeSchema;
@@ -169,7 +164,7 @@ export const sessionLayerMetadataSchema = z.object({
   expiresAt: z.number().optional(),
 }).strict();
 
-export const godModeSessionSchema = z.object({
+export const overrideSessionSchema = z.object({
   id: z.string(),
   activatedAt: z.string(),
   expiresAt: z.string(),
@@ -178,6 +173,9 @@ export const godModeSessionSchema = z.object({
   isActive: z.boolean(),
   overrides: z.record(z.string(), z.unknown()),
 }).strict();
+
+/** @deprecated Use `overrideSessionSchema` instead. */
+export const godModeSessionSchema = overrideSessionSchema;
 
 export const sessionActivationRequestSchema = z.object({
   reason: z.string(),

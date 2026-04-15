@@ -1,9 +1,9 @@
-// GodModeSession provider — session lifecycle management with expiration and audit
+// OverrideSession provider — session lifecycle management with expiration and audit
 
 import type {
   ConfigurationLayerData,
   ConfigurationStorageProvider,
-  GodModeSession,
+  OverrideSession,
   SessionActivationRequest,
   SessionDeactivationResult,
   WriteResult,
@@ -16,7 +16,11 @@ export interface AuditEntry {
   details?: Record<string, unknown> | undefined;
 }
 
-export interface GodModeSessionProviderOptions {
+export interface OverrideSessionProviderOptions {
+  /** Layer name for this session provider (default: "session") */
+  layer?: string | undefined;
+  /** Provider ID (default: "override-session") */
+  id?: string | undefined;
   defaultDurationMs?: number | undefined;
   onAudit?: ((entry: AuditEntry) => void) | undefined;
   timer?: {
@@ -25,11 +29,11 @@ export interface GodModeSessionProviderOptions {
   } | undefined;
 }
 
-export interface GodModeSessionController {
-  activate(request: SessionActivationRequest): GodModeSession;
+export interface OverrideSessionController {
+  activate(request: SessionActivationRequest): OverrideSession;
   deactivate(): SessionDeactivationResult;
-  extend(durationMs?: number | undefined): GodModeSession;
-  getSession(): GodModeSession | null;
+  extend(durationMs?: number | undefined): OverrideSession;
+  getSession(): OverrideSession | null;
   isActive(): boolean;
   readonly provider: ConfigurationStorageProvider;
   dispose(): void;
@@ -45,9 +49,9 @@ function nowIso(): string {
   return new Date().toISOString();
 }
 
-export function createGodModeSessionProvider(
-  options?: GodModeSessionProviderOptions | undefined,
-): GodModeSessionController {
+export function createOverrideSessionProvider(
+  options?: OverrideSessionProviderOptions | undefined,
+): OverrideSessionController {
   const defaultDurationMs = options?.defaultDurationMs ?? DEFAULT_DURATION_MS;
   const onAudit = options?.onAudit;
   const timerImpl = options?.timer ?? {
@@ -55,7 +59,7 @@ export function createGodModeSessionProvider(
     clearTimeout: (id: unknown) => clearTimeout(id),
   };
 
-  let session: GodModeSession | null = null;
+  let session: OverrideSession | null = null;
   let timerId: unknown = null;
   let currentDurationMs = defaultDurationMs;
 
@@ -102,17 +106,20 @@ export function createGodModeSessionProvider(
     }, durationMs);
   }
 
-  function snapshotSession(): GodModeSession {
+  function snapshotSession(): OverrideSession {
     if (session === null) {
       throw new Error("No active session");
     }
     return { ...session, overrides: { ...entries } };
   }
 
+  const layerName = options?.layer ?? "session";
+  const providerId = options?.id ?? "override-session";
+
   // Wrapping provider that keeps entries map in sync with session overrides
   const provider: ConfigurationStorageProvider = {
-    id: "god-mode-session",
-    layer: "session",
+    id: providerId,
+    layer: layerName,
     writable: true,
 
     async load(): Promise<ConfigurationLayerData> {
@@ -137,7 +144,7 @@ export function createGodModeSessionProvider(
   };
 
   return {
-    activate(request: SessionActivationRequest): GodModeSession {
+    activate(request: SessionActivationRequest): OverrideSession {
       if (session !== null) {
         throw new Error("Session already active");
       }
@@ -186,7 +193,7 @@ export function createGodModeSessionProvider(
       };
     },
 
-    extend(durationMs?: number | undefined): GodModeSession {
+    extend(durationMs?: number | undefined): OverrideSession {
       if (session === null) {
         throw new Error("No active session");
       }
@@ -202,7 +209,7 @@ export function createGodModeSessionProvider(
       return snapshotSession();
     },
 
-    getSession(): GodModeSession | null {
+    getSession(): OverrideSession | null {
       if (session === null) return null;
       return snapshotSession();
     },

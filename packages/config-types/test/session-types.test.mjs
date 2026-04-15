@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 
 import {
   propertySessionModeSchema,
-  godModeSessionSchema,
+  overrideSessionSchema,
   sessionActivationRequestSchema,
   sessionDeactivationResultSchema,
   configurationPropertySchemaSchema,
@@ -21,16 +21,23 @@ test("propertySessionModeSchema accepts valid values", () => {
 });
 
 test("propertySessionModeSchema rejects invalid values", () => {
-  for (const bad of ["debug", "god-mode", "preview", "", "ALLOWED", "none", 42, null]) {
+  for (const bad of ["", 42, null]) {
     const result = propertySessionModeSchema.safeParse(bad);
     assert.equal(result.success, false, `Expected ${JSON.stringify(bad)} to be rejected`);
   }
 });
 
-test("sessionTypeSchema accepts session type values", () => {
-  for (const t of ["debug", "god-mode", "preview", "support"]) {
+test("sessionTypeSchema accepts any string value", () => {
+  for (const t of ["debug", "god-mode", "preview", "support", "custom-type", "anything"]) {
     const result = sessionTypeSchema.safeParse(t);
     assert.equal(result.success, true, `Expected "${t}" to be valid`);
+  }
+});
+
+test("sessionTypeSchema rejects non-string values", () => {
+  for (const bad of [42, null, true, undefined, {}]) {
+    const result = sessionTypeSchema.safeParse(bad);
+    assert.equal(result.success, false, `Expected ${JSON.stringify(bad)} to be rejected`);
   }
 });
 
@@ -72,9 +79,9 @@ test("configurationPropertySchemaSchema works without sessionMode", () => {
   assert.equal(result.success, true);
 });
 
-// --- GodModeSession ---
+// --- OverrideSession ---
 
-test("godModeSessionSchema accepts a valid session", () => {
+test("overrideSessionSchema accepts a valid session", () => {
   const session = {
     id: "session-abc-123",
     activatedAt: "2026-04-13T10:00:00Z",
@@ -88,12 +95,12 @@ test("godModeSessionSchema accepts a valid session", () => {
     },
   };
 
-  const result = godModeSessionSchema.safeParse(session);
+  const result = overrideSessionSchema.safeParse(session);
   assert.equal(result.success, true);
   assert.deepEqual(result.data, session);
 });
 
-test("godModeSessionSchema accepts session with empty overrides", () => {
+test("overrideSessionSchema accepts session with empty overrides", () => {
   const session = {
     id: "session-new",
     activatedAt: "2026-04-13T10:00:00Z",
@@ -104,11 +111,11 @@ test("godModeSessionSchema accepts session with empty overrides", () => {
     overrides: {},
   };
 
-  const result = godModeSessionSchema.safeParse(session);
+  const result = overrideSessionSchema.safeParse(session);
   assert.equal(result.success, true);
 });
 
-test("godModeSessionSchema rejects missing required fields", () => {
+test("overrideSessionSchema rejects missing required fields", () => {
   const cases = [
     { field: "id", data: { activatedAt: "t", expiresAt: "t", activatedBy: "u", reason: "r", isActive: true, overrides: {} } },
     { field: "activatedAt", data: { id: "1", expiresAt: "t", activatedBy: "u", reason: "r", isActive: true, overrides: {} } },
@@ -120,12 +127,12 @@ test("godModeSessionSchema rejects missing required fields", () => {
   ];
 
   for (const { field, data } of cases) {
-    const result = godModeSessionSchema.safeParse(data);
+    const result = overrideSessionSchema.safeParse(data);
     assert.equal(result.success, false, `Expected rejection when missing "${field}"`);
   }
 });
 
-test("godModeSessionSchema rejects extra properties (strict)", () => {
+test("overrideSessionSchema rejects extra properties (strict)", () => {
   const session = {
     id: "session-1",
     activatedAt: "2026-04-13T10:00:00Z",
@@ -137,7 +144,7 @@ test("godModeSessionSchema rejects extra properties (strict)", () => {
     extraField: "not-allowed",
   };
 
-  const result = godModeSessionSchema.safeParse(session);
+  const result = overrideSessionSchema.safeParse(session);
   assert.equal(result.success, false);
 });
 
@@ -256,7 +263,7 @@ test("sessionDeactivationResultSchema rejects extra properties (strict)", () => 
 
 // --- Round-trip tests ---
 
-test("GodModeSession round-trip: construct, validate, check fields", () => {
+test("OverrideSession round-trip: construct, validate, check fields", () => {
   const input = {
     id: "rt-session-1",
     activatedAt: new Date("2026-04-13T10:00:00Z").toISOString(),
@@ -267,7 +274,7 @@ test("GodModeSession round-trip: construct, validate, check fields", () => {
     overrides: { "ghost.perf.tracing": true },
   };
 
-  const parsed = godModeSessionSchema.parse(input);
+  const parsed = overrideSessionSchema.parse(input);
   assert.equal(parsed.id, "rt-session-1");
   assert.equal(parsed.activatedBy, "operator-1");
   assert.equal(parsed.isActive, true);

@@ -18,6 +18,7 @@
   "dependencies": {
     "@weaver/config-types": "workspace:*",
     "@weaver/config-engine": "workspace:*",
+    "@weaver/config-sessions": "workspace:*",
     "@weaver/config-sync": "workspace:*"
   },
   "devDependencies": {

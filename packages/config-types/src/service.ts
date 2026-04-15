@@ -1,19 +1,19 @@
 import type { ConfigurationLayer, ScopeInstance } from "./types.js";
 import type {
-  GodModeSession,
+  OverrideSession,
   SessionActivationRequest,
   SessionDeactivationResult,
 } from "./session.js";
 
 /**
- * Minimal handle for session lifecycle — satisfied by GodModeSessionController
- * without creating a dependency from config-types to config-providers.
+ * Minimal handle for session lifecycle — satisfied by OverrideSessionController
+ * without creating a dependency from config-types to config-sessions.
  */
 export interface ConfigurationSessionHandle {
-  activate(request: SessionActivationRequest): GodModeSession;
+  activate(request: SessionActivationRequest): OverrideSession;
   deactivate(): SessionDeactivationResult;
-  extend(durationMs?: number | undefined): GodModeSession;
-  getSession(): GodModeSession | null;
+  extend(durationMs?: number | undefined): OverrideSession;
+  getSession(): OverrideSession | null;
   isActive(): boolean;
 }
 

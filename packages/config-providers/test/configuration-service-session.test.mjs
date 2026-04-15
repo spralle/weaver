@@ -7,8 +7,8 @@ import {
   StaticJsonStorageProvider,
 } from "../dist/static-json-provider.js";
 import {
-  createGodModeSessionProvider,
-} from "../dist/session-provider.js";
+  createOverrideSessionProvider,
+} from "../../config-sessions/src/override-session-provider.ts";
 import { defineWeaver, Layers } from "@weaver/config-types";
 
 const testConfig = defineWeaver([
@@ -62,7 +62,7 @@ test("createConfigurationService without session works as before (backward compa
 
 test("createConfigurationService with session exposes session on returned service", async () => {
   const timer = createFakeTimer();
-  const controller = createGodModeSessionProvider({ timer });
+  const controller = createOverrideSessionProvider({ timer });
 
   const core = new StaticJsonStorageProvider({
     id: "core",
@@ -83,7 +83,7 @@ test("createConfigurationService with session exposes session on returned servic
 
 test("session.provider is included in resolution (SESSION layer overrides)", async () => {
   const timer = createFakeTimer();
-  const controller = createGodModeSessionProvider({ timer });
+  const controller = createOverrideSessionProvider({ timer });
 
   const core = new StaticJsonStorageProvider({
     id: "core",
@@ -111,7 +111,7 @@ test("session.provider is included in resolution (SESSION layer overrides)", asy
 
 test("session.activate/deactivate lifecycle works through service", async () => {
   const timer = createFakeTimer();
-  const controller = createGodModeSessionProvider({ timer });
+  const controller = createOverrideSessionProvider({ timer });
 
   const core = new StaticJsonStorageProvider({
     id: "core",
@@ -142,7 +142,7 @@ test("session.activate/deactivate lifecycle works through service", async () => 
 
 test("session overrides appear in get() resolution after set", async () => {
   const timer = createFakeTimer();
-  const controller = createGodModeSessionProvider({ timer });
+  const controller = createOverrideSessionProvider({ timer });
 
   const core = new StaticJsonStorageProvider({
     id: "core",
@@ -175,7 +175,7 @@ test("session overrides appear in get() resolution after set", async () => {
 
 test("session deactivation clears overrides from resolution", async () => {
   const timer = createFakeTimer();
-  const controller = createGodModeSessionProvider({ timer });
+  const controller = createOverrideSessionProvider({ timer });
 
   const core = new StaticJsonStorageProvider({
     id: "core",
@@ -211,7 +211,7 @@ test("session deactivation clears overrides from resolution", async () => {
 
 test("session extend works through service handle", async () => {
   const timer = createFakeTimer();
-  const controller = createGodModeSessionProvider({ timer });
+  const controller = createOverrideSessionProvider({ timer });
 
   const svc = await createConfigurationService({
     providers: [],
@@ -232,7 +232,7 @@ test("session extend works through service handle", async () => {
 
 test("session inspect shows session layer value", async () => {
   const timer = createFakeTimer();
-  const controller = createGodModeSessionProvider({ timer });
+  const controller = createOverrideSessionProvider({ timer });
 
   const core = new StaticJsonStorageProvider({
     id: "core",

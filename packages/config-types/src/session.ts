@@ -1,4 +1,4 @@
-export type SessionType = "debug" | "god-mode" | "preview" | "support";
+export type SessionType = string;
 
 /** @deprecated Use `SessionType` instead. */
 export type SessionMode = SessionType;
@@ -22,7 +22,7 @@ export interface SessionLayer {
   readonly metadata: SessionLayerMetadata | null;
 }
 
-export interface GodModeSession {
+export interface OverrideSession {
   id: string;
   activatedAt: string;
   expiresAt: string;
@@ -44,3 +44,6 @@ export interface SessionDeactivationResult {
   overridesCleared: number;
   auditRecorded: boolean;
 }
+
+/** @deprecated Use `OverrideSession` instead. */
+export type GodModeSession = OverrideSession;

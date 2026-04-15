@@ -13,12 +13,12 @@ import type { ScopeInstance } from "@weaver/config-types";
 import { resolveConfiguration, inspectKey } from "@weaver/config-engine";
 import { createStateContainer } from "./state-container.js";
 import type { ConfigurationStateContainer } from "./state-container.js";
-import type { GodModeSessionController } from "./session-provider.js";
+import type { OverrideSessionController } from "@weaver/config-sessions";
 
 export interface ConfigurationServiceOptions {
   providers: ConfigurationStorageProvider[];
   weaverConfig: WeaverConfig;
-  session?: GodModeSessionController | undefined;
+  session?: OverrideSessionController | undefined;
 }
 
 /**

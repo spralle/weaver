@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createGodModeSessionProvider } from "../dist/index.js";
+import { createOverrideSessionProvider } from "../src/override-session-provider.ts";
 
 // Fake timer that allows manual triggering of scheduled callbacks
 function createFakeTimer() {
@@ -40,7 +40,7 @@ function createFakeTimer() {
 }
 
 test("activate creates session with correct metadata", () => {
-  const controller = createGodModeSessionProvider({
+  const controller = createOverrideSessionProvider({
     timer: createFakeTimer().impl,
   });
 
@@ -58,7 +58,7 @@ test("activate creates session with correct metadata", () => {
 });
 
 test("activate rejects when session already active", () => {
-  const controller = createGodModeSessionProvider({
+  const controller = createOverrideSessionProvider({
     timer: createFakeTimer().impl,
   });
 
@@ -73,7 +73,7 @@ test("activate rejects when session already active", () => {
 });
 
 test("deactivate clears overrides and returns count", async () => {
-  const controller = createGodModeSessionProvider({
+  const controller = createOverrideSessionProvider({
     timer: createFakeTimer().impl,
     onAudit: () => {},
   });
@@ -95,7 +95,7 @@ test("deactivate clears overrides and returns count", async () => {
 });
 
 test("deactivate rejects when no active session", () => {
-  const controller = createGodModeSessionProvider({
+  const controller = createOverrideSessionProvider({
     timer: createFakeTimer().impl,
   });
 
@@ -107,7 +107,7 @@ test("deactivate rejects when no active session", () => {
 
 test("extend resets timer and updates expiresAt", () => {
   const fakeTimer = createFakeTimer();
-  const controller = createGodModeSessionProvider({
+  const controller = createOverrideSessionProvider({
     timer: fakeTimer.impl,
     defaultDurationMs: 60_000,
   });
@@ -126,7 +126,7 @@ test("extend resets timer and updates expiresAt", () => {
 });
 
 test("extend rejects when no active session", () => {
-  const controller = createGodModeSessionProvider({
+  const controller = createOverrideSessionProvider({
     timer: createFakeTimer().impl,
   });
 
@@ -137,7 +137,7 @@ test("extend rejects when no active session", () => {
 });
 
 test("provider implements ConfigurationStorageProvider (read/write/remove)", async () => {
-  const controller = createGodModeSessionProvider({
+  const controller = createOverrideSessionProvider({
     timer: createFakeTimer().impl,
   });
 
@@ -145,8 +145,8 @@ test("provider implements ConfigurationStorageProvider (read/write/remove)", asy
 
   const { provider } = controller;
 
-  // Verify provider interface
-  assert.equal(provider.id, "god-mode-session");
+  // Verify provider interface — defaults
+  assert.equal(provider.id, "override-session");
   assert.equal(provider.layer, "session");
   assert.equal(provider.writable, true);
 
@@ -169,7 +169,7 @@ test("provider implements ConfigurationStorageProvider (read/write/remove)", asy
 });
 
 test("session overrides are cleared on deactivate", async () => {
-  const controller = createGodModeSessionProvider({
+  const controller = createOverrideSessionProvider({
     timer: createFakeTimer().impl,
   });
 
@@ -192,7 +192,7 @@ test("session overrides are cleared on deactivate", async () => {
 test("auto-expire triggers deactivation after timer fires", async () => {
   const fakeTimer = createFakeTimer();
   const auditLog = [];
-  const controller = createGodModeSessionProvider({
+  const controller = createOverrideSessionProvider({
     timer: fakeTimer.impl,
     defaultDurationMs: 5_000,
     onAudit: (entry) => auditLog.push(entry),
@@ -222,7 +222,7 @@ test("auto-expire triggers deactivation after timer fires", async () => {
 test("audit events emitted for activate/deactivate/extend/expire", async () => {
   const fakeTimer = createFakeTimer();
   const auditLog = [];
-  const controller = createGodModeSessionProvider({
+  const controller = createOverrideSessionProvider({
     timer: fakeTimer.impl,
     defaultDurationMs: 5_000,
     onAudit: (entry) => auditLog.push(entry),
@@ -255,7 +255,7 @@ test("audit events emitted for activate/deactivate/extend/expire", async () => {
 test("dispose clears timer and deactivates", async () => {
   const fakeTimer = createFakeTimer();
   const auditLog = [];
-  const controller = createGodModeSessionProvider({
+  const controller = createOverrideSessionProvider({
     timer: fakeTimer.impl,
     onAudit: (entry) => auditLog.push(entry),
   });
@@ -279,7 +279,7 @@ test("dispose clears timer and deactivates", async () => {
 
 test("custom durationMs in activation request", () => {
   const fakeTimer = createFakeTimer();
-  const controller = createGodModeSessionProvider({
+  const controller = createOverrideSessionProvider({
     timer: fakeTimer.impl,
     defaultDurationMs: 60_000,
   });
@@ -292,7 +292,7 @@ test("custom durationMs in activation request", () => {
 });
 
 test("getSession returns null when no session, returns session when active", () => {
-  const controller = createGodModeSessionProvider({
+  const controller = createOverrideSessionProvider({
     timer: createFakeTimer().impl,
   });
 
@@ -310,7 +310,7 @@ test("getSession returns null when no session, returns session when active", () 
 
 test("default duration is 4 hours", () => {
   const fakeTimer = createFakeTimer();
-  const controller = createGodModeSessionProvider({
+  const controller = createOverrideSessionProvider({
     timer: fakeTimer.impl,
   });
 
@@ -322,7 +322,7 @@ test("default duration is 4 hours", () => {
 });
 
 test("deactivate returns auditRecorded false when no onAudit", () => {
-  const controller = createGodModeSessionProvider({
+  const controller = createOverrideSessionProvider({
     timer: createFakeTimer().impl,
   });
 
@@ -333,7 +333,7 @@ test("deactivate returns auditRecorded false when no onAudit", () => {
 });
 
 test("provider load returns snapshot (not live reference)", async () => {
-  const controller = createGodModeSessionProvider({
+  const controller = createOverrideSessionProvider({
     timer: createFakeTimer().impl,
   });
 
@@ -351,7 +351,7 @@ test("provider load returns snapshot (not live reference)", async () => {
 
 test("extend without duration uses current duration", () => {
   const fakeTimer = createFakeTimer();
-  const controller = createGodModeSessionProvider({
+  const controller = createOverrideSessionProvider({
     timer: fakeTimer.impl,
     defaultDurationMs: 60_000,
   });
@@ -362,6 +362,22 @@ test("extend without duration uses current duration", () => {
   // Extend without specifying duration should use the current (30s)
   controller.extend();
   assert.equal(fakeTimer.scheduledMs, 30_000);
+
+  controller.dispose();
+});
+
+test("custom layer and id options", () => {
+  const controller = createOverrideSessionProvider({
+    timer: createFakeTimer().impl,
+    layer: "custom-session",
+    id: "my-session-provider",
+  });
+
+  controller.activate({ reason: "test" });
+
+  const { provider } = controller;
+  assert.equal(provider.id, "my-session-provider");
+  assert.equal(provider.layer, "custom-session");
 
   controller.dispose();
 });
