@@ -161,3 +161,26 @@ export {
   configAuditEntrySchema,
   emergencyOverrideRecordSchema,
 } from "./schemas-promotion.js";
+
+// merge-types.ts — Merge function type
+export type { MergeFunction } from "./merge-types.js";
+
+// layers.ts — Layer abstraction interfaces
+export type {
+  ResolutionContext,
+  LayerData,
+  LayerResolver,
+  LayerType,
+  LayerDefinition,
+  StaticLayerConfig,
+  DynamicLayerConfig,
+  PersonalLayerConfig,
+  EphemeralLayerConfig,
+} from "./layers.js";
+
+// layer-factories.ts — Built-in layer factories
+export { Layers, replaceOnly } from "./layer-factories.js";
+
+// weaver.ts — defineWeaver() builder
+export type { ExtractLayerNames, WeaverConfig } from "./weaver.js";
+export { defineWeaver } from "./weaver.js";
