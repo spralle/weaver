@@ -4,7 +4,6 @@ import type {
   ConfigurationPropertySchema,
   ConfigurationAccessContext,
 } from "@weaver/config-types";
-import { canWrite } from "./auth.js";
 
 export type PolicyDecision =
   | { readonly outcome: "allowed" }
@@ -25,17 +24,22 @@ export interface PolicyEvaluationContext extends ConfigurationAccessContext {
  * changePolicy, the caller's auth context, and the target layer.
  *
  * Decision flow:
- * 1. Check base write permission via canWrite()
+ * 1. Check base write permission via the provided canWrite function
  * 2. Evaluate changePolicy (defaults to 'direct-allowed')
  */
 export function evaluateChangePolicy(
   schema: ConfigurationPropertySchema,
   context: PolicyEvaluationContext,
   layer: string,
-  getRank?: ((layer: string) => number) | undefined,
+  canWrite: (
+    ctx: ConfigurationAccessContext,
+    layer: string,
+    key: string,
+    schema: ConfigurationPropertySchema | undefined,
+  ) => boolean,
 ): PolicyDecision {
   // Step 1: Check base write permission
-  if (!canWrite(context, layer, "", schema, getRank)) {
+  if (!canWrite(context, layer, "", schema)) {
     return {
       outcome: "denied",
       reason: `Write denied: insufficient permissions for layer '${layer}'`,

@@ -88,8 +88,6 @@ export type {
   ServiceConfigurationDeclaration,
 } from "./access.js";
 
-export { DEFAULT_LAYER_WRITE_POLICIES } from "./access.js";
-
 // schemas-core.ts — Zod schemas for core types
 export {
   configurationLayerSchema,

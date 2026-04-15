@@ -6,7 +6,6 @@
   },
   "include": ["src"],
   "references": [
-    { "path": "../config-types" },
-    { "path": "../config-engine" }
+    { "path": "../config-types" }
   ]
 }

@@ -20,33 +20,6 @@ export interface LayerWritePolicy {
   constraints?: ReadonlyArray<LayerWriteConstraint> | undefined;
 }
 
-export const DEFAULT_LAYER_WRITE_POLICIES: ReadonlyArray<LayerWritePolicy> = [
-  { layer: "core", allowedRoles: ["system"] },
-  { layer: "app", allowedRoles: ["platform-ops", "system"] },
-  { layer: "module", allowedRoles: ["system"] },
-  {
-    layer: "integrator",
-    allowedRoles: ["platform-ops", "integrator"],
-    constraints: [{ scopeRestriction: "own-tenant" }],
-  },
-  {
-    layer: "tenant",
-    allowedRoles: ["platform-ops", "tenant-admin"],
-    constraints: [{ scopeRestriction: "own-tenant" }],
-  },
-  {
-    layer: "user",
-    allowedRoles: ["user", "platform-ops", "support"],
-    constraints: [{ scopeRestriction: "own-user" }],
-  },
-  {
-    layer: "device",
-    allowedRoles: ["user"],
-    constraints: [{ scopeRestriction: "own-user" }],
-  },
-  { layer: "session", allowedRoles: ["platform-ops", "support"] },
-];
-
 export interface ServiceConfigurationDeclaration {
   serviceId: string;
   description: string;

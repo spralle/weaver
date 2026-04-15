@@ -59,17 +59,7 @@ export const configurationVisibilitySchema = z.enum([
   "internal",
 ]);
 
-export const configurationRoleSchema = z.enum([
-  "platform-ops",
-  "tenant-admin",
-  "scope-admin",
-  "integrator",
-  "user",
-  "support",
-  "system",
-  "service",
-  "platform-service",
-]);
+export const configurationRoleSchema = z.string();
 
 export const configReloadBehaviorSchema = z.enum([
   "hot",

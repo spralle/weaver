@@ -12,12 +12,11 @@
   "scripts": {
     "build": "tsc -b",
     "typecheck": "tsc --noEmit",
-    "test": "node --test dist/test/*.test.js 2>/dev/null || true",
+    "test": "node --test test/*.test.mjs",
     "lint": "echo 'no linter configured yet'"
   },
   "dependencies": {
-    "@weaver/config-types": "workspace:*",
-    "@weaver/config-engine": "workspace:*"
+    "@weaver/config-types": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.8.3"

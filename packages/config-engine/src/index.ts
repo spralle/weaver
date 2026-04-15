@@ -38,9 +38,6 @@ export {
   createSchemaRegistry,
 } from "./schema-registry.js";
 
-// auth.ts — Authorization checks
-export { canRead, canWrite, filterVisibleKeys } from "./auth.js";
-
 // contract-derivation.ts — Package.json contract metadata extraction
 export type {
   PackageJsonInput,

@@ -15,7 +15,6 @@
       "name": "@weaver/config-auth",
       "version": "0.0.0",
       "dependencies": {
-        "@weaver/config-engine": "workspace:*",
         "@weaver/config-types": "workspace:*",
       },
       "devDependencies": {

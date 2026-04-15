@@ -13,16 +13,7 @@ export type ConfigurationVisibility =
   | "platform"
   | "internal";
 
-export type ConfigurationRole =
-  | "platform-ops"
-  | "tenant-admin"
-  | "scope-admin"
-  | "integrator"
-  | "user"
-  | "support"
-  | "system"
-  | "service"
-  | "platform-service";
+export type ConfigurationRole = string;
 
 export type ConfigReloadBehavior =
   | "hot"
