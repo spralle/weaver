@@ -1,0 +1,17 @@
+{
+  "name": "weaver",
+  "private": true,
+  "packageManager": "bun@1.2.21",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "lint": "tsc --pretty false -p tsconfig.json --noEmit",
+    "typecheck": "tsc --pretty false -p tsconfig.json --noEmit",
+    "test": "echo \"no tests configured yet\"",
+    "build": "tsc -b --pretty false"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}
