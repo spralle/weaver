@@ -6,12 +6,18 @@
     "packages/*"
   ],
   "scripts": {
-    "lint": "tsc --pretty false -p tsconfig.json --noEmit",
-    "typecheck": "tsc --pretty false -p tsconfig.json --noEmit",
-    "test": "echo \"no tests configured yet\"",
-    "build": "tsc -b --pretty false"
+    "build": "turbo build",
+    "typecheck": "turbo typecheck",
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "turbo build && changeset publish"
   },
   "devDependencies": {
+    "@changesets/changelog-github": "0.6.0",
+    "@changesets/cli": "2.30.0",
+    "turbo": "2.9.6",
     "typescript": "^5.8.3"
   }
 }
