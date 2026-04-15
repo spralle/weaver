@@ -2,20 +2,23 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { createStateContainer } from "../dist/state-container.js";
 
+const testLayers = ["core","app","module","integrator","tenant","user","device","session"];
+const getRank = (l) => { const i = testLayers.indexOf(l); return i >= 0 ? i : testLayers.length; };
+
 test("empty container: get returns undefined", () => {
-  const container = createStateContainer();
+  const container = createStateContainer(getRank);
   assert.equal(container.get("ghost.app.theme"), undefined);
 });
 
 test("empty container: snapshot returns empty frozen object", () => {
-  const container = createStateContainer();
+  const container = createStateContainer(getRank);
   const snap = container.snapshot();
   assert.deepEqual(snap, {});
   assert.ok(Object.isFrozen(snap));
 });
 
 test("single layer: applyLayerData stores and resolves values", () => {
-  const container = createStateContainer();
+  const container = createStateContainer(getRank);
   container.applyLayerData("core", {
     "ghost.app.theme": "dark",
     "ghost.app.zoom": 5,
@@ -25,13 +28,13 @@ test("single layer: applyLayerData stores and resolves values", () => {
 });
 
 test("single layer: provenance tracks layer name", () => {
-  const container = createStateContainer();
+  const container = createStateContainer(getRank);
   container.applyLayerData("core", { "ghost.app.theme": "dark" });
   assert.equal(container.getProvenance("ghost.app.theme"), "core");
 });
 
 test("multi-layer merge: tenant overrides core", () => {
-  const container = createStateContainer();
+  const container = createStateContainer(getRank);
   container.applyLayerData("core", {
     "ghost.app.theme": "light",
     "ghost.app.zoom": 3,
@@ -44,7 +47,7 @@ test("multi-layer merge: tenant overrides core", () => {
 });
 
 test("listener precision: onChange fires only for changed keys", () => {
-  const container = createStateContainer();
+  const container = createStateContainer(getRank);
   container.applyLayerData("core", {
     "ghost.app.theme": "dark",
     "ghost.app.zoom": 5,
@@ -62,7 +65,7 @@ test("listener precision: onChange fires only for changed keys", () => {
 });
 
 test("listener unsubscribe: after unsubscribe, listener not called", () => {
-  const container = createStateContainer();
+  const container = createStateContainer(getRank);
   container.applyLayerData("core", { "ghost.app.theme": "dark" });
 
   const changes = [];
@@ -78,7 +81,7 @@ test("listener unsubscribe: after unsubscribe, listener not called", () => {
 });
 
 test("onAnyChange: fires with array of changed keys", () => {
-  const container = createStateContainer();
+  const container = createStateContainer(getRank);
   container.applyLayerData("core", { "ghost.app.theme": "dark", "ghost.app.zoom": 5 });
 
   const allChanges = [];
@@ -92,7 +95,7 @@ test("onAnyChange: fires with array of changed keys", () => {
 });
 
 test("onAnyChange unsubscribe works", () => {
-  const container = createStateContainer();
+  const container = createStateContainer(getRank);
   container.applyLayerData("core", { "ghost.app.theme": "dark" });
 
   const allChanges = [];
@@ -107,7 +110,7 @@ test("onAnyChange unsubscribe works", () => {
 });
 
 test("getNamespace: returns matching keys only", () => {
-  const container = createStateContainer();
+  const container = createStateContainer(getRank);
   container.applyLayerData("core", {
     "ghost.app.theme": "dark",
     "ghost.app.zoom": 5,
@@ -121,19 +124,19 @@ test("getNamespace: returns matching keys only", () => {
 });
 
 test("getLayerEntries: returns raw layer data", () => {
-  const container = createStateContainer();
+  const container = createStateContainer(getRank);
   container.applyLayerData("core", { "ghost.app.theme": "dark" });
   const raw = container.getLayerEntries("core");
   assert.deepEqual(raw, { "ghost.app.theme": "dark" });
 });
 
 test("getLayerEntries: returns empty for unknown layer", () => {
-  const container = createStateContainer();
+  const container = createStateContainer(getRank);
   assert.deepEqual(container.getLayerEntries("nonexistent"), {});
 });
 
 test("snapshot: returns frozen copy that does not affect container", () => {
-  const container = createStateContainer();
+  const container = createStateContainer(getRank);
   container.applyLayerData("core", { "ghost.app.theme": "dark" });
   const snap = container.snapshot();
   assert.ok(Object.isFrozen(snap));
@@ -144,7 +147,7 @@ test("snapshot: returns frozen copy that does not affect container", () => {
 });
 
 test("no listeners fire when values do not change", () => {
-  const container = createStateContainer();
+  const container = createStateContainer(getRank);
   container.applyLayerData("core", { "ghost.app.theme": "dark" });
 
   const changes = [];
@@ -156,7 +159,7 @@ test("no listeners fire when values do not change", () => {
 });
 
 test("layer ordering: session overrides user", () => {
-  const container = createStateContainer();
+  const container = createStateContainer(getRank);
   container.applyLayerData("user", { "ghost.app.theme": "blue" });
   container.applyLayerData("session", { "ghost.app.theme": "green" });
   assert.equal(container.get("ghost.app.theme"), "green");

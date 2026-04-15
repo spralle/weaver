@@ -4,16 +4,7 @@ import type { ConfigurationPropertySchema } from "./property-schema.js";
 
 // --- Layer and context schemas ---
 
-export const configurationLayerSchema = z.enum([
-  "core",
-  "app",
-  "module",
-  "integrator",
-  "tenant",
-  "user",
-  "device",
-  "session",
-]);
+export const configurationLayerSchema = z.string();
 
 export const scopeDefinitionSchema = z.object({
   id: z.string(),

@@ -3,22 +3,6 @@
 import type { ConfigurationLayerStack } from "@weaver/config-types";
 import { resolveConfiguration } from "@weaver/config-engine";
 
-const LAYER_RANK: Record<string, number> = {
-  core: 0,
-  app: 1,
-  module: 2,
-  integrator: 3,
-  tenant: 4,
-  user: 5,
-  device: 6,
-  session: 7,
-};
-
-function getLayerRank(layer: string): number {
-  const rank = LAYER_RANK[layer];
-  return rank !== undefined ? rank : 4.5;
-}
-
 export interface ConfigurationStateContainer {
   /** Get the resolved value for a key */
   get(key: string): unknown;
@@ -38,7 +22,9 @@ export interface ConfigurationStateContainer {
   getLayerEntries(layer: string): Record<string, unknown>;
 }
 
-export function createStateContainer(): ConfigurationStateContainer {
+export function createStateContainer(
+  getRank: (layer: string) => number,
+): ConfigurationStateContainer {
   const rawLayers = new Map<string, Record<string, unknown>>();
   let resolvedEntries: Record<string, unknown> = {};
   let provenance = new Map<string, string>();
@@ -48,7 +34,7 @@ export function createStateContainer(): ConfigurationStateContainer {
 
   function buildStack(): ConfigurationLayerStack {
     const sorted = [...rawLayers.entries()].sort(
-      (a, b) => getLayerRank(a[0]) - getLayerRank(b[0]),
+      (a, b) => getRank(a[0]) - getRank(b[0]),
     );
     return {
       layers: sorted.map(([layer, entries]) => ({ layer, entries })),

@@ -2,6 +2,9 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { canRead, canWrite, filterVisibleKeys } from "../dist/index.js";
 
+const testLayers = ["core","app","module","integrator","tenant","user","device","session"];
+const getRank = (l) => { const i = testLayers.indexOf(l); return i >= 0 ? i : testLayers.length; };
+
 // --- canRead tests ---
 
 test("canRead: public visibility allows all roles", () => {
@@ -52,13 +55,13 @@ test("canWrite: respects layer write policies", () => {
   // core layer only allows "system"
   const systemCtx = { userId: "u1", tenantId: "t1", roles: ["system"] };
   const userCtx = { userId: "u2", tenantId: "t1", roles: ["user"] };
-  assert.equal(canWrite(systemCtx, "core", "k", undefined), true);
-  assert.equal(canWrite(userCtx, "core", "k", undefined), false);
+  assert.equal(canWrite(systemCtx, "core", "k", undefined, getRank), true);
+  assert.equal(canWrite(userCtx, "core", "k", undefined, getRank), false);
 });
 
 test("canWrite: user can write to user layer", () => {
   const userCtx = { userId: "u1", tenantId: "t1", roles: ["user"] };
-  assert.equal(canWrite(userCtx, "user", "k", undefined), true);
+  assert.equal(canWrite(userCtx, "user", "k", undefined, getRank), true);
 });
 
 test("canWrite: respects key writeRestriction", () => {
@@ -69,9 +72,9 @@ test("canWrite: respects key writeRestriction", () => {
     writeRestriction: ["platform-ops"],
   };
   // tenant-admin can write to tenant layer, but writeRestriction blocks them
-  assert.equal(canWrite(adminCtx, "tenant", "k", schema), false);
+  assert.equal(canWrite(adminCtx, "tenant", "k", schema, getRank), false);
   // user can't even write to tenant layer
-  assert.equal(canWrite(userCtx, "tenant", "k", schema), false);
+  assert.equal(canWrite(userCtx, "tenant", "k", schema, getRank), false);
 });
 
 test("canWrite: respects maxOverrideLayer ceiling", () => {
@@ -81,7 +84,7 @@ test("canWrite: respects maxOverrideLayer ceiling", () => {
     maxOverrideLayer: "tenant",
   };
   // user layer is above tenant, should be denied
-  assert.equal(canWrite(userCtx, "user", "k", schema), false);
+  assert.equal(canWrite(userCtx, "user", "k", schema, getRank), false);
 });
 
 test("canWrite: emergency override bypasses ceiling", () => {
@@ -96,17 +99,17 @@ test("canWrite: emergency override bypasses ceiling", () => {
     maxOverrideLayer: "tenant",
   };
   // emergency override should bypass the ceiling
-  assert.equal(canWrite(userCtx, "user", "k", schema), true);
+  assert.equal(canWrite(userCtx, "user", "k", schema, getRank), true);
 });
 
 test("canWrite: dynamic scope layers allow scope-admin", () => {
   const scopeAdminCtx = { userId: "u1", tenantId: "t1", roles: ["scope-admin"] };
-  assert.equal(canWrite(scopeAdminCtx, "country:NO", "k", undefined), true);
+  assert.equal(canWrite(scopeAdminCtx, "country:NO", "k", undefined, getRank), true);
 });
 
 test("canWrite: dynamic scope layers deny regular user", () => {
   const userCtx = { userId: "u1", tenantId: "t1", roles: ["user"] };
-  assert.equal(canWrite(userCtx, "country:NO", "k", undefined), false);
+  assert.equal(canWrite(userCtx, "country:NO", "k", undefined, getRank), false);
 });
 
 // --- filterVisibleKeys tests ---

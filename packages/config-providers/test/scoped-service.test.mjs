@@ -4,6 +4,18 @@ import { createConfigurationService } from "../dist/configuration-service.js";
 import { createScopedConfigurationService } from "../dist/scoped-service.js";
 import { InMemoryStorageProvider } from "../dist/in-memory-provider.js";
 import { StaticJsonStorageProvider } from "../dist/static-json-provider.js";
+import { defineWeaver, Layers } from "@weaver/config-types";
+
+const testConfig = defineWeaver([
+  Layers.Static("core"),
+  Layers.Static("app"),
+  Layers.Static("module"),
+  Layers.Static("integrator"),
+  Layers.Dynamic("tenant"),
+  Layers.Personal("user"),
+  Layers.Personal("device"),
+  Layers.Ephemeral("session"),
+]);
 
 async function makeService(entries) {
   const core = new StaticJsonStorageProvider({
@@ -15,7 +27,7 @@ async function makeService(entries) {
     id: "session",
     layer: "session",
   });
-  return createConfigurationService({ providers: [core, session] });
+  return createConfigurationService({ providers: [core, session], weaverConfig: testConfig });
 }
 
 test("get qualifies key with namespace", async () => {
@@ -72,7 +84,7 @@ test("inspect returns inspection for qualified key", async () => {
   const inspection = scoped.inspect("map.zoom");
   assert.equal(inspection.key, "ghost.vesselView.map.zoom");
   assert.equal(inspection.effectiveValue, 5);
-  assert.equal(inspection.coreValue, 5);
+  assert.equal(inspection.layerValues.core, 5);
 });
 
 test("getForScope delegates to root with qualified key", async () => {
@@ -120,6 +132,7 @@ test("withScope returns scoped service with baked-in scope", async () => {
 
   const svc = await createConfigurationService({
     providers: [core, region, port],
+    weaverConfig: testConfig,
   });
   const scoped = createScopedConfigurationService(svc, "ghost.vesselView");
   const withScopeService = scoped.withScope([

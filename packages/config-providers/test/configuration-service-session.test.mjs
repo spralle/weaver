@@ -9,6 +9,18 @@ import {
 import {
   createGodModeSessionProvider,
 } from "../dist/session-provider.js";
+import { defineWeaver, Layers } from "@weaver/config-types";
+
+const testConfig = defineWeaver([
+  Layers.Static("core"),
+  Layers.Static("app"),
+  Layers.Static("module"),
+  Layers.Static("integrator"),
+  Layers.Dynamic("tenant"),
+  Layers.Personal("user"),
+  Layers.Personal("device"),
+  Layers.Ephemeral("session"),
+]);
 
 // --- Helper: injectable timer for deterministic tests ---
 function createFakeTimer() {
@@ -42,7 +54,7 @@ test("createConfigurationService without session works as before (backward compa
     layer: "core",
     data: { "ghost.app.theme": "light" },
   });
-  const svc = await createConfigurationService({ providers: [core] });
+  const svc = await createConfigurationService({ providers: [core], weaverConfig: testConfig });
 
   assert.equal(svc.get("ghost.app.theme"), "light");
   assert.equal(svc.session, undefined);
@@ -59,6 +71,7 @@ test("createConfigurationService with session exposes session on returned servic
   });
   const svc = await createConfigurationService({
     providers: [core],
+    weaverConfig: testConfig,
     session: controller,
   });
 
@@ -84,6 +97,7 @@ test("session.provider is included in resolution (SESSION layer overrides)", asy
 
   const svc = await createConfigurationService({
     providers: [core],
+    weaverConfig: testConfig,
     session: controller,
   });
 
@@ -106,6 +120,7 @@ test("session.activate/deactivate lifecycle works through service", async () => 
   });
   const svc = await createConfigurationService({
     providers: [core],
+    weaverConfig: testConfig,
     session: controller,
   });
 
@@ -136,6 +151,7 @@ test("session overrides appear in get() resolution after set", async () => {
   });
   const svc = await createConfigurationService({
     providers: [core],
+    weaverConfig: testConfig,
     session: controller,
   });
 
@@ -168,6 +184,7 @@ test("session deactivation clears overrides from resolution", async () => {
   });
   const svc = await createConfigurationService({
     providers: [core],
+    weaverConfig: testConfig,
     session: controller,
   });
 
@@ -198,6 +215,7 @@ test("session extend works through service handle", async () => {
 
   const svc = await createConfigurationService({
     providers: [],
+    weaverConfig: testConfig,
     session: controller,
   });
 
@@ -223,6 +241,7 @@ test("session inspect shows session layer value", async () => {
   });
   const svc = await createConfigurationService({
     providers: [core],
+    weaverConfig: testConfig,
     session: controller,
   });
 
@@ -232,8 +251,8 @@ test("session inspect shows session layer value", async () => {
   const inspection = svc.inspect("ghost.app.theme");
   assert.equal(inspection.effectiveValue, "dark");
   assert.equal(inspection.effectiveLayer, "session");
-  assert.equal(inspection.coreValue, "light");
-  assert.equal(inspection.sessionValue, "dark");
+  assert.equal(inspection.layerValues.core, "light");
+  assert.equal(inspection.layerValues.session, "dark");
 
   controller.dispose();
 });

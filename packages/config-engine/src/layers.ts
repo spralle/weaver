@@ -14,26 +14,6 @@ export interface ResolvedConfiguration {
   provenance: Map<string, string>;
 }
 
-const LAYER_RANK: Record<string, number> = {
-  core: 0,
-  app: 1,
-  module: 2,
-  integrator: 3,
-  tenant: 4,
-  user: 5,
-  device: 6,
-  session: 7,
-};
-
-function getLayerRank(layer: string): number {
-  const rank = LAYER_RANK[layer];
-  if (rank !== undefined) {
-    return rank;
-  }
-  // Dynamic scope layers sit between tenant (4) and user (5)
-  return 4.5;
-}
-
 /**
  * Resolves a configuration layer stack by deep merging all layers in order.
  * First layer = lowest priority, last layer = highest priority.
@@ -63,52 +43,6 @@ export function resolveConfiguration(
   return { entries, provenance };
 }
 
-const LAYER_VALUE_KEYS: Record<string, keyof ConfigurationInspection<unknown>> = {
-  core: "coreValue",
-  app: "appValue",
-  module: "moduleValue",
-  integrator: "integratorValue",
-  tenant: "tenantValue",
-  user: "userValue",
-  device: "deviceValue",
-  session: "sessionValue",
-};
-
-function setInspectionValue<T>(
-  inspection: ConfigurationInspection<T>,
-  key: keyof ConfigurationInspection<T>,
-  value: T,
-): void {
-  switch (key) {
-    case "coreValue":
-      inspection.coreValue = value;
-      break;
-    case "appValue":
-      inspection.appValue = value;
-      break;
-    case "moduleValue":
-      inspection.moduleValue = value;
-      break;
-    case "integratorValue":
-      inspection.integratorValue = value;
-      break;
-    case "tenantValue":
-      inspection.tenantValue = value;
-      break;
-    case "userValue":
-      inspection.userValue = value;
-      break;
-    case "deviceValue":
-      inspection.deviceValue = value;
-      break;
-    case "sessionValue":
-      inspection.sessionValue = value;
-      break;
-    default:
-      break;
-  }
-}
-
 /**
  * Inspects a specific key across all layers in a stack.
  * Keys are FLAT — the dot-delimited key is looked up directly
@@ -122,9 +56,8 @@ export function inspectKey<T>(
     key,
     effectiveValue: undefined,
     effectiveLayer: undefined,
+    layerValues: {},
   };
-
-  const scopeValues: Array<{ scopeId: string; value: T }> = [];
 
   for (const layerEntry of stack.layers) {
     if (!(key in layerEntry.entries)) {
@@ -134,18 +67,7 @@ export function inspectKey<T>(
     const value = layerEntry.entries[key] as T;
     inspection.effectiveValue = value;
     inspection.effectiveLayer = layerEntry.layer;
-
-    const valueKey = LAYER_VALUE_KEYS[layerEntry.layer];
-    if (valueKey !== undefined) {
-      setInspectionValue(inspection, valueKey, value);
-    } else {
-      // Dynamic scope layer
-      scopeValues.push({ scopeId: layerEntry.layer, value });
-    }
-  }
-
-  if (scopeValues.length > 0) {
-    inspection.scopeValues = scopeValues;
+    inspection.layerValues[layerEntry.layer] = value;
   }
 
   return inspection;
@@ -160,6 +82,7 @@ export function resolveConfigurationWithCeiling(
   stack: ConfigurationLayerStack,
   schemaMap: Map<string, { maxOverrideLayer?: ConfigurationLayer | undefined }>,
   isEmergencyOverride: boolean,
+  getRank: (layer: string) => number,
 ): ResolvedConfiguration {
   if (isEmergencyOverride) {
     return resolveConfiguration(stack);
@@ -167,13 +90,13 @@ export function resolveConfigurationWithCeiling(
 
   // Build a filtered stack: for each layer, remove keys that exceed their ceiling
   const filteredLayers = stack.layers.map((layerEntry) => {
-    const layerRank = getLayerRank(layerEntry.layer);
+    const layerRank = getRank(layerEntry.layer);
     const filteredEntries: Record<string, unknown> = {};
 
     for (const key of Object.keys(layerEntry.entries)) {
       const schema = schemaMap.get(key);
       if (schema?.maxOverrideLayer !== undefined) {
-        const ceilingRank = getLayerRank(schema.maxOverrideLayer);
+        const ceilingRank = getRank(schema.maxOverrideLayer);
         if (layerRank > ceilingRank) {
           continue; // Skip: this layer is above the ceiling for this key
         }

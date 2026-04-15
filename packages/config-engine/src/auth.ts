@@ -10,26 +10,6 @@ import type {
 
 import { DEFAULT_LAYER_WRITE_POLICIES } from "@weaver/config-types";
 
-const LAYER_RANK: Record<string, number> = {
-  core: 0,
-  app: 1,
-  module: 2,
-  integrator: 3,
-  tenant: 4,
-  user: 5,
-  device: 6,
-  session: 7,
-};
-
-function getLayerRank(layer: string): number {
-  const rank = LAYER_RANK[layer];
-  if (rank !== undefined) {
-    return rank;
-  }
-  // Dynamic scope layers sit between tenant (4) and user (5)
-  return 4.5;
-}
-
 const ADMIN_ROLES: ReadonlySet<ConfigurationRole> = new Set([
   "tenant-admin",
   "platform-ops",
@@ -95,6 +75,7 @@ export function canWrite(
   layer: ConfigurationLayer | string,
   _key: string,
   propertySchema: ConfigurationPropertySchema | undefined,
+  getRank?: ((layer: string) => number) | undefined,
 ): boolean {
   // Check layer write policy
   const policy = DEFAULT_LAYER_WRITE_POLICIES.find((p) => p.layer === layer);
@@ -135,9 +116,9 @@ export function canWrite(
   }
 
   // Check maxOverrideLayer ceiling
-  if (propertySchema.maxOverrideLayer !== undefined) {
-    const ceilingRank = getLayerRank(propertySchema.maxOverrideLayer);
-    const targetRank = getLayerRank(layer);
+  if (propertySchema.maxOverrideLayer !== undefined && getRank !== undefined) {
+    const ceilingRank = getRank(propertySchema.maxOverrideLayer);
+    const targetRank = getRank(layer);
     if (targetRank > ceilingRank) {
       // Deny unless emergency override
       return accessContext.sessionMode === "emergency-override";

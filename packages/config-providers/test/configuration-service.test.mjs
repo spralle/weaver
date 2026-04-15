@@ -9,6 +9,18 @@ import {
 import {
   InMemoryStorageProvider,
 } from "../dist/in-memory-provider.js";
+import { defineWeaver, Layers } from "@weaver/config-types";
+
+const testConfig = defineWeaver([
+  Layers.Static("core"),
+  Layers.Static("app"),
+  Layers.Static("module"),
+  Layers.Static("integrator"),
+  Layers.Dynamic("tenant"),
+  Layers.Personal("user"),
+  Layers.Personal("device"),
+  Layers.Ephemeral("session"),
+]);
 
 test("create service with core + session: get returns merged value", async () => {
   const core = new StaticJsonStorageProvider({
@@ -24,7 +36,7 @@ test("create service with core + session: get returns merged value", async () =>
     layer: "session",
     initialEntries: { "ghost.app.theme": "dark" },
   });
-  const svc = await createConfigurationService({ providers: [session, core] });
+  const svc = await createConfigurationService({ providers: [session, core], weaverConfig: testConfig });
   assert.equal(svc.get("ghost.app.theme"), "dark");
   assert.equal(svc.get("ghost.app.zoom"), 3);
 });
@@ -35,7 +47,7 @@ test("core key is returned when no override", async () => {
     layer: "core",
     data: { "ghost.app.lang": "en" },
   });
-  const svc = await createConfigurationService({ providers: [core] });
+  const svc = await createConfigurationService({ providers: [core], weaverConfig: testConfig });
   assert.equal(svc.get("ghost.app.lang"), "en");
 });
 
@@ -50,7 +62,7 @@ test("session key overrides core key", async () => {
     layer: "session",
     initialEntries: { "ghost.app.lang": "no" },
   });
-  const svc = await createConfigurationService({ providers: [core, session] });
+  const svc = await createConfigurationService({ providers: [core, session], weaverConfig: testConfig });
   assert.equal(svc.get("ghost.app.lang"), "no");
 });
 
@@ -59,6 +71,7 @@ test("getWithDefault returns default when key missing", async () => {
     providers: [
       new StaticJsonStorageProvider({ id: "core", layer: "core", data: {} }),
     ],
+    weaverConfig: testConfig,
   });
   assert.equal(svc.getWithDefault("ghost.app.missing", 42), 42);
 });
@@ -72,6 +85,7 @@ test("getWithDefault returns value when key exists", async () => {
         data: { "ghost.app.zoom": 5 },
       }),
     ],
+    weaverConfig: testConfig,
   });
   assert.equal(svc.getWithDefault("ghost.app.zoom", 42), 5);
 });
@@ -87,7 +101,7 @@ test("getAtLayer returns raw layer value", async () => {
     layer: "session",
     initialEntries: { "ghost.app.theme": "dark" },
   });
-  const svc = await createConfigurationService({ providers: [core, session] });
+  const svc = await createConfigurationService({ providers: [core, session], weaverConfig: testConfig });
   assert.equal(svc.getAtLayer("core", "ghost.app.theme"), "light");
   assert.equal(svc.getAtLayer("session", "ghost.app.theme"), "dark");
 });
@@ -97,7 +111,7 @@ test("set writes to writable provider, get returns new value", async () => {
     id: "session",
     layer: "session",
   });
-  const svc = await createConfigurationService({ providers: [session] });
+  const svc = await createConfigurationService({ providers: [session], weaverConfig: testConfig });
   svc.set("ghost.app.zoom", 10);
   assert.equal(svc.get("ghost.app.zoom"), 10);
 });
@@ -108,7 +122,7 @@ test("set to read-only layer throws", async () => {
     layer: "core",
     data: {},
   });
-  const svc = await createConfigurationService({ providers: [core] });
+  const svc = await createConfigurationService({ providers: [core], weaverConfig: testConfig });
   assert.throws(
     () => svc.set("ghost.app.zoom", 10, "core"),
     /No writable provider for layer "core"/,
@@ -125,7 +139,7 @@ test("set without layer uses highest writable provider", async () => {
     id: "session",
     layer: "session",
   });
-  const svc = await createConfigurationService({ providers: [core, session] });
+  const svc = await createConfigurationService({ providers: [core, session], weaverConfig: testConfig });
   svc.set("ghost.app.color", "red");
   assert.equal(svc.get("ghost.app.color"), "red");
   assert.equal(svc.getAtLayer("session", "ghost.app.color"), "red");
@@ -142,13 +156,13 @@ test("inspect shows per-layer breakdown", async () => {
     layer: "session",
     initialEntries: { "ghost.app.theme": "dark" },
   });
-  const svc = await createConfigurationService({ providers: [core, session] });
+  const svc = await createConfigurationService({ providers: [core, session], weaverConfig: testConfig });
   const inspection = svc.inspect("ghost.app.theme");
   assert.equal(inspection.key, "ghost.app.theme");
   assert.equal(inspection.effectiveValue, "dark");
   assert.equal(inspection.effectiveLayer, "session");
-  assert.equal(inspection.coreValue, "light");
-  assert.equal(inspection.sessionValue, "dark");
+  assert.equal(inspection.layerValues.core, "light");
+  assert.equal(inspection.layerValues.session, "dark");
 });
 
 test("onChange fires when set changes a value", async () => {
@@ -156,7 +170,7 @@ test("onChange fires when set changes a value", async () => {
     id: "session",
     layer: "session",
   });
-  const svc = await createConfigurationService({ providers: [session] });
+  const svc = await createConfigurationService({ providers: [session], weaverConfig: testConfig });
 
   const changes = [];
   svc.onChange("ghost.app.zoom", (v) => changes.push(v));
@@ -174,7 +188,7 @@ test("getNamespace returns matching keys", async () => {
       "ghost.nav.width": 200,
     },
   });
-  const svc = await createConfigurationService({ providers: [core] });
+  const svc = await createConfigurationService({ providers: [core], weaverConfig: testConfig });
   const ns = svc.getNamespace("ghost.app");
   assert.deepEqual(ns, {
     "ghost.app.theme": "dark",
@@ -188,7 +202,7 @@ test("remove deletes from writable layer", async () => {
     layer: "session",
     initialEntries: { "ghost.app.zoom": 5 },
   });
-  const svc = await createConfigurationService({ providers: [session] });
+  const svc = await createConfigurationService({ providers: [session], weaverConfig: testConfig });
   assert.equal(svc.get("ghost.app.zoom"), 5);
   svc.remove("ghost.app.zoom", "session");
   assert.equal(svc.get("ghost.app.zoom"), undefined);
@@ -200,7 +214,7 @@ test("remove from read-only layer throws", async () => {
     layer: "core",
     data: { "ghost.app.zoom": 5 },
   });
-  const svc = await createConfigurationService({ providers: [core] });
+  const svc = await createConfigurationService({ providers: [core], weaverConfig: testConfig });
   assert.throws(
     () => svc.remove("ghost.app.zoom", "core"),
     /No writable provider for layer "core"/,
@@ -236,6 +250,7 @@ test("getForScope resolves with tenant -> scope-chain -> user precedence", async
 
   const svc = await createConfigurationService({
     providers: [user, port, core, region, tenant],
+    weaverConfig: testConfig,
   });
 
   assert.equal(
@@ -259,7 +274,7 @@ test("getForScope falls back when narrower dynamic scope layer is missing", asyn
     initialEntries: { "ghost.app.zoom": 5 },
   });
 
-  const svc = await createConfigurationService({ providers: [tenant, region] });
+  const svc = await createConfigurationService({ providers: [tenant, region], weaverConfig: testConfig });
 
   assert.equal(
     svc.getForScope("ghost.app.zoom", [
@@ -282,7 +297,7 @@ test("getForScope falls back to tenant when no matching scope layers exist", asy
     initialEntries: { "ghost.app.units": "nautical" },
   });
 
-  const svc = await createConfigurationService({ providers: [tenant, region] });
+  const svc = await createConfigurationService({ providers: [tenant, region], weaverConfig: testConfig });
 
   assert.equal(
     svc.getForScope("ghost.app.units", [{ scopeId: "region", value: "asia" }]),
@@ -309,6 +324,7 @@ test("get remains unchanged and can include out-of-scope dynamic providers", asy
 
   const svc = await createConfigurationService({
     providers: [tenant, regionEurope, regionAsia],
+    weaverConfig: testConfig,
   });
 
   assert.equal(svc.get("ghost.app.locale"), "ja");

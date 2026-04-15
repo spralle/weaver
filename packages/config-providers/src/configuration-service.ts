@@ -7,6 +7,7 @@ import type {
   ConfigurationInspection,
   ConfigurationLayerStack,
   ConfigurationSessionHandle,
+  WeaverConfig,
 } from "@weaver/config-types";
 import type { ScopeInstance } from "@weaver/config-types";
 import { resolveConfiguration, inspectKey } from "@weaver/config-engine";
@@ -14,24 +15,9 @@ import { createStateContainer } from "./state-container.js";
 import type { ConfigurationStateContainer } from "./state-container.js";
 import type { GodModeSessionController } from "./session-provider.js";
 
-const LAYER_RANK: Record<string, number> = {
-  core: 0,
-  app: 1,
-  module: 2,
-  integrator: 3,
-  tenant: 4,
-  user: 5,
-  device: 6,
-  session: 7,
-};
-
-function getLayerRank(layer: string): number {
-  const rank = LAYER_RANK[layer];
-  return rank !== undefined ? rank : 4.5;
-}
-
 export interface ConfigurationServiceOptions {
   providers: ConfigurationStorageProvider[];
+  weaverConfig: WeaverConfig;
   session?: GodModeSessionController | undefined;
 }
 
@@ -44,7 +30,26 @@ export interface ConfigurationServiceOptions {
 export async function createConfigurationService(
   options: ConfigurationServiceOptions,
 ): Promise<ConfigurationService> {
-  const container = createStateContainer();
+  const { weaverConfig } = options;
+
+  // Compute a rank for unknown (runtime scope) layers.
+  // They should sort after the last dynamic layer but before the next known layer.
+  const dynamicLayers = weaverConfig.getLayersByType("dynamic");
+  let unknownLayerRank: number;
+  if (dynamicLayers.length > 0) {
+    const maxDynRank = Math.max(...dynamicLayers.map((dl) => weaverConfig.getRank(dl.name)));
+    unknownLayerRank = maxDynRank + 0.5;
+  } else {
+    // No dynamic layers — unknown layers sort after all known layers
+    unknownLayerRank = weaverConfig.layerNames.length + 0.5;
+  }
+
+  const getRank = (layer: string): number => {
+    const r = weaverConfig.getRank(layer);
+    return r >= 0 ? r : unknownLayerRank;
+  };
+
+  const container = createStateContainer(getRank);
 
   // When a session controller is provided, auto-register its provider
   const allProviders = options.session !== undefined
@@ -53,7 +58,7 @@ export async function createConfigurationService(
 
   // Sort providers by layer rank for deterministic load order
   const sortedProviders = allProviders.sort(
-    (a, b) => getLayerRank(a.layer) - getLayerRank(b.layer),
+    (a, b) => getRank(a.layer) - getRank(b.layer),
   );
 
   // Load each provider and apply to state container
@@ -106,21 +111,40 @@ export async function createConfigurationService(
     const fixedTopLayers: Array<{ layer: string; entries: Record<string, unknown> }> = [];
     const scopeLayerEntries = new Map<string, Record<string, unknown>>();
 
+    // Determine the dynamic layer rank range from WeaverConfig
+    const dynamicLayers = weaverConfig.getLayersByType("dynamic");
+    let minDynamicRank = Infinity;
+    let maxDynamicRank = -Infinity;
+    for (const dl of dynamicLayers) {
+      const r = getRank(dl.name);
+      if (r < minDynamicRank) minDynamicRank = r;
+      if (r > maxDynamicRank) maxDynamicRank = r;
+    }
+    const hasDynamicLayers = dynamicLayers.length > 0;
+
     for (const provider of sortedProviders) {
       const entries = container.getLayerEntries(provider.layer);
-      const rank = getLayerRank(provider.layer);
 
-      if (rank <= getLayerRank("tenant")) {
+      // Runtime scope layers (not in WeaverConfig) are dynamic scope layers
+      if (!weaverConfig.rankMap.has(provider.layer)) {
+        scopeLayerEntries.set(provider.layer, entries);
+        continue;
+      }
+
+      const rank = getRank(provider.layer);
+
+      if (!hasDynamicLayers) {
+        // No dynamic layers configured — all known providers are fixed
         fixedBaseLayers.push({ layer: provider.layer, entries });
         continue;
       }
 
-      if (rank >= getLayerRank("user")) {
-        fixedTopLayers.push({ layer: provider.layer, entries });
+      if (rank <= maxDynamicRank) {
+        fixedBaseLayers.push({ layer: provider.layer, entries });
         continue;
       }
 
-      scopeLayerEntries.set(provider.layer, entries);
+      fixedTopLayers.push({ layer: provider.layer, entries });
     }
 
     const orderedScopeLayers = scopePath

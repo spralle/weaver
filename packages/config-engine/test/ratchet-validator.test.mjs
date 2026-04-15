@@ -5,6 +5,8 @@ import {
   validateOneWayRatchet,
 } from "../dist/index.js";
 
+const testLayerOrder = ["core","app","module","integrator","tenant","user","device","session"];
+
 test("reports violation when higher-priority layer loosens policy", () => {
   const result = validateOneWayRatchet(
     [
@@ -12,6 +14,7 @@ test("reports violation when higher-priority layer loosens policy", () => {
       { layer: "tenant", values: { changePolicy: "staging-gate" } },
     ],
     DEFAULT_PLUGIN_MANAGEMENT_RATCHET_RULES,
+    { layerOrder: testLayerOrder },
   );
 
   assert.equal(result.violations.length, 1);
@@ -45,6 +48,7 @@ test("allows equal and tightening transitions", () => {
       },
     ],
     DEFAULT_PLUGIN_MANAGEMENT_RATCHET_RULES,
+    { layerOrder: testLayerOrder },
   );
 
   assert.equal(result.violations.length, 0);
@@ -66,6 +70,7 @@ test("handles ordering gaps by comparing nearest defined values", () => {
       { layer: "session", values: { changePolicy: "full-pipeline" } },
     ],
     DEFAULT_PLUGIN_MANAGEMENT_RATCHET_RULES,
+    { layerOrder: testLayerOrder },
   );
 
   assert.equal(result.violations.length, 0);
@@ -87,6 +92,7 @@ test("blocked semantics are sticky by default", () => {
       { layer: "user", values: { changePolicy: "full-pipeline" } },
     ],
     DEFAULT_PLUGIN_MANAGEMENT_RATCHET_RULES,
+    { layerOrder: testLayerOrder },
   );
 
   const changePolicyEvaluations = result.evaluations.filter(
@@ -106,7 +112,7 @@ test("blocked semantics can be non-sticky when configured", () => {
       { layer: "user", values: { changePolicy: "full-pipeline" } },
     ],
     DEFAULT_PLUGIN_MANAGEMENT_RATCHET_RULES,
-    { stickyBlocked: false },
+    { layerOrder: testLayerOrder, stickyBlocked: false },
   );
 
   const changePolicyEvaluations = result.evaluations.filter(
@@ -128,6 +134,7 @@ test("maxOverrideLayer default rule enforces tighter ceiling", () => {
       { layer: "user", values: { maxOverrideLayer: "tenant" } },
     ],
     DEFAULT_PLUGIN_MANAGEMENT_RATCHET_RULES,
+    { layerOrder: testLayerOrder },
   );
 
   const maxOverrideEvaluations = result.evaluations.filter(

@@ -32,9 +32,10 @@ export function evaluateChangePolicy(
   schema: ConfigurationPropertySchema,
   context: PolicyEvaluationContext,
   layer: string,
+  getRank?: ((layer: string) => number) | undefined,
 ): PolicyDecision {
   // Step 1: Check base write permission
-  if (!canWrite(context, layer, "", schema)) {
+  if (!canWrite(context, layer, "", schema, getRank)) {
     return {
       outcome: "denied",
       reason: `Write denied: insufficient permissions for layer '${layer}'`,

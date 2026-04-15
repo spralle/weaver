@@ -6,6 +6,9 @@ import {
   resolveConfigurationWithCeiling,
 } from "../dist/index.js";
 
+const testLayers = ["core","app","module","integrator","tenant","user","device","session"];
+const getRank = (l) => { const i = testLayers.indexOf(l); return i >= 0 ? i : testLayers.length; };
+
 test("resolves with single layer", () => {
   const stack = {
     layers: [
@@ -80,9 +83,9 @@ test("inspectKey returns per-layer values", () => {
     ],
   };
   const result = inspectKey(stack, "ghost.app.zoom");
-  assert.equal(result.coreValue, 1);
-  assert.equal(result.tenantValue, 3);
-  assert.equal(result.userValue, 5);
+  assert.equal(result.layerValues.core, 1);
+  assert.equal(result.layerValues.tenant, 3);
+  assert.equal(result.layerValues.user, 5);
 });
 
 test("inspectKey shows correct effectiveValue and effectiveLayer", () => {
@@ -109,9 +112,7 @@ test("inspectKey handles dynamic scope layers", () => {
   const result = inspectKey(stack, "ghost.app.zoom");
   assert.equal(result.effectiveValue, 3);
   assert.equal(result.effectiveLayer, "country:NO");
-  assert.ok(result.scopeValues);
-  assert.equal(result.scopeValues.length, 1);
-  assert.equal(result.scopeValues[0].scopeId, "country:NO");
+  assert.equal(result.layerValues["country:NO"], 3);
 });
 
 test("inspectKey returns undefined for missing key", () => {
@@ -136,7 +137,7 @@ test("resolveConfigurationWithCeiling respects maxOverrideLayer", () => {
   const schemaMap = new Map([
     ["ghost.app.zoom", { maxOverrideLayer: "tenant" }],
   ]);
-  const result = resolveConfigurationWithCeiling(stack, schemaMap, false);
+  const result = resolveConfigurationWithCeiling(stack, schemaMap, false, getRank);
   // user layer should be ignored because maxOverrideLayer is tenant
   assert.equal(result.entries["ghost.app.zoom"], 5);
 });
@@ -152,7 +153,7 @@ test("resolveConfigurationWithCeiling emergency override bypasses ceiling", () =
   const schemaMap = new Map([
     ["ghost.app.zoom", { maxOverrideLayer: "tenant" }],
   ]);
-  const result = resolveConfigurationWithCeiling(stack, schemaMap, true);
+  const result = resolveConfigurationWithCeiling(stack, schemaMap, true, getRank);
   // Emergency override: user layer should NOT be ignored
   assert.equal(result.entries["ghost.app.zoom"], 10);
 });
@@ -165,6 +166,6 @@ test("resolveConfigurationWithCeiling allows keys without schema", () => {
     ],
   };
   const schemaMap = new Map();
-  const result = resolveConfigurationWithCeiling(stack, schemaMap, false);
+  const result = resolveConfigurationWithCeiling(stack, schemaMap, false, getRank);
   assert.equal(result.entries["ghost.app.zoom"], 10);
 });

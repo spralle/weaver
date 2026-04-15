@@ -77,18 +77,5 @@ export const configurationInspectionSchema = z.object({
   key: z.string(),
   effectiveValue: z.unknown().optional(),
   effectiveLayer: z.string().optional(),
-  coreValue: z.unknown().optional(),
-  appValue: z.unknown().optional(),
-  moduleValue: z.unknown().optional(),
-  integratorValue: z.unknown().optional(),
-  tenantValue: z.unknown().optional(),
-  userValue: z.unknown().optional(),
-  deviceValue: z.unknown().optional(),
-  sessionValue: z.unknown().optional(),
-  scopeValues: z.array(
-    z.object({
-      scopeId: z.string(),
-      value: z.unknown(),
-    }).strict(),
-  ).readonly().optional(),
+  layerValues: z.record(z.string(), z.unknown()).optional(),
 }).strict();

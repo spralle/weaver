@@ -1,12 +1,4 @@
-export type ConfigurationLayer =
-  | "core"
-  | "app"
-  | "module"
-  | "integrator"
-  | "tenant"
-  | "user"
-  | "device"
-  | "session";
+export type ConfigurationLayer = string;
 
 export interface ScopeDefinition {
   id: string;

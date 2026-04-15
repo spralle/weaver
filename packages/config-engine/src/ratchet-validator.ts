@@ -32,7 +32,7 @@ export interface RatchetValidatorOptions {
   /**
    * Layer order from lowest priority to highest priority.
    */
-  readonly layerOrder?: readonly string[];
+  readonly layerOrder: readonly string[];
   /**
    * If true (default), once a field is blocked all later transitions for that
    * field are also reported as blocked.
@@ -55,17 +55,6 @@ export interface RatchetValidationResult {
   readonly violations: ReadonlyArray<RatchetEvaluation>;
   readonly blocked: ReadonlyArray<RatchetEvaluation>;
 }
-
-const DEFAULT_LAYER_ORDER: readonly string[] = [
-  "core",
-  "app",
-  "module",
-  "integrator",
-  "tenant",
-  "user",
-  "device",
-  "session",
-];
 
 export const DEFAULT_PLUGIN_MANAGEMENT_RATCHET_RULES: readonly RatchetRule[] = [
   {
@@ -156,9 +145,9 @@ function compareByRule(
 export function validateOneWayRatchet(
   layers: ReadonlyArray<RatchetLayerSnapshot>,
   rules: ReadonlyArray<RatchetRule>,
-  options: RatchetValidatorOptions = {},
+  options: RatchetValidatorOptions,
 ): RatchetValidationResult {
-  const layerOrder = options.layerOrder ?? DEFAULT_LAYER_ORDER;
+  const layerOrder = options.layerOrder;
   const stickyBlocked = options.stickyBlocked ?? true;
 
   const sortedLayers = [...layers].sort(

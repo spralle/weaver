@@ -21,15 +21,7 @@ export interface ConfigurationInspection<T> {
   key: string;
   effectiveValue: T | undefined;
   effectiveLayer: ConfigurationLayer | string | undefined;
-  coreValue?: T | undefined;
-  appValue?: T | undefined;
-  moduleValue?: T | undefined;
-  integratorValue?: T | undefined;
-  tenantValue?: T | undefined;
-  userValue?: T | undefined;
-  deviceValue?: T | undefined;
-  sessionValue?: T | undefined;
-  scopeValues?: ReadonlyArray<{ scopeId: string; value: T }> | undefined;
+  layerValues: Partial<Record<string, T>>;
 }
 
 export interface ConfigurationService {

@@ -4,6 +4,18 @@ import { createConfigurationService } from "../dist/configuration-service.js";
 import { createViewConfigurationService } from "../dist/view-service.js";
 import { InMemoryStorageProvider } from "../dist/in-memory-provider.js";
 import { StaticJsonStorageProvider } from "../dist/static-json-provider.js";
+import { defineWeaver, Layers } from "@weaver/config-types";
+
+const testConfig = defineWeaver([
+  Layers.Static("core"),
+  Layers.Static("app"),
+  Layers.Static("module"),
+  Layers.Static("integrator"),
+  Layers.Dynamic("tenant"),
+  Layers.Personal("user"),
+  Layers.Personal("device"),
+  Layers.Ephemeral("session"),
+]);
 
 async function makeService(coreData, sessionData = {}) {
   const core = new StaticJsonStorageProvider({
@@ -16,7 +28,7 @@ async function makeService(coreData, sessionData = {}) {
     layer: "session",
     initialEntries: sessionData,
   });
-  return createConfigurationService({ providers: [core, session] });
+  return createConfigurationService({ providers: [core, session], weaverConfig: testConfig });
 }
 
 test("get reads base view config key", async () => {
