@@ -184,6 +184,7 @@ export const sessionActivationRequestSchema = z.object({
     token: z.string(),
     method: z.string(),
   }).strict().optional(),
+  activatedBy: z.string().optional(),
 }).strict();
 
 export const sessionDeactivationResultSchema = z.object({

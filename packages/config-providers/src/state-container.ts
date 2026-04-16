@@ -57,11 +57,19 @@ export function createStateContainer(
 
     const changes: Array<{ key: string; newValue: unknown }> = [];
     for (const key of allKeys) {
-      const oldVal = JSON.stringify(oldEntries[key]);
-      const newVal = JSON.stringify(resolvedEntries[key]);
-      if (oldVal !== newVal) {
-        changes.push({ key, newValue: resolvedEntries[key] });
+      const oldVal = oldEntries[key];
+      const newVal = resolvedEntries[key];
+      // Fast path: reference equality (covers primitives and unchanged objects)
+      if (oldVal === newVal) continue;
+      // Slow path: deep comparison via JSON.stringify for object values
+      if (
+        typeof oldVal === "object" &&
+        typeof newVal === "object" &&
+        JSON.stringify(oldVal) === JSON.stringify(newVal)
+      ) {
+        continue;
       }
+      changes.push({ key, newValue: newVal });
     }
 
     if (changes.length === 0) return;

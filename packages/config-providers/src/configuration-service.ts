@@ -19,6 +19,7 @@ export interface ConfigurationServiceOptions {
   providers: ConfigurationStorageProvider[];
   weaverConfig: WeaverConfig;
   session?: OverrideSessionController | undefined;
+  onWriteError?: ((error: unknown, context: { key: string; layer: string; operation: 'write' | 'remove' }) => void) | undefined;
 }
 
 /**
@@ -106,51 +107,50 @@ export async function createConfigurationService(
     };
   }
 
-  function buildScopedLayerStack(scopePath: ScopeInstance[]): ConfigurationLayerStack {
-    const fixedBaseLayers: Array<{ layer: string; entries: Record<string, unknown> }> = [];
-    const fixedTopLayers: Array<{ layer: string; entries: Record<string, unknown> }> = [];
-    const scopeLayerEntries = new Map<string, Record<string, unknown>>();
+  interface ClassifiedLayers {
+    fixedBase: Array<{ layer: string; entries: Record<string, unknown> }>;
+    scopeEntries: Map<string, Record<string, unknown>>;
+    fixedTop: Array<{ layer: string; entries: Record<string, unknown> }>;
+  }
 
-    // Determine the dynamic layer rank range from WeaverConfig
-    const dynamicLayers = weaverConfig.getLayersByType("dynamic");
-    let minDynamicRank = Infinity;
-    let maxDynamicRank = -Infinity;
-    for (const dl of dynamicLayers) {
-      const r = getRank(dl.name);
-      if (r < minDynamicRank) minDynamicRank = r;
-      if (r > maxDynamicRank) maxDynamicRank = r;
-    }
-    const hasDynamicLayers = dynamicLayers.length > 0;
+  function classifyProviderLayers(): ClassifiedLayers {
+    const fixedBase: ClassifiedLayers["fixedBase"] = [];
+    const fixedTop: ClassifiedLayers["fixedBase"] = [];
+    const scopeEntries = new Map<string, Record<string, unknown>>();
+
+    const dynLayers = weaverConfig.getLayersByType("dynamic");
+    const maxDynRank = dynLayers.length > 0
+      ? Math.max(...dynLayers.map((dl) => getRank(dl.name)))
+      : -Infinity;
+    const hasDynLayers = dynLayers.length > 0;
 
     for (const provider of sortedProviders) {
       const entries = container.getLayerEntries(provider.layer);
 
-      // Runtime scope layers (not in WeaverConfig) are dynamic scope layers
       if (!weaverConfig.rankMap.has(provider.layer)) {
-        scopeLayerEntries.set(provider.layer, entries);
+        scopeEntries.set(provider.layer, entries);
         continue;
       }
 
       const rank = getRank(provider.layer);
 
-      if (!hasDynamicLayers) {
-        // No dynamic layers configured — all known providers are fixed
-        fixedBaseLayers.push({ layer: provider.layer, entries });
-        continue;
+      if (!hasDynLayers || rank <= maxDynRank) {
+        fixedBase.push({ layer: provider.layer, entries });
+      } else {
+        fixedTop.push({ layer: provider.layer, entries });
       }
-
-      if (rank <= maxDynamicRank) {
-        fixedBaseLayers.push({ layer: provider.layer, entries });
-        continue;
-      }
-
-      fixedTopLayers.push({ layer: provider.layer, entries });
     }
+
+    return { fixedBase, scopeEntries, fixedTop };
+  }
+
+  function buildScopedLayerStack(scopePath: ScopeInstance[]): ConfigurationLayerStack {
+    const { fixedBase, scopeEntries, fixedTop } = classifyProviderLayers();
 
     const orderedScopeLayers = scopePath
       .map((scope) => `${scope.scopeId}:${scope.value}`)
       .map((layerId) => {
-        const entries = scopeLayerEntries.get(layerId);
+        const entries = scopeEntries.get(layerId);
         return entries !== undefined ? { layer: layerId, entries } : undefined;
       })
       .filter((layer): layer is { layer: string; entries: Record<string, unknown> } => {
@@ -158,7 +158,7 @@ export async function createConfigurationService(
       });
 
     return {
-      layers: [...fixedBaseLayers, ...orderedScopeLayers, ...fixedTopLayers],
+      layers: [...fixedBase, ...orderedScopeLayers, ...fixedTop],
     };
   }
 
@@ -216,7 +216,9 @@ export async function createConfigurationService(
       }
 
       // Fire-and-forget the async write; update container synchronously
-      void provider.write(key, value);
+      provider.write(key, value).catch((error: unknown) => {
+        options.onWriteError?.(error, { key, layer: provider.layer, operation: 'write' });
+      });
 
       const updated = {
         ...container.getLayerEntries(provider.layer),
@@ -232,7 +234,9 @@ export async function createConfigurationService(
         throw new Error(`No writable provider for layer "${layer}"`);
       }
 
-      void provider.remove(key);
+      provider.remove(key).catch((error: unknown) => {
+        options.onWriteError?.(error, { key, layer: provider.layer, operation: 'remove' });
+      });
 
       const updated = container.getLayerEntries(provider.layer);
       delete updated[key];

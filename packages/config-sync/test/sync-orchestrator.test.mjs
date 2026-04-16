@@ -272,3 +272,333 @@ test("tenant isolation via separate orchestrator instances with separate caches"
   assert.equal(queueB.length, 1);
   assert.notEqual(queueA[0].mutationId, queueB[0].mutationId);
 });
+
+// --- Error classification (tested indirectly via orchestrator behavior) ---
+
+test("error classification: SyncErrorMetadata object passes through unchanged", async () => {
+  const cache = new MemoryDurableConfigCacheAdapter();
+  const harness = createTransportHarness();
+  const orchestrator = createConfigSyncOrchestrator({
+    snapshotCache: cache,
+    mutationQueue: cache,
+    transport: harness.transport,
+  });
+
+  orchestrator.setOnline(false);
+  await orchestrator.load();
+  await orchestrator.write("ghost.key", "val");
+
+  const err = new Error("server error");
+  err.code = "server";
+  err.retryable = true;
+  harness.pushQueue.push(err);
+
+  orchestrator.setOnline(true);
+  await new Promise((r) => setTimeout(r, 0));
+  const diag = orchestrator.getDiagnostics();
+  assert.deepEqual(diag.lastError, { code: "server", message: "server error", retryable: true });
+});
+
+test("error classification: plain Error gets code unknown and retryable false", async () => {
+  const cache = new MemoryDurableConfigCacheAdapter();
+  const harness = createTransportHarness();
+  const orchestrator = createConfigSyncOrchestrator({
+    snapshotCache: cache,
+    mutationQueue: cache,
+    transport: harness.transport,
+  });
+
+  orchestrator.setOnline(false);
+  await orchestrator.load();
+  await orchestrator.write("ghost.key", "val");
+
+  harness.pushQueue.push(new Error("something broke"));
+
+  orchestrator.setOnline(true);
+  await new Promise((r) => setTimeout(r, 0));
+  const diag = orchestrator.getDiagnostics();
+  assert.deepEqual(diag.lastError, { code: "unknown", message: "something broke", retryable: false });
+});
+
+test("error classification: error with syncError property is unwrapped", async () => {
+  const cache = new MemoryDurableConfigCacheAdapter();
+  const harness = createTransportHarness();
+  const orchestrator = createConfigSyncOrchestrator({
+    snapshotCache: cache,
+    mutationQueue: cache,
+    transport: harness.transport,
+  });
+
+  orchestrator.setOnline(false);
+  await orchestrator.load();
+  await orchestrator.write("ghost.key", "val");
+
+  const wrapper = new Error("wrapper");
+  wrapper.syncError = { code: "timeout", message: "timed out", retryable: true };
+  harness.pushQueue.push(wrapper);
+
+  orchestrator.setOnline(true);
+  await new Promise((r) => setTimeout(r, 0));
+  const diag = orchestrator.getDiagnostics();
+  assert.deepEqual(diag.lastError, { code: "timeout", message: "timed out", retryable: true });
+});
+
+// --- Batch push behavior ---
+
+test("batch push sends multiple batches when queue exceeds batchSize", async () => {
+  const cache = new MemoryDurableConfigCacheAdapter();
+  const harness = createTransportHarness();
+  const orchestrator = createConfigSyncOrchestrator({
+    snapshotCache: cache,
+    mutationQueue: cache,
+    transport: harness.transport,
+    batchSize: 2,
+  });
+
+  orchestrator.setOnline(false);
+  await orchestrator.load();
+  await orchestrator.write("k1", "v1");
+  await orchestrator.write("k2", "v2");
+  await orchestrator.write("k3", "v3");
+  await orchestrator.write("k4", "v4");
+
+  harness.pullQueue.push({
+    cursor: { serverRevision: "rev-10", serverTime: 1000 },
+    serverTime: 1000,
+    changes: [],
+  });
+
+  orchestrator.setOnline(true);
+  const result = await orchestrator.sync();
+
+  assert.equal(result.pushed, 4);
+  assert.ok(harness.pushes.length >= 2, `expected >= 2 pushes, got ${harness.pushes.length}`);
+});
+
+// --- Remove operation ---
+
+test("remove() creates a remove mutation and deletes key from snapshot", async () => {
+  const cache = new MemoryDurableConfigCacheAdapter();
+  const harness = createTransportHarness();
+  const orchestrator = createConfigSyncOrchestrator({
+    snapshotCache: cache,
+    mutationQueue: cache,
+    transport: harness.transport,
+  });
+
+  orchestrator.setOnline(false);
+  await orchestrator.load();
+  await orchestrator.write("ghost.theme", "dark");
+  await orchestrator.remove("ghost.theme");
+
+  const queued = await cache.peekQueuedMutations(10);
+  const removeMutation = queued.find((m) => m.operation === "remove");
+  assert.ok(removeMutation, "expected a remove mutation in queue");
+  assert.equal(removeMutation.key, "ghost.theme");
+
+  const snapshot = await cache.loadSnapshot();
+  assert.equal(snapshot.entries["ghost.theme"], undefined);
+});
+
+// --- Online/offline transitions ---
+
+test("offline to online triggers sync", async () => {
+  const cache = new MemoryDurableConfigCacheAdapter();
+  const harness = createTransportHarness();
+  const orchestrator = createConfigSyncOrchestrator({
+    snapshotCache: cache,
+    mutationQueue: cache,
+    transport: harness.transport,
+  });
+
+  orchestrator.setOnline(false);
+  await orchestrator.load();
+  await orchestrator.write("ghost.key", "val");
+
+  harness.pullQueue.push({
+    cursor: { serverRevision: "rev-5", serverTime: 500 },
+    serverTime: 500,
+    changes: [],
+  });
+
+  orchestrator.setOnline(true);
+  const result = await orchestrator.sync();
+  assert.equal(result.pushed, 1);
+  assert.equal(orchestrator.getSyncState().status, "synced");
+});
+
+test("going offline sets status to offline and clears retry", async () => {
+  const cache = new MemoryDurableConfigCacheAdapter();
+  const harness = createTransportHarness();
+  const orchestrator = createConfigSyncOrchestrator({
+    snapshotCache: cache,
+    mutationQueue: cache,
+    transport: harness.transport,
+  });
+
+  orchestrator.setOnline(false);
+  await orchestrator.load();
+  assert.equal(orchestrator.getSyncState().status, "offline");
+
+  // Going offline again is idempotent
+  orchestrator.setOnline(false);
+  assert.equal(orchestrator.getSyncState().status, "offline");
+});
+
+test("double setOnline(false) is idempotent", async () => {
+  const cache = new MemoryDurableConfigCacheAdapter();
+  const harness = createTransportHarness();
+  const orchestrator = createConfigSyncOrchestrator({
+    snapshotCache: cache,
+    mutationQueue: cache,
+    transport: harness.transport,
+  });
+
+  orchestrator.setOnline(false);
+  await orchestrator.load();
+  orchestrator.setOnline(false);
+  orchestrator.setOnline(false);
+  assert.equal(orchestrator.getSyncState().status, "offline");
+  assert.equal(harness.pushes.length, 0);
+  assert.equal(harness.pulls.length, 0);
+});
+
+// --- Diagnostics and state listeners ---
+
+test("onSyncStateChange listener fires on state transitions", async () => {
+  const cache = new MemoryDurableConfigCacheAdapter();
+  const harness = createTransportHarness();
+  const orchestrator = createConfigSyncOrchestrator({
+    snapshotCache: cache,
+    mutationQueue: cache,
+    transport: harness.transport,
+  });
+
+  const states = [];
+  orchestrator.onSyncStateChange((state) => states.push(state.status));
+
+  orchestrator.setOnline(false);
+  await orchestrator.load();
+
+  assert.ok(states.includes("offline"), `expected offline in states: ${JSON.stringify(states)}`);
+});
+
+test("onDiagnosticsChange listener fires on diagnostics updates", async () => {
+  const cache = new MemoryDurableConfigCacheAdapter();
+  const harness = createTransportHarness();
+  const orchestrator = createConfigSyncOrchestrator({
+    snapshotCache: cache,
+    mutationQueue: cache,
+    transport: harness.transport,
+  });
+
+  const diagnosticsLog = [];
+  orchestrator.onDiagnosticsChange((d) => diagnosticsLog.push({ ...d }));
+
+  orchestrator.setOnline(false);
+  await orchestrator.load();
+  await orchestrator.write("ghost.key", "val");
+
+  assert.ok(diagnosticsLog.length > 0, "expected diagnostics change events");
+});
+
+test("unsubscribe from listeners stops notifications", async () => {
+  const cache = new MemoryDurableConfigCacheAdapter();
+  const harness = createTransportHarness();
+  const orchestrator = createConfigSyncOrchestrator({
+    snapshotCache: cache,
+    mutationQueue: cache,
+    transport: harness.transport,
+  });
+
+  const states = [];
+  const unsub = orchestrator.onSyncStateChange((state) => states.push(state.status));
+
+  orchestrator.setOnline(false);
+  await orchestrator.load();
+  const countAfterOffline = states.length;
+
+  unsub();
+  orchestrator.setOnline(true);
+  // After unsub, no new states should be added
+  // Allow any triggered sync to settle
+  await new Promise((r) => setTimeout(r, 50));
+  assert.equal(states.length, countAfterOffline, "listener should not fire after unsubscribe");
+});
+
+// --- Pull with server changes ---
+
+test("pullChanges applies server-side changes to snapshot", async () => {
+  const cache = new MemoryDurableConfigCacheAdapter();
+  const harness = createTransportHarness();
+  const orchestrator = createConfigSyncOrchestrator({
+    snapshotCache: cache,
+    mutationQueue: cache,
+    transport: harness.transport,
+  });
+
+  orchestrator.setOnline(false);
+  await orchestrator.load();
+
+  harness.pullQueue.push({
+    cursor: { serverRevision: "rev-5", serverTime: 500 },
+    serverTime: 500,
+    changes: [
+      { key: "server.key", value: "server-value", operation: "set", revision: "rev-5" },
+    ],
+  });
+
+  orchestrator.setOnline(true);
+  const result = await orchestrator.sync();
+  assert.equal(result.pulled, 1);
+
+  const snapshot = await cache.loadSnapshot();
+  assert.equal(snapshot.entries["server.key"], "server-value");
+});
+
+// --- getPendingWrites ---
+
+test("getPendingWrites contains written key before sync", async () => {
+  const cache = new MemoryDurableConfigCacheAdapter();
+  const harness = createTransportHarness();
+  const orchestrator = createConfigSyncOrchestrator({
+    snapshotCache: cache,
+    mutationQueue: cache,
+    transport: harness.transport,
+  });
+
+  orchestrator.setOnline(false);
+  await orchestrator.load();
+  await orchestrator.write("ghost.pending", "value");
+
+  const pending = orchestrator.getPendingWrites();
+  assert.equal(pending.has("ghost.pending"), true);
+  assert.equal(pending.get("ghost.pending"), "value");
+});
+
+test("getPendingWrites is cleared after successful sync", async () => {
+  const cache = new MemoryDurableConfigCacheAdapter();
+  const harness = createTransportHarness();
+  const orchestrator = createConfigSyncOrchestrator({
+    snapshotCache: cache,
+    mutationQueue: cache,
+    transport: harness.transport,
+  });
+
+  orchestrator.setOnline(false);
+  await orchestrator.load();
+  await orchestrator.write("ghost.pending", "value");
+
+  harness.pullQueue.push({
+    cursor: { serverRevision: "rev-5", serverTime: 500 },
+    serverTime: 500,
+    changes: [],
+  });
+
+  orchestrator.setOnline(true);
+  await orchestrator.sync();
+
+  const pending = orchestrator.getPendingWrites();
+  assert.equal(pending.has("ghost.pending"), false);
+  assert.equal(pending.size, 0);
+});

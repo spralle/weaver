@@ -1,6 +1,7 @@
 {
   "name": "weaver",
   "private": true,
+  "type": "module",
   "packageManager": "bun@1.2.21",
   "workspaces": [
     "packages/*"
@@ -17,7 +18,10 @@
   "devDependencies": {
     "@changesets/changelog-github": "0.6.0",
     "@changesets/cli": "2.30.0",
+    "@eslint/js": "10.0.1",
+    "eslint": "10.2.0",
     "turbo": "2.9.6",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "typescript-eslint": "8.58.2"
   }
 }
