@@ -7,6 +7,7 @@ import {
   pullChanges,
 } from "./internal/orchestrator-ops.js";
 import { calculateRetryDelay, scheduleRetryState } from "./internal/retry-policy.js";
+import { createSyncStateManager } from "./internal/sync-state.js";
 import type {
   ConfigSyncOrchestrator,
   ConfigSyncOrchestratorOptions,
@@ -39,12 +40,7 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
   private readonly pendingWrites = new Map<string, unknown>();
   private readonly revisions = new Map<string, string>();
   private readonly localContext = new Map<string, LocalMutationContext>();
-  private readonly syncStateListeners = new Set<(state: SyncStatus) => void>();
-  private readonly diagnosticsListeners = new Set<(diagnostics: SyncDiagnostics) => void>();
-
-  private syncState: SyncStatus = { status: "syncing" };
-  private diagnostics: SyncDiagnostics = { pendingCount: 0 };
-  private queueMeta: { pendingCount: number; inFlightCount: number } = { pendingCount: 0, inFlightCount: 0 };
+  private readonly stateManager: ReturnType<typeof createSyncStateManager>;
 
   private snapshot: ConfigurationLayerData = { entries: {} };
   private online = true;
@@ -66,6 +62,7 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
     this.conflictResolution = options.conflictResolution ?? "server-authoritative";
     this.now = options.now ?? (() => Date.now());
     this.instanceId = Math.random().toString(36).slice(2, 8);
+    this.stateManager = createSyncStateManager(options);
   }
 
   async load(): Promise<ConfigurationLayerData> {
@@ -166,21 +163,19 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
   }
 
   getSyncState(): SyncStatus {
-    return this.syncState;
+    return this.stateManager.getSyncState();
   }
 
   onSyncStateChange(listener: (state: SyncStatus) => void): () => void {
-    this.syncStateListeners.add(listener);
-    return () => this.syncStateListeners.delete(listener);
+    return this.stateManager.onSyncStateChange(listener);
   }
 
   getDiagnostics(): SyncDiagnostics {
-    return { ...this.diagnostics };
+    return this.stateManager.getDiagnostics();
   }
 
   onDiagnosticsChange(listener: (diagnostics: SyncDiagnostics) => void): () => void {
-    this.diagnosticsListeners.add(listener);
-    return () => this.diagnosticsListeners.delete(listener);
+    return this.stateManager.onDiagnosticsChange(listener);
   }
 
   getPendingWrites(): ReadonlyMap<string, unknown> {
@@ -188,28 +183,19 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
   }
 
   private setSyncState(state: SyncStatus): void {
-    this.syncState = state;
-    this.options.onSyncStateChange?.(state);
-    for (const listener of this.syncStateListeners) {
-      listener(state);
-    }
+    this.stateManager.setSyncState(state);
   }
 
   private updateDiagnostics(partial: Partial<SyncDiagnostics>): void {
-    this.diagnostics = { ...this.diagnostics, ...partial };
-    const current = this.getDiagnostics();
-    this.options.onDiagnosticsChange?.(current);
-    for (const listener of this.diagnosticsListeners) {
-      listener(current);
-    }
+    this.stateManager.updateDiagnostics(partial);
   }
 
   private setQueue(queue: { pendingCount: number; inFlightCount: number }): void {
-    this.queueMeta = { pendingCount: queue.pendingCount, inFlightCount: queue.inFlightCount };
+    this.stateManager.setQueue(queue);
   }
 
   private getPendingWriteCount(): number {
-    return this.queueMeta.pendingCount + this.queueMeta.inFlightCount;
+    return this.stateManager.getPendingWriteCount();
   }
 
   private async runSyncCycle(): Promise<SyncResult> {
