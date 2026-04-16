@@ -1,0 +1,14 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": [
+    "docs/principles/universal.md",
+    "docs/principles/typescript.md",
+    "docs/principles/weaver.md"
+  ],
+  "command": {
+    "on_startup": {
+      "description": "Pull Beads database state",
+      "template": "Run `bd dolt pull`."
+    }
+  }
+}
