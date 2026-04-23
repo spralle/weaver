@@ -1,13 +1,24 @@
 import type { OverrideSessionController } from "@weaver/config-sessions";
+import type { ConfigurationService } from "@weaver/config-types";
 import { addLogEntry, setSessionActive } from "../state.js";
 
 export function renderSessionPanel(
   container: HTMLElement,
   session: OverrideSessionController,
+  service: ConfigurationService,
 ): void {
   container.innerHTML = `<h2>Override Session</h2><div class="session-body"></div>`;
   const body = container.querySelector(".session-body")!;
   let timerId: ReturnType<typeof setInterval> | null = null;
+
+  function clearSessionOverrides(): void {
+    const current = session.getSession();
+    if (current === null) return;
+    const keys = Object.keys(current.overrides);
+    for (const key of keys) {
+      service.remove(key, "session");
+    }
+  }
 
   function render(): void {
     clearTimer();
@@ -50,7 +61,7 @@ export function renderSessionPanel(
         <button id="btn-deactivate" class="btn-danger">Deactivate</button>
       </div>`;
 
-    startCountdown(expiresAt);
+    startCountdown(expiresAt, Object.keys(current.overrides));
 
     body.querySelector("#btn-extend")!.addEventListener("click", () => {
       session.extend(5 * 60 * 1000);
@@ -59,22 +70,31 @@ export function renderSessionPanel(
     });
 
     body.querySelector("#btn-deactivate")!.addEventListener("click", () => {
+      clearSessionOverrides();
       session.deactivate();
       setSessionActive(false);
-      addLogEntry("Session deactivated");
+      addLogEntry("Session deactivated — overrides cleared");
       render();
     });
   }
 
-  function startCountdown(expiresAt: number): void {
+  function startCountdown(expiresAt: number, capturedKeys: string[]): void {
     function update(): void {
       const remaining = Math.max(0, expiresAt - Date.now());
       const el = document.getElementById("countdown");
       if (!el) return;
       if (remaining <= 0) {
         el.textContent = "Expired";
+        const current = session.getSession();
+        const keysToRemove = current !== null
+          ? Object.keys(current.overrides)
+          : capturedKeys;
+        for (const key of keysToRemove) {
+          service.remove(key, "session");
+        }
         setSessionActive(false);
         clearTimer();
+        addLogEntry("Session expired — overrides cleared");
         setTimeout(() => render(), 500);
         return;
       }

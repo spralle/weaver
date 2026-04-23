@@ -24,7 +24,7 @@ async function main(): Promise<void> {
   renderConfigBrowser(document.getElementById("config-browser")!, service, weaverConfig);
   renderInspector(document.getElementById("inspector")!, service, weaverConfig);
   renderEditor(document.getElementById("editor")!, service, session, weaverConfig);
-  renderSessionPanel(document.getElementById("session-panel")!, session);
+  renderSessionPanel(document.getElementById("session-panel")!, session, service);
   renderActivityLog(document.getElementById("activity-log")!);
 
   addLogEntry("Weaver demo initialized");
