@@ -1,6 +1,7 @@
 {
   "name": "weaver",
   "private": true,
+  "license": "MIT",
   "packageManager": "bun@1.2.21",
   "workspaces": [
     "packages/*"
