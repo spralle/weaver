@@ -1,6 +1,18 @@
 {
   "name": "@weaver/config-auth",
   "version": "0.0.0",
+  "description": "Role-based access control extension for Weaver configuration via withAuth() composition",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/spralle/weaver.git",
+    "directory": "packages/config-auth"
+  },
+  "homepage": "https://github.com/spralle/weaver/tree/main/packages/config-auth#readme",
+  "bugs": {
+    "url": "https://github.com/spralle/weaver/issues"
+  },
+  "keywords": ["weaver", "configuration", "config", "layered", "auth", "rbac", "access-control"],
   "type": "module",
   "exports": {
     ".": {

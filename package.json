@@ -1,6 +1,15 @@
 {
   "name": "weaver",
   "private": true,
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/spralle/weaver.git"
+  },
+  "homepage": "https://github.com/spralle/weaver#readme",
+  "bugs": {
+    "url": "https://github.com/spralle/weaver/issues"
+  },
   "packageManager": "bun@1.2.21",
   "workspaces": [
     "packages/*"
