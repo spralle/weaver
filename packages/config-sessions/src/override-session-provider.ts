@@ -23,10 +23,12 @@ export interface OverrideSessionProviderOptions {
   id?: string | undefined;
   defaultDurationMs?: number | undefined;
   onAudit?: ((entry: AuditEntry) => void) | undefined;
-  timer?: {
-    setTimeout: (fn: () => void, ms: number) => unknown;
-    clearTimeout: (id: unknown) => void;
-  } | undefined;
+  timer?:
+    | {
+        setTimeout: (fn: () => void, ms: number) => unknown;
+        clearTimeout: (id: unknown) => void;
+      }
+    | undefined;
 }
 
 export interface OverrideSessionController {
@@ -66,7 +68,10 @@ export function createOverrideSessionProvider(
   // Ephemeral in-memory storage — entries map is the single source of truth
   const entries: Record<string, unknown> = {};
 
-  function emitAudit(action: string, details?: Record<string, unknown> | undefined): void {
+  function emitAudit(
+    action: string,
+    details?: Record<string, unknown> | undefined,
+  ): void {
     if (onAudit === undefined || session === null) return;
     onAudit({ action, sessionId: session.id, timestamp: nowIso(), details });
   }
@@ -92,7 +97,12 @@ export function createOverrideSessionProvider(
     const overridesCleared = clearAllEntries();
 
     if (onAudit !== undefined) {
-      onAudit({ action, sessionId, timestamp: nowIso(), details: { overridesCleared } });
+      onAudit({
+        action,
+        sessionId,
+        timestamp: nowIso(),
+        details: { overridesCleared },
+      });
     }
 
     session = null;

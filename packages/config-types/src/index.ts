@@ -1,86 +1,5 @@
 // @weaver/config-types — Configuration type definitions and Zod schemas
 
-// types.ts — Layer, context, and stack types
-export type {
-  ConfigurationLayer,
-  ScopeDefinition,
-  ScopeInstance,
-  TenantScopeHierarchy,
-  ConfigurationContext,
-  ConfigurationLayerEntry,
-  ConfigurationLayerStack,
-  ConfigurationLayerData,
-} from "./types.js";
-
-// property-schema.ts — Property schema and policy types
-export type {
-  ConfigChangePolicy,
-  ConfigurationVisibility,
-  ConfigurationRole,
-  ConfigReloadBehavior,
-  ConfigurationJsonSchemaType,
-  ConfigurationPropertySchema,
-} from "./property-schema.js";
-
-// service.ts — Service interfaces
-export type {
-  ConfigurationSessionHandle,
-  ConfigurationInspection,
-  ConfigurationService,
-  ScopedConfigurationService,
-  ViewConfigurationService,
-  ServiceConfigurationService,
-} from "./service.js";
-
-// providers.ts — Storage provider interfaces
-export type {
-  WriteResult,
-  ConfigurationChange,
-  ConfigurationStorageProvider,
-  SyncStatus,
-  ConfigurationConflict,
-  SyncResult,
-  SyncCursor,
-  SyncQueueMetadata,
-  SyncMutationOperation,
-  SyncMutationMetadata,
-  SyncQueuedMutation,
-  SyncRemoteChange,
-  SyncErrorCode,
-  SyncErrorMetadata,
-  SyncConflictMetadata,
-  ConfigSyncPullRequest,
-  ConfigSyncPullResponse,
-  ConfigSyncPushRequest,
-  ConfigSyncPushResult,
-  ConfigSyncPushResponse,
-  ConfigSyncAckRequest,
-  ConfigSyncAckResponse,
-  SyncSnapshotCache,
-  SyncMutationQueue,
-  DurableConfigCache,
-  ConfigSyncTransport,
-} from "./providers.js";
-
-// expressions.ts — Expression evaluator interface
-export type {
-  ExpressionValidationResult,
-  ExpressionEvaluatorProvider,
-} from "./expressions.js";
-
-// session.ts — Session layer types
-export type {
-  SessionType,
-  SessionMode,
-  PropertySessionMode,
-  SessionLayerMetadata,
-  SessionLayer,
-  OverrideSession,
-  GodModeSession,
-  SessionActivationRequest,
-  SessionDeactivationResult,
-} from "./session.js";
-
 // access.ts — Permission types and default policies
 export type {
   ConfigurationAccessContext,
@@ -88,98 +7,164 @@ export type {
   LayerWritePolicy,
   ServiceConfigurationDeclaration,
 } from "./access.js";
-
+// expressions.ts — Expression evaluator interface
+export type {
+  ExpressionEvaluatorProvider,
+  ExpressionValidationResult,
+} from "./expressions.js";
+// layer-factories.ts — Built-in layer factories
+export { Layers, replaceOnly } from "./layer-factories.js";
+// layers.ts — Layer abstraction interfaces
+export type {
+  DynamicLayerConfig,
+  EphemeralLayerConfig,
+  LayerData,
+  LayerDefinition,
+  LayerResolver,
+  LayerType,
+  PersonalLayerConfig,
+  ResolutionContext,
+  StaticLayerConfig,
+} from "./layers.js";
+// merge-types.ts — Merge function type
+export type { MergeFunction } from "./merge-types.js";
+// promotion-types.ts — Promotion pipeline, audit, and emergency override types
+export type {
+  ConfigAuditEntry,
+  EmergencyOverrideRecord,
+  PromotionRequest,
+  PromotionStatus,
+} from "./promotion-types.js";
+// property-schema.ts — Property schema and policy types
+export type {
+  ConfigChangePolicy,
+  ConfigReloadBehavior,
+  ConfigurationJsonSchemaType,
+  ConfigurationPropertySchema,
+  ConfigurationRole,
+  ConfigurationVisibility,
+} from "./property-schema.js";
+// providers.ts — Storage provider interfaces
+export type {
+  ConfigSyncAckRequest,
+  ConfigSyncAckResponse,
+  ConfigSyncPullRequest,
+  ConfigSyncPullResponse,
+  ConfigSyncPushRequest,
+  ConfigSyncPushResponse,
+  ConfigSyncPushResult,
+  ConfigSyncTransport,
+  ConfigurationChange,
+  ConfigurationConflict,
+  ConfigurationStorageProvider,
+  DurableConfigCache,
+  SyncConflictMetadata,
+  SyncCursor,
+  SyncErrorCode,
+  SyncErrorMetadata,
+  SyncMutationMetadata,
+  SyncMutationOperation,
+  SyncMutationQueue,
+  SyncQueuedMutation,
+  SyncQueueMetadata,
+  SyncRemoteChange,
+  SyncResult,
+  SyncSnapshotCache,
+  SyncStatus,
+  WriteResult,
+} from "./providers.js";
 // schemas-core.ts — Zod schemas for core types
 export {
-  configurationLayerSchema,
-  scopeDefinitionSchema,
-  scopeInstanceSchema,
-  tenantScopeHierarchySchema,
-  configurationContextSchema,
-  configurationLayerEntrySchema,
-  configurationLayerStackSchema,
-  configurationLayerDataSchema,
   configChangePolicySchema,
-  configurationVisibilitySchema,
-  configurationRoleSchema,
   configReloadBehaviorSchema,
-  configurationPropertySchemaSchema,
-  expressionValidationResultSchema,
-  sessionTypeSchema,
-  sessionModeSchema,
-  propertySessionModeSchema,
-  sessionLayerMetadataSchema,
-  overrideSessionSchema,
-  godModeSessionSchema,
-  sessionActivationRequestSchema,
-  sessionDeactivationResultSchema,
   configurationAccessContextSchema,
+  configurationContextSchema,
+  configurationLayerDataSchema,
+  configurationLayerEntrySchema,
+  configurationLayerSchema,
+  configurationLayerStackSchema,
+  configurationPropertySchemaSchema,
+  configurationRoleSchema,
+  configurationVisibilitySchema,
+  expressionValidationResultSchema,
+  godModeSessionSchema,
   layerWriteConstraintSchema,
   layerWritePolicySchema,
+  overrideSessionSchema,
+  propertySessionModeSchema,
+  scopeDefinitionSchema,
+  scopeInstanceSchema,
   serviceConfigurationDeclarationSchema,
+  sessionActivationRequestSchema,
+  sessionDeactivationResultSchema,
+  sessionLayerMetadataSchema,
+  sessionModeSchema,
+  sessionTypeSchema,
+  tenantScopeHierarchySchema,
 } from "./schemas-core.js";
-
+// schemas-promotion.ts — Zod schemas for promotion types
+export {
+  configAuditEntrySchema,
+  emergencyOverrideRecordSchema,
+  promotionRequestSchema,
+  promotionStatusSchema,
+} from "./schemas-promotion.js";
 // schemas-providers.ts — Zod schemas for provider types
 export {
-  writeResultSchema,
   configurationChangeSchema,
   configurationConflictSchema,
-  syncResultSchema,
+  configurationInspectionSchema,
   syncQueueMetadataSchema,
-  syncStatusSyncedSchema,
-  syncStatusSyncingSchema,
-  syncStatusOfflineSchema,
+  syncResultSchema,
   syncStatusConflictSchema,
   syncStatusErrorSchema,
+  syncStatusOfflineSchema,
   syncStatusSchema,
-  configurationInspectionSchema,
+  syncStatusSyncedSchema,
+  syncStatusSyncingSchema,
+  writeResultSchema,
 } from "./schemas-providers.js";
-
+// service.ts — Service interfaces
+export type {
+  ConfigurationInspection,
+  ConfigurationService,
+  ConfigurationSessionHandle,
+  ScopedConfigurationService,
+  ServiceConfigurationService,
+  ViewConfigurationService,
+} from "./service.js";
+// session.ts — Session layer types
+export type {
+  GodModeSession,
+  OverrideSession,
+  PropertySessionMode,
+  SessionActivationRequest,
+  SessionDeactivationResult,
+  SessionLayer,
+  SessionLayerMetadata,
+  SessionMode,
+  SessionType,
+} from "./session.js";
 // type-utils.ts — Compile-time mapped types for typesafe config access
 export type {
   ConfigKeyPath,
   ConfigValueAtPath,
   TypedConfigurationService,
 } from "./type-utils.js";
-
+// types.ts — Layer, context, and stack types
+export type {
+  ConfigurationContext,
+  ConfigurationLayer,
+  ConfigurationLayerData,
+  ConfigurationLayerEntry,
+  ConfigurationLayerStack,
+  ScopeDefinition,
+  ScopeInstance,
+  TenantScopeHierarchy,
+} from "./types.js";
 // view-config-declaration.ts — View config declaration type and factory
 export type { ViewConfigDeclaration } from "./view-config-declaration.js";
 export { defineViewConfig } from "./view-config-declaration.js";
-
-// promotion-types.ts — Promotion pipeline, audit, and emergency override types
-export type {
-  PromotionStatus,
-  PromotionRequest,
-  ConfigAuditEntry,
-  EmergencyOverrideRecord,
-} from "./promotion-types.js";
-
-// schemas-promotion.ts — Zod schemas for promotion types
-export {
-  promotionStatusSchema,
-  promotionRequestSchema,
-  configAuditEntrySchema,
-  emergencyOverrideRecordSchema,
-} from "./schemas-promotion.js";
-
-// merge-types.ts — Merge function type
-export type { MergeFunction } from "./merge-types.js";
-
-// layers.ts — Layer abstraction interfaces
-export type {
-  ResolutionContext,
-  LayerData,
-  LayerResolver,
-  LayerType,
-  LayerDefinition,
-  StaticLayerConfig,
-  DynamicLayerConfig,
-  PersonalLayerConfig,
-  EphemeralLayerConfig,
-} from "./layers.js";
-
-// layer-factories.ts — Built-in layer factories
-export { Layers, replaceOnly } from "./layer-factories.js";
 
 // weaver.ts — defineWeaver() builder
 export type { ExtractLayerNames, WeaverConfig } from "./weaver.js";

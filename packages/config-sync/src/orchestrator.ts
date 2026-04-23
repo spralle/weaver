@@ -1,12 +1,19 @@
-import type { ConfigurationLayerData, SyncResult, SyncStatus } from "@weaver/config-types";
+import type {
+  ConfigurationLayerData,
+  SyncResult,
+  SyncStatus,
+} from "@weaver/config-types";
 import {
-  classifySyncError,
+  type classifySyncError,
   cloneSnapshot,
   createMutation,
   flushQueue,
   pullChanges,
 } from "./internal/orchestrator-ops.js";
-import { calculateRetryDelay, scheduleRetryState } from "./internal/retry-policy.js";
+import {
+  calculateRetryDelay,
+  scheduleRetryState,
+} from "./internal/retry-policy.js";
 import type {
   ConfigSyncOrchestrator,
   ConfigSyncOrchestratorOptions,
@@ -22,7 +29,9 @@ const DEFAULT_BATCH_SIZE = 50;
 const DEFAULT_RETRY_BASE_MS = 500;
 const DEFAULT_RETRY_MAX_MS = 30_000;
 
-export function createConfigSyncOrchestrator(options: ConfigSyncOrchestratorOptions): ConfigSyncOrchestrator {
+export function createConfigSyncOrchestrator(
+  options: ConfigSyncOrchestratorOptions,
+): ConfigSyncOrchestrator {
   return new ConfigSyncOrchestratorImpl(options);
 }
 
@@ -40,11 +49,16 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
   private readonly revisions = new Map<string, string>();
   private readonly localContext = new Map<string, LocalMutationContext>();
   private readonly syncStateListeners = new Set<(state: SyncStatus) => void>();
-  private readonly diagnosticsListeners = new Set<(diagnostics: SyncDiagnostics) => void>();
+  private readonly diagnosticsListeners = new Set<
+    (diagnostics: SyncDiagnostics) => void
+  >();
 
   private syncState: SyncStatus = { status: "syncing" };
   private diagnostics: SyncDiagnostics = { pendingCount: 0 };
-  private queueMeta: { pendingCount: number; inFlightCount: number } = { pendingCount: 0, inFlightCount: 0 };
+  private queueMeta: { pendingCount: number; inFlightCount: number } = {
+    pendingCount: 0,
+    inFlightCount: 0,
+  };
 
   private snapshot: ConfigurationLayerData = { entries: {} };
   private online = true;
@@ -61,9 +75,11 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
     this.mutationQueue = options.mutationQueue;
     this.transport = options.transport;
     this.batchSize = options.batchSize ?? DEFAULT_BATCH_SIZE;
-    this.retryBaseMs = options.retryPolicy?.baseDelayMs ?? DEFAULT_RETRY_BASE_MS;
+    this.retryBaseMs =
+      options.retryPolicy?.baseDelayMs ?? DEFAULT_RETRY_BASE_MS;
     this.retryMaxMs = options.retryPolicy?.maxDelayMs ?? DEFAULT_RETRY_MAX_MS;
-    this.conflictResolution = options.conflictResolution ?? "server-authoritative";
+    this.conflictResolution =
+      options.conflictResolution ?? "server-authoritative";
     this.now = options.now ?? (() => Date.now());
     this.instanceId = Math.random().toString(36).slice(2, 8);
   }
@@ -73,7 +89,10 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
     this.loaded = true;
     const queue = await this.mutationQueue.getQueueMetadata();
     this.setQueue(queue);
-    this.updateDiagnostics({ pendingCount: queue.pendingCount, lastSyncedAt: this.snapshot.lastSyncedAt });
+    this.updateDiagnostics({
+      pendingCount: queue.pendingCount,
+      lastSyncedAt: this.snapshot.lastSyncedAt,
+    });
 
     if (!this.online) {
       this.setSyncState({
@@ -107,7 +126,11 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
     );
     this.snapshot.entries[key] = value;
     this.pendingWrites.set(key, value);
-    this.localContext.set(mutation.mutationId, { mutation, localValue: value, localRevision: mutation.baseRevision });
+    this.localContext.set(mutation.mutationId, {
+      mutation,
+      localValue: value,
+      localRevision: mutation.baseRevision,
+    });
     await this.snapshotCache.saveSnapshot(cloneSnapshot(this.snapshot));
     await this.mutationQueue.enqueueMutation(mutation);
     await this.refreshQueueDiagnostics();
@@ -128,7 +151,11 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
     );
     delete this.snapshot.entries[key];
     this.pendingWrites.set(key, undefined);
-    this.localContext.set(mutation.mutationId, { mutation, localValue: undefined, localRevision: mutation.baseRevision });
+    this.localContext.set(mutation.mutationId, {
+      mutation,
+      localValue: undefined,
+      localRevision: mutation.baseRevision,
+    });
     await this.snapshotCache.saveSnapshot(cloneSnapshot(this.snapshot));
     await this.mutationQueue.enqueueMutation(mutation);
     await this.refreshQueueDiagnostics();
@@ -178,7 +205,9 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
     return { ...this.diagnostics };
   }
 
-  onDiagnosticsChange(listener: (diagnostics: SyncDiagnostics) => void): () => void {
+  onDiagnosticsChange(
+    listener: (diagnostics: SyncDiagnostics) => void,
+  ): () => void {
     this.diagnosticsListeners.add(listener);
     return () => this.diagnosticsListeners.delete(listener);
   }
@@ -204,8 +233,14 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
     }
   }
 
-  private setQueue(queue: { pendingCount: number; inFlightCount: number }): void {
-    this.queueMeta = { pendingCount: queue.pendingCount, inFlightCount: queue.inFlightCount };
+  private setQueue(queue: {
+    pendingCount: number;
+    inFlightCount: number;
+  }): void {
+    this.queueMeta = {
+      pendingCount: queue.pendingCount,
+      inFlightCount: queue.inFlightCount,
+    };
   }
 
   private getPendingWriteCount(): number {
@@ -268,7 +303,11 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
         } else {
           this.clearRetryTimer();
         }
-        this.setSyncState({ status: "error", error: syncError.message, lastSyncedAt: this.snapshot.lastSyncedAt });
+        this.setSyncState({
+          status: "error",
+          error: syncError.message,
+          lastSyncedAt: this.snapshot.lastSyncedAt,
+        });
       },
     });
 
@@ -295,7 +334,11 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
     const queue = await this.mutationQueue.getQueueMetadata();
     const lastSyncedAt = this.snapshot.lastSyncedAt ?? this.now();
     this.setQueue(queue);
-    this.updateDiagnostics({ pendingCount: queue.pendingCount, lastSyncedAt, lastError: undefined });
+    this.updateDiagnostics({
+      pendingCount: queue.pendingCount,
+      lastSyncedAt,
+      lastError: undefined,
+    });
     this.retryAttempt = 0;
 
     if (push.conflicts.length > 0) {

@@ -37,7 +37,11 @@ export class LocalStorageProvider implements ConfigurationStorageProvider {
     }
     try {
       const parsed: unknown = JSON.parse(raw);
-      if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+      if (
+        typeof parsed !== "object" ||
+        parsed === null ||
+        Array.isArray(parsed)
+      ) {
         console.warn(
           `[LocalStorageProvider] Invalid data in "${this.storageKey}", expected object`,
         );
@@ -126,7 +130,11 @@ export class LocalStorageProvider implements ConfigurationStorageProvider {
     if (raw === null) return {};
     try {
       const parsed: unknown = JSON.parse(raw);
-      if (typeof parsed === "object" && parsed !== null && !Array.isArray(parsed)) {
+      if (
+        typeof parsed === "object" &&
+        parsed !== null &&
+        !Array.isArray(parsed)
+      ) {
         return parsed as Record<string, unknown>;
       }
       return {};

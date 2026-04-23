@@ -4,7 +4,9 @@ import type { ComposedSchemaEntry } from "./schema-registry.js";
 
 type PropertySchema = ComposedSchemaEntry["schema"];
 
-function isPropertySchema(value: PropertySchema | ReadonlyArray<PropertySchema>): value is PropertySchema {
+function isPropertySchema(
+  value: PropertySchema | ReadonlyArray<PropertySchema>,
+): value is PropertySchema {
   return !Array.isArray(value);
 }
 
@@ -13,7 +15,7 @@ function isPropertySchema(value: PropertySchema | ReadonlyArray<PropertySchema>)
  * Replaces dots and hyphens with underscores.
  */
 export function sanitizeKeyToIdentifier(key: string): string {
-  return key.replace(/[.\-]/g, "_");
+  return key.replace(/[.-]/g, "_");
 }
 
 /**
@@ -31,8 +33,14 @@ function generateZodExpression(schema: PropertySchema): string {
   const schemaType = Array.isArray(schema.type) ? schema.type[0] : schema.type;
 
   // Handle string enums specially — z.enum([...]) instead of z.string()
-  if (schemaType === "string" && schema.enum !== undefined && schema.enum.length > 0) {
-    const enumValues = schema.enum.map((v: unknown) => JSON.stringify(v)).join(", ");
+  if (
+    schemaType === "string" &&
+    schema.enum !== undefined &&
+    schema.enum.length > 0
+  ) {
+    const enumValues = schema.enum
+      .map((v: unknown) => JSON.stringify(v))
+      .join(", ");
     parts.push(`z.enum([${enumValues}])`);
   } else {
     // Base type
@@ -49,12 +57,20 @@ function generateZodExpression(schema: PropertySchema): string {
       case "object":
         if (schema.properties !== undefined) {
           const shape = Object.entries(schema.properties)
-            .map(([key, value]) => `${JSON.stringify(key)}: ${generateZodExpression(value)}`)
+            .map(
+              ([key, value]) =>
+                `${JSON.stringify(key)}: ${generateZodExpression(value)}`,
+            )
             .join(", ");
           parts.push(`z.object({ ${shape} })`);
         } else if (schema.additionalProperties !== false) {
-          if (schema.additionalProperties !== undefined && schema.additionalProperties !== true) {
-            parts.push(`z.record(z.string(), ${generateZodExpression(schema.additionalProperties)})`);
+          if (
+            schema.additionalProperties !== undefined &&
+            schema.additionalProperties !== true
+          ) {
+            parts.push(
+              `z.record(z.string(), ${generateZodExpression(schema.additionalProperties)})`,
+            );
           } else {
             parts.push("z.record(z.string(), z.unknown())");
           }
@@ -112,7 +128,11 @@ export function generateZodSchemaSource(
   lines.push('import { z } from "zod";');
   lines.push("");
 
-  const entries: Array<{ identifier: string; key: string; expression: string }> = [];
+  const entries: Array<{
+    identifier: string;
+    key: string;
+    expression: string;
+  }> = [];
 
   for (const [key, entry] of schemas) {
     const identifier = sanitizeKeyToIdentifier(key);

@@ -147,7 +147,7 @@ export function withAuth(config: AuthConfig): AuthFunctions {
       propertySchema.writeRestriction.length > 0
     ) {
       const callerHasKeyRole = accessContext.roles.some((r) =>
-        propertySchema.writeRestriction!.includes(r),
+        propertySchema.writeRestriction?.includes(r),
       );
       if (!callerHasKeyRole) {
         return false;

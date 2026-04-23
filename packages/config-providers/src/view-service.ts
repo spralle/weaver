@@ -1,10 +1,10 @@
 // View-level configuration service with per-instance overrides
 
+import { qualifyKey } from "@weaver/config-engine";
 import type {
   ConfigurationService,
   ViewConfigurationService,
 } from "@weaver/config-types";
-import { qualifyKey } from "@weaver/config-engine";
 
 /**
  * Builds the instance-qualified key pattern:
@@ -23,11 +23,7 @@ function instanceKey(
  * Builds the base view key pattern:
  * {namespace}.{viewId}.{key}
  */
-function baseViewKey(
-  namespace: string,
-  viewId: string,
-  key: string,
-): string {
+function baseViewKey(namespace: string, viewId: string, key: string): string {
   return qualifyKey(namespace, `${viewId}.${key}`);
 }
 

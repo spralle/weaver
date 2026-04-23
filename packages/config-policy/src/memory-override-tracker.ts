@@ -1,7 +1,10 @@
 // In-memory emergency override tracker for testing
 
 import type { EmergencyOverrideRecord } from "@weaver/config-types";
-import type { OverrideTracker, OverrideTrackerOptions } from "./override-tracker.js";
+import type {
+  OverrideTracker,
+  OverrideTrackerOptions,
+} from "./override-tracker.js";
 import { computeDeadline, resolveDeadlineMs } from "./override-tracker.js";
 
 export function createInMemoryOverrideTracker(

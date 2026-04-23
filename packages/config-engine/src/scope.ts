@@ -1,9 +1,6 @@
 // Scope chain builder for dynamic tenant scope hierarchies
 
-import type {
-  TenantScopeHierarchy,
-  ScopeInstance,
-} from "@weaver/config-types";
+import type { ScopeInstance, TenantScopeHierarchy } from "@weaver/config-types";
 
 export interface ScopeChainEntry {
   scopeId: string;
@@ -33,9 +30,7 @@ export function buildScopeChain(
     return { success: true, chain: [] };
   }
 
-  const definitionMap = new Map(
-    hierarchy.scopes.map((s) => [s.id, s]),
-  );
+  const definitionMap = new Map(hierarchy.scopes.map((s) => [s.id, s]));
 
   const chain: ScopeChainEntry[] = [];
   const seenScopeIds = new Set<string>();

@@ -4,7 +4,9 @@ import type { ComposedSchemaEntry } from "./schema-registry.js";
 
 type PropertySchema = ComposedSchemaEntry["schema"];
 
-function isPropertySchema(value: PropertySchema | ReadonlyArray<PropertySchema>): value is PropertySchema {
+function isPropertySchema(
+  value: PropertySchema | ReadonlyArray<PropertySchema>,
+): value is PropertySchema {
   return !Array.isArray(value);
 }
 
@@ -71,7 +73,9 @@ function mapType(type: PropertySchema["type"]): string | string[] {
   return [...type].map((value) => TYPE_MAP[value] ?? value);
 }
 
-function generateNestedPropertySchema(schema: PropertySchema): JsonSchemaProperty {
+function generateNestedPropertySchema(
+  schema: PropertySchema,
+): JsonSchemaProperty {
   const prop: JsonSchemaProperty = {
     type: mapType(schema.type),
   };
@@ -89,13 +93,17 @@ function generateNestedPropertySchema(schema: PropertySchema): JsonSchemaPropert
   if (schema.multipleOf !== undefined) prop.multipleOf = schema.multipleOf;
   if (schema.minimum !== undefined) prop.minimum = schema.minimum;
   if (schema.maximum !== undefined) prop.maximum = schema.maximum;
-  if (schema.exclusiveMinimum !== undefined) prop.exclusiveMinimum = schema.exclusiveMinimum;
-  if (schema.exclusiveMaximum !== undefined) prop.exclusiveMaximum = schema.exclusiveMaximum;
+  if (schema.exclusiveMinimum !== undefined)
+    prop.exclusiveMinimum = schema.exclusiveMinimum;
+  if (schema.exclusiveMaximum !== undefined)
+    prop.exclusiveMaximum = schema.exclusiveMaximum;
   if (schema.minItems !== undefined) prop.minItems = schema.minItems;
   if (schema.maxItems !== undefined) prop.maxItems = schema.maxItems;
   if (schema.uniqueItems !== undefined) prop.uniqueItems = schema.uniqueItems;
-  if (schema.minProperties !== undefined) prop.minProperties = schema.minProperties;
-  if (schema.maxProperties !== undefined) prop.maxProperties = schema.maxProperties;
+  if (schema.minProperties !== undefined)
+    prop.minProperties = schema.minProperties;
+  if (schema.maxProperties !== undefined)
+    prop.maxProperties = schema.maxProperties;
   if (schema.required !== undefined) prop.required = [...schema.required];
 
   if (schema.properties !== undefined) {
@@ -108,33 +116,44 @@ function generateNestedPropertySchema(schema: PropertySchema): JsonSchemaPropert
 
   if (schema.patternProperties !== undefined) {
     const mapped: Record<string, JsonSchemaProperty> = {};
-    for (const [key, nestedSchema] of Object.entries(schema.patternProperties)) {
+    for (const [key, nestedSchema] of Object.entries(
+      schema.patternProperties,
+    )) {
       mapped[key] = generateNestedPropertySchema(nestedSchema);
     }
     prop.patternProperties = mapped;
   }
 
   if (schema.additionalProperties !== undefined) {
-    prop.additionalProperties = typeof schema.additionalProperties === "boolean"
-      ? schema.additionalProperties
-      : generateNestedPropertySchema(schema.additionalProperties);
+    prop.additionalProperties =
+      typeof schema.additionalProperties === "boolean"
+        ? schema.additionalProperties
+        : generateNestedPropertySchema(schema.additionalProperties);
   }
 
   if (schema.items !== undefined) {
     const itemSchema = schema.items;
     prop.items = isPropertySchema(itemSchema)
       ? generateNestedPropertySchema(itemSchema)
-      : itemSchema.map((item: PropertySchema) => generateNestedPropertySchema(item));
+      : itemSchema.map((item: PropertySchema) =>
+          generateNestedPropertySchema(item),
+        );
   }
 
   if (schema.oneOf !== undefined) {
-    prop.oneOf = schema.oneOf.map((item: PropertySchema) => generateNestedPropertySchema(item));
+    prop.oneOf = schema.oneOf.map((item: PropertySchema) =>
+      generateNestedPropertySchema(item),
+    );
   }
   if (schema.anyOf !== undefined) {
-    prop.anyOf = schema.anyOf.map((item: PropertySchema) => generateNestedPropertySchema(item));
+    prop.anyOf = schema.anyOf.map((item: PropertySchema) =>
+      generateNestedPropertySchema(item),
+    );
   }
   if (schema.allOf !== undefined) {
-    prop.allOf = schema.allOf.map((item: PropertySchema) => generateNestedPropertySchema(item));
+    prop.allOf = schema.allOf.map((item: PropertySchema) =>
+      generateNestedPropertySchema(item),
+    );
   }
   if (schema.not !== undefined) {
     prop.not = generateNestedPropertySchema(schema.not);

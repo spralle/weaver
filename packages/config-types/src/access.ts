@@ -1,6 +1,6 @@
-import type { ConfigurationLayer, ScopeInstance } from "./types.js";
 import type { ConfigurationRole } from "./property-schema.js";
 import type { SessionType } from "./session.js";
+import type { ConfigurationLayer, ScopeInstance } from "./types.js";
 
 export interface ConfigurationAccessContext {
   userId: string;
@@ -24,7 +24,10 @@ export interface ServiceConfigurationDeclaration {
   serviceId: string;
   description: string;
   configuration: {
-    properties: Record<string, import("./property-schema.js").ConfigurationPropertySchema>;
+    properties: Record<
+      string,
+      import("./property-schema.js").ConfigurationPropertySchema
+    >;
   };
   reads?: ReadonlyArray<string> | undefined;
 }

@@ -1,7 +1,7 @@
 // Compile-time type utilities for typesafe configuration access
 
-import type { ConfigurationLayer, ScopeInstance } from "./types.js";
 import type { ConfigurationInspection } from "./service.js";
+import type { ConfigurationLayer, ScopeInstance } from "./types.js";
 
 /**
  * Union of valid key strings from a configuration schema map.

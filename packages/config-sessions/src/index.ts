@@ -1,2 +1,6 @@
-export type { AuditEntry, OverrideSessionProviderOptions, OverrideSessionController } from "./override-session-provider.js";
+export type {
+  AuditEntry,
+  OverrideSessionController,
+  OverrideSessionProviderOptions,
+} from "./override-session-provider.js";
 export { createOverrideSessionProvider } from "./override-session-provider.js";

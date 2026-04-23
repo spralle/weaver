@@ -1,32 +1,26 @@
 // @weaver/config-providers — Storage provider implementations (iteration 2)
 
 export {
-  InMemoryStorageProvider,
-  type InMemoryProviderOptions,
-} from "./in-memory-provider.js";
-
+  type ConfigurationServiceOptions,
+  createConfigurationService,
+} from "./configuration-service.js";
 export {
-  StaticJsonStorageProvider,
-  type StaticJsonProviderOptions,
-} from "./static-json-provider.js";
+  type InMemoryProviderOptions,
+  InMemoryStorageProvider,
+} from "./in-memory-provider.js";
 
 export {
   LocalStorageProvider,
   type LocalStorageProviderOptions,
 } from "./local-storage-provider.js";
-
-export {
-  createStateContainer,
-  type ConfigurationStateContainer,
-} from "./state-container.js";
-
-export {
-  createConfigurationService,
-  type ConfigurationServiceOptions,
-} from "./configuration-service.js";
-
 export { createScopedConfigurationService } from "./scoped-service.js";
-
-export { createViewConfigurationService } from "./view-service.js";
-
+export {
+  type ConfigurationStateContainer,
+  createStateContainer,
+} from "./state-container.js";
+export {
+  type StaticJsonProviderOptions,
+  StaticJsonStorageProvider,
+} from "./static-json-provider.js";
 export { MemoryDurableConfigCacheAdapter } from "./sync/durable-cache-memory.js";
+export { createViewConfigurationService } from "./view-service.js";

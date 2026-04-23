@@ -8,12 +8,14 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc -b",
     "typecheck": "tsc --noEmit",
     "test": "node --test test/*.test.mjs",
-    "lint": "echo 'no linter configured yet'"
+    "lint": "biome check ."
   },
   "dependencies": {
     "@weaver/config-types": "workspace:*",

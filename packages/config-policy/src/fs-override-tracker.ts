@@ -1,9 +1,12 @@
 // File-system based emergency override tracker using JSON array storage
 
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import type { EmergencyOverrideRecord } from "@weaver/config-types";
-import type { OverrideTracker, OverrideTrackerOptions } from "./override-tracker.js";
+import type {
+  OverrideTracker,
+  OverrideTrackerOptions,
+} from "./override-tracker.js";
 import { computeDeadline, resolveDeadlineMs } from "./override-tracker.js";
 
 async function readRecords(

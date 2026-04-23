@@ -1,11 +1,11 @@
 import type {
-  LayerDefinition,
-  LayerType,
-  LayerResolver,
-  StaticLayerConfig,
   DynamicLayerConfig,
-  PersonalLayerConfig,
   EphemeralLayerConfig,
+  LayerDefinition,
+  LayerResolver,
+  LayerType,
+  PersonalLayerConfig,
+  StaticLayerConfig,
 } from "./layers.js";
 import type { MergeFunction } from "./merge-types.js";
 import type { ConfigurationStorageProvider } from "./providers.js";
@@ -30,9 +30,7 @@ const defaultMerge: MergeFunction = (
     const result: Record<string, unknown> = {
       ...(base as Record<string, unknown>),
     };
-    for (const [k, v] of Object.entries(
-      override as Record<string, unknown>,
-    )) {
+    for (const [k, v] of Object.entries(override as Record<string, unknown>)) {
       result[k] = defaultMerge(result[k], v);
     }
     return result;

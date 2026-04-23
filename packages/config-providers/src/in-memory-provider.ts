@@ -23,9 +23,8 @@ export class InMemoryStorageProvider implements ConfigurationStorageProvider {
   constructor(options: InMemoryProviderOptions) {
     this.id = options.id;
     this.layer = options.layer;
-    this.entries = options.initialEntries !== undefined
-      ? { ...options.initialEntries }
-      : {};
+    this.entries =
+      options.initialEntries !== undefined ? { ...options.initialEntries } : {};
   }
 
   async load(): Promise<ConfigurationLayerData> {
