@@ -1,7 +1,18 @@
 {
   "name": "@weaver/config-engine",
   "version": "0.0.0",
+  "description": "Deep merge, layer resolution, key inspection, scope chains, and schema registry for Weaver configuration",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/spralle/weaver.git",
+    "directory": "packages/config-engine"
+  },
+  "homepage": "https://github.com/spralle/weaver/tree/main/packages/config-engine#readme",
+  "bugs": {
+    "url": "https://github.com/spralle/weaver/issues"
+  },
+  "keywords": ["weaver", "configuration", "config", "layered", "engine", "merge", "resolution", "layers"],
   "type": "module",
   "exports": {
     ".": {

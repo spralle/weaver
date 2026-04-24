@@ -1,7 +1,18 @@
 {
   "name": "@weaver/config-sessions",
   "version": "0.0.0",
+  "description": "Override session provider with expiration, audit logging, and ephemeral storage for Weaver",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/spralle/weaver.git",
+    "directory": "packages/config-sessions"
+  },
+  "homepage": "https://github.com/spralle/weaver/tree/main/packages/config-sessions#readme",
+  "bugs": {
+    "url": "https://github.com/spralle/weaver/issues"
+  },
+  "keywords": ["weaver", "configuration", "config", "layered", "sessions", "override", "ephemeral"],
   "type": "module",
   "exports": {
     ".": {
