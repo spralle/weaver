@@ -12,7 +12,15 @@
   "bugs": {
     "url": "https://github.com/spralle/weaver/issues"
   },
-  "keywords": ["weaver", "configuration", "config", "layered", "server", "filesystem", "audit"],
+  "keywords": [
+    "weaver",
+    "configuration",
+    "config",
+    "layered",
+    "server",
+    "filesystem",
+    "audit"
+  ],
   "type": "module",
   "exports": {
     ".": {

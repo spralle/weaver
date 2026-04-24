@@ -1,13 +1,13 @@
 import {
-  getSelectedLocation,
-  setSelectedLocation,
-  onSelectedLocationChange,
-} from "../state.js";
-import {
-  LOCATIONS,
   COUNTRY_CODES_WITH_PROVIDERS,
   findLocation,
+  LOCATIONS,
 } from "../locations.js";
+import {
+  getSelectedLocation,
+  onSelectedLocationChange,
+  setSelectedLocation,
+} from "../state.js";
 
 export function renderLocationSelector(container: HTMLElement): void {
   container.innerHTML = `
@@ -70,8 +70,6 @@ function buildChainDisplay(locationCode: string | null): string {
 function formatChain(segments: string[], highlighted: string[] = []): string {
   const set = new Set(highlighted);
   return segments
-    .map((s) =>
-      set.has(s) ? `<span class="scope-segment">${s}</span>` : s,
-    )
+    .map((s) => (set.has(s) ? `<span class="scope-segment">${s}</span>` : s))
     .join(" → ");
 }

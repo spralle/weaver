@@ -13,6 +13,7 @@ export {
   LocalStorageProvider,
   type LocalStorageProviderOptions,
 } from "./local-storage-provider.js";
+export { createScopeResolutionCache } from "./scope-resolution-cache.js";
 export { createScopedConfigurationService } from "./scoped-service.js";
 export {
   type ConfigurationStateContainer,
@@ -22,6 +23,5 @@ export {
   type StaticJsonProviderOptions,
   StaticJsonStorageProvider,
 } from "./static-json-provider.js";
-export { createScopeResolutionCache } from "./scope-resolution-cache.js";
 export { MemoryDurableConfigCacheAdapter } from "./sync/durable-cache-memory.js";
 export { createViewConfigurationService } from "./view-service.js";

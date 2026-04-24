@@ -7,6 +7,9 @@ export type {
   LayerWritePolicy,
   ServiceConfigurationDeclaration,
 } from "./access.js";
+// cache.ts — Scope resolution cache interface
+export type { ScopeResolutionCache } from "./cache.js";
+export { serializeScopePath } from "./cache.js";
 // expressions.ts — Expression evaluator interface
 export type {
   ExpressionEvaluatorProvider,
@@ -165,10 +168,6 @@ export type {
 // view-config-declaration.ts — View config declaration type and factory
 export type { ViewConfigDeclaration } from "./view-config-declaration.js";
 export { defineViewConfig } from "./view-config-declaration.js";
-
-// cache.ts — Scope resolution cache interface
-export type { ScopeResolutionCache } from "./cache.js";
-export { serializeScopePath } from "./cache.js";
 // weaver.ts — defineWeaver() builder
 export type { ExtractLayerNames, WeaverConfig } from "./weaver.js";
 export { defineWeaver } from "./weaver.js";

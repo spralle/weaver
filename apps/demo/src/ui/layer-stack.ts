@@ -1,6 +1,6 @@
 import type { WeaverConfig } from "@weaver/config-types";
+import { COUNTRY_CODES_WITH_PROVIDERS, findLocation } from "../locations.js";
 import { getSelectedLocation, onSelectedLocationChange } from "../state.js";
-import { findLocation, COUNTRY_CODES_WITH_PROVIDERS } from "../locations.js";
 
 const TYPE_COLORS: Record<string, string> = {
   static: "var(--color-static)",

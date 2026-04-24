@@ -1,10 +1,17 @@
-import type { ConfigurationService, WeaverConfig } from "@weaver/config-types";
-import type { OverrideSessionController } from "@weaver/config-sessions";
 import { evaluateChangePolicy } from "@weaver/config-policy";
-import { getSelectedKey, onSelectedKeyChange, addLogEntry, isSessionActive, onSessionActiveChange } from "../state.js";
-import { getSelectedLocation, onSelectedLocationChange } from "../state.js";
+import type { OverrideSessionController } from "@weaver/config-sessions";
+import type { ConfigurationService, WeaverConfig } from "@weaver/config-types";
+import { COUNTRY_CODES_WITH_PROVIDERS, findLocation } from "../locations.js";
 import { getSchemaForKey } from "../schemas.js";
-import { findLocation, COUNTRY_CODES_WITH_PROVIDERS } from "../locations.js";
+import {
+  addLogEntry,
+  getSelectedKey,
+  getSelectedLocation,
+  isSessionActive,
+  onSelectedKeyChange,
+  onSelectedLocationChange,
+  onSessionActiveChange,
+} from "../state.js";
 
 const BASE_WRITABLE_LAYERS = ["tenant", "user", "session"] as const;
 
@@ -42,7 +49,14 @@ export function renderEditor(
     let html = `<h3>${key}</h3>`;
 
     for (const layer of getWritableLayers()) {
-      html += buildLayerSection(layer, key, currentValue, service, schema, weaverConfig);
+      html += buildLayerSection(
+        layer,
+        key,
+        currentValue,
+        service,
+        schema,
+        weaverConfig,
+      );
     }
 
     html += `<div class="policy-feedback" id="policy-feedback"></div>`;
@@ -104,7 +118,8 @@ function isCeilingBlocked(
   if (layer === "session" && isSessionActive()) return false;
   // Scope layers (country:*, location:*) sit between tenant (rank 2) and user (rank 3)
   const SCOPE_LAYER_RANK = 2.5;
-  const isScopeLayer = layer.startsWith("location:") || layer.startsWith("country:");
+  const isScopeLayer =
+    layer.startsWith("location:") || layer.startsWith("country:");
   const layerRank = isScopeLayer
     ? SCOPE_LAYER_RANK
     : weaverConfig.getRank(layer);
@@ -123,7 +138,9 @@ function buildInput(
   const hasOwn = layerValue !== undefined;
 
   if (typeof currentValue === "boolean") {
-    const inherit = hasOwn ? "" : `<option value="" selected>— inherit —</option>`;
+    const inherit = hasOwn
+      ? ""
+      : `<option value="" selected>— inherit —</option>`;
     const tSel = hasOwn && layerValue === true ? " selected" : "";
     const fSel = hasOwn && layerValue === false ? " selected" : "";
     return `<select ${attr}>${inherit}<option value="true"${tSel}>true</option><option value="false"${fSel}>false</option></select>`;
@@ -138,7 +155,10 @@ function buildInput(
   return `<input ${attr} type="text"${val}${ph} />`;
 }
 
-function parseInput(el: HTMLInputElement | HTMLSelectElement, currentValue: unknown): unknown {
+function parseInput(
+  el: HTMLInputElement | HTMLSelectElement,
+  currentValue: unknown,
+): unknown {
   const raw = el.value;
   if (raw === "") return currentValue;
   if (typeof currentValue === "boolean") return raw === "true";
@@ -149,7 +169,11 @@ function parseInput(el: HTMLInputElement | HTMLSelectElement, currentValue: unkn
   return raw;
 }
 
-function showFeedback(body: Element, message: string, level: "warning" | "error"): void {
+function showFeedback(
+  body: Element,
+  message: string,
+  level: "warning" | "error",
+): void {
   const el = body.querySelector("#policy-feedback");
   if (!el) return;
   el.className = `policy-feedback ${level}`;
@@ -170,7 +194,9 @@ function handleSet(
   service: ConfigurationService,
   session: OverrideSessionController,
 ): void {
-  const input = body.querySelector<HTMLInputElement | HTMLSelectElement>(`[data-input-layer="${layer}"]`);
+  const input = body.querySelector<HTMLInputElement | HTMLSelectElement>(
+    `[data-input-layer="${layer}"]`,
+  );
   if (!input) return;
 
   const schema = getSchemaForKey(key);
@@ -181,7 +207,9 @@ function handleSet(
       userId: "demo-user",
       tenantId: "demo-tenant",
       roles: ["admin"] as readonly string[],
-      sessionMode: isSessionActive() ? ("emergency-override" as const) : undefined,
+      sessionMode: isSessionActive()
+        ? ("emergency-override" as const)
+        : undefined,
       overrideReason: session.getSession()?.reason,
     };
     const decision = evaluateChangePolicy(schema, ctx, layer, () => true);
@@ -214,14 +242,14 @@ function bindEvents(
 ): void {
   for (const btn of body.querySelectorAll<HTMLButtonElement>(".btn-set")) {
     btn.addEventListener("click", () => {
-      const layer = btn.dataset["layer"]!;
+      const layer = btn.dataset.layer!;
       handleSet(body, key, layer, service, session);
     });
   }
 
   for (const btn of body.querySelectorAll<HTMLButtonElement>(".btn-remove")) {
     btn.addEventListener("click", () => {
-      const layer = btn.dataset["layer"]!;
+      const layer = btn.dataset.layer!;
       clearFeedback(body);
       service.remove(key, layer);
       addLogEntry(`Removed ${key} from [${layer}]`);

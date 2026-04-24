@@ -12,7 +12,16 @@
   "bugs": {
     "url": "https://github.com/spralle/weaver/issues"
   },
-  "keywords": ["weaver", "configuration", "config", "layered", "engine", "merge", "resolution", "layers"],
+  "keywords": [
+    "weaver",
+    "configuration",
+    "config",
+    "layered",
+    "engine",
+    "merge",
+    "resolution",
+    "layers"
+  ],
   "type": "module",
   "exports": {
     ".": {

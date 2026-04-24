@@ -35,9 +35,14 @@ export function renderSessionPanel(
           </label>
           <button id="btn-activate" class="btn-primary">Activate Session</button>
         </div>`;
-      body.querySelector("#btn-activate")!.addEventListener("click", () => {
-        const reason = (body.querySelector("#session-reason") as HTMLInputElement).value || "Demo";
-        const mins = Number((body.querySelector("#session-duration") as HTMLInputElement).value) || 5;
+      body.querySelector("#btn-activate")?.addEventListener("click", () => {
+        const reason =
+          (body.querySelector("#session-reason") as HTMLInputElement).value ||
+          "Demo";
+        const mins =
+          Number(
+            (body.querySelector("#session-duration") as HTMLInputElement).value,
+          ) || 5;
         session.activate({ reason, durationMs: mins * 60 * 1000 });
         setSessionActive(true);
         addLogEntry(`Session activated: "${reason}" for ${mins}min`);
@@ -63,13 +68,13 @@ export function renderSessionPanel(
 
     startCountdown(expiresAt, Object.keys(current.overrides));
 
-    body.querySelector("#btn-extend")!.addEventListener("click", () => {
+    body.querySelector("#btn-extend")?.addEventListener("click", () => {
       session.extend(5 * 60 * 1000);
       addLogEntry("Session extended by 5min");
       render();
     });
 
-    body.querySelector("#btn-deactivate")!.addEventListener("click", () => {
+    body.querySelector("#btn-deactivate")?.addEventListener("click", () => {
       clearSessionOverrides();
       session.deactivate();
       setSessionActive(false);
@@ -86,9 +91,8 @@ export function renderSessionPanel(
       if (remaining <= 0) {
         el.textContent = "Expired";
         const current = session.getSession();
-        const keysToRemove = current !== null
-          ? Object.keys(current.overrides)
-          : capturedKeys;
+        const keysToRemove =
+          current !== null ? Object.keys(current.overrides) : capturedKeys;
         for (const key of keysToRemove) {
           service.remove(key, "session");
         }

@@ -1,5 +1,8 @@
 import type { SyncStatus } from "@weaver/config-types";
-import type { ConfigSyncOrchestratorOptions, SyncDiagnostics } from "../types.js";
+import type {
+  ConfigSyncOrchestratorOptions,
+  SyncDiagnostics,
+} from "../types.js";
 
 export interface SyncStateManager {
   getSyncState(): SyncStatus;
@@ -9,12 +12,18 @@ export interface SyncStateManager {
   setQueue(queue: { pendingCount: number; inFlightCount: number }): void;
   getPendingWriteCount(): number;
   onSyncStateChange(listener: (state: SyncStatus) => void): () => void;
-  onDiagnosticsChange(listener: (diagnostics: SyncDiagnostics) => void): () => void;
+  onDiagnosticsChange(
+    listener: (diagnostics: SyncDiagnostics) => void,
+  ): () => void;
 }
 
-export function createSyncStateManager(options: ConfigSyncOrchestratorOptions): SyncStateManager {
+export function createSyncStateManager(
+  options: ConfigSyncOrchestratorOptions,
+): SyncStateManager {
   const syncStateListeners = new Set<(state: SyncStatus) => void>();
-  const diagnosticsListeners = new Set<(diagnostics: SyncDiagnostics) => void>();
+  const diagnosticsListeners = new Set<
+    (diagnostics: SyncDiagnostics) => void
+  >();
 
   let syncState: SyncStatus = { status: "syncing" };
   let diagnostics: SyncDiagnostics = { pendingCount: 0 };
@@ -37,8 +46,14 @@ export function createSyncStateManager(options: ConfigSyncOrchestratorOptions): 
     }
   }
 
-  function setQueue(queue: { pendingCount: number; inFlightCount: number }): void {
-    queueMeta = { pendingCount: queue.pendingCount, inFlightCount: queue.inFlightCount };
+  function setQueue(queue: {
+    pendingCount: number;
+    inFlightCount: number;
+  }): void {
+    queueMeta = {
+      pendingCount: queue.pendingCount,
+      inFlightCount: queue.inFlightCount,
+    };
   }
 
   function getPendingWriteCount(): number {

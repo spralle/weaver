@@ -12,7 +12,15 @@
   "bugs": {
     "url": "https://github.com/spralle/weaver/issues"
   },
-  "keywords": ["weaver", "configuration", "config", "layered", "types", "schema", "zod"],
+  "keywords": [
+    "weaver",
+    "configuration",
+    "config",
+    "layered",
+    "types",
+    "schema",
+    "zod"
+  ],
   "type": "module",
   "exports": {
     ".": {

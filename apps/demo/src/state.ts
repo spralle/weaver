@@ -32,7 +32,8 @@ export function onSelectedKeyChange(cb: Callback<string | null>): () => void {
 
 export function addLogEntry(message: string): void {
   activityLog.unshift({ timestamp: new Date(), message });
-  if (activityLog.length > MAX_LOG_ENTRIES) activityLog.length = MAX_LOG_ENTRIES;
+  if (activityLog.length > MAX_LOG_ENTRIES)
+    activityLog.length = MAX_LOG_ENTRIES;
   for (const cb of logListeners) cb([...activityLog]);
 }
 
@@ -80,7 +81,9 @@ export function setSelectedLocation(loc: string | null): void {
   for (const cb of locationListeners) cb(loc);
 }
 
-export function onSelectedLocationChange(cb: Callback<string | null>): () => void {
+export function onSelectedLocationChange(
+  cb: Callback<string | null>,
+): () => void {
   locationListeners.push(cb);
   return () => {
     const idx = locationListeners.indexOf(cb);
