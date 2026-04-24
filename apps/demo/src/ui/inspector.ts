@@ -2,6 +2,7 @@ import type { ConfigurationService, WeaverConfig } from "@weaver/config-types";
 import { onSelectedKeyChange, getSelectedKey } from "../state.js";
 import { getSelectedLocation, onSelectedLocationChange } from "../state.js";
 import { getSchemaForKey } from "../schemas.js";
+import { ALL_PROVIDER_LAYERS } from "../setup.js";
 import { findLocation, buildScopePath, COUNTRY_CODES_WITH_PROVIDERS, type LocationDef } from "../locations.js";
 
 const VISIBILITY_COLORS: Record<string, string> = {
@@ -68,6 +69,7 @@ export function renderInspector(
       effectiveLayer,
       layerValues: { ...inspection.layerValues, ...scopeLayerValues },
     });
+    html += buildAllSourcesSection(key, service);
     html += buildSchemaSection(key);
     body.innerHTML = html;
   }
@@ -104,6 +106,37 @@ function buildLayerBreakdown(
       <div class="layer-row${isWinner ? " winner" : ""}">
         <span class="layer-label">${layer}</span>
         <span class="layer-val">${value !== undefined ? formatValue(value) : "—"}</span>
+      </div>`;
+  }
+  html += `</div>`;
+  return html;
+}
+
+function buildAllSourcesSection(
+  key: string,
+  service: ConfigurationService,
+): string {
+  const sources: Array<{ layer: string; value: unknown }> = [];
+
+  for (const layer of ALL_PROVIDER_LAYERS) {
+    const value = service.getAtLayer(layer, key);
+    if (value !== undefined) {
+      sources.push({ layer, value });
+    }
+  }
+
+  if (sources.length === 0) {
+    return `<div class="all-sources"><h4>All Sources</h4><p class="placeholder">No values set</p></div>`;
+  }
+
+  let html = `<div class="all-sources"><h4>All Sources</h4>`;
+  for (const { layer, value } of sources) {
+    const isScope = layer.includes(":");
+    const cls = isScope ? "source-row scope" : "source-row";
+    html += `
+      <div class="${cls}">
+        <span class="source-layer">${layer}</span>
+        <span class="source-val">${formatValue(value)}</span>
       </div>`;
   }
   html += `</div>`;

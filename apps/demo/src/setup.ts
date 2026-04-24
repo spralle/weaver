@@ -16,6 +16,20 @@ import {
   LOCATION_NLEUR_DEFAULTS,
 } from "./seed-data.js";
 
+/** All registered provider layer names, in rank order (lowest to highest). */
+export const ALL_PROVIDER_LAYERS: readonly string[] = [
+  "core",
+  "app",
+  "tenant",
+  "country:GB",
+  "country:NL",
+  "location:GBDVR",
+  "location:FRCQF",
+  "location:NLEUR",
+  "user",
+  "session",
+];
+
 export async function initService() {
   const weaverConfig = defineWeaver([
     Layers.Static("core"),
