@@ -53,7 +53,10 @@ class IncrementalConfigurationSchemaRegistry
 
   private readonly keyOwners = new Map<string, string[]>();
 
-  private readonly ownerEntries = new Map<string, Map<string, ComposedSchemaEntry>>();
+  private readonly ownerEntries = new Map<
+    string,
+    Map<string, ComposedSchemaEntry>
+  >();
 
   private readonly ownerIndex = new Map<string, Set<string>>();
 
@@ -72,7 +75,8 @@ class IncrementalConfigurationSchemaRegistry
         errors.push({
           type: "invalid-key-format",
           key: fullyQualifiedKey,
-          message: validation.error ?? `Invalid key format: ${fullyQualifiedKey}`,
+          message:
+            validation.error ?? `Invalid key format: ${fullyQualifiedKey}`,
         });
         continue;
       }
@@ -135,7 +139,9 @@ class IncrementalConfigurationSchemaRegistry
         continue;
       }
 
-      const nextEntry = this.ownerEntries.get(nextOwnerId)?.get(fullyQualifiedKey);
+      const nextEntry = this.ownerEntries
+        .get(nextOwnerId)
+        ?.get(fullyQualifiedKey);
       if (nextEntry === undefined) {
         this.schemas.delete(fullyQualifiedKey);
         removedKeys.push(fullyQualifiedKey);
@@ -184,7 +190,10 @@ class IncrementalConfigurationSchemaRegistry
   private addOwnerEntry(entry: ComposedSchemaEntry): void {
     const ownerMap = this.ownerEntries.get(entry.ownerId);
     if (ownerMap === undefined) {
-      this.ownerEntries.set(entry.ownerId, new Map([[entry.fullyQualifiedKey, entry]]));
+      this.ownerEntries.set(
+        entry.ownerId,
+        new Map([[entry.fullyQualifiedKey, entry]]),
+      );
     } else {
       ownerMap.set(entry.fullyQualifiedKey, entry);
     }

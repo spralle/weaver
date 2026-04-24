@@ -1,12 +1,12 @@
 import type {
   ConfigSyncPushResult,
+  ConfigSyncTransport,
   ConfigurationConflict,
   ConfigurationLayerData,
   SyncErrorMetadata,
   SyncMutationQueue,
   SyncQueuedMutation,
   SyncSnapshotCache,
-  ConfigSyncTransport,
 } from "@weaver/config-types";
 import type { LocalMutationContext, PushBatchOutcome } from "../types.js";
 
@@ -33,7 +33,9 @@ export interface FlushQueueArgs extends CommonArgs {
   onError: (error: SyncErrorMetadata) => Promise<void>;
 }
 
-export async function flushQueue(args: FlushQueueArgs): Promise<PushBatchOutcome> {
+export async function flushQueue(
+  args: FlushQueueArgs,
+): Promise<PushBatchOutcome> {
   let pushed = 0;
   const conflicts: ConfigurationConflict[] = [];
 
@@ -44,7 +46,10 @@ export async function flushQueue(args: FlushQueueArgs): Promise<PushBatchOutcome
     }
 
     const requestId = createRequestId(args.now);
-    await args.mutationQueue.markRequestInFlight(requestId, queued.map((m) => m.mutationId));
+    await args.mutationQueue.markRequestInFlight(
+      requestId,
+      queued.map((m) => m.mutationId),
+    );
 
     try {
       const response = await args.transport.push({
@@ -83,8 +88,12 @@ interface ApplyPushArgs extends CommonArgs {
   attempted: ReadonlyArray<SyncQueuedMutation>;
 }
 
-async function applyPushResults(args: ApplyPushArgs): Promise<ConfigurationConflict[]> {
-  const attemptedById = new Map(args.attempted.map((entry) => [entry.mutationId, entry]));
+async function applyPushResults(
+  args: ApplyPushArgs,
+): Promise<ConfigurationConflict[]> {
+  const attemptedById = new Map(
+    args.attempted.map((entry) => [entry.mutationId, entry]),
+  );
   const conflicts: ConfigurationConflict[] = [];
 
   for (const result of args.results) {
@@ -111,7 +120,8 @@ async function applyPushResults(args: ApplyPushArgs): Promise<ConfigurationConfl
       key: mutation.key,
       localValue: context?.localValue,
       remoteValue: result.conflict.serverValue,
-      localRevision: result.conflict.localRevision ?? context?.localRevision ?? "unknown",
+      localRevision:
+        result.conflict.localRevision ?? context?.localRevision ?? "unknown",
       remoteRevision: result.conflict.serverRevision,
     });
 
@@ -199,7 +209,10 @@ export function classifySyncError(error: unknown): SyncErrorMetadata {
 
   return {
     code: "unknown",
-    message: typeof error === "string" && error.length > 0 ? error : "Config sync request failed.",
+    message:
+      typeof error === "string" && error.length > 0
+        ? error
+        : "Config sync request failed.",
     retryable: false,
   };
 }
@@ -256,7 +269,9 @@ export function createRequestId(now: () => number): string {
   return `req-${now()}-${Math.random().toString(16).slice(2, 8)}`;
 }
 
-export function cloneSnapshot(snapshot: ConfigurationLayerData): ConfigurationLayerData {
+export function cloneSnapshot(
+  snapshot: ConfigurationLayerData,
+): ConfigurationLayerData {
   return {
     entries: { ...snapshot.entries },
     revision: snapshot.revision,

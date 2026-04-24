@@ -1,6 +1,4 @@
-export {
-  createConfigSyncOrchestrator,
-} from "./orchestrator.js";
+export { createConfigSyncOrchestrator } from "./orchestrator.js";
 
 export {
   createSyncableStorageProviderAdapter,
@@ -9,9 +7,9 @@ export {
 } from "./provider.js";
 
 export type {
-  SyncRetryPolicy,
-  SyncDiagnostics,
   ConfigSyncOrchestrator,
   ConfigSyncOrchestratorOptions,
   SyncableConfigStorageProvider,
+  SyncDiagnostics,
+  SyncRetryPolicy,
 } from "./types.js";

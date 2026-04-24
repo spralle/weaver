@@ -1,9 +1,9 @@
-import type { ConfigurationLayer, ScopeInstance } from "./types.js";
 import type {
   OverrideSession,
   SessionActivationRequest,
   SessionDeactivationResult,
 } from "./session.js";
+import type { ConfigurationLayer, ScopeInstance } from "./types.js";
 
 /**
  * Minimal handle for session lifecycle — satisfied by OverrideSessionController
@@ -40,7 +40,10 @@ export interface ConfigurationService {
 export interface ScopedConfigurationService {
   get<T>(relativeKey: string): T | undefined;
   getWithDefault<T>(relativeKey: string, defaultValue: T): T;
-  getForScope<T>(relativeKey: string, scopePath: ScopeInstance[]): T | undefined;
+  getForScope<T>(
+    relativeKey: string,
+    scopePath: ScopeInstance[],
+  ): T | undefined;
   withScope(scopePath: ScopeInstance[]): ScopedConfigurationService;
   forView(viewId: string): ViewConfigurationService;
   inspect<T>(relativeKey: string): ConfigurationInspection<T>;

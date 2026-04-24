@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "server",
+  "dolt_database": "weaver",
+  "project_id": "88d8b485-25b1-49f2-81a7-9727a6459995"
+}

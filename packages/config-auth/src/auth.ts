@@ -104,16 +104,65 @@ export function withAuth(config: AuthConfig): AuthFunctions {
     }
   }
 
+  /** Checks if the caller's roles satisfy the layer write policy or dynamic scope fallback. */
+  function checkLayerWritePolicy(roles: ReadonlyArray<string>, layer: string): boolean {
+    const policy = layerWritePolicies.find((p) => p.layer === layer);
+    if (policy) {
+      return roles.some((r) => policy.allowedRoles.includes(r));
+    }
+    // Unknown layer (dynamic scope) — use dynamicScopeRoles
+    return hasAnyRole(roles, dynamicScopeRoles);
+  }
+
+  /** Checks key-level writeRestriction against caller roles. */
+  function checkWriteRestriction(
+    roles: ReadonlyArray<string>,
+    schema: ConfigurationPropertySchema,
+  ): boolean {
+    if (schema.writeRestriction === undefined || schema.writeRestriction.length === 0) {
+      return true;
+    }
+    return roles.some((r) => schema.writeRestriction!.includes(r));
+  }
+
+  /** Checks maxOverrideLayer ceiling — denies if target layer exceeds ceiling (unless emergency). */
+  function checkMaxOverrideLayer(
+    layer: string,
+    schema: ConfigurationPropertySchema,
+    sessionMode: string | undefined,
+  ): boolean {
+    if (schema.maxOverrideLayer === undefined) {
+      return true;
+    }
+    const ceilingRank = getRank(schema.maxOverrideLayer);
+    const targetRank = getRank(layer);
+    if (ceilingRank >= 0 && targetRank >= 0 && targetRank > ceilingRank) {
+      return sessionMode === "emergency-override";
+    }
+    return true;
+  }
+
+  /** Enforces sessionMode rules when writing to the session layer. */
+  function checkSessionModeEnforcement(
+    layer: string,
+    schema: ConfigurationPropertySchema,
+    sessionMode: string | undefined,
+  ): boolean {
+    if (sessionLayer === undefined || layer !== sessionLayer) {
+      return true;
+    }
+    const propertySessionMode = schema.sessionMode ?? "allowed";
+    if (propertySessionMode === "blocked") {
+      return false;
+    }
+    if (propertySessionMode === "restricted") {
+      return sessionMode === (elevatedSessionMode ?? "god-mode");
+    }
+    return true;
+  }
+
   /**
    * Checks whether the caller can write to a given configuration key at a specific layer.
-   *
-   * Checks:
-   * 1. Layer write policy: caller's role must be in the layer's allowedRoles
-   * 2. Key writeRestriction: if schema has writeRestriction, caller's role must be in it
-   * 3. maxOverrideLayer: if schema has maxOverrideLayer and target layer is above it,
-   *    deny UNLESS sessionMode === "emergency-override"
-   * 4. Session-layer sessionMode: if writing to the configured session layer,
-   *    "blocked" -> always deny, "restricted" -> require elevated session mode
    */
   function canWrite(
     accessContext: ConfigurationAccessContext,
@@ -121,62 +170,22 @@ export function withAuth(config: AuthConfig): AuthFunctions {
     _key: string,
     propertySchema: ConfigurationPropertySchema | undefined,
   ): boolean {
-    // Check layer write policy
-    const policy = layerWritePolicies.find((p) => p.layer === layer);
-    if (policy) {
-      const callerHasLayerRole = accessContext.roles.some((r) =>
-        policy.allowedRoles.includes(r),
-      );
-      if (!callerHasLayerRole) {
-        return false;
-      }
-    } else {
-      // Unknown layer (dynamic scope) — use dynamicScopeRoles
-      if (!hasAnyRole(accessContext.roles, dynamicScopeRoles)) {
-        return false;
-      }
+    if (!checkLayerWritePolicy(accessContext.roles, layer)) {
+      return false;
     }
-
     if (!propertySchema) {
       return true;
     }
 
-    // Check key-level writeRestriction
-    if (
-      propertySchema.writeRestriction !== undefined &&
-      propertySchema.writeRestriction.length > 0
-    ) {
-      const callerHasKeyRole = accessContext.roles.some((r) =>
-        propertySchema.writeRestriction!.includes(r),
-      );
-      if (!callerHasKeyRole) {
-        return false;
-      }
+    if (!checkWriteRestriction(accessContext.roles, propertySchema)) {
+      return false;
     }
-
-    // Check maxOverrideLayer ceiling
-    if (propertySchema.maxOverrideLayer !== undefined) {
-      const ceilingRank = getRank(propertySchema.maxOverrideLayer);
-      const targetRank = getRank(layer);
-      if (ceilingRank >= 0 && targetRank >= 0 && targetRank > ceilingRank) {
-        // Deny unless emergency override
-        return accessContext.sessionMode === "emergency-override";
-      }
+    if (!checkMaxOverrideLayer(layer, propertySchema, accessContext.sessionMode)) {
+      return false;
     }
-
-    // Check sessionMode enforcement for session layer writes
-    if (sessionLayer !== undefined && layer === sessionLayer) {
-      const propertySessionMode = propertySchema.sessionMode ?? "allowed";
-      if (propertySessionMode === "blocked") {
-        return false;
-      }
-      if (propertySessionMode === "restricted") {
-        return (
-          accessContext.sessionMode === (elevatedSessionMode ?? "god-mode")
-        );
-      }
+    if (!checkSessionModeEnforcement(layer, propertySchema, accessContext.sessionMode)) {
+      return false;
     }
-
     return true;
   }
 

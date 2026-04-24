@@ -1,10 +1,6 @@
 // One-way ratchet validator for restrictive config fields
 
-export type RatchetTransition =
-  | "tightened"
-  | "equal"
-  | "loosened"
-  | "blocked";
+export type RatchetTransition = "tightened" | "equal" | "loosened" | "blocked";
 
 export interface RatchetLayerSnapshot {
   readonly layer: string;
@@ -220,7 +216,9 @@ export function validateOneWayRatchet(
     }
   }
 
-  const violations = evaluations.filter((entry) => entry.transition === "loosened");
+  const violations = evaluations.filter(
+    (entry) => entry.transition === "loosened",
+  );
   const blocked = evaluations.filter((entry) => entry.transition === "blocked");
 
   return {

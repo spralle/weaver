@@ -1,8 +1,8 @@
 // Policy validation engine — evaluates changePolicy rules for config writes
 
 import type {
-  ConfigurationPropertySchema,
   ConfigurationAccessContext,
+  ConfigurationPropertySchema,
 } from "@weaver/config-types";
 
 export type PolicyDecision =

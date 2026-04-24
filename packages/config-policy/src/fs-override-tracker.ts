@@ -1,9 +1,12 @@
 // File-system based emergency override tracker using JSON array storage
 
-import { readFile, writeFile, mkdir } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import type { EmergencyOverrideRecord } from "@weaver/config-types";
-import type { OverrideTracker, OverrideTrackerOptions } from "./override-tracker.js";
+import type {
+  OverrideTracker,
+  OverrideTrackerOptions,
+} from "./override-tracker.js";
 import { computeDeadline, resolveDeadlineMs } from "./override-tracker.js";
 
 async function readRecords(
@@ -35,6 +38,18 @@ function isNodeError(err: unknown): err is NodeJS.ErrnoException {
   return err instanceof Error && "code" in err;
 }
 
+/**
+ * Creates a file-system backed emergency override tracker using JSON array storage.
+ *
+ * **Scalability note**: Every operation (`create`, `listActive`, `regularize`,
+ * `listOverdue`) reads the entire records file into memory. Mutating operations
+ * read-then-write the full file. This implementation is suitable for emergency
+ * override tracking where record counts are inherently low (typically < 100
+ * active records). It is NOT suitable for high-frequency write workloads.
+ *
+ * For concurrent access, this implementation does not provide file-level
+ * locking — use a database-backed tracker if concurrent writes are expected.
+ */
 export function createFileSystemOverrideTracker(
   filePath: string,
   options?: OverrideTrackerOptions | undefined,

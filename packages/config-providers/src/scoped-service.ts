@@ -1,13 +1,13 @@
 // Scoped configuration service — namespace-qualified key lookups for plugins
 
+import { qualifyKey } from "@weaver/config-engine";
 import type {
+  ConfigurationInspection,
   ConfigurationService,
   ScopedConfigurationService,
-  ConfigurationInspection,
+  ScopeInstance,
   ViewConfigurationService,
 } from "@weaver/config-types";
-import type { ScopeInstance } from "@weaver/config-types";
-import { qualifyKey } from "@weaver/config-engine";
 import { createViewConfigurationService } from "./view-service.js";
 
 /**
@@ -106,10 +106,7 @@ export function createScopedConfigurationService(
       relativeKey: string,
       listener: (value: unknown) => void,
     ): () => void {
-      return rootService.onChange(
-        qualifyKey(namespace, relativeKey),
-        listener,
-      );
+      return rootService.onChange(qualifyKey(namespace, relativeKey), listener);
     },
 
     get root(): ConfigurationService {

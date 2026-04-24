@@ -14,8 +14,10 @@ export interface RetryScheduleOptions {
 }
 
 export function calculateRetryDelay(options: RetryScheduleOptions): number {
-  const base = options.retryBaseMs * (2 ** (options.retryAttempt - 1));
-  const jitter = Math.floor(Math.random() * Math.max(1, Math.floor(options.retryBaseMs / 4)));
+  const base = options.retryBaseMs * 2 ** (options.retryAttempt - 1);
+  const jitter = Math.floor(
+    Math.random() * Math.max(1, Math.floor(options.retryBaseMs / 4)),
+  );
   return Math.min(options.retryMaxMs, base + jitter);
 }
 
