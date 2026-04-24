@@ -14,7 +14,7 @@
     "build": "tsc -b",
     "typecheck": "tsc --noEmit",
     "test": "node --test test/*.test.mjs",
-    "lint": "echo 'no linter configured yet'"
+    "lint": "eslint src/"
   },
   "dependencies": {
     "@weaver/config-types": "workspace:*",
