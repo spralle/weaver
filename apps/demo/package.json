@@ -1,0 +1,21 @@
+{
+  "name": "@weaver/demo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@weaver/config-types": "workspace:*",
+    "@weaver/config-engine": "workspace:*",
+    "@weaver/config-providers": "workspace:*",
+    "@weaver/config-sessions": "workspace:*",
+    "@weaver/config-policy": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3",
+    "vite": "^6.3.0"
+  }
+}

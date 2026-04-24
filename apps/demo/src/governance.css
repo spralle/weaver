@@ -1,0 +1,117 @@
+/* Governance & Policy UI */
+
+.key-policy-badge {
+  display: inline-block;
+  padding: 0.05rem 0.35rem;
+  border-radius: 8px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  margin-left: 0.3rem;
+  vertical-align: middle;
+}
+
+.policy-direct {
+  background: rgba(107, 203, 119, 0.2);
+  color: #6bcb77;
+}
+
+.policy-staging {
+  background: rgba(232, 216, 56, 0.2);
+  color: #e8d838;
+}
+
+.policy-pipeline {
+  background: rgba(232, 168, 56, 0.2);
+  color: #e8a838;
+}
+
+.policy-emergency {
+  background: rgba(231, 76, 60, 0.2);
+  color: #e74c3c;
+}
+
+.ceiling-badge {
+  font-size: 0.7rem;
+  margin-left: 0.2rem;
+  opacity: 0.8;
+}
+
+/* Schema metadata in inspector */
+.schema-meta {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.schema-meta h4 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+  margin-bottom: 0.5rem;
+}
+
+.schema-meta dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 0.75rem;
+  font-size: 0.85rem;
+}
+
+.schema-meta dt {
+  color: var(--color-muted);
+  font-weight: 500;
+}
+
+.schema-meta dd {
+  margin: 0;
+}
+
+.schema-badge {
+  display: inline-block;
+  padding: 0.05rem 0.4rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+/* Policy feedback in editor */
+.policy-feedback {
+  margin-top: 0.5rem;
+  padding: 0;
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  transition: all 0.2s;
+}
+
+.policy-feedback:empty {
+  display: none;
+}
+
+.policy-feedback.warning {
+  display: block;
+  padding: 0.5rem 0.75rem;
+  background: rgba(232, 216, 56, 0.15);
+  border: 1px solid rgba(232, 216, 56, 0.3);
+  color: #e8d838;
+}
+
+.policy-feedback.error {
+  display: block;
+  padding: 0.5rem 0.75rem;
+  background: rgba(231, 76, 60, 0.15);
+  border: 1px solid rgba(231, 76, 60, 0.3);
+  color: #e74c3c;
+}
+
+/* Ceiling-blocked editor layer */
+.editor-layer.ceiling-blocked {
+  opacity: 0.5;
+  border: 1px dashed var(--color-border);
+}
+
+.ceiling-msg {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  padding: 0.25rem 0;
+}

@@ -1,0 +1,56 @@
+/* Scope chain display in location selector */
+.scope-chain {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  font-family: "Fira Code", "Cascadia Code", monospace;
+}
+
+.scope-chain .scope-segment {
+  color: var(--color-scope);
+}
+
+/* All Sources debug view */
+.all-sources {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.all-sources h4 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-muted);
+  margin-bottom: 0.5rem;
+}
+
+.source-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.3rem 0.5rem;
+  border-radius: var(--radius);
+  font-size: 0.8rem;
+  margin-bottom: 0.2rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.source-row.scope {
+  border-left: 2px solid var(--color-scope);
+}
+
+.source-layer {
+  font-weight: 500;
+  font-family: "Fira Code", "Cascadia Code", monospace;
+  font-size: 0.75rem;
+}
+
+.source-row.scope .source-layer {
+  color: var(--color-scope);
+}
+
+.source-val {
+  font-family: "Fira Code", "Cascadia Code", monospace;
+  color: var(--color-muted);
+  font-size: 0.75rem;
+}
