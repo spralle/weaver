@@ -162,6 +162,10 @@ export {
   emergencyOverrideRecordSchema,
 } from "./schemas-promotion.js";
 
+// cache.ts — Scope resolution cache interface
+export type { ScopeResolutionCache } from "./cache.js";
+export { serializeScopePath } from "./cache.js";
+
 // merge-types.ts — Merge function type
 export type { MergeFunction } from "./merge-types.js";
 

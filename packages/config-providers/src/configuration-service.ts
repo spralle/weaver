@@ -9,7 +9,8 @@ import type {
   ConfigurationSessionHandle,
   WeaverConfig,
 } from "@weaver/config-types";
-import type { ScopeInstance } from "@weaver/config-types";
+import type { ScopeInstance, ScopeResolutionCache } from "@weaver/config-types";
+import { serializeScopePath } from "@weaver/config-types";
 import { resolveConfiguration, inspectKey } from "@weaver/config-engine";
 import { createStateContainer } from "./state-container.js";
 import type { ConfigurationStateContainer } from "./state-container.js";
@@ -19,6 +20,7 @@ export interface ConfigurationServiceOptions {
   providers: ConfigurationStorageProvider[];
   weaverConfig: WeaverConfig;
   session?: OverrideSessionController | undefined;
+  scopeCache?: ScopeResolutionCache | undefined;
 }
 
 /**
@@ -65,6 +67,7 @@ export async function createConfigurationService(
   for (const provider of sortedProviders) {
     const data = await provider.load();
     container.applyLayerData(provider.layer, data.entries);
+    options.scopeCache?.clear();
   }
 
   // Wire external change listeners
@@ -80,6 +83,7 @@ export async function createConfigurationService(
           }
         }
         container.applyLayerData(provider.layer, currentEntries);
+        options.scopeCache?.clear();
       });
     }
   }
@@ -188,6 +192,16 @@ export async function createConfigurationService(
       key: string,
       scopePath: ScopeInstance[],
     ): T | undefined {
+      const cache = options.scopeCache;
+      if (cache !== undefined) {
+        const cacheKey = serializeScopePath(scopePath);
+        const cached = cache.get(cacheKey);
+        if (cached !== undefined) return cached[key] as T | undefined;
+        const stack = buildScopedLayerStack(scopePath);
+        const resolved = resolveConfiguration(stack);
+        cache.set(cacheKey, resolved.entries);
+        return resolved.entries[key] as T | undefined;
+      }
       const stack = buildScopedLayerStack(scopePath);
       const resolved = resolveConfiguration(stack);
       return resolved.entries[key] as T | undefined;
@@ -223,6 +237,7 @@ export async function createConfigurationService(
         [key]: value,
       };
       container.applyLayerData(provider.layer, updated);
+      options.scopeCache?.clear();
     },
 
     remove(key: string, layer: ConfigurationLayer): void {
@@ -237,6 +252,7 @@ export async function createConfigurationService(
       const updated = container.getLayerEntries(provider.layer);
       delete updated[key];
       container.applyLayerData(provider.layer, updated);
+      options.scopeCache?.clear();
     },
 
     onChange(key: string, listener: (value: unknown) => void): () => void {

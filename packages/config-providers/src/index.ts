@@ -27,6 +27,8 @@ export {
 
 export { createScopedConfigurationService } from "./scoped-service.js";
 
+export { createScopeResolutionCache } from "./scope-resolution-cache.js";
+
 export { createViewConfigurationService } from "./view-service.js";
 
 export { MemoryDurableConfigCacheAdapter } from "./sync/durable-cache-memory.js";
