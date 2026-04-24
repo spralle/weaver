@@ -1,18 +1,18 @@
-import { defineWeaver, Layers } from "@weaver/config-types";
 import {
-  StaticJsonStorageProvider,
+  createConfigurationService,
   InMemoryStorageProvider,
   LocalStorageProvider,
-  createConfigurationService,
+  StaticJsonStorageProvider,
 } from "@weaver/config-providers";
 import { createOverrideSessionProvider } from "@weaver/config-sessions";
+import { defineWeaver, Layers } from "@weaver/config-types";
 import {
-  CORE_DEFAULTS,
   APP_DEFAULTS,
+  CORE_DEFAULTS,
   COUNTRY_GB_DEFAULTS,
   COUNTRY_NL_DEFAULTS,
-  LOCATION_GBDVR_DEFAULTS,
   LOCATION_FRCQF_DEFAULTS,
+  LOCATION_GBDVR_DEFAULTS,
   LOCATION_NLEUR_DEFAULTS,
 } from "./seed-data.js";
 

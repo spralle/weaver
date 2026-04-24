@@ -1,9 +1,14 @@
 import type { ConfigurationService, WeaverConfig } from "@weaver/config-types";
-import { ALL_KEYS } from "../seed-data.js";
-import { getSelectedKey, setSelectedKey, onSelectedKeyChange } from "../state.js";
-import { getSelectedLocation, onSelectedLocationChange } from "../state.js";
+import { buildScopePath, findLocation } from "../locations.js";
 import { getSchemaForKey } from "../schemas.js";
-import { findLocation, buildScopePath } from "../locations.js";
+import { ALL_KEYS } from "../seed-data.js";
+import {
+  getSelectedKey,
+  getSelectedLocation,
+  onSelectedKeyChange,
+  onSelectedLocationChange,
+  setSelectedKey,
+} from "../state.js";
 
 const LAYER_TYPE_COLORS: Record<string, string> = {
   static: "var(--color-static)",
@@ -56,9 +61,7 @@ function buildRow(
   const locationCode = getSelectedLocation();
   const loc = locationCode ? findLocation(locationCode) : null;
   const baseValue = service.get(key);
-  const value = loc
-    ? service.getForScope(key, buildScopePath(loc))
-    : baseValue;
+  const value = loc ? service.getForScope(key, buildScopePath(loc)) : baseValue;
   const inspection = service.inspect(key);
   const row = document.createElement("div");
   row.className = `key-row${key === selected ? " selected" : ""}`;
@@ -92,9 +95,7 @@ function getLayerColor(
   return LAYER_TYPE_COLORS[layer.type.id] ?? null;
 }
 
-function buildBadges(
-  schema: ReturnType<typeof getSchemaForKey>,
-): string {
+function buildBadges(schema: ReturnType<typeof getSchemaForKey>): string {
   if (!schema) return "";
   let html = "";
   if (schema.maxOverrideLayer) {
@@ -108,11 +109,16 @@ function buildBadges(
 
 function policyLabel(policy: string): string {
   switch (policy) {
-    case "direct-allowed": return "direct";
-    case "staging-gate": return "staging";
-    case "full-pipeline": return "pipeline";
-    case "emergency-override": return "emergency";
-    default: return policy;
+    case "direct-allowed":
+      return "direct";
+    case "staging-gate":
+      return "staging";
+    case "full-pipeline":
+      return "pipeline";
+    case "emergency-override":
+      return "emergency";
+    default:
+      return policy;
   }
 }
 

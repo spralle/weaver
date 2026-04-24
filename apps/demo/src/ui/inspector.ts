@@ -1,9 +1,18 @@
 import type { ConfigurationService, WeaverConfig } from "@weaver/config-types";
-import { onSelectedKeyChange, getSelectedKey } from "../state.js";
-import { getSelectedLocation, onSelectedLocationChange } from "../state.js";
+import {
+  buildScopePath,
+  COUNTRY_CODES_WITH_PROVIDERS,
+  findLocation,
+  type LocationDef,
+} from "../locations.js";
 import { getSchemaForKey } from "../schemas.js";
 import { ALL_PROVIDER_LAYERS } from "../setup.js";
-import { findLocation, buildScopePath, COUNTRY_CODES_WITH_PROVIDERS, type LocationDef } from "../locations.js";
+import {
+  getSelectedKey,
+  getSelectedLocation,
+  onSelectedKeyChange,
+  onSelectedLocationChange,
+} from "../state.js";
 
 const VISIBILITY_COLORS: Record<string, string> = {
   public: "#6bcb77",
@@ -56,14 +65,18 @@ export function renderInspector(
       scopeLayerValues[sl] = service.getAtLayer(sl, key);
     }
 
-    const isLocationWinner = loc !== null
-      && scopedValue !== inspection.effectiveValue;
+    const isLocationWinner =
+      loc !== null && scopedValue !== inspection.effectiveValue;
     const effectiveLayer = isLocationWinner
-      ? findWinnerScopeLayer(scopeLayers, scopeLayerValues) ?? inspection.effectiveLayer
+      ? (findWinnerScopeLayer(scopeLayers, scopeLayerValues) ??
+        inspection.effectiveLayer)
       : inspection.effectiveLayer;
 
     let html = `<h3>${key}</h3>`;
-    html += buildEffectiveSection({ effectiveValue: scopedValue, effectiveLayer });
+    html += buildEffectiveSection({
+      effectiveValue: scopedValue,
+      effectiveLayer,
+    });
     html += buildLayerBreakdown(displayLayers, {
       ...inspection,
       effectiveLayer,
@@ -87,7 +100,10 @@ export function renderInspector(
   });
 }
 
-function buildEffectiveSection(inspection: { effectiveValue: unknown; effectiveLayer: string | undefined }): string {
+function buildEffectiveSection(inspection: {
+  effectiveValue: unknown;
+  effectiveLayer: string | undefined;
+}): string {
   return `<div class="effective-value">
     Effective: <strong>${formatValue(inspection.effectiveValue)}</strong>
     <span class="effective-layer">from <em>${inspection.effectiveLayer ?? "none"}</em></span>
@@ -96,7 +112,10 @@ function buildEffectiveSection(inspection: { effectiveValue: unknown; effectiveL
 
 function buildLayerBreakdown(
   layerNames: string[],
-  inspection: { effectiveLayer: string | undefined; layerValues: Record<string, unknown> },
+  inspection: {
+    effectiveLayer: string | undefined;
+    layerValues: Record<string, unknown>;
+  },
 ): string {
   let html = `<div class="layer-breakdown">`;
   for (const layer of layerNames) {

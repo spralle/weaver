@@ -12,7 +12,15 @@
   "bugs": {
     "url": "https://github.com/spralle/weaver/issues"
   },
-  "keywords": ["weaver", "configuration", "config", "layered", "sync", "offline", "conflict-resolution"],
+  "keywords": [
+    "weaver",
+    "configuration",
+    "config",
+    "layered",
+    "sync",
+    "offline",
+    "conflict-resolution"
+  ],
   "type": "module",
   "exports": {
     ".": {

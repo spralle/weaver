@@ -105,7 +105,10 @@ export function withAuth(config: AuthConfig): AuthFunctions {
   }
 
   /** Checks if the caller's roles satisfy the layer write policy or dynamic scope fallback. */
-  function checkLayerWritePolicy(roles: ReadonlyArray<string>, layer: string): boolean {
+  function checkLayerWritePolicy(
+    roles: ReadonlyArray<string>,
+    layer: string,
+  ): boolean {
     const policy = layerWritePolicies.find((p) => p.layer === layer);
     if (policy) {
       return roles.some((r) => policy.allowedRoles.includes(r));
@@ -119,10 +122,13 @@ export function withAuth(config: AuthConfig): AuthFunctions {
     roles: ReadonlyArray<string>,
     schema: ConfigurationPropertySchema,
   ): boolean {
-    if (schema.writeRestriction === undefined || schema.writeRestriction.length === 0) {
+    if (
+      schema.writeRestriction === undefined ||
+      schema.writeRestriction.length === 0
+    ) {
       return true;
     }
-    return roles.some((r) => schema.writeRestriction!.includes(r));
+    return roles.some((r) => schema.writeRestriction?.includes(r));
   }
 
   /** Checks maxOverrideLayer ceiling — denies if target layer exceeds ceiling (unless emergency). */
@@ -180,10 +186,18 @@ export function withAuth(config: AuthConfig): AuthFunctions {
     if (!checkWriteRestriction(accessContext.roles, propertySchema)) {
       return false;
     }
-    if (!checkMaxOverrideLayer(layer, propertySchema, accessContext.sessionMode)) {
+    if (
+      !checkMaxOverrideLayer(layer, propertySchema, accessContext.sessionMode)
+    ) {
       return false;
     }
-    if (!checkSessionModeEnforcement(layer, propertySchema, accessContext.sessionMode)) {
+    if (
+      !checkSessionModeEnforcement(
+        layer,
+        propertySchema,
+        accessContext.sessionMode,
+      )
+    ) {
       return false;
     }
     return true;

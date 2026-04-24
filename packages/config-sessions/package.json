@@ -12,7 +12,15 @@
   "bugs": {
     "url": "https://github.com/spralle/weaver/issues"
   },
-  "keywords": ["weaver", "configuration", "config", "layered", "sessions", "override", "ephemeral"],
+  "keywords": [
+    "weaver",
+    "configuration",
+    "config",
+    "layered",
+    "sessions",
+    "override",
+    "ephemeral"
+  ],
   "type": "module",
   "exports": {
     ".": {

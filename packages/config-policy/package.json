@@ -12,7 +12,15 @@
   "bugs": {
     "url": "https://github.com/spralle/weaver/issues"
   },
-  "keywords": ["weaver", "configuration", "config", "layered", "policy", "ratchet", "change-control"],
+  "keywords": [
+    "weaver",
+    "configuration",
+    "config",
+    "layered",
+    "policy",
+    "ratchet",
+    "change-control"
+  ],
   "type": "module",
   "exports": {
     ".": {

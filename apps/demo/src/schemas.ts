@@ -1,5 +1,5 @@
-import type { ConfigurationPropertySchema } from "@weaver/config-types";
 import { createSchemaRegistry } from "@weaver/config-engine";
+import type { ConfigurationPropertySchema } from "@weaver/config-types";
 
 export const schemaRegistry = createSchemaRegistry();
 
@@ -8,14 +8,14 @@ schemaRegistry.register({
   ownerId: "demo",
   namespace: "app.ui",
   properties: {
-    "theme": {
+    theme: {
       type: "string",
       description: "UI theme preference",
       enum: ["light", "dark", "system"],
       changePolicy: "direct-allowed",
       visibility: "public",
     },
-    "language": {
+    language: {
       type: "string",
       description: "Interface language — locked at tenant",
       maxOverrideLayer: "tenant",
@@ -100,6 +100,8 @@ schemaRegistry.register({
   },
 });
 
-export function getSchemaForKey(key: string): ConfigurationPropertySchema | undefined {
+export function getSchemaForKey(
+  key: string,
+): ConfigurationPropertySchema | undefined {
   return schemaRegistry.getSchema(key)?.schema;
 }

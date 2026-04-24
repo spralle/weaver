@@ -45,7 +45,6 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
   private readonly retryMaxMs: number;
   private readonly conflictResolution: "server-authoritative" | "lww-fallback";
   private readonly now: () => number;
-  private readonly options: ConfigSyncOrchestratorOptions;
   private readonly pendingWrites = new Map<string, unknown>();
   private readonly revisions = new Map<string, string>();
   private readonly localContext = new Map<string, LocalMutationContext>();
@@ -61,7 +60,6 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
   private readonly instanceId: string;
 
   constructor(options: ConfigSyncOrchestratorOptions) {
-    this.options = options;
     this.snapshotCache = options.snapshotCache;
     this.mutationQueue = options.mutationQueue;
     this.transport = options.transport;

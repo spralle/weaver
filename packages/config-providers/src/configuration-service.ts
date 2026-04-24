@@ -10,9 +10,9 @@ import type {
   ConfigurationSessionHandle,
   ConfigurationStorageProvider,
   ScopeInstance,
+  ScopeResolutionCache,
   WeaverConfig,
 } from "@weaver/config-types";
-import type { ScopeResolutionCache } from "@weaver/config-types";
 import { serializeScopePath } from "@weaver/config-types";
 import { createStateContainer } from "./state-container.js";
 
@@ -21,7 +21,12 @@ export interface ConfigurationServiceOptions {
   weaverConfig: WeaverConfig;
   session?: OverrideSessionController | undefined;
   scopeCache?: ScopeResolutionCache | undefined;
-  onWriteError?: ((error: unknown, context: { key: string; layer: string; operation: "write" | "remove" }) => void) | undefined;
+  onWriteError?:
+    | ((
+        error: unknown,
+        context: { key: string; layer: string; operation: "write" | "remove" },
+      ) => void)
+    | undefined;
 }
 
 /**
@@ -154,7 +159,9 @@ export async function createConfigurationService(
     return { fixedBase, scopeEntries, fixedTop };
   }
 
-  function buildScopedLayerStack(scopePath: ScopeInstance[]): ConfigurationLayerStack {
+  function buildScopedLayerStack(
+    scopePath: ScopeInstance[],
+  ): ConfigurationLayerStack {
     const { fixedBase, scopeEntries, fixedTop } = classifyProviderLayers();
 
     const orderedScopeLayers = scopePath
@@ -238,7 +245,11 @@ export async function createConfigurationService(
 
       // Fire-and-forget the async write; update container synchronously
       provider.write(key, value).catch((error: unknown) => {
-        options.onWriteError?.(error, { key, layer: provider.layer, operation: "write" });
+        options.onWriteError?.(error, {
+          key,
+          layer: provider.layer,
+          operation: "write",
+        });
       });
 
       const updated = {
@@ -257,7 +268,11 @@ export async function createConfigurationService(
       }
 
       provider.remove(key).catch((error: unknown) => {
-        options.onWriteError?.(error, { key, layer: provider.layer, operation: "remove" });
+        options.onWriteError?.(error, {
+          key,
+          layer: provider.layer,
+          operation: "remove",
+        });
       });
 
       const updated = container.getLayerEntries(provider.layer);
