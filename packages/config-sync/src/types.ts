@@ -1,17 +1,16 @@
 import type {
+  ConfigSyncTransport,
   ConfigurationChange,
+  ConfigurationConflict,
   ConfigurationLayer,
   ConfigurationLayerData,
-  ConfigurationConflict,
   SyncErrorCode,
   SyncErrorMetadata,
-  SyncQueueMetadata,
-  SyncResult,
-  SyncStatus,
-  SyncQueuedMutation,
-  ConfigSyncTransport,
-  SyncSnapshotCache,
   SyncMutationQueue,
+  SyncQueuedMutation,
+  SyncResult,
+  SyncSnapshotCache,
+  SyncStatus,
   WriteResult,
 } from "@weaver/config-types";
 
@@ -35,11 +34,13 @@ export interface ConfigSyncOrchestratorOptions {
 export interface SyncDiagnostics {
   pendingCount: number;
   lastSyncedAt?: number | undefined;
-  lastError?: {
-    code: SyncErrorCode;
-    message: string;
-    retryable: boolean;
-  } | undefined;
+  lastError?:
+    | {
+        code: SyncErrorCode;
+        message: string;
+        retryable: boolean;
+      }
+    | undefined;
 }
 
 export interface ConfigSyncOrchestrator {
@@ -52,7 +53,9 @@ export interface ConfigSyncOrchestrator {
   getSyncState(): SyncStatus;
   onSyncStateChange(listener: (state: SyncStatus) => void): () => void;
   getDiagnostics(): SyncDiagnostics;
-  onDiagnosticsChange(listener: (diagnostics: SyncDiagnostics) => void): () => void;
+  onDiagnosticsChange(
+    listener: (diagnostics: SyncDiagnostics) => void,
+  ): () => void;
   getPendingWrites(): ReadonlyMap<string, unknown>;
 }
 
@@ -63,13 +66,17 @@ export interface SyncableConfigStorageProvider {
   load(): Promise<ConfigurationLayerData>;
   write(key: string, value: unknown): Promise<WriteResult>;
   remove(key: string): Promise<WriteResult>;
-  onExternalChange?(listener: (changes: ConfigurationChange[]) => void): () => void;
+  onExternalChange?(
+    listener: (changes: ConfigurationChange[]) => void,
+  ): () => void;
   readonly syncState: SyncStatus;
   readonly pendingWrites: ReadonlyMap<string, unknown>;
   sync(): Promise<SyncResult>;
   onSyncStateChange(listener: (state: SyncStatus) => void): () => void;
   getSyncDiagnostics(): SyncDiagnostics;
-  onSyncDiagnosticsChange(listener: (diagnostics: SyncDiagnostics) => void): () => void;
+  onSyncDiagnosticsChange(
+    listener: (diagnostics: SyncDiagnostics) => void,
+  ): () => void;
 }
 
 export interface PushCycleResult {

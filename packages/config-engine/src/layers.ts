@@ -1,10 +1,9 @@
 // Layer resolution engine — core configuration resolution logic
 
 import type {
-  ConfigurationLayerStack,
-  ConfigurationLayer,
   ConfigurationInspection,
-  ConfigurationPropertySchema,
+  ConfigurationLayer,
+  ConfigurationLayerStack,
 } from "@weaver/config-types";
 
 import { deepMerge } from "./merge.js";

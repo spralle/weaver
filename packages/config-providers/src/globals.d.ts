@@ -40,4 +40,7 @@ type EventListener = (event: unknown) => void;
 // Augment globalThis with browser APIs used at runtime (feature-detected)
 declare var localStorage: Storage;
 declare function addEventListener(type: string, listener: EventListener): void;
-declare function removeEventListener(type: string, listener: EventListener): void;
+declare function removeEventListener(
+  type: string,
+  listener: EventListener,
+): void;

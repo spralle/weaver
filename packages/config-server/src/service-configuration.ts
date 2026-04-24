@@ -1,11 +1,11 @@
 // ServiceConfigurationService factory — namespace-scoped config for backend services
 
+import { qualifyKey } from "@weaver/config-engine";
 import type {
+  ConfigurationPropertySchema,
   ConfigurationService,
   ServiceConfigurationService,
-  ConfigurationPropertySchema,
 } from "@weaver/config-types";
-import { qualifyKey } from "@weaver/config-engine";
 
 export interface ServiceConfigurationOptions {
   configService: ConfigurationService;

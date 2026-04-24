@@ -1,12 +1,12 @@
-import { readFile, writeFile, rename, stat, mkdir } from "node:fs/promises";
+import { mkdir, readFile, rename, stat, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
+import { deepMerge } from "@weaver/config-engine";
 import type {
-  ConfigurationStorageProvider,
+  ConfigurationLayer,
   ConfigurationLayerData,
+  ConfigurationStorageProvider,
   WriteResult,
 } from "@weaver/config-types";
-import type { ConfigurationLayer } from "@weaver/config-types";
-import { deepMerge } from "@weaver/config-engine";
 
 export interface FileSystemProviderOptions {
   id: string;

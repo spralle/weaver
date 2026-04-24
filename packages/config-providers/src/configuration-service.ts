@@ -1,19 +1,18 @@
 // Configuration service factory — composes providers, state container, and engine
 
+import { inspectKey, resolveConfiguration } from "@weaver/config-engine";
+import type { OverrideSessionController } from "@weaver/config-sessions";
 import type {
-  ConfigurationService,
-  ConfigurationStorageProvider,
-  ConfigurationLayer,
   ConfigurationInspection,
+  ConfigurationLayer,
   ConfigurationLayerStack,
+  ConfigurationService,
   ConfigurationSessionHandle,
+  ConfigurationStorageProvider,
+  ScopeInstance,
   WeaverConfig,
 } from "@weaver/config-types";
-import type { ScopeInstance } from "@weaver/config-types";
-import { resolveConfiguration, inspectKey } from "@weaver/config-engine";
 import { createStateContainer } from "./state-container.js";
-import type { ConfigurationStateContainer } from "./state-container.js";
-import type { OverrideSessionController } from "@weaver/config-sessions";
 
 export interface ConfigurationServiceOptions {
   providers: ConfigurationStorageProvider[];
@@ -38,7 +37,9 @@ export async function createConfigurationService(
   const dynamicLayers = weaverConfig.getLayersByType("dynamic");
   let unknownLayerRank: number;
   if (dynamicLayers.length > 0) {
-    const maxDynRank = Math.max(...dynamicLayers.map((dl) => weaverConfig.getRank(dl.name)));
+    const maxDynRank = Math.max(
+      ...dynamicLayers.map((dl) => weaverConfig.getRank(dl.name)),
+    );
     unknownLayerRank = maxDynRank + 0.5;
   } else {
     // No dynamic layers — unknown layers sort after all known layers
@@ -53,9 +54,10 @@ export async function createConfigurationService(
   const container = createStateContainer(getRank);
 
   // When a session controller is provided, auto-register its provider
-  const allProviders = options.session !== undefined
-    ? [...options.providers, options.session.provider]
-    : [...options.providers];
+  const allProviders =
+    options.session !== undefined
+      ? [...options.providers, options.session.provider]
+      : [...options.providers];
 
   // Sort providers by layer rank for deterministic load order
   const sortedProviders = allProviders.sort(
@@ -92,7 +94,9 @@ export async function createConfigurationService(
     return sortedProviders.find((p) => p.layer === layer);
   }
 
-  function findHighestWritableProvider(): ConfigurationStorageProvider | undefined {
+  function findHighestWritableProvider():
+    | ConfigurationStorageProvider
+    | undefined {
     // Iterate from highest rank to lowest
     const reversed = [...sortedProviders].reverse();
     return reversed.find((p) => p.writable);
@@ -119,9 +123,10 @@ export async function createConfigurationService(
     const scopeEntries = new Map<string, Record<string, unknown>>();
 
     const dynLayers = weaverConfig.getLayersByType("dynamic");
-    const maxDynRank = dynLayers.length > 0
-      ? Math.max(...dynLayers.map((dl) => getRank(dl.name)))
-      : -Infinity;
+    const maxDynRank =
+      dynLayers.length > 0
+        ? Math.max(...dynLayers.map((dl) => getRank(dl.name)))
+        : -Infinity;
     const hasDynLayers = dynLayers.length > 0;
 
     for (const provider of sortedProviders) {
@@ -153,9 +158,13 @@ export async function createConfigurationService(
         const entries = scopeEntries.get(layerId);
         return entries !== undefined ? { layer: layerId, entries } : undefined;
       })
-      .filter((layer): layer is { layer: string; entries: Record<string, unknown> } => {
-        return layer !== undefined;
-      });
+      .filter(
+        (
+          layer,
+        ): layer is { layer: string; entries: Record<string, unknown> } => {
+          return layer !== undefined;
+        },
+      );
 
     return {
       layers: [...fixedBase, ...orderedScopeLayers, ...fixedTop],
@@ -184,10 +193,7 @@ export async function createConfigurationService(
       return entries[key] as T | undefined;
     },
 
-    getForScope<T>(
-      key: string,
-      scopePath: ScopeInstance[],
-    ): T | undefined {
+    getForScope<T>(key: string, scopePath: ScopeInstance[]): T | undefined {
       const stack = buildScopedLayerStack(scopePath);
       const resolved = resolveConfiguration(stack);
       return resolved.entries[key] as T | undefined;

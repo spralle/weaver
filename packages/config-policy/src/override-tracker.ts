@@ -28,9 +28,7 @@ export function computeDeadline(
   createdAt: string,
   deadlineMs: number = DEFAULT_FOLLOW_UP_DEADLINE_MS,
 ): string {
-  return new Date(
-    new Date(createdAt).getTime() + deadlineMs,
-  ).toISOString();
+  return new Date(new Date(createdAt).getTime() + deadlineMs).toISOString();
 }
 
 export function resolveDeadlineMs(

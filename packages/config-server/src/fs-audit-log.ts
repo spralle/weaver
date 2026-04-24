@@ -1,6 +1,6 @@
 // File-system based audit log using JSON Lines (append-only) format
 
-import { readFile, appendFile, mkdir } from "node:fs/promises";
+import { appendFile, mkdir, readFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import type { ConfigAuditEntry } from "@weaver/config-types";
 import type { ConfigAuditLog } from "./audit-log.js";
@@ -50,7 +50,7 @@ export function createFileSystemAuditLog(filePath: string): ConfigAuditLog {
   return {
     async append(entry: ConfigAuditEntry): Promise<void> {
       await mkdir(dirname(filePath), { recursive: true });
-      await appendFile(filePath, JSON.stringify(entry) + "\n", "utf-8");
+      await appendFile(filePath, `${JSON.stringify(entry)}\n`, "utf-8");
     },
 
     async queryByKey(key: string): Promise<ConfigAuditEntry[]> {

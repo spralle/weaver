@@ -1,7 +1,7 @@
 // Internal state container — holds resolved config state with change notification
 
-import type { ConfigurationLayerStack } from "@weaver/config-types";
 import { resolveConfiguration } from "@weaver/config-engine";
+import type { ConfigurationLayerStack } from "@weaver/config-types";
 
 export interface ConfigurationStateContainer {
   /** Get the resolved value for a key */
@@ -15,7 +15,9 @@ export interface ConfigurationStateContainer {
   /** Listen for changes to a specific key */
   onChange(key: string, listener: (newValue: unknown) => void): () => void;
   /** Listen for all changes (wildcard) */
-  onAnyChange(listener: (changes: Array<{ key: string; newValue: unknown }>) => void): () => void;
+  onAnyChange(
+    listener: (changes: Array<{ key: string; newValue: unknown }>) => void,
+  ): () => void;
   /** Frozen snapshot of current state */
   snapshot(): Readonly<Record<string, unknown>>;
   /** Get raw entries for a specific layer (before merge) */
@@ -30,7 +32,9 @@ export function createStateContainer(
   let provenance = new Map<string, string>();
 
   const keyListeners = new Map<string, Set<(newValue: unknown) => void>>();
-  const globalListeners = new Set<(changes: Array<{ key: string; newValue: unknown }>) => void>();
+  const globalListeners = new Set<
+    (changes: Array<{ key: string; newValue: unknown }>) => void
+  >();
 
   function buildStack(): ConfigurationLayerStack {
     const sorted = [...rawLayers.entries()].sort(
@@ -96,7 +100,7 @@ export function createStateContainer(
     },
 
     getNamespace(prefix: string): Record<string, unknown> {
-      const dotPrefix = prefix + ".";
+      const dotPrefix = `${prefix}.`;
       const result: Record<string, unknown> = {};
       for (const key of Object.keys(resolvedEntries)) {
         if (key.startsWith(dotPrefix)) {
@@ -130,7 +134,9 @@ export function createStateContainer(
       };
     },
 
-    onAnyChange(listener: (changes: Array<{ key: string; newValue: unknown }>) => void): () => void {
+    onAnyChange(
+      listener: (changes: Array<{ key: string; newValue: unknown }>) => void,
+    ): () => void {
       globalListeners.add(listener);
       return () => {
         globalListeners.delete(listener);

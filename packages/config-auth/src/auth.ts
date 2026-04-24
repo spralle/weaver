@@ -176,6 +176,7 @@ export function withAuth(config: AuthConfig): AuthFunctions {
     if (!propertySchema) {
       return true;
     }
+
     if (!checkWriteRestriction(accessContext.roles, propertySchema)) {
       return false;
     }

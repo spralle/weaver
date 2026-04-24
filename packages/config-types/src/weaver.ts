@@ -47,6 +47,7 @@ export function defineWeaver<const T extends readonly LayerDefinition[]>(
   // Build rank map — position = rank
   const rankMap = new Map<string, number>();
   for (let i = 0; i < layers.length; i++) {
+    // biome-ignore lint/style/noNonNullAssertion: index is within bounds of layers.length
     rankMap.set(layers[i]!.name, i);
   }
 

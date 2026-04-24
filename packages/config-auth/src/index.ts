@@ -1,6 +1,6 @@
 export type {
-  VisibilityRoleMapping,
   AuthConfig,
   AuthFunctions,
+  VisibilityRoleMapping,
 } from "./auth.js";
 export { withAuth } from "./auth.js";
