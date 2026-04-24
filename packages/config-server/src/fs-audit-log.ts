@@ -35,6 +35,17 @@ function isNodeError(err: unknown): err is NodeJS.ErrnoException {
   return err instanceof Error && "code" in err;
 }
 
+/**
+ * Creates a file-system backed audit log using JSON Lines (append-only) format.
+ *
+ * **Scalability note**: Query operations (`queryByKey`, `queryByTimeRange`,
+ * `getRecent`) read the entire log file into memory on every call. This
+ * implementation is suitable for development, testing, and low-volume production
+ * use (< ~10,000 entries). For high-volume production workloads, use a
+ * database-backed audit log implementation instead.
+ *
+ * Writes are append-only and remain efficient regardless of file size.
+ */
 export function createFileSystemAuditLog(filePath: string): ConfigAuditLog {
   return {
     async append(entry: ConfigAuditEntry): Promise<void> {

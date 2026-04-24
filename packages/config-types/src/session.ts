@@ -36,6 +36,7 @@ export interface SessionActivationRequest {
   reason: string;
   durationMs?: number | undefined;
   elevatedAuth?: { token: string; method: string } | undefined;
+  activatedBy?: string | undefined;
 }
 
 export interface SessionDeactivationResult {

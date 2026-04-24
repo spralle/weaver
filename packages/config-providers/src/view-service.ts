@@ -35,6 +35,7 @@ export function createViewConfigurationService(
   root: ConfigurationService,
   namespace: string,
   viewId: string,
+  sessionLayer?: string | undefined,
 ): ViewConfigurationService {
   return {
     get<T>(key: string): T | undefined {
@@ -68,12 +69,9 @@ export function createViewConfigurationService(
         `${viewId}.__instance__.${instanceIdVal}`,
       );
       const entries = root.getNamespace(instPrefix);
+      const targetLayer = sessionLayer ?? "session";
       for (const key of Object.keys(entries)) {
-        // Remove from the highest writable layer; the service.remove needs a layer
-        // but the root.set wrote without specifying a layer (highest writable).
-        // We use getNamespace + remove pattern. Since remove requires a layer,
-        // we use "session" as the default writable layer for instance overrides.
-        root.remove(key, "session");
+        root.remove(key, targetLayer);
       }
     },
   };

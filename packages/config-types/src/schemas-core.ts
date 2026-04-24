@@ -219,6 +219,7 @@ export const sessionActivationRequestSchema = z
       })
       .strict()
       .optional(),
+    activatedBy: z.string().optional(),
   })
   .strict();
 

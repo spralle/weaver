@@ -169,7 +169,7 @@ export function createOverrideSessionProvider(
         id,
         activatedAt,
         expiresAt,
-        activatedBy: "system",
+        activatedBy: request.activatedBy ?? "system",
         reason: request.reason,
         isActive: true,
         overrides: {},

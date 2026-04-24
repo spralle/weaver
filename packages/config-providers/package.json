@@ -1,6 +1,18 @@
 {
   "name": "@weaver/config-providers",
   "version": "0.0.0",
+  "description": "Storage provider implementations and the configuration service factory for Weaver",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/spralle/weaver.git",
+    "directory": "packages/config-providers"
+  },
+  "homepage": "https://github.com/spralle/weaver/tree/main/packages/config-providers#readme",
+  "bugs": {
+    "url": "https://github.com/spralle/weaver/issues"
+  },
+  "keywords": ["weaver", "configuration", "config", "layered", "providers", "storage", "service"],
   "type": "module",
   "exports": {
     ".": {
