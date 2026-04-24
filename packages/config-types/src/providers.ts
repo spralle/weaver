@@ -19,7 +19,9 @@ export interface ConfigurationStorageProvider {
   load(): Promise<ConfigurationLayerData>;
   write(key: string, value: unknown): Promise<WriteResult>;
   remove(key: string): Promise<WriteResult>;
-  onExternalChange?(listener: (changes: ConfigurationChange[]) => void): () => void;
+  onExternalChange?(
+    listener: (changes: ConfigurationChange[]) => void,
+  ): () => void;
 }
 
 export type SyncStatus =
@@ -174,8 +176,13 @@ export interface SyncSnapshotCache {
 
 export interface SyncMutationQueue {
   enqueueMutation(mutation: SyncQueuedMutation): Promise<void>;
-  peekQueuedMutations(limit: number): Promise<ReadonlyArray<SyncQueuedMutation>>;
-  markRequestInFlight(requestId: string, mutationIds: ReadonlyArray<string>): Promise<void>;
+  peekQueuedMutations(
+    limit: number,
+  ): Promise<ReadonlyArray<SyncQueuedMutation>>;
+  markRequestInFlight(
+    requestId: string,
+    mutationIds: ReadonlyArray<string>,
+  ): Promise<void>;
   acknowledgeRequest(requestId: string): Promise<void>;
   releaseRequest(requestId: string, error: SyncErrorMetadata): Promise<void>;
   getQueueMetadata(): Promise<SyncQueueMetadata>;

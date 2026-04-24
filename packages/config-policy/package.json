@@ -1,6 +1,18 @@
 {
   "name": "@weaver/config-policy",
   "version": "0.0.0",
+  "description": "Change control policies, ratchet validation, and emergency override tracking for Weaver configuration",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/spralle/weaver.git",
+    "directory": "packages/config-policy"
+  },
+  "homepage": "https://github.com/spralle/weaver/tree/main/packages/config-policy#readme",
+  "bugs": {
+    "url": "https://github.com/spralle/weaver/issues"
+  },
+  "keywords": ["weaver", "configuration", "config", "layered", "policy", "ratchet", "change-control"],
   "type": "module",
   "exports": {
     ".": {
@@ -8,12 +20,14 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc -b",
     "typecheck": "tsc --noEmit",
     "test": "node --test test/*.test.mjs",
-    "lint": "echo 'no linter configured yet'"
+    "lint": "biome check ."
   },
   "dependencies": {
     "@weaver/config-types": "workspace:*",

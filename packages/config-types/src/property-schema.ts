@@ -1,5 +1,5 @@
-import type { ConfigurationLayer } from "./types.js";
 import type { PropertySessionMode } from "./session.js";
+import type { ConfigurationLayer } from "./types.js";
 
 export type ConfigChangePolicy =
   | "full-pipeline"
@@ -30,7 +30,9 @@ export type ConfigurationJsonSchemaType =
   | "null";
 
 export interface ConfigurationPropertySchema {
-  type: ConfigurationJsonSchemaType | ReadonlyArray<ConfigurationJsonSchemaType>;
+  type:
+    | ConfigurationJsonSchemaType
+    | ReadonlyArray<ConfigurationJsonSchemaType>;
   title?: string | undefined;
   default?: unknown;
   description?: string | undefined;
@@ -52,10 +54,17 @@ export interface ConfigurationPropertySchema {
   minProperties?: number | undefined;
   maxProperties?: number | undefined;
   required?: ReadonlyArray<string> | undefined;
-  properties?: Readonly<Record<string, ConfigurationPropertySchema>> | undefined;
-  patternProperties?: Readonly<Record<string, ConfigurationPropertySchema>> | undefined;
+  properties?:
+    | Readonly<Record<string, ConfigurationPropertySchema>>
+    | undefined;
+  patternProperties?:
+    | Readonly<Record<string, ConfigurationPropertySchema>>
+    | undefined;
   additionalProperties?: boolean | ConfigurationPropertySchema | undefined;
-  items?: ConfigurationPropertySchema | ReadonlyArray<ConfigurationPropertySchema> | undefined;
+  items?:
+    | ConfigurationPropertySchema
+    | ReadonlyArray<ConfigurationPropertySchema>
+    | undefined;
   oneOf?: ReadonlyArray<ConfigurationPropertySchema> | undefined;
   anyOf?: ReadonlyArray<ConfigurationPropertySchema> | undefined;
   allOf?: ReadonlyArray<ConfigurationPropertySchema> | undefined;

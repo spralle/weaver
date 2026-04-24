@@ -28,8 +28,7 @@ export interface ContractMetadata {
 export function deriveContractFromPackageJson(
   pkg: PackageJsonInput,
 ): ContractMetadata {
-  const namespace =
-    pkg.weaver?.configNamespace ?? deriveNamespace(pkg.name);
+  const namespace = pkg.weaver?.configNamespace ?? deriveNamespace(pkg.name);
 
   return {
     pluginId: pkg.name,

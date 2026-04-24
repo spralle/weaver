@@ -3,8 +3,8 @@ import type {
   DurableConfigCache,
   SyncCursor,
   SyncErrorMetadata,
-  SyncQueueMetadata,
   SyncQueuedMutation,
+  SyncQueueMetadata,
 } from "@weaver/config-types";
 
 interface InFlightRequest {
@@ -53,11 +53,18 @@ export class MemoryDurableConfigCacheAdapter implements DurableConfigCache {
     this.queue.pending.push(cloneValue(mutation));
   }
 
-  async peekQueuedMutations(limit: number): Promise<ReadonlyArray<SyncQueuedMutation>> {
-    return this.queue.pending.slice(0, limit).map((mutation) => cloneValue(mutation));
+  async peekQueuedMutations(
+    limit: number,
+  ): Promise<ReadonlyArray<SyncQueuedMutation>> {
+    return this.queue.pending
+      .slice(0, limit)
+      .map((mutation) => cloneValue(mutation));
   }
 
-  async markRequestInFlight(requestId: string, mutationIds: ReadonlyArray<string>): Promise<void> {
+  async markRequestInFlight(
+    requestId: string,
+    mutationIds: ReadonlyArray<string>,
+  ): Promise<void> {
     const picked: SyncQueuedMutation[] = [];
     const pickedIdSet = new Set(mutationIds);
 
@@ -80,15 +87,22 @@ export class MemoryDurableConfigCacheAdapter implements DurableConfigCache {
       return;
     }
 
-    this.queue.inFlight = this.queue.inFlight.filter((entry) => entry.requestId !== requestId);
+    this.queue.inFlight = this.queue.inFlight.filter(
+      (entry) => entry.requestId !== requestId,
+    );
     this.queue.inFlight.push({ requestId, mutations: picked });
   }
 
   async acknowledgeRequest(requestId: string): Promise<void> {
-    this.queue.inFlight = this.queue.inFlight.filter((entry) => entry.requestId !== requestId);
+    this.queue.inFlight = this.queue.inFlight.filter(
+      (entry) => entry.requestId !== requestId,
+    );
   }
 
-  async releaseRequest(requestId: string, _error: SyncErrorMetadata): Promise<void> {
+  async releaseRequest(
+    requestId: string,
+    _error: SyncErrorMetadata,
+  ): Promise<void> {
     const remainingInFlight: InFlightRequest[] = [];
     let released: SyncQueuedMutation[] = [];
 
@@ -107,14 +121,24 @@ export class MemoryDurableConfigCacheAdapter implements DurableConfigCache {
   }
 
   async getQueueMetadata(): Promise<SyncQueueMetadata> {
-    const allQueued = [...this.queue.pending, ...this.queue.inFlight.flatMap((entry) => entry.mutations)];
-    const queuedAtValues = allQueued.map((mutation) => mutation.metadata.queuedAt);
+    const allQueued = [
+      ...this.queue.pending,
+      ...this.queue.inFlight.flatMap((entry) => entry.mutations),
+    ];
+    const queuedAtValues = allQueued.map(
+      (mutation) => mutation.metadata.queuedAt,
+    );
 
     return {
       pendingCount: this.queue.pending.length,
-      inFlightCount: this.queue.inFlight.reduce((count, entry) => count + entry.mutations.length, 0),
-      oldestQueuedAt: queuedAtValues.length > 0 ? Math.min(...queuedAtValues) : undefined,
-      newestQueuedAt: queuedAtValues.length > 0 ? Math.max(...queuedAtValues) : undefined,
+      inFlightCount: this.queue.inFlight.reduce(
+        (count, entry) => count + entry.mutations.length,
+        0,
+      ),
+      oldestQueuedAt:
+        queuedAtValues.length > 0 ? Math.min(...queuedAtValues) : undefined,
+      newestQueuedAt:
+        queuedAtValues.length > 0 ? Math.max(...queuedAtValues) : undefined,
     };
   }
 }

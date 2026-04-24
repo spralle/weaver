@@ -10,22 +10,27 @@ import { createConfigSyncOrchestrator } from "./orchestrator.js";
 import type {
   ConfigSyncOrchestrator,
   ConfigSyncOrchestratorOptions,
-  SyncDiagnostics,
   SyncableConfigStorageProvider,
+  SyncDiagnostics,
 } from "./types.js";
 
-export interface SyncableStorageProviderAdapterOptions extends ConfigSyncOrchestratorOptions {
+export interface SyncableStorageProviderAdapterOptions
+  extends ConfigSyncOrchestratorOptions {
   id: string;
   layer: ConfigurationLayer | string;
 }
 
-export class SyncableStorageProviderAdapter implements SyncableConfigStorageProvider {
+export class SyncableStorageProviderAdapter
+  implements SyncableConfigStorageProvider
+{
   readonly id: string;
   readonly layer: ConfigurationLayer | string;
   readonly writable = true as const;
 
   private readonly orchestrator: ConfigSyncOrchestrator;
-  private readonly externalChangeListeners = new Set<(changes: ConfigurationChange[]) => void>();
+  private readonly externalChangeListeners = new Set<
+    (changes: ConfigurationChange[]) => void
+  >();
   private loadedSnapshot: ConfigurationLayerData = { entries: {} };
 
   constructor(options: SyncableStorageProviderAdapterOptions) {
@@ -68,7 +73,9 @@ export class SyncableStorageProviderAdapter implements SyncableConfigStorageProv
     return this.orchestrator.onSyncStateChange(listener);
   }
 
-  onExternalChange(listener: (changes: ConfigurationChange[]) => void): () => void {
+  onExternalChange(
+    listener: (changes: ConfigurationChange[]) => void,
+  ): () => void {
     this.externalChangeListeners.add(listener);
     return () => {
       this.externalChangeListeners.delete(listener);
@@ -79,7 +86,9 @@ export class SyncableStorageProviderAdapter implements SyncableConfigStorageProv
     return this.orchestrator.getDiagnostics();
   }
 
-  onSyncDiagnosticsChange(listener: (diagnostics: SyncDiagnostics) => void): () => void {
+  onSyncDiagnosticsChange(
+    listener: (diagnostics: SyncDiagnostics) => void,
+  ): () => void {
     return this.orchestrator.onDiagnosticsChange(listener);
   }
 
@@ -97,7 +106,9 @@ export class SyncableStorageProviderAdapter implements SyncableConfigStorageProv
     }
   }
 
-  private cloneSnapshot(snapshot: ConfigurationLayerData): ConfigurationLayerData {
+  private cloneSnapshot(
+    snapshot: ConfigurationLayerData,
+  ): ConfigurationLayerData {
     return {
       entries: { ...snapshot.entries },
       revision: snapshot.revision,

@@ -51,7 +51,10 @@ export function validateChangePolicies(
     }
 
     // Rule 3: Restart-required reload behavior with direct-allowed
-    if (entry.schema.reloadBehavior === "restart-required" && policy === "direct-allowed") {
+    if (
+      entry.schema.reloadBehavior === "restart-required" &&
+      policy === "direct-allowed"
+    ) {
       violations.push({
         key,
         violation: `Restart-required key "${key}" uses "${policy}" policy`,

@@ -5,8 +5,5 @@
     "rootDir": "src"
   },
   "include": ["src"],
-  "references": [
-    { "path": "../config-types" },
-    { "path": "../config-engine" }
-  ]
+  "references": [{ "path": "../config-types" }, { "path": "../config-engine" }]
 }

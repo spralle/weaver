@@ -1,6 +1,18 @@
 {
   "name": "@weaver/config-types",
   "version": "0.0.0",
+  "description": "Core type definitions, Zod schemas, and the defineWeaver() builder for declaring layered configuration stacks",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/spralle/weaver.git",
+    "directory": "packages/config-types"
+  },
+  "homepage": "https://github.com/spralle/weaver/tree/main/packages/config-types#readme",
+  "bugs": {
+    "url": "https://github.com/spralle/weaver/issues"
+  },
+  "keywords": ["weaver", "configuration", "config", "layered", "types", "schema", "zod"],
   "type": "module",
   "exports": {
     ".": {
@@ -8,12 +20,14 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc -b",
     "typecheck": "tsc --noEmit",
     "test": "node --test test/*.test.mjs",
-    "lint": "echo 'no linter configured yet'"
+    "lint": "biome check ."
   },
   "dependencies": {
     "zod": "^3.24.0"
