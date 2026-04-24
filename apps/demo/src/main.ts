@@ -6,6 +6,7 @@ import { renderInspector } from "./ui/inspector.js";
 import { renderEditor } from "./ui/editor.js";
 import { renderSessionPanel } from "./ui/session-panel.js";
 import { renderActivityLog } from "./ui/activity-log.js";
+import { renderLocationSelector } from "./ui/location-selector.js";
 import { addLogEntry } from "./state.js";
 import { ALL_KEYS } from "./seed-data.js";
 
@@ -21,6 +22,7 @@ async function main(): Promise<void> {
 
   // Mount UI panels
   renderLayerStack(document.getElementById("layer-stack")!, weaverConfig);
+  renderLocationSelector(document.getElementById("location-selector")!);
   renderConfigBrowser(document.getElementById("config-browser")!, service, weaverConfig);
   renderInspector(document.getElementById("inspector")!, service, weaverConfig);
   renderEditor(document.getElementById("editor")!, service, session, weaverConfig);

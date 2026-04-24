@@ -67,3 +67,23 @@ export function onSessionActiveChange(cb: Callback<boolean>): () => void {
     if (idx >= 0) sessionListeners.splice(idx, 1);
   };
 }
+
+let selectedLocation: string | null = null;
+const locationListeners: Callback<string | null>[] = [];
+
+export function getSelectedLocation(): string | null {
+  return selectedLocation;
+}
+
+export function setSelectedLocation(loc: string | null): void {
+  selectedLocation = loc;
+  for (const cb of locationListeners) cb(loc);
+}
+
+export function onSelectedLocationChange(cb: Callback<string | null>): () => void {
+  locationListeners.push(cb);
+  return () => {
+    const idx = locationListeners.indexOf(cb);
+    if (idx >= 0) locationListeners.splice(idx, 1);
+  };
+}

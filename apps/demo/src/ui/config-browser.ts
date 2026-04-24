@@ -1,13 +1,16 @@
 import type { ConfigurationService, WeaverConfig } from "@weaver/config-types";
 import { ALL_KEYS } from "../seed-data.js";
 import { getSelectedKey, setSelectedKey, onSelectedKeyChange } from "../state.js";
+import { getSelectedLocation, onSelectedLocationChange } from "../state.js";
 import { getSchemaForKey } from "../schemas.js";
+import { findLocation, buildScopePath } from "../locations.js";
 
 const LAYER_TYPE_COLORS: Record<string, string> = {
   static: "var(--color-static)",
   dynamic: "var(--color-dynamic)",
   personal: "var(--color-personal)",
   ephemeral: "var(--color-ephemeral)",
+  scope: "var(--color-scope)",
 };
 
 const POLICY_CLASSES: Record<string, string> = {
@@ -38,6 +41,7 @@ export function renderConfigBrowser(
 
   render();
   onSelectedKeyChange(() => render());
+  onSelectedLocationChange(() => render());
   for (const key of ALL_KEYS) {
     service.onChange(key, () => render());
   }
@@ -49,13 +53,21 @@ function buildRow(
   service: ConfigurationService,
   weaverConfig: WeaverConfig,
 ): HTMLDivElement {
-  const value = service.get(key);
+  const locationCode = getSelectedLocation();
+  const loc = locationCode ? findLocation(locationCode) : null;
+  const baseValue = service.get(key);
+  const value = loc
+    ? service.getForScope(key, buildScopePath(loc))
+    : baseValue;
   const inspection = service.inspect(key);
   const row = document.createElement("div");
   row.className = `key-row${key === selected ? " selected" : ""}`;
 
-  // Layer color border
-  const borderColor = getLayerColor(inspection.effectiveLayer, weaverConfig);
+  // If scoped value differs from base, location layer is the winner
+  const isLocationWinner = loc !== null && value !== baseValue;
+  const borderColor = isLocationWinner
+    ? "var(--color-scope)"
+    : getLayerColor(inspection.effectiveLayer, weaverConfig);
   if (borderColor) {
     row.style.borderLeft = `3px solid ${borderColor}`;
   }

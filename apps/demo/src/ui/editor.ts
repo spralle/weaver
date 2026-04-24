@@ -2,9 +2,24 @@ import type { ConfigurationService, WeaverConfig } from "@weaver/config-types";
 import type { OverrideSessionController } from "@weaver/config-sessions";
 import { evaluateChangePolicy } from "@weaver/config-policy";
 import { getSelectedKey, onSelectedKeyChange, addLogEntry, isSessionActive, onSessionActiveChange } from "../state.js";
+import { getSelectedLocation, onSelectedLocationChange } from "../state.js";
 import { getSchemaForKey } from "../schemas.js";
+import { findLocation, COUNTRY_CODES_WITH_PROVIDERS } from "../locations.js";
 
-const WRITABLE_LAYERS = ["tenant", "user", "session"] as const;
+const BASE_WRITABLE_LAYERS = ["tenant", "user", "session"] as const;
+
+function getWritableLayers(): string[] {
+  const locationCode = getSelectedLocation();
+  if (!locationCode) return [...BASE_WRITABLE_LAYERS];
+  const loc = findLocation(locationCode);
+  const layers = ["tenant"];
+  if (loc && COUNTRY_CODES_WITH_PROVIDERS.has(loc.countryCode)) {
+    layers.push(`country:${loc.countryCode}`);
+  }
+  layers.push(`location:${locationCode}`);
+  layers.push("user", "session");
+  return layers;
+}
 
 export function renderEditor(
   container: HTMLElement,
@@ -26,7 +41,7 @@ export function renderEditor(
     const schema = getSchemaForKey(key);
     let html = `<h3>${key}</h3>`;
 
-    for (const layer of WRITABLE_LAYERS) {
+    for (const layer of getWritableLayers()) {
       html += buildLayerSection(layer, key, currentValue, service, schema, weaverConfig);
     }
 
@@ -38,6 +53,7 @@ export function renderEditor(
   render();
   onSelectedKeyChange(() => render());
   onSessionActiveChange(() => render());
+  onSelectedLocationChange(() => render());
 
   let cleanupOnChange: (() => void) | null = null;
   onSelectedKeyChange((key) => {
@@ -85,9 +101,13 @@ function isCeilingBlocked(
   weaverConfig: WeaverConfig,
 ): boolean {
   if (!schema?.maxOverrideLayer) return false;
-  // Emergency session re-enables session layer
   if (layer === "session" && isSessionActive()) return false;
-  const layerRank = weaverConfig.getRank(layer);
+  // Scope layers (country:*, location:*) sit between tenant (rank 2) and user (rank 3)
+  const SCOPE_LAYER_RANK = 2.5;
+  const isScopeLayer = layer.startsWith("location:") || layer.startsWith("country:");
+  const layerRank = isScopeLayer
+    ? SCOPE_LAYER_RANK
+    : weaverConfig.getRank(layer);
   const ceilingRank = weaverConfig.getRank(schema.maxOverrideLayer);
   if (layerRank < 0 || ceilingRank < 0) return false;
   return layerRank > ceilingRank;
@@ -99,23 +119,23 @@ function buildInput(
   currentValue: unknown,
   layerValue: unknown,
 ): string {
-  const id = `input-${layer}`;
+  const attr = `data-input-layer="${layer}"`;
   const hasOwn = layerValue !== undefined;
 
   if (typeof currentValue === "boolean") {
     const inherit = hasOwn ? "" : `<option value="" selected>— inherit —</option>`;
     const tSel = hasOwn && layerValue === true ? " selected" : "";
     const fSel = hasOwn && layerValue === false ? " selected" : "";
-    return `<select id="${id}">${inherit}<option value="true"${tSel}>true</option><option value="false"${fSel}>false</option></select>`;
+    return `<select ${attr}>${inherit}<option value="true"${tSel}>true</option><option value="false"${fSel}>false</option></select>`;
   }
   if (typeof currentValue === "number") {
     const val = hasOwn ? ` value="${layerValue}"` : "";
     const ph = hasOwn ? "" : ` placeholder="${currentValue}"`;
-    return `<input id="${id}" type="number"${val}${ph} />`;
+    return `<input ${attr} type="number"${val}${ph} />`;
   }
   const val = hasOwn ? ` value="${layerValue}"` : "";
   const ph = hasOwn ? "" : ` placeholder="${currentValue ?? ""}"`;
-  return `<input id="${id}" type="text"${val}${ph} />`;
+  return `<input ${attr} type="text"${val}${ph} />`;
 }
 
 function parseInput(el: HTMLInputElement | HTMLSelectElement, currentValue: unknown): unknown {
@@ -150,7 +170,7 @@ function handleSet(
   service: ConfigurationService,
   session: OverrideSessionController,
 ): void {
-  const input = body.querySelector<HTMLInputElement | HTMLSelectElement>(`#input-${layer}`);
+  const input = body.querySelector<HTMLInputElement | HTMLSelectElement>(`[data-input-layer="${layer}"]`);
   if (!input) return;
 
   const schema = getSchemaForKey(key);

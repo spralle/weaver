@@ -1,0 +1,11 @@
+/* Scope chain display in location selector */
+.scope-chain {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--color-muted);
+  font-family: "Fira Code", "Cascadia Code", monospace;
+}
+
+.scope-chain .scope-segment {
+  color: var(--color-scope);
+}
