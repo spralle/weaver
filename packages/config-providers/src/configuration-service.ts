@@ -12,13 +12,16 @@ import type {
   ScopeInstance,
   WeaverConfig,
 } from "@weaver/config-types";
+import type { ScopeResolutionCache } from "@weaver/config-types";
+import { serializeScopePath } from "@weaver/config-types";
 import { createStateContainer } from "./state-container.js";
 
 export interface ConfigurationServiceOptions {
   providers: ConfigurationStorageProvider[];
   weaverConfig: WeaverConfig;
   session?: OverrideSessionController | undefined;
-  onWriteError?: ((error: unknown, context: { key: string; layer: string; operation: 'write' | 'remove' }) => void) | undefined;
+  scopeCache?: ScopeResolutionCache | undefined;
+  onWriteError?: ((error: unknown, context: { key: string; layer: string; operation: "write" | "remove" }) => void) | undefined;
 }
 
 /**
@@ -68,6 +71,7 @@ export async function createConfigurationService(
   for (const provider of sortedProviders) {
     const data = await provider.load();
     container.applyLayerData(provider.layer, data.entries);
+    options.scopeCache?.clear();
   }
 
   // Wire external change listeners
@@ -83,6 +87,7 @@ export async function createConfigurationService(
           }
         }
         container.applyLayerData(provider.layer, currentEntries);
+        options.scopeCache?.clear();
       });
     }
   }
@@ -194,6 +199,16 @@ export async function createConfigurationService(
     },
 
     getForScope<T>(key: string, scopePath: ScopeInstance[]): T | undefined {
+      const cache = options.scopeCache;
+      if (cache !== undefined) {
+        const cacheKey = serializeScopePath(scopePath);
+        const cached = cache.get(cacheKey);
+        if (cached !== undefined) return cached[key] as T | undefined;
+        const stack = buildScopedLayerStack(scopePath);
+        const resolved = resolveConfiguration(stack);
+        cache.set(cacheKey, resolved.entries);
+        return resolved.entries[key] as T | undefined;
+      }
       const stack = buildScopedLayerStack(scopePath);
       const resolved = resolveConfiguration(stack);
       return resolved.entries[key] as T | undefined;
@@ -223,7 +238,7 @@ export async function createConfigurationService(
 
       // Fire-and-forget the async write; update container synchronously
       provider.write(key, value).catch((error: unknown) => {
-        options.onWriteError?.(error, { key, layer: provider.layer, operation: 'write' });
+        options.onWriteError?.(error, { key, layer: provider.layer, operation: "write" });
       });
 
       const updated = {
@@ -231,6 +246,7 @@ export async function createConfigurationService(
         [key]: value,
       };
       container.applyLayerData(provider.layer, updated);
+      options.scopeCache?.clear();
     },
 
     remove(key: string, layer: ConfigurationLayer): void {
@@ -241,12 +257,13 @@ export async function createConfigurationService(
       }
 
       provider.remove(key).catch((error: unknown) => {
-        options.onWriteError?.(error, { key, layer: provider.layer, operation: 'remove' });
+        options.onWriteError?.(error, { key, layer: provider.layer, operation: "remove" });
       });
 
       const updated = container.getLayerEntries(provider.layer);
       delete updated[key];
       container.applyLayerData(provider.layer, updated);
+      options.scopeCache?.clear();
     },
 
     onChange(key: string, listener: (value: unknown) => void): () => void {

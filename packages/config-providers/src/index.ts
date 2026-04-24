@@ -22,5 +22,6 @@ export {
   type StaticJsonProviderOptions,
   StaticJsonStorageProvider,
 } from "./static-json-provider.js";
+export { createScopeResolutionCache } from "./scope-resolution-cache.js";
 export { MemoryDurableConfigCacheAdapter } from "./sync/durable-cache-memory.js";
 export { createViewConfigurationService } from "./view-service.js";

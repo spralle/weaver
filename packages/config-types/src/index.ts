@@ -166,6 +166,9 @@ export type {
 export type { ViewConfigDeclaration } from "./view-config-declaration.js";
 export { defineViewConfig } from "./view-config-declaration.js";
 
+// cache.ts — Scope resolution cache interface
+export type { ScopeResolutionCache } from "./cache.js";
+export { serializeScopePath } from "./cache.js";
 // weaver.ts — defineWeaver() builder
 export type { ExtractLayerNames, WeaverConfig } from "./weaver.js";
 export { defineWeaver } from "./weaver.js";
