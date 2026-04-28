@@ -69,13 +69,10 @@ function mapType(type: PropertySchema["type"]): string | string[] {
   return [...type].map((value) => TYPE_MAP[value] ?? value);
 }
 
-function generateNestedPropertySchema(
+function copyScalarConstraints(
   schema: PropertySchema,
-): JsonSchemaProperty {
-  const prop: JsonSchemaProperty = {
-    type: mapType(schema.type),
-  };
-
+  prop: JsonSchemaProperty,
+): void {
   if (schema.title !== undefined) prop.title = schema.title;
   if (schema.description !== undefined) prop.description = schema.description;
   if (schema.default !== undefined) prop.default = schema.default;
@@ -101,7 +98,12 @@ function generateNestedPropertySchema(
   if (schema.maxProperties !== undefined)
     prop.maxProperties = schema.maxProperties;
   if (schema.required !== undefined) prop.required = [...schema.required];
+}
 
+function copyCompositeConstraints(
+  schema: PropertySchema,
+  prop: JsonSchemaProperty,
+): void {
   if (schema.properties !== undefined) {
     const mapped: Record<string, JsonSchemaProperty> = {};
     for (const [key, nestedSchema] of Object.entries(schema.properties)) {
@@ -154,6 +156,17 @@ function generateNestedPropertySchema(
   if (schema.not !== undefined) {
     prop.not = generateNestedPropertySchema(schema.not);
   }
+}
+
+function generateNestedPropertySchema(
+  schema: PropertySchema,
+): JsonSchemaProperty {
+  const prop: JsonSchemaProperty = {
+    type: mapType(schema.type),
+  };
+
+  copyScalarConstraints(schema, prop);
+  copyCompositeConstraints(schema, prop);
 
   return prop;
 }
