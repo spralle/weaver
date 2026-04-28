@@ -125,7 +125,7 @@ describe("generateSinglePropertySchema", () => {
     assert.equal(result.minimum, 10);
   });
 
-  it("populates x-weaver-* extension fields", () => {
+  it("populates x-weaver extension object", () => {
     const result = generateSinglePropertySchema(
       "ghost.shell.theme",
       entry("ghost.shell", {
@@ -135,10 +135,12 @@ describe("generateSinglePropertySchema", () => {
         reloadBehavior: "hot",
       }),
     );
-    assert.equal(result["x-weaver-changePolicy"], "full-pipeline");
-    assert.equal(result["x-weaver-visibility"], "public");
-    assert.equal(result["x-weaver-reloadBehavior"], "hot");
-    assert.equal(result["x-weaver-namespace"], "ghost.shell");
+    assert.deepEqual(result["x-weaver"], {
+      namespace: "ghost.shell",
+      changePolicy: "full-pipeline",
+      visibility: "public",
+      reloadBehavior: "hot",
+    });
   });
 
   it("omits optional fields when not present in schema", () => {
@@ -151,7 +153,79 @@ describe("generateSinglePropertySchema", () => {
     assert.equal(result.enum, undefined);
     assert.equal(result.minimum, undefined);
     assert.equal(result.maximum, undefined);
-    assert.equal(result["x-weaver-changePolicy"], undefined);
+    assert.equal(result["x-weaver"].changePolicy, undefined);
+    assert.equal(result["x-weaver"].namespace, "ghost.shell");
+  });
+
+  it("emits sensitive field in x-weaver when present", () => {
+    const result = generateSinglePropertySchema(
+      "ghost.shell.secret",
+      entry("ghost.shell", { type: "string", sensitive: true }),
+    );
+    assert.equal(result["x-weaver"].sensitive, true);
+  });
+
+  it("emits maxOverrideLayer in x-weaver when present", () => {
+    const result = generateSinglePropertySchema(
+      "ghost.shell.key",
+      entry("ghost.shell", { type: "string", maxOverrideLayer: "user" }),
+    );
+    assert.equal(result["x-weaver"].maxOverrideLayer, "user");
+  });
+
+  it("emits writeRestriction in x-weaver when present", () => {
+    const result = generateSinglePropertySchema(
+      "ghost.shell.key",
+      entry("ghost.shell", { type: "string", writeRestriction: ["admin", "platform"] }),
+    );
+    assert.deepEqual(result["x-weaver"].writeRestriction, ["admin", "platform"]);
+  });
+
+  it("emits sessionMode in x-weaver when present", () => {
+    const result = generateSinglePropertySchema(
+      "ghost.shell.key",
+      entry("ghost.shell", { type: "string", sessionMode: "ephemeral" }),
+    );
+    assert.equal(result["x-weaver"].sessionMode, "ephemeral");
+  });
+
+  it("emits expressionAllowed in x-weaver when present", () => {
+    const result = generateSinglePropertySchema(
+      "ghost.shell.key",
+      entry("ghost.shell", { type: "string", expressionAllowed: true }),
+    );
+    assert.equal(result["x-weaver"].expressionAllowed, true);
+  });
+
+  it("emits instanceOverridable in x-weaver when present", () => {
+    const result = generateSinglePropertySchema(
+      "ghost.shell.key",
+      entry("ghost.shell", { type: "string", instanceOverridable: false }),
+    );
+    assert.equal(result["x-weaver"].instanceOverridable, false);
+  });
+
+  it("emits viewConfig in x-weaver when present", () => {
+    const result = generateSinglePropertySchema(
+      "ghost.shell.key",
+      entry("ghost.shell", { type: "string", viewConfig: true }),
+    );
+    assert.equal(result["x-weaver"].viewConfig, true);
+  });
+
+  it("omits undefined extension fields from x-weaver", () => {
+    const result = generateSinglePropertySchema(
+      "ghost.shell.key",
+      entry("ghost.shell", { type: "string" }),
+    );
+    const xw = result["x-weaver"];
+    assert.equal(Object.prototype.hasOwnProperty.call(xw, "sensitive"), false);
+    assert.equal(Object.prototype.hasOwnProperty.call(xw, "maxOverrideLayer"), false);
+    assert.equal(Object.prototype.hasOwnProperty.call(xw, "writeRestriction"), false);
+    assert.equal(Object.prototype.hasOwnProperty.call(xw, "sessionMode"), false);
+    assert.equal(Object.prototype.hasOwnProperty.call(xw, "expressionAllowed"), false);
+    assert.equal(Object.prototype.hasOwnProperty.call(xw, "instanceOverridable"), false);
+    assert.equal(Object.prototype.hasOwnProperty.call(xw, "viewConfig"), false);
   });
 });
 
