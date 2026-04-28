@@ -49,11 +49,7 @@ export interface JsonSchemaProperty {
   anyOf?: JsonSchemaProperty[] | undefined;
   allOf?: JsonSchemaProperty[] | undefined;
   not?: JsonSchemaProperty | undefined;
-  "x-weaver-changePolicy"?: string | undefined;
-  "x-weaver-visibility"?: string | undefined;
-  "x-weaver-reloadBehavior"?: string | undefined;
-  "x-weaver-namespace"?: string | undefined;
-  "x-weaver-category"?: string | undefined;
+  "x-weaver"?: Record<string, unknown> | undefined;
 }
 
 const TYPE_MAP: Record<string, string> = {
@@ -172,19 +168,41 @@ export function generateSinglePropertySchema(
   const { schema, ownerId } = entry;
   const prop = generateNestedPropertySchema(schema);
 
-  // x-weaver-* extension fields
+  // x-weaver extension object
+  const xWeaver: Record<string, unknown> = { namespace: ownerId };
+
   if (schema.changePolicy !== undefined) {
-    prop["x-weaver-changePolicy"] = schema.changePolicy;
+    xWeaver.changePolicy = schema.changePolicy;
   }
   if (schema.visibility !== undefined) {
-    prop["x-weaver-visibility"] = schema.visibility;
+    xWeaver.visibility = schema.visibility;
   }
   if (schema.reloadBehavior !== undefined) {
-    prop["x-weaver-reloadBehavior"] = schema.reloadBehavior;
+    xWeaver.reloadBehavior = schema.reloadBehavior;
+  }
+  if (schema.sensitive !== undefined) {
+    xWeaver.sensitive = schema.sensitive;
+  }
+  if (schema.maxOverrideLayer !== undefined) {
+    xWeaver.maxOverrideLayer = schema.maxOverrideLayer;
+  }
+  if (schema.writeRestriction !== undefined) {
+    xWeaver.writeRestriction = [...schema.writeRestriction];
+  }
+  if (schema.sessionMode !== undefined) {
+    xWeaver.sessionMode = schema.sessionMode;
+  }
+  if (schema.expressionAllowed !== undefined) {
+    xWeaver.expressionAllowed = schema.expressionAllowed;
+  }
+  if (schema.instanceOverridable !== undefined) {
+    xWeaver.instanceOverridable = schema.instanceOverridable;
+  }
+  if (schema.viewConfig !== undefined) {
+    xWeaver.viewConfig = schema.viewConfig;
   }
 
-  // Derive namespace from ownerId
-  prop["x-weaver-namespace"] = ownerId;
+  prop["x-weaver"] = xWeaver;
 
   return prop;
 }
