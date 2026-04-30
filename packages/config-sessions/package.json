@@ -34,7 +34,7 @@
   "scripts": {
     "build": "tsc -b",
     "typecheck": "tsc --noEmit",
-    "test": "node --test test/*.test.mjs",
+    "test": "bun test",
     "lint": "biome check ."
   },
   "dependencies": {
