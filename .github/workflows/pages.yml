@@ -1,0 +1,51 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.2.21"
+
+      - run: bun install
+
+      # Build all packages + demo app via Turborepo
+      - run: bun run build
+
+      # Generate TypeDoc API docs into docs-dist/api/
+      - run: bunx typedoc
+
+      # Copy demo app into docs-dist/ root (alongside api/)
+      - run: cp -r apps/demo/dist/* docs-dist/
+
+      # Upload combined site as Pages artifact
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs-dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

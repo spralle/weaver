@@ -1,0 +1,27 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPointStrategy": "packages",
+  "entryPoints": [
+    "packages/config-types",
+    "packages/config-engine",
+    "packages/config-providers",
+    "packages/config-sessions",
+    "packages/config-auth",
+    "packages/config-policy",
+    "packages/config-server",
+    "packages/config-sync"
+  ],
+  "out": "docs-dist/api",
+  "name": "Weaver API Reference",
+  "readme": "none",
+  "githubPages": true,
+  "navigation": {
+    "includeCategories": true,
+    "includeGroups": true
+  },
+  "categorizeByGroup": true,
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "excludeExternals": true,
+  "cleanOutputDir": true
+}

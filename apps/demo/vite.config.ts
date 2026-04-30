@@ -5,6 +5,7 @@ import { defineConfig } from "vite";
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 
 export default defineConfig({
+  base: "/weaver/",
   root: ".",
   build: { outDir: "dist" },
   resolve: {

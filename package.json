@@ -22,6 +22,8 @@
     "lint": "turbo lint",
     "format": "biome check --write .",
     "test": "turbo test",
+    "docs": "typedoc",
+    "docs:build": "turbo build && typedoc && cp -r apps/demo/dist/* docs-dist/",
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "turbo build && changeset publish"
@@ -33,6 +35,7 @@
     "@eslint/js": "10.0.1",
     "eslint": "10.2.0",
     "turbo": "2.9.6",
+    "typedoc": "^0.28.19",
     "typescript": "^5.8.3",
     "typescript-eslint": "8.58.2"
   }
