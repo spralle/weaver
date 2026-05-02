@@ -1,1 +1,14 @@
-// @weaver/weaver-client — Configuration client SDK
+export type { ConfigDelta, ConfigSnapshot, ResolveOptions, GetOptions, Unsubscribe } from "./types.js";
+export { configDeltaSchema, configSnapshotSchema } from "./types.js";
+export type { WeaverTransport } from "./transport.js";
+export type { WeaverClientPersistence } from "./persistence.js";
+export type { WeaverClient, WeaverClientOptions } from "./client.js";
+export { createWeaverClient } from "./client.js";
+export type { TenantMode, TenantManager, TenantManagerOptions } from "./tenant-manager.js";
+export { createTenantManager } from "./tenant-manager.js";
+export type { FileSystemPersistenceOptions } from "./fs-persistence.js";
+export { createFileSystemPersistence } from "./fs-persistence.js";
+export type { IndexedDbPersistenceOptions } from "./indexeddb-persistence.js";
+export { createIndexedDbPersistence } from "./indexeddb-persistence.js";
+export type { LocalTransportOptions, LocalTransport } from "./local-transport.js";
+export { createLocalTransport } from "./local-transport.js";
