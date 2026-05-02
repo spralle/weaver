@@ -108,6 +108,67 @@ test("multiple violations from one schema map", () => {
   assert.equal(warnings.length, 2); // internal + restart-required
 });
 
+test("sensitive + public visibility produces error", () => {
+  const schemas = new Map([
+    entry("app.db.connectionString", {
+      type: "string",
+      "x-weaver": { sensitive: true, visibility: "public" },
+    }),
+  ]);
+  const violations = validateChangePolicies(schemas);
+  const match = violations.find((v) => v.violation.includes("Sensitive key"));
+  assert.ok(match);
+  assert.equal(match.severity, "error");
+});
+
+test("sensitive + admin visibility produces no sensitive-public violation", () => {
+  const schemas = new Map([
+    entry("app.db.connectionString", {
+      type: "string",
+      "x-weaver": { sensitive: true, visibility: "admin" },
+    }),
+  ]);
+  const violations = validateChangePolicies(schemas);
+  const match = violations.find((v) => v.violation.includes("Sensitive key"));
+  assert.equal(match, undefined);
+});
+
+test("sensitive + internal visibility produces no sensitive-public violation", () => {
+  const schemas = new Map([
+    entry("app.db.connectionString", {
+      type: "string",
+      "x-weaver": { sensitive: true, visibility: "internal" },
+    }),
+  ]);
+  const violations = validateChangePolicies(schemas);
+  const match = violations.find((v) => v.violation.includes("Sensitive key"));
+  assert.equal(match, undefined);
+});
+
+test("sensitive + platform visibility produces no sensitive-public violation", () => {
+  const schemas = new Map([
+    entry("app.db.connectionString", {
+      type: "string",
+      "x-weaver": { sensitive: true, visibility: "platform" },
+    }),
+  ]);
+  const violations = validateChangePolicies(schemas);
+  const match = violations.find((v) => v.violation.includes("Sensitive key"));
+  assert.equal(match, undefined);
+});
+
+test("not sensitive + public visibility produces no sensitive-public violation", () => {
+  const schemas = new Map([
+    entry("app.ui.theme", {
+      type: "string",
+      "x-weaver": { sensitive: false, visibility: "public" },
+    }),
+  ]);
+  const violations = validateChangePolicies(schemas);
+  const match = violations.find((v) => v.violation.includes("Sensitive key"));
+  assert.equal(match, undefined);
+});
+
 test("key with no explicit changePolicy defaults to direct-allowed for check", () => {
   const schemas = new Map([
     entry("app.auth.token", { type: "string" }), // no changePolicy → defaults to direct-allowed

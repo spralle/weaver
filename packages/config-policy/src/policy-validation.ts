@@ -63,6 +63,20 @@ export function validateChangePolicies(
         suggestedPolicy: "staging-gate",
       });
     }
+
+    // Rule 4: Sensitive keys must not have public visibility
+    if (
+      entry.schema["x-weaver"]?.sensitive === true &&
+      entry.schema["x-weaver"]?.visibility === "public"
+    ) {
+      violations.push({
+        key,
+        violation: `Sensitive key "${key}" has public visibility`,
+        severity: "error",
+        currentPolicy: policy,
+        suggestedPolicy: undefined,
+      });
+    }
   }
 
   return violations;
