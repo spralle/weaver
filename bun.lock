@@ -117,6 +117,32 @@
         "typescript": "^5.8.3",
       },
     },
+    "packages/weaver-client": {
+      "name": "@weaver/weaver-client",
+      "version": "0.0.0",
+      "dependencies": {
+        "@weaver/config-providers": "workspace:*",
+        "@weaver/config-types": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/node": "25.6.0",
+        "typescript": "^5.8.3",
+      },
+    },
+    "packages/weaver-server": {
+      "name": "@weaver/weaver-server",
+      "version": "0.0.0",
+      "dependencies": {
+        "@weaver/config-engine": "workspace:*",
+        "@weaver/config-providers": "workspace:*",
+        "@weaver/config-types": "workspace:*",
+        "zod": "^4.0.0",
+      },
+      "devDependencies": {
+        "@types/node": "25.6.0",
+        "typescript": "^5.8.3",
+      },
+    },
   },
   "packages": {
     "@babel/runtime": ["@babel/runtime@7.29.2", "", {}, "sha512-JiDShH45zKHWyGe4ZNVRrCjBz8Nh9TMmZG1kh4QTK8hCBTWBi8Da+i7s1fJw7/lYpM4ccepSNfqzZ/QvABBi5g=="],
@@ -388,6 +414,10 @@
     "@weaver/config-types": ["@weaver/config-types@workspace:packages/config-types"],
 
     "@weaver/demo": ["@weaver/demo@workspace:apps/demo"],
+
+    "@weaver/weaver-client": ["@weaver/weaver-client@workspace:packages/weaver-client"],
+
+    "@weaver/weaver-server": ["@weaver/weaver-server@workspace:packages/weaver-server"],
 
     "acorn": ["acorn@8.16.0", "", { "bin": { "acorn": "bin/acorn" } }, "sha512-UVJyE9MttOsBQIDKw1skb9nAwQuR5wuGD3+82K6JgJlm/Y+KI92oNsMNGZCYdDsVtRHSak0pcV5Dno5+4jh9sw=="],
 
