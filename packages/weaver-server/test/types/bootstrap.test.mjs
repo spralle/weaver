@@ -1,4 +1,4 @@
-import test from "node:test";
+import { test } from "bun:test";
 import assert from "node:assert/strict";
 import { bootstrapConfigSchema } from "../../src/types/bootstrap.ts";
 
