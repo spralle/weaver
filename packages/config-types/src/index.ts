@@ -177,6 +177,14 @@ export { defineViewConfig } from "./view-config-declaration.js";
 // weaver.ts — defineWeaver() builder
 export type { ExtractLayerNames, WeaverConfig } from "./weaver.js";
 export { defineWeaver } from "./weaver.js";
+// environment.ts — Environment-aware provider types and provenance tracking
+export type {
+  ConfigValueSource,
+  EnvironmentAwareStorageProvider,
+  EnvironmentName,
+  LayerValueDetail,
+  MergedLayerResult,
+} from "./environment.js";
 // markers.ts — _weaver marker types and type guards
 export type { ConfigMount, SecretReference, WeaverMarker } from "./markers.js";
 export { isConfigMount, isSecretReference, isWeaverMarker } from "./markers.js";
