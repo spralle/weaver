@@ -83,6 +83,17 @@ export const propertySessionModeSchema = z.enum([
   "blocked",
 ]);
 
+export const weaverPropertyExtensionsSchema = z.strictObject({
+  sensitive: z.boolean().optional(),
+  visibility: configurationVisibilitySchema.optional(),
+  changePolicy: configChangePolicySchema.optional(),
+  reloadBehavior: configReloadBehaviorSchema.optional(),
+  expressionAllowed: z.boolean().optional(),
+  maxOverrideLayer: configurationLayerSchema.optional(),
+  writeRestriction: z.array(configurationRoleSchema).readonly().optional(),
+  sessionMode: propertySessionModeSchema.optional(),
+});
+
 export const configurationPropertySchemaSchema: z.ZodType<ConfigurationPropertySchema> =
   z.lazy(() =>
     z.strictObject({
@@ -135,16 +146,7 @@ export const configurationPropertySchemaSchema: z.ZodType<ConfigurationPropertyS
       $ref: z.never().optional(),
       $defs: z.never().optional(),
 
-      expressionAllowed: z.boolean().optional(),
-      changePolicy: configChangePolicySchema.optional(),
-      visibility: configurationVisibilitySchema.optional(),
-      sensitive: z.boolean().optional(),
-      maxOverrideLayer: configurationLayerSchema.optional(),
-      writeRestriction: z.array(configurationRoleSchema).readonly().optional(),
-      viewConfig: z.boolean().optional(),
-      instanceOverridable: z.boolean().optional(),
-      reloadBehavior: configReloadBehaviorSchema.optional(),
-      sessionMode: propertySessionModeSchema.optional(),
+      "x-weaver": weaverPropertyExtensionsSchema.optional(),
     }),
   );
 

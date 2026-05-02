@@ -46,6 +46,7 @@ export type {
   ConfigurationPropertySchema,
   ConfigurationRole,
   ConfigurationVisibility,
+  WeaverPropertyExtensions,
 } from "./property-schema.js";
 // providers.ts — Storage provider interfaces
 export type {
@@ -104,6 +105,7 @@ export {
   sessionModeSchema,
   sessionTypeSchema,
   tenantScopeHierarchySchema,
+  weaverPropertyExtensionsSchema,
 } from "./schemas-core.js";
 // schemas-promotion.ts — Zod schemas for promotion types
 export {
@@ -171,3 +173,12 @@ export { defineViewConfig } from "./view-config-declaration.js";
 // weaver.ts — defineWeaver() builder
 export type { ExtractLayerNames, WeaverConfig } from "./weaver.js";
 export { defineWeaver } from "./weaver.js";
+// markers.ts — _weaver marker types and type guards
+export type { ConfigMount, SecretReference, WeaverMarker } from "./markers.js";
+export { isConfigMount, isSecretReference, isWeaverMarker } from "./markers.js";
+// schemas-markers.ts — Zod schemas for marker types
+export {
+  configMountSchema,
+  secretReferenceSchema,
+  weaverMarkerSchema,
+} from "./schemas-markers.js";

@@ -26,7 +26,7 @@ export function validateChangePolicies(
   const violations: PolicyViolation[] = [];
 
   for (const [key, entry] of schemas) {
-    const policy = entry.schema.changePolicy ?? "direct-allowed";
+    const policy = entry.schema["x-weaver"]?.changePolicy ?? "direct-allowed";
 
     // Rule 1: Security-sensitive key names should not use direct-allowed
     if (SECURITY_SENSITIVE_PATTERN.test(key) && policy === "direct-allowed") {
@@ -40,7 +40,7 @@ export function validateChangePolicies(
     }
 
     // Rule 2: Internal visibility with direct-allowed
-    if (entry.schema.visibility === "internal" && policy === "direct-allowed") {
+    if (entry.schema["x-weaver"]?.visibility === "internal" && policy === "direct-allowed") {
       violations.push({
         key,
         violation: `Internal-visibility key "${key}" uses "${policy}" policy`,
@@ -52,7 +52,7 @@ export function validateChangePolicies(
 
     // Rule 3: Restart-required reload behavior with direct-allowed
     if (
-      entry.schema.reloadBehavior === "restart-required" &&
+      entry.schema["x-weaver"]?.reloadBehavior === "restart-required" &&
       policy === "direct-allowed"
     ) {
       violations.push({
