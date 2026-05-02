@@ -3,8 +3,10 @@
 // access.ts — Permission types and default policies
 export type {
   ConfigurationAccessContext,
+  ConfigurationSchemaFragment,
   LayerWriteConstraint,
   LayerWritePolicy,
+  ServiceAccessPolicy,
   ServiceConfigurationDeclaration,
 } from "./access.js";
 // cache.ts — Scope resolution cache interface
@@ -79,6 +81,7 @@ export type {
 } from "./providers.js";
 // schemas-core.ts — Zod schemas for core types
 export {
+  configurationSchemaFragmentSchema,
   configChangePolicySchema,
   configReloadBehaviorSchema,
   configurationAccessContextSchema,
@@ -98,6 +101,7 @@ export {
   propertySessionModeSchema,
   scopeDefinitionSchema,
   scopeInstanceSchema,
+  serviceAccessPolicySchema,
   serviceConfigurationDeclarationSchema,
   sessionActivationRequestSchema,
   sessionDeactivationResultSchema,

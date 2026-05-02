@@ -75,6 +75,17 @@
         "typescript": "^5.8.3",
       },
     },
+    "packages/config-secrets": {
+      "name": "@weaver/config-secrets",
+      "version": "0.0.0",
+      "dependencies": {
+        "@weaver/config-types": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/node": "25.6.0",
+        "typescript": "^5.8.3",
+      },
+    },
     "packages/config-server": {
       "name": "@weaver/config-server",
       "version": "0.0.0",
@@ -378,6 +389,8 @@
     "@weaver/config-policy": ["@weaver/config-policy@workspace:packages/config-policy"],
 
     "@weaver/config-providers": ["@weaver/config-providers@workspace:packages/config-providers"],
+
+    "@weaver/config-secrets": ["@weaver/config-secrets@workspace:packages/config-secrets"],
 
     "@weaver/config-server": ["@weaver/config-server@workspace:packages/config-server"],
 
