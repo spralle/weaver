@@ -24,6 +24,8 @@ export interface ConfigurationInspection<T> {
   layerValues: Partial<Record<string, T>>;
   /** Mount chain if key resolves through mount indirection */
   mountChain?: readonly string[] | undefined;
+  /** Whether the effective value was resolved from a SecretReference */
+  secretResolved?: boolean | undefined;
 }
 
 export interface ConfigurationService {

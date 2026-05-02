@@ -1,5 +1,4 @@
 // Configuration service factory — composes providers, state container, and engine
-
 import { inspectKey, resolveConfiguration } from "@weaver/config-engine";
 import type { OverrideSessionController } from "@weaver/config-sessions";
 import type {
@@ -19,6 +18,8 @@ import {
   resolveMountedNamespace,
   resolveMountedValue,
 } from "./mount-resolver.js";
+import type { SecretIntegrationHandle, SecretIntegrationOptions } from "./secret-integration.js";
+import { createSecretIntegration } from "./secret-integration.js";
 import { createStateContainer } from "./state-container.js";
 
 export interface ConfigurationServiceOptions {
@@ -26,6 +27,8 @@ export interface ConfigurationServiceOptions {
   weaverConfig: WeaverConfig;
   session?: OverrideSessionController | undefined;
   scopeCache?: ScopeResolutionCache | undefined;
+  /** Optional secret resolution for transparent SecretReference resolution */
+  secrets?: SecretIntegrationOptions | undefined;
   onWriteError?:
     | ((
         error: unknown,
@@ -107,6 +110,20 @@ export async function createConfigurationService(
   container.onAnyChange(() => {
     mountMap = buildMountMap(container.snapshot());
   });
+
+  // Secret resolution: pre-resolve all SecretReference entries
+  let secretHandle: SecretIntegrationHandle | undefined;
+  if (options.secrets !== undefined) {
+    secretHandle = await createSecretIntegration(
+      container.snapshot(),
+      options.secrets,
+    );
+    container.onAnyChange(() => {
+      secretHandle?.refresh(container.snapshot()).catch(
+        options.secrets?.onRefreshError ?? (() => {}),
+      );
+    });
+  }
 
   // Provider lookup helpers
   function findProviderForLayer(
@@ -200,6 +217,10 @@ export async function createConfigurationService(
 
   return {
     get<T>(key: string): T | undefined {
+      // Check secret shadow map first
+      if (secretHandle?.hasSecret(key) === true) {
+        return secretHandle.getResolved(key) as T | undefined;
+      }
       if (!mountMap.has(key)) {
         return container.get(key) as T | undefined;
       }
@@ -209,6 +230,13 @@ export async function createConfigurationService(
           mountMap,
           (k) => container.get(k),
         );
+        // Check if mounted target is itself a secret
+        if (secretHandle !== undefined && resolution.isMounted) {
+          const targetKey = resolution.chain[resolution.chain.length - 1] ?? key;
+          if (secretHandle.hasSecret(targetKey)) {
+            return secretHandle.getResolved(targetKey) as T | undefined;
+          }
+        }
         return resolution.value as T | undefined;
       } catch {
         return undefined;
@@ -216,6 +244,11 @@ export async function createConfigurationService(
     },
 
     getWithDefault<T>(key: string, defaultValue: T): T {
+      // Check secret shadow map first
+      if (secretHandle?.hasSecret(key) === true) {
+        const resolved = secretHandle.getResolved(key);
+        return resolved !== undefined ? (resolved as T) : defaultValue;
+      }
       if (!mountMap.has(key)) {
         const value = container.get(key) as T | undefined;
         return value !== undefined ? value : defaultValue;
@@ -226,6 +259,13 @@ export async function createConfigurationService(
           mountMap,
           (k) => container.get(k),
         );
+        if (secretHandle !== undefined && resolution.isMounted) {
+          const targetKey = resolution.chain[resolution.chain.length - 1] ?? key;
+          if (secretHandle.hasSecret(targetKey)) {
+            const resolved = secretHandle.getResolved(targetKey);
+            return resolved !== undefined ? (resolved as T) : defaultValue;
+          }
+        }
         const value = resolution.value as T | undefined;
         return value !== undefined ? value : defaultValue;
       } catch {
@@ -274,6 +314,14 @@ export async function createConfigurationService(
           }
         } catch {
           // Mount error — leave inspection as-is
+        }
+      }
+
+      if (secretHandle?.hasSecret(key) === true) {
+        const resolved = secretHandle.getResolved(key);
+        if (resolved !== undefined) {
+          inspection.effectiveValue = resolved as T;
+          inspection.secretResolved = true;
         }
       }
 
