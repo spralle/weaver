@@ -51,3 +51,11 @@ export type {
   DeprovisionTenantRequest,
   TenantProvisionResult,
 } from "./tenant-manager.js";
+
+export { createSessionManager } from "./session-manager.js";
+export type {
+  SessionManager,
+  SessionManagerOptions,
+  OverrideSessionRequest,
+  OverrideSessionInfo,
+} from "./session-manager.js";
