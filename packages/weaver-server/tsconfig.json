@@ -8,6 +8,7 @@
   "references": [
     { "path": "../config-types" },
     { "path": "../config-engine" },
-    { "path": "../config-providers" }
+    { "path": "../config-providers" },
+    { "path": "../config-server" }
   ]
 }
