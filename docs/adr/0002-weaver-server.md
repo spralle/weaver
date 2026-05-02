@@ -1005,6 +1005,577 @@ Extend `SecretProvider` interface with additional implementations:
 
 Static analysis tool for `ServiceConfigurationDeclaration` files. Checks for: missing `x-weaver` on sensitive-looking keys, overly broad `reads` patterns, schema version consistency, fragment compatibility. Can run in CI as a pre-merge check.
 
+## Addendum: Gap Analysis Deltas
+
+The following gaps were identified through systematic architecture review and
+are incorporated as binding additions to this ADR. They are organized by
+severity.
+
+### A.1 Composition with Existing Packages (Critical)
+
+weaver-server and weaver-client do not replace existing domain logic packages.
+They compose them as a network transport layer on top of existing libraries:
+
+#### weaver-server Composition
+
+```
+weaver-server
+  ├── config-providers.createConfigurationService()    ← internal state engine
+  │     Uses the same factory that local deployments use.
+  │     Storage providers are GitStorageProvider, MongoDBStorageProvider,
+  │     and InMemoryStorageProvider (for ephemeral layers).
+  │
+  ├── config-sessions.createOverrideSessionProvider()  ← override session logic
+  │     weaver-server wraps the OverrideSessionController with
+  │     API endpoints (activate, deactivate, extend). The domain
+  │     logic (expiry, follow-up deadlines) lives in config-sessions.
+  │
+  ├── config-auth.withAuth()                           ← authorization middleware
+  │     JWT authentication extracts identity (serviceId or userId + roles).
+  │     The extracted identity is mapped to a ConfigurationAccessContext.
+  │     config-auth.canRead() and filterVisibleKeys() evaluate the policy.
+  │     weaver-server does NOT reimplement authorization logic.
+  │
+  ├── config-policy                                    ← write-time validation
+  │     Policy rules (sensitive + public = error, changePolicy enforcement)
+  │     are evaluated on every write via config-policy validators.
+  │
+  ├── config-server.FileSystemStorageProvider           ← read path base
+  │     GitStorageProvider composes FileSystemStorageProvider for reads
+  │     (fs.readFile on JSON files). Git operations (commit, push, PR)
+  │     are layered on top for the write path. No read-path duplication.
+  │
+  └── config-secrets.SecretResolutionService            ← secret resolution
+        Same resolution service from ADR-0001. weaver-server calls
+        resolveAll() at startup and on secret refresh cycles.
+```
+
+#### weaver-client Composition
+
+```
+weaver-client
+  ├── config-providers.StateContainer                  ← local state cache
+  │     WeaverClient maintains a local StateContainer populated from
+  │     server snapshots. get() is synchronous from this container.
+  │
+  ├── config-sync.createConfigSyncOrchestrator()       ← offline sync engine
+  │     For offline persistence, WeaverClient wires the sync orchestrator
+  │     with a WeaverTransport-backed SyncTransport. The orchestrator
+  │     manages snapshot cache, mutation queue, and reconnection logic.
+  │     WeaverClientPersistence implementations (fs, IndexedDB) serve
+  │     as the durable cache for the sync orchestrator.
+  │
+  └── config-server.createServiceConfigurationService() ← consumer wrapper
+        The developer-facing API. In local mode, it wraps a local
+        ConfigurationService. In remote mode, it wraps the WeaverClient.
+        Same interface either way — the consumer does not know or care
+        whether config comes from local files or weaver-server.
+```
+
+#### Interface Continuity
+
+`createServiceConfigurationService()` remains the consumer-facing factory.
+Its options gain an optional `transport` field:
+
+```typescript
+// Local mode (development, no weaver-server needed)
+const config = createServiceConfigurationService({
+  serviceId: "vessel-tracking",
+  configService: localConfigService,  // from createConfigurationService()
+  schema: vesselTrackingSchema,
+});
+
+// Remote mode (production, backed by weaver-server)
+const config = createServiceConfigurationService({
+  serviceId: "vessel-tracking",
+  transport: createScompTransport({ url: "ws://weaver:3399/scomp" }),
+  schema: vesselTrackingSchema,
+});
+```
+
+Same `get()`, `getNamespace()`, `inspect()`, `onChange()`, `onRestartRequired()`
+interface in both modes. The transport choice is a deployment concern, not a
+code concern.
+
+### A.2 Write Operations (Critical)
+
+ADR-0002 section 8 defines read and admin operations but omits the primary
+config write path. The following operations are added to both the scomp
+contract and REST API:
+
+**scomp operations:**
+
+| Operation | Type | Purpose |
+|---|---|---|
+| `set` | request | Write a config value to a specific layer and environment |
+| `remove` | request | Remove a config key from a specific layer and environment |
+
+**REST endpoints:**
+
+```
+PUT    /api/config/:layer/:environment/:key    → set
+DELETE /api/config/:layer/:environment/:key    → remove
+```
+
+**Write flow:**
+
+```
+1. Authenticate request (JWT → identity)
+2. Authorize: config-auth.canWrite(identity, layer, key)
+3. Validate value against ConfigurationPropertySchema (Zod schema)
+4. Check changePolicy:
+   a. "direct-allowed" → proceed to write
+   b. "staging-gate" or "full-pipeline" → reject if target is
+      above the allowed stage (must use promote instead)
+   c. "emergency-override" → require active OverrideSession
+5. Write to storage provider:
+   a. Git-backed: write file, git add, queue for commit/push
+   b. MongoDB-backed: upsert document
+6. Create audit entry (sensitive values masked)
+7. Reload affected layer in state container
+8. Compute and push deltas to subscribed clients
+```
+
+Write operations for Git-backed layers go through the write serializer
+(see A.3). MongoDB writes are independent and do not need serialization.
+
+### A.3 Git Write Serialization (Critical)
+
+All Git write operations are serialized through a single-threaded write
+queue to prevent concurrent push conflicts:
+
+```typescript
+interface GitWriteQueue {
+  enqueue<T>(operation: () => Promise<T>): Promise<T>;
+}
+```
+
+Operations that use the queue:
+- `set` / `remove` (for Git-backed layers)
+- `promote`
+- `rollback`
+- `registerSchema` (when schema changes)
+- `provisionTenant` / `deprovisionTenant`
+
+Queue behavior:
+1. Operations execute one at a time, in FIFO order
+2. Before each push: `git pull --rebase` to incorporate external changes
+3. If push fails (conflict from external change): retry with rebase (max 3 retries)
+4. If retries exhausted: reject the operation, log error, return `GIT_ERROR`
+5. Queue depth limit: configurable, default 100. Beyond limit: reject with backpressure
+
+This is sufficient for single-instance v1. Horizontal scaling (future) will
+require distributed write coordination (leader election or write-leader model).
+
+### A.4 Error Type Taxonomy (Important)
+
+All operations return structured errors with a code, message, and optional
+details. Errors are consistent across scomp and REST transports.
+
+```typescript
+interface WeaverError {
+  code: WeaverErrorCode;
+  message: string;
+  details?: Record<string, unknown>;
+}
+
+type WeaverErrorCode =
+  | "NOT_FOUND"           // key or resource doesn't exist
+  | "UNAUTHORIZED"        // invalid, expired, or missing JWT
+  | "FORBIDDEN"           // valid JWT but policy denies access
+  | "TENANT_NOT_FOUND"    // tenant not provisioned
+  | "TENANT_NOT_LOADED"   // tenant not warmed in lazy mode
+  | "SCHEMA_CONFLICT"     // breaking schema change rejected by policy
+  | "POLICY_VIOLATION"    // changePolicy prevents this write/promote
+  | "VALIDATION_ERROR"    // value doesn't match schema
+  | "GIT_ERROR"           // Git operation failed after retries
+  | "SERVER_DEGRADED"     // serving stale state, writes rejected
+  | "SIZE_WARNING"        // value exceeds 1MB (non-fatal, included in response)
+  | "QUEUE_FULL"          // Git write queue at capacity
+  | "SESSION_REQUIRED"    // operation requires active OverrideSession
+  | "SESSION_BLOCKED"     // key's sessionMode is "blocked"
+```
+
+REST responses use standard HTTP status codes mapped to error codes:
+- `NOT_FOUND` → 404
+- `UNAUTHORIZED` → 401
+- `FORBIDDEN` → 403
+- `VALIDATION_ERROR`, `POLICY_VIOLATION` → 400
+- `GIT_ERROR`, `SERVER_DEGRADED` → 503
+- `QUEUE_FULL` → 429
+
+### A.5 Schema Validation on Writes (Important)
+
+Every write (`set`, `promote`) validates the value against the key's schema:
+
+1. Look up the `ConfigurationPropertySchema` for the key from the registered
+   `ServiceConfigurationDeclaration`
+2. If a Zod schema exists: parse the value. Reject with `VALIDATION_ERROR`
+   on failure.
+3. If no schema is registered for the key: accept the write (schema
+   registration may happen later)
+4. After layer reload (post-merge): run full schema validation on the
+   merged state for the affected service. Log warnings for post-merge
+   violations but do not reject (the individual writes were valid;
+   the combination is the problem). Surface violations via `inspect()`.
+
+### A.6 Graceful Shutdown Sequence (Important)
+
+On SIGTERM (from Rancher/K8s):
+
+```
+1. Set /readyz to false              ← stop receiving new traffic
+2. Stop accepting new connections    ← no new scomp/SSE/REST clients
+3. Wait for in-flight requests       ← drain with timeout (default 10s)
+4. Push final deltas to clients      ← best-effort
+5. Close all client connections      ← scomp close, SSE close, HTTP drain
+6. Flush audit sink                  ← ensure pending audit entries are written
+7. Drain Git write queue             ← complete in-progress writes, cancel queued
+8. Close MongoDB connections         ← graceful driver shutdown
+9. Cancel background tasks           ← Git polling, secret refresh, session expiry
+10. Exit process
+```
+
+Configurable drain timeout: `_weaver.server.shutdownDrainMs` (default: 10000).
+If drain timeout expires, force-close remaining connections and exit.
+
+### A.7 Tenant Deprovisioning (Important)
+
+Add `deprovisionTenant` to admin operations:
+
+```
+POST /admin/tenants/:tenantId/deprovision
+{
+  archive: true    // false = permanent delete (dangerous)
+}
+```
+
+Flow:
+1. Archive: move `layers/tenant:{id}/` to `layers/_archived/tenant:{id}/`
+   in Git. Permanent delete: remove the directory entirely.
+2. Remove tenant layer from state container
+3. Push deltas to connected services (keys from this tenant disappear)
+4. Create audit entry: `action: "deprovision"`
+5. Services with `tenantScope` listing this tenant will need policy updates
+
+Archived tenants can be restored by moving the directory back.
+Permanent deletion is audited and requires explicit `archive: false`.
+
+### A.8 Service Decommissioning (Important)
+
+Add `decommissionService` to admin operations:
+
+```
+POST /admin/services/:serviceId/decommission
+{
+  archiveConfig: true,     // archive config data in the service's namespace
+  archiveSchema: true,     // archive schema
+  archivePolicy: true      // archive policy
+}
+```
+
+Flow:
+1. Archive schema: move `_weaver/schemas/{serviceId}.json` to
+   `_weaver/_archived/schemas/{serviceId}.json`
+2. Archive policy: same pattern
+3. Optionally archive config namespace data
+4. Create audit entry
+5. Note: archived data preserved for historical reference and audit compliance
+
+### A.9 GitHub Webhook Security (Important)
+
+The webhook endpoint (`/api/hooks/github`) must verify request authenticity:
+
+1. GitHub sends `X-Hub-Signature-256` header with HMAC-SHA256 of the payload
+2. Server computes HMAC using shared secret (`WEAVER_WEBHOOK_SECRET` env var)
+3. Constant-time comparison of signatures
+4. Reject with 401 if signature doesn't match
+5. Additional: verify `X-GitHub-Event` header matches expected event types
+   (`push`, `pull_request`)
+
+The webhook secret is an additional bootstrap environment variable.
+
+### A.10 CORS Configuration (Important)
+
+Browser clients (admin MF2 plugin in Lynx) require CORS headers:
+
+```json
+{
+  "_weaver.server.cors": {
+    "allowedOrigins": ["https://lynx.example.com"],
+    "allowedMethods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    "allowCredentials": true,
+    "maxAge": 86400
+  }
+}
+```
+
+All REST and SSE responses include appropriate CORS headers.
+WebSocket (scomp) connections check the `Origin` header during upgrade.
+Default: no CORS (all cross-origin requests rejected) — must be explicitly
+configured.
+
+### A.11 JWT Token Lifecycle on Long-Lived Connections (Important)
+
+scomp WebSocket connections are long-lived. JWTs expire.
+
+**Strategy: proactive reconnection.** The WeaverClient tracks its JWT expiry
+time. Before the token expires (configurable buffer, default 60 seconds
+before expiry), the client:
+
+1. Obtains a fresh JWT from Accounts (token refresh)
+2. Disconnects the current scomp connection
+3. Reconnects with the new JWT
+4. Requests a full snapshot via `resolveAll` (standard reconnection flow)
+5. Resumes delta streaming
+
+This reuses the existing reconnection model. No special token refresh
+protocol is needed on the wire. The server treats each connection as
+independently authenticated.
+
+### A.12 ConfigDelta Delete Events (Important)
+
+The `ConfigDelta` type is extended with an `action` field to distinguish
+value changes from deletions:
+
+```typescript
+interface ConfigDelta {
+  action: "set" | "remove";
+  key: string;
+  value: unknown | null;    // null when action is "remove"
+  layer: string;
+  environment: string;
+  timestamp: string;
+}
+```
+
+Clients receiving a `remove` delta must delete the key from local state.
+
+### A.13 Local Development Story (Minor)
+
+In development, services do not need weaver-server. The existing
+`createConfigurationService()` with `FileSystemStorageProvider` (or
+`StaticJsonProvider`) works directly.
+
+The recommended development workflow:
+
+1. **Unit tests**: Use `InMemoryStorageProvider` with test fixtures
+2. **Local dev**: Use `FileSystemStorageProvider` reading from a local
+   config directory (can be a clone of the weaver-config repo)
+3. **Integration tests**: Use `LocalTransport` — a WeaverTransport
+   implementation that wraps `createConfigurationService()` in-process
+   (no network, same interface)
+4. **Staging/production**: Use `ScompWeaverTransport` or `HttpWeaverTransport`
+
+The `LocalTransport` implementation enables testing the full WeaverClient
+code path (tenant loading, persistence, delta handling) without a running
+weaver-server.
+
+### A.14 Migration Strategy (Minor)
+
+Migration from direct `ConfigurationStorageProvider` usage to WeaverClient
+is incremental and non-breaking:
+
+**Phase 1 — Parallel operation:**
+Deploy weaver-server alongside existing config. Services continue using
+local storage providers. weaver-server loads the same config repo.
+
+**Phase 2 — HTTP transport adoption:**
+Services adopt `createServiceConfigurationService()` with `HttpWeaverTransport`.
+Lower risk than scomp (standard HTTP, easier debugging). Local fallback
+on transport failure (if offline persistence is configured).
+
+**Phase 3 — scomp transport adoption:**
+Services switch to `ScompWeaverTransport` for live delta streaming.
+`onChange` listeners now fire in real-time instead of polling.
+
+**Phase 4 — Cleanup:**
+Remove local storage providers from service deployments. Services depend
+solely on WeaverClient for config. Local `FileSystemStorageProvider` remains
+for development.
+
+Each phase is independently deployable and rollbackable. Services can
+operate in mixed mode during migration (some on scomp, some on HTTP,
+some still local).
+
+### A.15 resolveAll Response Shape for Tenant-All Services (Minor)
+
+For services with `tenantScope: "all"`, the `resolveAll` response uses
+explicit tenant separation:
+
+```typescript
+interface ConfigSnapshot {
+  /** Platform config (non-tenant-scoped) */
+  platform: Record<string, unknown>;
+
+  /** Per-tenant config, keyed by tenantId */
+  tenants: Record<string, Record<string, unknown>>;
+
+  /** Revision identifier for this snapshot */
+  revision: string;
+
+  /** Server timestamp */
+  timestamp: string;
+}
+```
+
+Example:
+```json
+{
+  "platform": {
+    "db.host": "prod-db.internal",
+    "db.port": 5432
+  },
+  "tenants": {
+    "acme": {
+      "lynx.maxUsers": 5000,
+      "lynx.theme": "dark"
+    },
+    "globex": {
+      "lynx.maxUsers": 1000,
+      "lynx.theme": "light"
+    }
+  },
+  "revision": "abc123",
+  "timestamp": "2026-05-02T20:00:00Z"
+}
+```
+
+The WeaverClient uses this structure to populate per-tenant state
+containers. `config.get("lynx.maxUsers", { tenantId: "acme" })` reads
+from the `acme` tenant container, falling back to `platform` for keys
+without tenant overrides.
+
+For services with specific `tenantScope` (e.g., `["acme"]`), the `tenants`
+object contains only the authorized tenants.
+
+### A.16 Schema Default Materialization on Registration (Minor)
+
+When a service registers a schema with new properties that have `default`
+values:
+
+1. Server diffs the new schema against the existing schema
+2. For each new property with a `default` value:
+   a. Check if the key already exists in the appropriate layer
+   b. If not: materialize the default into the target layer:
+      - Platform-level properties → platform layer base
+      - Properties expected per-tenant → each existing tenant layer base
+3. Commit materialized defaults to Git
+4. Acknowledge registration only after defaults are materialized
+
+This ensures that `resolveAll` after registration always includes the
+service's defaults. Without this, a service registering a new property
+would get `undefined` for that key until someone manually sets a value.
+
+### A.17 Bootstrap Validation (Minor)
+
+`bootstrap/server.json` is validated at startup using a Zod schema:
+
+```typescript
+const BootstrapConfigSchema = z.object({
+  layers: z.array(z.object({
+    id: z.string(),
+    provider: z.enum(["git", "mongodb", "memory"]),
+    path: z.string().optional(),
+    collection: z.string().optional(),
+  })),
+  mongodb: z.object({
+    uri: z.string(),
+  }).optional(),
+});
+```
+
+Validation failures produce clear error messages:
+```
+FATAL: Bootstrap validation failed:
+  - layers[2].provider: Expected "git" | "mongodb" | "memory", received "gitx"
+  - mongodb.uri: Required when any layer uses "mongodb" provider
+```
+
+The server exits with code 1 on bootstrap validation failure. No degraded
+mode — bootstrap config must be valid.
+
+### A.18 MongoDB Index Strategy (Minor)
+
+Required indexes for MongoDB collections:
+
+**`config_layers` collection:**
+```javascript
+db.config_layers.createIndex({ layer: 1, environment: 1, key: 1 }, { unique: true })
+db.config_layers.createIndex({ layer: 1, environment: 1 })  // for layer scans
+```
+
+**`config_revisions` collection:**
+```javascript
+db.config_revisions.createIndex({ layer: 1, key: 1, timestamp: -1 })
+db.config_revisions.createIndex({ timestamp: 1 }, { expireAfterSeconds: 7776000 })  // 90-day TTL
+```
+
+**`config_audit` collection:**
+```javascript
+db.config_audit.createIndex({ timestamp: -1, layer: 1 })
+db.config_audit.createIndex({ timestamp: -1, tenantId: 1 })
+db.config_audit.createIndex({ key: 1, timestamp: -1 })
+```
+
+Indexes are created at startup if they don't exist (idempotent
+`createIndex` calls). The revision TTL index auto-expires old revision
+history after 90 days (configurable via `_weaver.server.revisionRetentionDays`).
+
+### A.19 GitStorageProvider and FileSystemStorageProvider Relationship (Minor)
+
+`GitStorageProvider` composes `FileSystemStorageProvider` for reads rather
+than duplicating filesystem logic:
+
+```typescript
+class GitStorageProvider implements ConfigurationStorageProvider {
+  private readonly fsProvider: FileSystemStorageProvider;
+  private readonly git: SimpleGit;
+  private readonly writeQueue: GitWriteQueue;
+
+  async load(): Promise<ConfigurationLayerData> {
+    // Delegate reads to FileSystemStorageProvider
+    return this.fsProvider.load();
+  }
+
+  async write(key: string, value: unknown): Promise<WriteResult> {
+    return this.writeQueue.enqueue(async () => {
+      // Write file via fsProvider
+      const result = await this.fsProvider.write(key, value);
+      // Then commit and push via Git
+      await this.git.add(this.fsProvider.pathForKey(key));
+      await this.git.commit(`config: set ${key}`);
+      await this.git.push();
+      return result;
+    });
+  }
+}
+```
+
+`FileSystemStorageProvider` remains available independently for local
+development and testing (no Git required).
+
+### A.20 scomp Contract Versioning (Minor)
+
+The scomp contract is versioned via the contract token name:
+
+```typescript
+const WeaverConfigV1 = createContractToken<WeaverConfigContractV1>("weaver-config-v1");
+```
+
+Breaking changes to the contract create a new token:
+```typescript
+const WeaverConfigV2 = createContractToken<WeaverConfigContractV2>("weaver-config-v2");
+```
+
+During migration, the server hosts both contract versions simultaneously.
+Clients negotiate the available version via scomp's built-in
+`__scomp.discover` control plane route. Old clients continue using v1
+until migrated. After migration window: v1 is removed.
+
+Non-breaking additions (new operations) do not require a version bump —
+old clients simply don't call the new operations.
+
 ## Consequences
 
 - New `@weaver/weaver-server` package: central config server with Git + MongoDB storage, scomp/REST/SSE transports, JWT auth, promotion engine, rollback API, pluggable audit
@@ -1018,3 +1589,5 @@ Static analysis tool for `ServiceConfigurationDeclaration` files. Checks for: mi
 - Breaking change: services must migrate from direct `ConfigurationStorageProvider` usage to WeaverClient for production deployments
 - Single-server deployment for v1; horizontal scaling deferred but architecture supports it
 - All existing packages (`config-engine`, `config-providers`, `config-secrets`, `config-policy`) remain unchanged — weaver-server builds on top of them
+- Addendum A.1–A.20: 20 gap analysis deltas addressing package composition, write operations, Git concurrency, error handling, validation, shutdown, lifecycle management, security, and developer experience
+- Existing packages (`config-server`, `config-sync`, `config-sessions`, `config-auth`) are composed into weaver-server/weaver-client, not superseded — see addendum A.1
