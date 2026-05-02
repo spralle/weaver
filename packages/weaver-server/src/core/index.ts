@@ -18,3 +18,36 @@ export type {
   WebhookHandler,
   WebhookHandlerOptions,
 } from "./webhook-handler.js";
+
+export { createPromotionEngine } from "./promotion-engine.js";
+export type {
+  PromotionEngine,
+  PromotionEngineOptions,
+  PromotionRequest,
+  PromotionResult,
+} from "./promotion-engine.js";
+
+export { createRollbackService } from "./rollback-service.js";
+export type {
+  RollbackService,
+  RollbackServiceOptions,
+  RollbackRequest,
+  RollbackResult,
+} from "./rollback-service.js";
+
+export { createSchemaRegistry } from "./schema-registry.js";
+export type {
+  SchemaRegistry,
+  SchemaRegistryOptions,
+  SchemaRegistrationRequest,
+  SchemaRegistrationResult,
+} from "./schema-registry.js";
+
+export { createTenantManager } from "./tenant-manager.js";
+export type {
+  TenantManager,
+  TenantManagerOptions,
+  ProvisionTenantRequest,
+  DeprovisionTenantRequest,
+  TenantProvisionResult,
+} from "./tenant-manager.js";
