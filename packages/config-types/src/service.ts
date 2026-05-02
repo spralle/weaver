@@ -22,6 +22,8 @@ export interface ConfigurationInspection<T> {
   effectiveValue: T | undefined;
   effectiveLayer: ConfigurationLayer | string | undefined;
   layerValues: Partial<Record<string, T>>;
+  /** Mount chain if key resolves through mount indirection */
+  mountChain?: readonly string[] | undefined;
 }
 
 export interface ConfigurationService {

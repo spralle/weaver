@@ -14,6 +14,11 @@ import type {
   WeaverConfig,
 } from "@weaver/config-types";
 import { serializeScopePath } from "@weaver/config-types";
+import {
+  buildMountMap,
+  resolveMountedNamespace,
+  resolveMountedValue,
+} from "./mount-resolver.js";
 import { createStateContainer } from "./state-container.js";
 
 export interface ConfigurationServiceOptions {
@@ -96,6 +101,12 @@ export async function createConfigurationService(
       });
     }
   }
+
+  // Build mount map for resolving ConfigMount markers
+  let mountMap = buildMountMap(container.snapshot());
+  container.onAnyChange(() => {
+    mountMap = buildMountMap(container.snapshot());
+  });
 
   // Provider lookup helpers
   function findProviderForLayer(
@@ -189,12 +200,37 @@ export async function createConfigurationService(
 
   return {
     get<T>(key: string): T | undefined {
-      return container.get(key) as T | undefined;
+      if (!mountMap.has(key)) {
+        return container.get(key) as T | undefined;
+      }
+      try {
+        const resolution = resolveMountedValue(
+          key,
+          mountMap,
+          (k) => container.get(k),
+        );
+        return resolution.value as T | undefined;
+      } catch {
+        return undefined;
+      }
     },
 
     getWithDefault<T>(key: string, defaultValue: T): T {
-      const value = container.get(key) as T | undefined;
-      return value !== undefined ? value : defaultValue;
+      if (!mountMap.has(key)) {
+        const value = container.get(key) as T | undefined;
+        return value !== undefined ? value : defaultValue;
+      }
+      try {
+        const resolution = resolveMountedValue(
+          key,
+          mountMap,
+          (k) => container.get(k),
+        );
+        const value = resolution.value as T | undefined;
+        return value !== undefined ? value : defaultValue;
+      } catch {
+        return defaultValue;
+      }
     },
 
     getAtLayer<T>(
@@ -223,7 +259,25 @@ export async function createConfigurationService(
 
     inspect<T>(key: string): ConfigurationInspection<T> {
       const stack = buildLayerStack();
-      return inspectKey<T>(stack, key);
+      const inspection = inspectKey<T>(stack, key);
+
+      if (mountMap.has(key)) {
+        try {
+          const resolution = resolveMountedValue(
+            key,
+            mountMap,
+            (k) => container.get(k),
+          );
+          if (resolution.isMounted) {
+            inspection.mountChain = resolution.chain;
+            inspection.effectiveValue = resolution.value as T;
+          }
+        } catch {
+          // Mount error — leave inspection as-is
+        }
+      }
+
+      return inspection;
     },
 
     set(key: string, value: unknown, layer?: ConfigurationLayer): void {
@@ -286,7 +340,12 @@ export async function createConfigurationService(
     },
 
     getNamespace(prefix: string): Record<string, unknown> {
-      return container.getNamespace(prefix);
+      return resolveMountedNamespace(
+        prefix,
+        mountMap,
+        (p) => container.getNamespace(p),
+        (k) => container.get(k),
+      );
     },
 
     session: sessionHandle,

@@ -8,6 +8,12 @@ export {
   type InMemoryProviderOptions,
   InMemoryStorageProvider,
 } from "./in-memory-provider.js";
+export type { MountResolution } from "./mount-resolver.js";
+export {
+  buildMountMap,
+  resolveMountedNamespace,
+  resolveMountedValue,
+} from "./mount-resolver.js";
 
 export {
   LocalStorageProvider,
