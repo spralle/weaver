@@ -1,6 +1,22 @@
 // @weaver/config-secrets — Server-side secret resolution for Weaver
-//
-// Provides SecretProvider interface, SecretResolutionService, SecretCache,
-// and AzureKeyVaultProvider. Depends only on @weaver/config-types.
 
-export {};
+export type {
+  SecretValue,
+  SecretMetadata,
+  SecretStoreResult,
+  SecretProviderHealth,
+  SecretProvider,
+} from "./secret-provider.js";
+
+export type { SecretCacheOptions, SecretCacheEntry } from "./secret-cache.js";
+export { SecretCache } from "./secret-cache.js";
+
+export type {
+  SecretAuditEntry,
+  SecretAuditLog,
+  SecretResolutionServiceOptions,
+} from "./secret-resolution-service.js";
+export { SecretResolutionService } from "./secret-resolution-service.js";
+
+export type { AzureKeyVaultProviderOptions } from "./azure-keyvault-provider.js";
+export { AzureKeyVaultProvider } from "./azure-keyvault-provider.js";
