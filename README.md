@@ -32,16 +32,23 @@ const weaver = defineWeaver([
 ] as const);
 
 // 2. Wire up storage providers
-const defaults = StaticJsonStorageProvider("defaults", {
-  "ui.theme.mode": "light",
-  "ui.theme.density": "comfortable",
-  "feature.beta.enabled": false,
+const defaults = new StaticJsonStorageProvider({
+  id: "defaults",
+  layer: "defaults",
+  data: {
+    "ui.theme.mode": "light",
+    "ui.theme.density": "comfortable",
+    "feature.beta.enabled": false,
+  },
 });
-const tenant = InMemoryStorageProvider("tenant");
-const user = InMemoryStorageProvider("user");
+const tenant = new InMemoryStorageProvider({ id: "tenant", layer: "tenant" });
+const user = new InMemoryStorageProvider({ id: "user", layer: "user" });
 
 // 3. Create the configuration service
-const service = createConfigurationService(weaver, [defaults, tenant, user]);
+const service = await createConfigurationService({
+  weaverConfig: weaver,
+  providers: [defaults, tenant, user],
+});
 
 // 4. Read resolved values (deep-merged across layers)
 const mode = service.get("ui.theme.mode"); // "light"

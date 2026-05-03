@@ -1,5 +1,4 @@
 export type { ConfigDelta, ConfigSnapshot, ConfigurationInspection, ResolveOptions, GetOptions, Unsubscribe } from "./types.js";
-export { configDeltaSchema, configSnapshotSchema } from "./types.js";
 export type { WeaverTransport, WriteOptions, WriteResult } from "./transport.js";
 export type { WeaverClientPersistence } from "./persistence.js";
 export type { WeaverClient, WeaverClientOptions } from "./client.js";

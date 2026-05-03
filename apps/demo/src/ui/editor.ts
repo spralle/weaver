@@ -187,7 +187,7 @@ function clearFeedback(body: Element): void {
   el.textContent = "";
 }
 
-function handleSet(
+async function handleSet(
   body: Element,
   key: string,
   layer: string,
@@ -228,7 +228,7 @@ function handleSet(
   }
 
   clearFeedback(body);
-  service.set(key, value, layer);
+  await service.set(key, value, layer);
   addLogEntry(`Set ${key} = ${JSON.stringify(value)} at [${layer}]`);
 }
 

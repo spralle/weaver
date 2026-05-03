@@ -1,23 +1,20 @@
-import { z } from "zod";
 import type { ScopeInstance } from "@weaver/config-types";
 
-export const configDeltaSchema = z.object({
-  action: z.enum(["set", "remove"]),
-  key: z.string(),
-  value: z.unknown().nullable(),
-  layer: z.string(),
-  environment: z.string(),
-  timestamp: z.string(),
-});
-export type ConfigDelta = z.infer<typeof configDeltaSchema>;
+export interface ConfigDelta {
+  action: "set" | "remove";
+  key: string;
+  value: unknown | null;
+  layer: string;
+  environment: string;
+  timestamp: string;
+}
 
-export const configSnapshotSchema = z.object({
-  entries: z.record(z.string(), z.unknown()),
-  scopes: z.record(z.string(), z.record(z.string(), z.unknown())),
-  revision: z.string(),
-  timestamp: z.string().optional(),
-});
-export type ConfigSnapshot = z.infer<typeof configSnapshotSchema>;
+export interface ConfigSnapshot {
+  entries: Record<string, unknown>;
+  scopes: Record<string, Record<string, unknown>>;
+  revision: string;
+  timestamp?: string;
+}
 
 export interface ResolveOptions {
   scopePath?: ScopeInstance[];
