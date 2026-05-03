@@ -38,6 +38,11 @@ test("weaverErrorSchema rejects invalid code", () => {
   assert.equal(result.success, false);
 });
 
+test("error codes include SCOPE_NOT_FOUND and SCOPE_NOT_LOADED", () => {
+  assert.ok(weaverErrorCodes.includes("SCOPE_NOT_FOUND"));
+  assert.ok(weaverErrorCodes.includes("SCOPE_NOT_LOADED"));
+});
+
 test("httpStatusForError returns correct status for each code", () => {
   for (const code of weaverErrorCodes) {
     const status = httpStatusForError(code);

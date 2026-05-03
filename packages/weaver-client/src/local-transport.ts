@@ -1,3 +1,4 @@
+import type { ScopeInstance } from "@weaver/config-types";
 import type { ConfigDelta, ConfigSnapshot, GetOptions, ResolveOptions, Unsubscribe } from "./types.js";
 import type { WeaverTransport } from "./transport.js";
 
@@ -8,6 +9,10 @@ export interface LocalTransportOptions {
 
 export interface LocalTransport extends WeaverTransport {
   pushDelta(delta: ConfigDelta): void;
+}
+
+function buildScopeKey(scopePath: ScopeInstance[]): string {
+  return scopePath.map(s => `${s.scopeId}:${s.value}`).join("/");
 }
 
 export function createLocalTransport(options: LocalTransportOptions): LocalTransport {
@@ -22,21 +27,21 @@ export function createLocalTransport(options: LocalTransportOptions): LocalTrans
   }
 
   return {
-    async resolveAll(_serviceId: string, opts?: ResolveOptions): Promise<ConfigSnapshot> {
+    async resolveAll(_opts?: ResolveOptions): Promise<ConfigSnapshot> {
       return withLatency(snapshot);
     },
 
-    async get(_serviceId: string, key: string, opts?: GetOptions): Promise<unknown> {
-      const source = opts?.tenantId
-        ? snapshot.tenants[opts.tenantId] ?? {}
-        : snapshot.platform;
+    async get(key: string, opts?: GetOptions): Promise<unknown> {
+      const source = opts?.scopePath?.length
+        ? snapshot.scopes[buildScopeKey(opts.scopePath)] ?? {}
+        : snapshot.entries;
       return withLatency(source[key]);
     },
 
-    async getNamespace(_serviceId: string, prefix: string, opts?: GetOptions): Promise<Record<string, unknown>> {
-      const source = opts?.tenantId
-        ? snapshot.tenants[opts.tenantId] ?? {}
-        : snapshot.platform;
+    async getNamespace(prefix: string, opts?: GetOptions): Promise<Record<string, unknown>> {
+      const source = opts?.scopePath?.length
+        ? snapshot.scopes[buildScopeKey(opts.scopePath)] ?? {}
+        : snapshot.entries;
       const result: Record<string, unknown> = {};
       for (const [key, value] of Object.entries(source)) {
         if (key.startsWith(prefix)) {
@@ -46,7 +51,7 @@ export function createLocalTransport(options: LocalTransportOptions): LocalTrans
       return withLatency(result);
     },
 
-    subscribe(_serviceId: string, handler: (delta: ConfigDelta) => void): Unsubscribe {
+    subscribe(handler: (delta: ConfigDelta) => void): Unsubscribe {
       subscribers.add(handler);
       return () => {
         subscribers.delete(handler);

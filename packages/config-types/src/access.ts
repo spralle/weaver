@@ -4,7 +4,6 @@ import type { ConfigurationLayer, ScopeInstance } from "./types.js";
 
 export interface ConfigurationAccessContext {
   userId: string;
-  tenantId: string;
   roles: ReadonlyArray<ConfigurationRole>;
   assignedScopes?: ReadonlyArray<ScopeInstance> | undefined;
   sessionMode?: "emergency-override" | SessionType | undefined;
@@ -47,7 +46,7 @@ export interface ServiceAccessPolicy {
   readonly allowedNamespaces: ReadonlyArray<string>;
   readonly allowedReads: ReadonlyArray<string>;
   readonly allowedSecrets: boolean;
-  readonly tenantScope: "all" | ReadonlyArray<string>;
+  readonly scopeAccess: "all" | ReadonlyArray<string>;
   readonly approvedBy: string;
   readonly approvedAt: string;
   readonly expiresAt?: string | undefined;

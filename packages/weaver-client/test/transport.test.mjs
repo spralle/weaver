@@ -3,7 +3,7 @@ import { test, expect, describe } from "bun:test";
 describe("WeaverTransport interface", () => {
   test("mock transport satisfies interface contract", () => {
     const transport = {
-      resolveAll: async () => ({ platform: {}, tenants: {}, revision: "r1", timestamp: "t1" }),
+      resolveAll: async () => ({ entries: {}, scopes: {}, revision: "r1", timestamp: "t1" }),
       get: async () => undefined,
       getNamespace: async () => ({}),
       subscribe: () => () => {},

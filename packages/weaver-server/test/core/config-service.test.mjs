@@ -31,11 +31,11 @@ describe("WeaverConfigService read path", () => {
       environment: "dev",
     });
 
-    const snapshot = await svc.resolveAll("my-service");
-    assert.equal(snapshot.platform["app.name"], "test");
+    const snapshot = await svc.resolveAll();
+    assert.equal(snapshot.entries["app.name"], "test");
     assert.ok(snapshot.revision);
     assert.ok(snapshot.timestamp);
-    assert.deepEqual(snapshot.tenants, {});
+    assert.deepEqual(snapshot.scopes, {});
   });
 
   test("get returns correct value", async () => {
@@ -45,7 +45,7 @@ describe("WeaverConfigService read path", () => {
       environment: "dev",
     });
 
-    const val = await svc.get("svc", "db.host");
+    const val = await svc.get("db.host");
     assert.equal(val, "localhost");
   });
 
@@ -60,7 +60,7 @@ describe("WeaverConfigService read path", () => {
       environment: "dev",
     });
 
-    const ns = await svc.getNamespace("svc", "db");
+    const ns = await svc.getNamespace("db");
     assert.equal(ns["db.host"], "localhost");
     assert.equal(ns["db.port"], 5432);
     assert.equal(ns["cache.ttl"], undefined);
@@ -74,7 +74,7 @@ describe("WeaverConfigService read path", () => {
       environment: "dev",
     });
 
-    const info = await svc.inspect("svc", "app.name");
+    const info = await svc.inspect("app.name");
     assert.equal(info.key, "app.name");
     assert.equal(info.effectiveValue, "override");
     assert.equal(info.effectiveLayer, "platform");
@@ -82,7 +82,7 @@ describe("WeaverConfigService read path", () => {
     assert.equal(info.layerValues["platform"], "override");
   });
 
-  test("multi-tenant: platform + tenant providers grouped correctly", async () => {
+  test("multi-scope: platform + scoped providers grouped correctly", async () => {
     const platform = createTestProvider("p1", "platform", { "app.name": "test" });
     const acme = createTestProvider("t1", "tenant:acme", { "theme": "dark" });
     const globex = createTestProvider("t2", "tenant:globex", { "theme": "light" });
@@ -92,13 +92,13 @@ describe("WeaverConfigService read path", () => {
       environment: "dev",
     });
 
-    const snapshot = await svc.resolveAll("svc");
-    assert.equal(snapshot.platform["app.name"], "test");
-    assert.equal(snapshot.tenants["acme"]["theme"], "dark");
-    assert.equal(snapshot.tenants["globex"]["theme"], "light");
+    const snapshot = await svc.resolveAll();
+    assert.equal(snapshot.entries["app.name"], "test");
+    assert.equal(snapshot.scopes["tenant:acme"]["theme"], "dark");
+    assert.equal(snapshot.scopes["tenant:globex"]["theme"], "light");
   });
 
-  test("get with tenantId merges tenant over platform", async () => {
+  test("get with scopePath merges scope over platform", async () => {
     const platform = createTestProvider("p1", "platform", { "theme": "default" });
     const acme = createTestProvider("t1", "tenant:acme", { "theme": "dark" });
 
@@ -107,7 +107,7 @@ describe("WeaverConfigService read path", () => {
       environment: "dev",
     });
 
-    const val = await svc.get("svc", "theme", { tenantId: "acme" });
+    const val = await svc.get("theme", { scopePath: [{ scopeId: "tenant", value: "acme" }] });
     assert.equal(val, "dark");
   });
 
@@ -118,12 +118,12 @@ describe("WeaverConfigService read path", () => {
       environment: "dev",
     });
 
-    assert.equal(await svc.get("svc", "key"), "old");
+    assert.equal(await svc.get("key"), "old");
 
     provider._setData({ "key": "new" });
     await svc.reloadProvider("p1");
 
-    assert.equal(await svc.get("svc", "key"), "new");
+    assert.equal(await svc.get("key"), "new");
   });
 
   test("revision changes after reload", async () => {

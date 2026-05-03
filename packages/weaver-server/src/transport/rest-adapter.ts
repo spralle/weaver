@@ -2,6 +2,7 @@
 import type { WeaverConfigService } from "../core/config-service.js";
 import { createWeaverError, httpStatusForError } from "../types/index.js";
 import type { WeaverErrorCode } from "../types/index.js";
+import { parseScopeQuery } from "../core/scope-utils.js";
 
 export interface RestRoute {
   method: "GET" | "POST" | "PUT" | "DELETE";
@@ -81,7 +82,6 @@ function errorResponse(
 export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
   const { configService, corsOrigins } = options;
 
-  // Route params are guaranteed by path matching; this helper satisfies noUncheckedIndexedAccess
   function param(params: Record<string, string>, name: string): string {
     return params[name] as string;
   }
@@ -94,22 +94,21 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
   const routes: RestRoute[] = [
     {
       method: "GET",
-      path: "/api/config/:serviceId",
+      path: "/api/config",
       async handler(req) {
-        const tenantId = queryOpt(req.query, "tenantId");
-        const opts = tenantId !== undefined ? { tenantId } : {};
-        const snapshot = await configService.resolveAll(param(req.params, "serviceId"), opts);
+        const scopePath = parseScopeQuery(queryOpt(req.query, "scope"));
+        const opts = scopePath ? { scopePath } : {};
+        const snapshot = await configService.resolveAll(opts);
         return { status: 200, body: snapshot };
       },
     },
     {
       method: "GET",
-      path: "/api/config/:serviceId/namespace/:prefix",
+      path: "/api/config/namespace/:prefix",
       async handler(req) {
-        const tenantId = queryOpt(req.query, "tenantId");
-        const opts = tenantId !== undefined ? { tenantId } : {};
+        const scopePath = parseScopeQuery(queryOpt(req.query, "scope"));
+        const opts = scopePath ? { scopePath } : {};
         const entries = await configService.getNamespace(
-          param(req.params, "serviceId"),
           param(req.params, "prefix"),
           opts,
         );
@@ -118,10 +117,9 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
     },
     {
       method: "GET",
-      path: "/api/config/:serviceId/inspect/:key",
+      path: "/api/config/inspect/:key",
       async handler(req) {
         const inspection = await configService.inspect(
-          param(req.params, "serviceId"),
           param(req.params, "key"),
         );
         return { status: 200, body: inspection };
@@ -129,12 +127,11 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
     },
     {
       method: "GET",
-      path: "/api/config/:serviceId/:key",
+      path: "/api/config/:key",
       async handler(req) {
-        const tenantId = queryOpt(req.query, "tenantId");
-        const opts = tenantId !== undefined ? { tenantId } : {};
+        const scopePath = parseScopeQuery(queryOpt(req.query, "scope"));
+        const opts = scopePath ? { scopePath } : {};
         const value = await configService.get(
-          param(req.params, "serviceId"),
           param(req.params, "key"),
           opts,
         );
@@ -207,7 +204,7 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
     },
     {
       method: "POST",
-      path: "/api/admin/tenants",
+      path: "/api/admin/scopes",
       async handler() {
         return { status: 501, body: { error: "Not implemented" } };
       },

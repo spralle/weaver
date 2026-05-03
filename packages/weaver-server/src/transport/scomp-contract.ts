@@ -5,19 +5,19 @@ import type { WriteResult } from "@weaver/config-types";
 
 export interface WeaverConfigContract {
   resolveAll: {
-    request: { serviceId: string; tenantId?: string };
+    request: { scope?: string };
     response: ConfigSnapshot;
   };
   get: {
-    request: { serviceId: string; key: string; tenantId?: string };
+    request: { key: string; scope?: string };
     response: { value: unknown };
   };
   getNamespace: {
-    request: { serviceId: string; prefix: string; tenantId?: string };
+    request: { prefix: string; scope?: string };
     response: { entries: Record<string, unknown> };
   };
   inspect: {
-    request: { serviceId: string; key: string };
+    request: { key: string };
     response: ConfigurationInspection<unknown>;
   };
   set: {
@@ -26,7 +26,7 @@ export interface WeaverConfigContract {
       key: string;
       value: unknown;
       environment?: string;
-      tenantId?: string;
+      scope?: string;
     };
     response: WriteResult;
   };
@@ -35,7 +35,7 @@ export interface WeaverConfigContract {
       layer: string;
       key: string;
       environment?: string;
-      tenantId?: string;
+      scope?: string;
     };
     response: WriteResult;
   };
@@ -57,7 +57,7 @@ export interface WeaverConfigContract {
     response: { success: boolean };
   };
   configChanges: {
-    request: { serviceId: string };
+    request: Record<string, never>;
     item: ConfigDelta;
   };
 }

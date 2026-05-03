@@ -1,0 +1,141 @@
+import type { ScopeDefinition } from "@weaver/config-types";
+import type { WeaverConfigService } from "./config-service.js";
+import type { GitWriteQueue } from "../git/write-queue.js";
+import type { SchemaRegistry } from "./schema-registry.js";
+import type { WeaverError } from "../types/errors.js";
+import { createWeaverError } from "../types/errors.js";
+import { isScopedLayer, parseScopeLayer } from "./scope-utils.js";
+
+export interface ProvisionScopeRequest {
+  scopeId: string;
+  value: string;
+  displayName?: string;
+  actor: string;
+}
+
+export interface DeprovisionScopeRequest {
+  scopeId: string;
+  value: string;
+  archive?: boolean;
+  actor: string;
+}
+
+export interface ScopeProvisionResult {
+  success: boolean;
+  scopeId: string;
+  value: string;
+  error?: WeaverError;
+}
+
+export interface ScopeManagerOptions {
+  configService: WeaverConfigService;
+  gitWriteQueue: GitWriteQueue;
+  schemaRegistry: SchemaRegistry;
+}
+
+export interface ScopeManager {
+  provision(request: ProvisionScopeRequest): Promise<ScopeProvisionResult>;
+  deprovision(request: DeprovisionScopeRequest): Promise<ScopeProvisionResult>;
+  listScopeValues(scopeId: string): string[];
+  listScopes(): ScopeDefinition[];
+}
+
+export function createScopeManager(
+  options: ScopeManagerOptions,
+): ScopeManager {
+  const { configService, gitWriteQueue } = options;
+  const activeScopes = new Map<string, Set<string>>();
+
+  // Initialize from existing providers
+  for (const provider of configService.providers) {
+    const parsed = parseScopeLayer(provider.layer);
+    if (parsed) {
+      if (!activeScopes.has(parsed.scopeId)) {
+        activeScopes.set(parsed.scopeId, new Set());
+      }
+      activeScopes.get(parsed.scopeId)!.add(parsed.value);
+    }
+  }
+
+  return {
+    async provision(
+      request: ProvisionScopeRequest,
+    ): Promise<ScopeProvisionResult> {
+      const { scopeId, value, actor } = request;
+      const values = activeScopes.get(scopeId);
+
+      if (values?.has(value)) {
+        return {
+          success: false,
+          scopeId,
+          value,
+          error: createWeaverError(
+            "VALIDATION_ERROR",
+            `Scope "${scopeId}:${value}" already exists`,
+          ),
+        };
+      }
+
+      await gitWriteQueue.enqueue(async () => {
+        const layer = `${scopeId}:${value}`;
+        const provider = configService.providers.find(
+          (p) => p.layer === layer,
+        );
+        if (provider) {
+          await configService.set(layer, `_weaver.scope.${scopeId}`, value, {
+            environment: "default",
+            actor,
+          });
+        }
+      });
+
+      if (!activeScopes.has(scopeId)) {
+        activeScopes.set(scopeId, new Set());
+      }
+      activeScopes.get(scopeId)!.add(value);
+      return { success: true, scopeId, value };
+    },
+
+    async deprovision(
+      request: DeprovisionScopeRequest,
+    ): Promise<ScopeProvisionResult> {
+      const { scopeId, value, actor } = request;
+      const values = activeScopes.get(scopeId);
+
+      if (!values?.has(value)) {
+        return {
+          success: false,
+          scopeId,
+          value,
+          error: createWeaverError(
+            "SCOPE_NOT_FOUND",
+            `Scope "${scopeId}:${value}" not found`,
+          ),
+        };
+      }
+
+      await gitWriteQueue.enqueue(async () => {
+        const layer = `${scopeId}:${value}`;
+        await configService.remove(layer, `_weaver.scope.${scopeId}`, {
+          environment: "default",
+          actor,
+        });
+      });
+
+      values.delete(value);
+      return { success: true, scopeId, value };
+    },
+
+    listScopeValues(scopeId: string): string[] {
+      return [...(activeScopes.get(scopeId) ?? [])];
+    },
+
+    listScopes(): ScopeDefinition[] {
+      const scopes: ScopeDefinition[] = [];
+      for (const scopeId of activeScopes.keys()) {
+        scopes.push({ id: scopeId, label: scopeId });
+      }
+      return scopes;
+    },
+  };
+}

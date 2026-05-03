@@ -71,8 +71,8 @@ describe("PromotionEngine", () => {
     assert.equal(result.error?.code, "NOT_FOUND");
   });
 
-  test("promote rejects user/device layers", async () => {
-    const provider = createTestProvider("p1", "user:123", { "key": "val" });
+  test("promote rejects non-promotable layers", async () => {
+    const provider = createTestProvider("p1", "user", { "key": "val" });
     const configService = await createWeaverConfigService({
       providers: [provider],
       environment: "dev",
@@ -86,7 +86,7 @@ describe("PromotionEngine", () => {
       key: "key",
       fromEnvironment: "dev",
       toEnvironment: "prod",
-      layer: "user:123",
+      layer: "user",
       actor: "admin",
     });
 
@@ -116,8 +116,7 @@ describe("PromotionEngine", () => {
 
     assert.equal(result.success, true);
     assert.equal(result.method, "direct");
-    // Value should still be accessible
-    const val = await configService.get("svc", "feature.flag");
+    const val = await configService.get("feature.flag");
     assert.equal(val, true);
   });
 });

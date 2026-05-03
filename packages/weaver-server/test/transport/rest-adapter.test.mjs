@@ -33,16 +33,16 @@ function req(overrides = {}) {
 }
 
 describe("RestAdapter", () => {
-  test("GET /api/config/:serviceId returns snapshot", async () => {
+  test("GET /api/config returns snapshot", async () => {
     const { adapter } = await setup();
-    const res = await adapter.handleRequest("GET", "/api/config/svc1", req());
+    const res = await adapter.handleRequest("GET", "/api/config", req());
     assert.equal(res.status, 200);
-    assert.equal(res.body.platform["app.name"], "test");
+    assert.equal(res.body.entries["app.name"], "test");
   });
 
-  test("GET /api/config/:serviceId/:key returns value", async () => {
+  test("GET /api/config/:key returns value", async () => {
     const { adapter } = await setup();
-    const res = await adapter.handleRequest("GET", "/api/config/svc1/app.name", req());
+    const res = await adapter.handleRequest("GET", "/api/config/app.name", req());
     assert.equal(res.status, 200);
     assert.deepEqual(res.body, { value: "test" });
   });
@@ -61,9 +61,9 @@ describe("RestAdapter", () => {
     assert.equal(res.body.success, true);
   });
 
-  test("GET /api/config/:serviceId/namespace/:prefix returns namespace", async () => {
+  test("GET /api/config/namespace/:prefix returns namespace", async () => {
     const { adapter } = await setup();
-    const res = await adapter.handleRequest("GET", "/api/config/svc1/namespace/db", req());
+    const res = await adapter.handleRequest("GET", "/api/config/namespace/db", req());
     assert.equal(res.status, 200);
     assert.ok(res.body.entries["db.host"]);
   });
@@ -76,14 +76,13 @@ describe("RestAdapter", () => {
 
   test("error responses use correct HTTP status codes", async () => {
     const { adapter } = await setup();
-    // Try to write to non-existent layer
     const res = await adapter.handleRequest("PUT", "/api/config/nope/dev/key", req({ body: { value: 1 } }));
     assert.equal(res.status, 400);
   });
 
   test("CORS headers when configured", async () => {
     const { adapter } = await setup({ corsOrigins: ["http://localhost:3000"] });
-    const res = await adapter.handleRequest("GET", "/api/config/svc1", req());
+    const res = await adapter.handleRequest("GET", "/api/config", req());
     assert.ok(res.headers["Access-Control-Allow-Origin"]);
   });
 });

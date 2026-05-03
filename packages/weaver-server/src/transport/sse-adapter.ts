@@ -8,30 +8,32 @@ export interface SSEAdapterOptions {
 }
 
 export interface SSEClient {
-  readonly serviceId: string;
+  readonly id: string;
   readonly keyPatterns: string[];
   send(delta: ConfigDelta): void;
   close(): void;
 }
 
 export interface SSEAdapter {
-  createClient(serviceId: string, keyPatterns?: string[]): SSEClient;
+  createClient(keyPatterns?: string[]): SSEClient;
   removeClient(client: SSEClient): void;
   readonly clientCount: number;
   closeAll(): void;
 }
+
+let clientIdCounter = 0;
 
 export function createSSEAdapter(options: SSEAdapterOptions): SSEAdapter {
   const { configService } = options;
   const clients = new Set<SSEClient & { unsubscribe: () => void }>();
 
   function createClient(
-    serviceId: string,
     keyPatterns?: string[],
   ): SSEClient {
     const patterns = keyPatterns ?? ["**"];
     const messages: string[] = [];
     let closed = false;
+    const id = `sse-${++clientIdCounter}`;
 
     function shouldDeliver(delta: ConfigDelta): boolean {
       return patterns.some((p) => matchGlob(p, delta.key));
@@ -45,7 +47,7 @@ export function createSSEAdapter(options: SSEAdapterOptions): SSEAdapter {
     });
 
     const client = {
-      serviceId,
+      id,
       keyPatterns: patterns,
       unsubscribe,
       send(delta: ConfigDelta): void {

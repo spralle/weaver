@@ -11,16 +11,16 @@ export function createFileSystemPersistence(options: FileSystemPersistenceOption
   const { directory } = options;
 
   return {
-    async save(serviceId: string, snapshot: ConfigSnapshot): Promise<void> {
+    async save(namespace: string, snapshot: ConfigSnapshot): Promise<void> {
       mkdirSync(directory, { recursive: true });
-      const filePath = join(directory, `${serviceId}.json`);
+      const filePath = join(directory, `${namespace}.json`);
       const tempPath = `${filePath}.tmp`;
       writeFileSync(tempPath, JSON.stringify(snapshot), "utf-8");
       renameSync(tempPath, filePath);
     },
 
-    async load(serviceId: string): Promise<ConfigSnapshot | null> {
-      const filePath = join(directory, `${serviceId}.json`);
+    async load(namespace: string): Promise<ConfigSnapshot | null> {
+      const filePath = join(directory, `${namespace}.json`);
       if (!existsSync(filePath)) return null;
       const content = readFileSync(filePath, "utf-8");
       return JSON.parse(content) as ConfigSnapshot;

@@ -16,7 +16,6 @@ export interface TenantScopeHierarchy {
 }
 
 export interface ConfigurationContext {
-  tenantId: string;
   scopePath: ScopeInstance[];
   userId: string;
   deviceId: string;

@@ -7,7 +7,7 @@ export interface AuditEntry {
   key: string;
   layer: string;
   environment: string;
-  tenantId?: string;
+  scopePath?: string;
   oldValue?: unknown;
   newValue?: unknown;
   isEmergencyOverride: boolean;

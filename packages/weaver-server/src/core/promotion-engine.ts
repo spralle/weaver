@@ -2,6 +2,7 @@ import type { WeaverConfigService } from "./config-service.js";
 import type { GitWriteQueue } from "../git/write-queue.js";
 import type { WeaverError } from "../types/errors.js";
 import { createWeaverError } from "../types/errors.js";
+import { isScopedLayer, parseScopeLayer } from "./scope-utils.js";
 
 export interface PromotionRequest {
   key: string;
@@ -27,12 +28,8 @@ export interface PromotionEngine {
   promote(request: PromotionRequest): Promise<PromotionResult>;
 }
 
-const ALLOWED_LAYER_PREFIXES = ["platform", "tenant:"];
-
 function isPromotableLayer(layer: string): boolean {
-  return ALLOWED_LAYER_PREFIXES.some(
-    (prefix) => layer === prefix || layer.startsWith(prefix),
-  );
+  return layer === "platform" || isScopedLayer(layer);
 }
 
 export function createPromotionEngine(
@@ -50,19 +47,17 @@ export function createPromotionEngine(
           method: "direct",
           error: createWeaverError(
             "POLICY_VIOLATION",
-            `Promotion only supported for platform/tenant layers, got "${layer}"`,
+            `Promotion only supported for platform/scoped layers, got "${layer}"`,
           ),
         };
       }
 
       // Read value from source environment
-      const tenantId = layer.startsWith("tenant:")
-        ? layer.slice("tenant:".length)
-        : undefined;
+      const parsed = parseScopeLayer(layer);
+      const scopePath = parsed ? [{ scopeId: parsed.scopeId, value: parsed.value }] : undefined;
       const value = await configService.get(
-        "_promotion",
         key,
-        tenantId ? { tenantId } : undefined,
+        scopePath ? { scopePath } : undefined,
       );
 
       if (value === undefined) {
@@ -76,16 +71,12 @@ export function createPromotionEngine(
         };
       }
 
-      // For v1, default changePolicy is "direct-allowed"
       const changePolicy = "direct-allowed";
 
       if (changePolicy !== "direct-allowed") {
-        // Staging-gate or full-pipeline: would create PR
-        // TODO: implement PR creation via gh CLI
         return { success: true, method: "pull-request" };
       }
 
-      // Direct promotion: write value to target environment via queue
       await gitWriteQueue.enqueue(async () => {
         const result = await configService.set(layer, key, value, {
           environment: toEnvironment,
@@ -99,7 +90,6 @@ export function createPromotionEngine(
         }
       });
 
-      // Reload affected provider
       const provider = configService.providers.find(
         (p) => p.layer === layer,
       );
