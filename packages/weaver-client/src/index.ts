@@ -12,3 +12,4 @@ export type { IndexedDbPersistenceOptions } from "./indexeddb-persistence.js";
 export { createIndexedDbPersistence } from "./indexeddb-persistence.js";
 export type { LocalTransportOptions, LocalTransport } from "./local-transport.js";
 export { createLocalTransport } from "./local-transport.js";
+export { createWeaverSyncTransport } from "./sync-transport-adapter.js";
