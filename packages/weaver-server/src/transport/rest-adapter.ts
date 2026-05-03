@@ -1,5 +1,6 @@
 // REST transport adapter — maps HTTP routes to WeaverConfigService
 import type { WeaverConfigService } from "../core/config-service.js";
+import type { ScopeManager } from "../core/scope-manager.js";
 import { createWeaverError, httpStatusForError } from "../types/index.js";
 import type { WeaverErrorCode, WeaverError } from "../types/index.js";
 import { parseScopeQuery } from "../core/scope-utils.js";
@@ -36,6 +37,7 @@ export interface ApiErrorResponse {
 
 export interface RestAdapterOptions {
   configService: WeaverConfigService;
+  scopeManager?: ScopeManager;
   corsOrigins?: string[];
 }
 
@@ -114,7 +116,7 @@ function stub501(revision: string): RestResponse {
 }
 
 export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
-  const { configService, corsOrigins } = options;
+  const { configService, scopeManager, corsOrigins } = options;
 
   function param(params: Record<string, string>, name: string): string {
     return params[name] as string;
@@ -249,14 +251,23 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
       method: "GET",
       path: "/v1/scopes",
       async handler() {
-        return v1Response(200, { scopes: [] });
+        if (!scopeManager) {
+          return v1Response(200, { definitions: [] });
+        }
+        const definitions = scopeManager.listScopes();
+        return v1Response(200, { definitions });
       },
     },
     {
       method: "GET",
       path: "/v1/scopes/:scopeId",
-      async handler() {
-        return v1Response(200, { values: [] });
+      async handler(req) {
+        if (!scopeManager) {
+          return v1Response(200, { values: [] });
+        }
+        const scopeId = param(req.params, "scopeId");
+        const values = scopeManager.listScopeValues(scopeId);
+        return v1Response(200, { values });
       },
     },
     // ── Admin ─────────────────────────────────────────────
@@ -283,35 +294,55 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
     {
       method: "POST",
       path: "/v1/admin/scopes/:scopeId",
-      async handler() { return stub501(configService.revision); },
+      async handler(req) {
+        if (!scopeManager) {
+          return stub501(configService.revision);
+        }
+        const scopeId = param(req.params, "scopeId");
+        const body = req.body as Record<string, unknown> | undefined;
+        const value = body?.value as string | undefined;
+        if (!value) {
+          return v1Error("VALIDATION_ERROR", "Missing 'value' in request body");
+        }
+        const displayName = body?.displayName as string | undefined;
+        const result = await scopeManager.provision({
+          scopeId,
+          value,
+          ...(displayName !== undefined ? { displayName } : {}),
+          actor: "api",
+        });
+        if (!result.success) {
+          return v1Error("VALIDATION_ERROR", result.error?.message ?? "Provision failed");
+        }
+        return v1Response(201, result);
+      },
     },
     {
       method: "DELETE",
       path: "/v1/admin/scopes/:scopeId/:value",
-      async handler() { return stub501(configService.revision); },
+      async handler(req) {
+        if (!scopeManager) {
+          return stub501(configService.revision);
+        }
+        const scopeId = param(req.params, "scopeId");
+        const value = param(req.params, "value");
+        const result = await scopeManager.deprovision({
+          scopeId,
+          value,
+          actor: "api",
+        });
+        if (!result.success) {
+          return v1Error("SCOPE_NOT_FOUND", result.error?.message ?? "Scope not found");
+        }
+        return v1Response(200, result);
+      },
     },
     // ── Sessions ──────────────────────────────────────────
-    {
-      method: "POST",
-      path: "/v1/admin/sessions",
-      async handler() { return stub501(configService.revision); },
-    },
-    {
-      method: "GET",
-      path: "/v1/admin/sessions/active",
-      async handler() { return stub501(configService.revision); },
-    },
-    {
-      method: "DELETE",
-      path: "/v1/admin/sessions/active",
-      async handler() { return stub501(configService.revision); },
-    },
+    { method: "POST", path: "/v1/admin/sessions", async handler() { return stub501(configService.revision); } },
+    { method: "GET", path: "/v1/admin/sessions/active", async handler() { return stub501(configService.revision); } },
+    { method: "DELETE", path: "/v1/admin/sessions/active", async handler() { return stub501(configService.revision); } },
     // ── Events (SSE) ──────────────────────────────────────
-    {
-      method: "GET",
-      path: "/v1/events",
-      async handler() { return stub501(configService.revision); },
-    },
+    { method: "GET", path: "/v1/events", async handler() { return stub501(configService.revision); } },
   ];
 
   function findRoute(method: string, path: string): RouteMatch | null {

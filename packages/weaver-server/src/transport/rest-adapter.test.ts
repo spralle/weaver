@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { createRestAdapter } from "./rest-adapter.js";
 import { httpStatusForError } from "../types/index.js";
 import type { WeaverConfigService } from "../core/config-service.js";
+import type { ScopeManager } from "../core/scope-manager.js";
 import type { RestRequest } from "./rest-adapter.js";
 
 function createMockConfigService(): WeaverConfigService {
@@ -123,5 +124,109 @@ describe("REST adapter CAS concurrency", () => {
 
   it("REVISION_CONFLICT maps to HTTP 409 in httpStatusForError", () => {
     assert.equal(httpStatusForError("REVISION_CONFLICT"), 409);
+  });
+});
+
+function createMockScopeManager(): ScopeManager {
+  const scopes = new Map<string, Set<string>>();
+  scopes.set("tenant", new Set(["stenaline", "dfds"]));
+  scopes.set("site", new Set(["gothenburg", "oslo"]));
+
+  return {
+    listScopes() {
+      return [...scopes.keys()].map(id => ({ id, label: id }));
+    },
+    listScopeValues(scopeId: string) {
+      return [...(scopes.get(scopeId) ?? [])];
+    },
+    async provision(req: { scopeId: string; value: string }) {
+      const values = scopes.get(req.scopeId) ?? new Set();
+      if (values.has(req.value)) {
+        return { success: false, scopeId: req.scopeId, value: req.value, error: { code: "VALIDATION_ERROR", message: "Already exists" } };
+      }
+      values.add(req.value);
+      scopes.set(req.scopeId, values);
+      return { success: true, scopeId: req.scopeId, value: req.value };
+    },
+    async deprovision(req: { scopeId: string; value: string }) {
+      const values = scopes.get(req.scopeId);
+      if (!values?.has(req.value)) {
+        return { success: false, scopeId: req.scopeId, value: req.value, error: { code: "SCOPE_NOT_FOUND", message: "Not found" } };
+      }
+      values.delete(req.value);
+      return { success: true, scopeId: req.scopeId, value: req.value };
+    },
+  } as unknown as ScopeManager;
+}
+
+describe("REST adapter scope routes", () => {
+  it("GET /v1/scopes returns definitions from ScopeManager", async () => {
+    const adapter = createRestAdapter({ configService: createMockConfigService(), scopeManager: createMockScopeManager() });
+    const res = await adapter.handleRequest("GET", "/v1/scopes", makeReq());
+    assert.equal(res.status, 200);
+    const body = res.body as { data: { definitions: Array<{ id: string }> } };
+    assert.equal(body.data.definitions.length, 2);
+    assert.deepEqual(body.data.definitions.map(d => d.id).sort(), ["site", "tenant"]);
+  });
+
+  it("GET /v1/scopes returns empty definitions when no ScopeManager", async () => {
+    const adapter = createRestAdapter({ configService: createMockConfigService() });
+    const res = await adapter.handleRequest("GET", "/v1/scopes", makeReq());
+    assert.equal(res.status, 200);
+    const body = res.body as { data: { definitions: unknown[] } };
+    assert.deepEqual(body.data.definitions, []);
+  });
+
+  it("GET /v1/scopes/:scopeId returns values for given scope", async () => {
+    const adapter = createRestAdapter({ configService: createMockConfigService(), scopeManager: createMockScopeManager() });
+    const res = await adapter.handleRequest("GET", "/v1/scopes/tenant", makeReq());
+    assert.equal(res.status, 200);
+    const body = res.body as { data: { values: string[] } };
+    assert.deepEqual(body.data.values.sort(), ["dfds", "stenaline"]);
+  });
+
+  it("GET /v1/scopes/:scopeId returns empty values when scope has no values", async () => {
+    const adapter = createRestAdapter({ configService: createMockConfigService(), scopeManager: createMockScopeManager() });
+    const res = await adapter.handleRequest("GET", "/v1/scopes/unknown", makeReq());
+    assert.equal(res.status, 200);
+    const body = res.body as { data: { values: string[] } };
+    assert.deepEqual(body.data.values, []);
+  });
+
+  it("POST /v1/admin/scopes/:scopeId provisions a scope value", async () => {
+    const adapter = createRestAdapter({ configService: createMockConfigService(), scopeManager: createMockScopeManager() });
+    const res = await adapter.handleRequest("POST", "/v1/admin/scopes/tenant", makeReq({
+      body: { value: "viking" },
+    }));
+    assert.equal(res.status, 201);
+    const body = res.body as { data: { success: boolean; scopeId: string; value: string } };
+    assert.equal(body.data.success, true);
+    assert.equal(body.data.value, "viking");
+  });
+
+  it("POST /v1/admin/scopes/:scopeId returns error when value missing", async () => {
+    const adapter = createRestAdapter({ configService: createMockConfigService(), scopeManager: createMockScopeManager() });
+    const res = await adapter.handleRequest("POST", "/v1/admin/scopes/tenant", makeReq({
+      body: {},
+    }));
+    assert.equal(res.status, 400);
+    const body = res.body as { error: { code: string } };
+    assert.equal(body.error.code, "VALIDATION_ERROR");
+  });
+
+  it("DELETE /v1/admin/scopes/:scopeId/:value deprovisions a scope value", async () => {
+    const adapter = createRestAdapter({ configService: createMockConfigService(), scopeManager: createMockScopeManager() });
+    const res = await adapter.handleRequest("DELETE", "/v1/admin/scopes/tenant/stenaline", makeReq());
+    assert.equal(res.status, 200);
+    const body = res.body as { data: { success: boolean } };
+    assert.equal(body.data.success, true);
+  });
+
+  it("DELETE /v1/admin/scopes/:scopeId/:value returns error when scope not found", async () => {
+    const adapter = createRestAdapter({ configService: createMockConfigService(), scopeManager: createMockScopeManager() });
+    const res = await adapter.handleRequest("DELETE", "/v1/admin/scopes/tenant/nonexistent", makeReq());
+    assert.equal(res.status, 404);
+    const body = res.body as { error: { code: string } };
+    assert.equal(body.error.code, "SCOPE_NOT_FOUND");
   });
 });
