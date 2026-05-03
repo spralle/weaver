@@ -222,4 +222,23 @@ describe("SSEAdapter", () => {
     assert.equal(msg(msgs, 0).event, "snapshot");
     client.close();
   });
+
+  it("caps message buffer at maxBufferSize, evicting oldest", async () => {
+    const smallAdapter = createSSEAdapter({
+      configService: mock.configService,
+      maxBufferSize: 5,
+    });
+    const client = await smallAdapter.createClient();
+    // snapshot is message 1; send 6 more changes to exceed buffer of 5
+    for (let i = 0; i < 6; i++) {
+      mock.emitDelta(makeDelta({ key: "app.name", value: `v${i}` }));
+    }
+    // Buffer should be capped at 5
+    assert.equal(client.messages.length, 5);
+    // Oldest messages (snapshot + early changes) should be evicted
+    const msgs = parseMessages(client);
+    // Last message should be the most recent change
+    assert.equal(msgs[msgs.length - 1]!.data.value, "v5");
+    client.close();
+  });
 });
