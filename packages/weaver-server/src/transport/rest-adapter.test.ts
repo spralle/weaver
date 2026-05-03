@@ -29,6 +29,13 @@ function createMockConfigService(): WeaverConfigService {
       currentRevision = "rev-" + (parseInt(currentRevision.split("-")[1]!) + 1);
       return { success: true as const, revision: currentRevision };
     },
+    async setMany(_layer: string, newEntries: Record<string, unknown>) {
+      for (const [key, value] of Object.entries(newEntries)) {
+        entries[key] = value;
+      }
+      currentRevision = "rev-" + (parseInt(currentRevision.split("-")[1]!) + 1);
+      return { success: true as const, revision: currentRevision };
+    },
     async reloadProvider() {},
     onDelta() { return () => {}; },
     async flush() {},
@@ -231,5 +238,35 @@ describe("REST adapter scope routes", () => {
     assert.equal(res.status, 404);
     const body = res.body as { error: { code: string } };
     assert.equal(body.error.code, "SCOPE_NOT_FOUND");
+  });
+});
+
+describe("REST adapter batch writes", () => {
+  it("PATCH /v1/config writes multiple entries", async () => {
+    const adapter = createRestAdapter({ configService: createMockConfigService() });
+    const res = await adapter.handleRequest("PATCH", "/v1/config", makeReq({
+      body: { entries: { "db.host": "localhost", "db.port": 5432 } },
+    }));
+    assert.equal(res.status, 200);
+    const body = res.body as { data: { success: boolean; written: number } };
+    assert.equal(body.data.success, true);
+    assert.equal(body.data.written, 2);
+  });
+
+  it("PATCH /v1/config returns 400 when entries missing", async () => {
+    const adapter = createRestAdapter({ configService: createMockConfigService() });
+    const res = await adapter.handleRequest("PATCH", "/v1/config", makeReq({
+      body: {},
+    }));
+    assert.equal(res.status, 400);
+  });
+
+  it("PATCH /v1/config respects CAS", async () => {
+    const adapter = createRestAdapter({ configService: createMockConfigService() });
+    const res = await adapter.handleRequest("PATCH", "/v1/config", makeReq({
+      headers: { "if-match": '"rev-wrong"' },
+      body: { entries: { a: 1 } },
+    }));
+    assert.equal(res.status, 409);
   });
 });

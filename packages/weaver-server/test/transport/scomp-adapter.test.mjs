@@ -2,27 +2,28 @@ import { test, describe } from "bun:test";
 import assert from "node:assert/strict";
 import { createWeaverConfigService } from "../../src/core/config-service.ts";
 import { createScompAdapter } from "../../src/transport/scomp-adapter.ts";
+import { deepSet, deepRemove } from "@weaver/config-engine";
 
 function createTestProvider(id, layer, entries, writable = true) {
-  let data = { ...entries };
+  let data = JSON.parse(JSON.stringify(entries));
   return {
     id,
     layer,
     writable,
-    async load() { return { entries: { ...data } }; },
+    async load() { return { entries: JSON.parse(JSON.stringify(data)) }; },
     async write(key, value) {
-      data[key] = value;
+      deepSet(data, key, value);
       return { success: true };
     },
     async remove(key) {
-      delete data[key];
+      deepRemove(data, key);
       return { success: true };
     },
   };
 }
 
 async function setup() {
-  const provider = createTestProvider("p1", "platform", { "app.name": "test", "app.port": 3000 });
+  const provider = createTestProvider("p1", "platform", { app: { name: "test", port: 3000 } });
   const svc = await createWeaverConfigService({ providers: [provider], environment: "dev" });
   const adapter = createScompAdapter({ configService: svc });
   return { svc, adapter };
@@ -33,7 +34,7 @@ describe("ScompAdapter", () => {
     const { adapter } = await setup();
     const result = await adapter.handleRequest("resolveAll", {});
     assert.ok(result.entries);
-    assert.equal(result.entries["app.name"], "test");
+    assert.equal(result.entries.app.name, "test");
     assert.ok(result.revision);
   });
 

@@ -2,22 +2,23 @@ import { test, describe } from "bun:test";
 import assert from "node:assert/strict";
 import { createPromotionEngine } from "../../src/core/promotion-engine.ts";
 import { createWeaverConfigService } from "../../src/core/config-service.ts";
+import { deepSet, deepRemove } from "@weaver/config-engine";
 
 function createTestProvider(id, layer, entries, writable = true) {
-  let data = { ...entries };
+  let data = JSON.parse(JSON.stringify(entries));
   return {
     id,
     layer,
     writable,
-    async load() { return { entries: { ...data } }; },
+    async load() { return { entries: JSON.parse(JSON.stringify(data)) }; },
     async write(key, value) {
       if (!writable) return { success: false, error: "read-only" };
-      data[key] = value;
+      deepSet(data, key, value);
       return { success: true };
     },
     async remove(key) {
       if (!writable) return { success: false, error: "read-only" };
-      delete data[key];
+      deepRemove(data, key);
       return { success: true };
     },
   };
@@ -25,7 +26,7 @@ function createTestProvider(id, layer, entries, writable = true) {
 
 describe("PromotionEngine", () => {
   test("promote copies value from source to target environment", async () => {
-    const provider = createTestProvider("p1", "platform", { "db.host": "staging-db" });
+    const provider = createTestProvider("p1", "platform", { db: { host: "staging-db" } });
     const configService = await createWeaverConfigService({
       providers: [provider],
       environment: "staging",
@@ -85,7 +86,7 @@ describe("PromotionEngine", () => {
   });
 
   test("direct promotion method writes value", async () => {
-    const provider = createTestProvider("p1", "platform", { "feature.flag": true });
+    const provider = createTestProvider("p1", "platform", { feature: { flag: true } });
     const configService = await createWeaverConfigService({
       providers: [provider],
       environment: "dev",

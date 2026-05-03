@@ -9,6 +9,7 @@ import type { ConfigSnapshot, ConfigDelta } from "../types/index.js";
 import type { WeaverLogger } from "../logger.js";
 import { consoleLogger } from "../logger.js";
 import { isScopedLayer, parseScopeLayer, buildScopePathString } from "./scope-utils.js";
+import { deepGet, deepSet, deepRemove, deepMerge } from "@weaver/config-engine";
 
 export interface WriteContext {
   environment?: string;
@@ -53,6 +54,13 @@ export interface WeaverConfigService {
 
   /** Group multiple writes into one commit. Auto-flushes at the end. */
   batch<T>(fn: () => Promise<T>): Promise<T>;
+
+  /** Write multiple key-value pairs in a single batch. */
+  setMany(
+    layer: string,
+    entries: Record<string, unknown>,
+    options?: WriteContext,
+  ): Promise<WriteResult>;
 
   /** Flush all dirty providers. Rarely needed — set/remove auto-flush. */
   flush(): Promise<void>;
@@ -99,23 +107,23 @@ export async function createWeaverConfigService(
   }
 
   function getBaseEntries(): Record<string, unknown> {
-    const merged: Record<string, unknown> = {};
+    let merged: Record<string, unknown> = {};
     for (const provider of providers) {
       if (isScopedLayer(provider.layer)) continue;
       const entries = layerData.get(provider.id) ?? {};
-      Object.assign(merged, entries);
+      merged = deepMerge(merged, entries);
     }
     return merged;
   }
 
   function getScopeState(scopePath: ScopeInstance[]): Record<string, unknown> {
-    const merged: Record<string, unknown> = {};
+    let merged: Record<string, unknown> = {};
     for (const scope of scopePath) {
       const layerName = `${scope.scopeId}:${scope.value}`;
       for (const provider of providers) {
         if (provider.layer === layerName) {
           const entries = layerData.get(provider.id) ?? {};
-          Object.assign(merged, entries);
+          merged = deepMerge(merged, entries);
         }
       }
     }
@@ -135,7 +143,7 @@ export async function createWeaverConfigService(
   function getMergedState(scopePath?: ScopeInstance[]): Record<string, unknown> {
     const base = getBaseEntries();
     if (!scopePath?.length) return base;
-    return { ...base, ...getScopeState(scopePath) };
+    return deepMerge(base, getScopeState(scopePath));
   }
 
   function updateRevision(): void {
@@ -150,7 +158,7 @@ export async function createWeaverConfigService(
     }
   }
 
-  return {
+  const service: WeaverConfigService = {
     get providers() {
       return providers;
     },
@@ -180,7 +188,7 @@ export async function createWeaverConfigService(
       opts?: { scopePath?: ScopeInstance[] },
     ): Promise<unknown> {
       const state = getMergedState(opts?.scopePath);
-      return state[key];
+      return deepGet(state, key);
     },
 
     async getNamespace(
@@ -188,14 +196,11 @@ export async function createWeaverConfigService(
       opts?: { scopePath?: ScopeInstance[] },
     ): Promise<Record<string, unknown>> {
       const state = getMergedState(opts?.scopePath);
-      const dotPrefix = `${prefix}.`;
-      const result: Record<string, unknown> = {};
-      for (const [key, value] of Object.entries(state)) {
-        if (key.startsWith(dotPrefix)) {
-          result[key] = value;
-        }
+      const value = deepGet(state, prefix);
+      if (value !== null && typeof value === "object" && !Array.isArray(value)) {
+        return value as Record<string, unknown>;
       }
-      return result;
+      return {};
     },
 
     async inspect(
@@ -207,9 +212,10 @@ export async function createWeaverConfigService(
 
       for (const provider of providers) {
         const entries = layerData.get(provider.id) ?? {};
-        if (key in entries) {
-          layerValues[provider.layer] = entries[key];
-          effectiveValue = entries[key];
+        const value = deepGet(entries, key);
+        if (value !== undefined) {
+          layerValues[provider.layer] = value;
+          effectiveValue = value;
           effectiveLayer = provider.layer;
         }
       }
@@ -249,7 +255,7 @@ export async function createWeaverConfigService(
       if (!result.success) return result;
 
       const entries = layerData.get(provider.id) ?? {};
-      entries[key] = value;
+      deepSet(entries, key, value);
       layerData.set(provider.id, entries);
       updateRevision();
 
@@ -284,7 +290,7 @@ export async function createWeaverConfigService(
       if (!result.success) return result;
 
       const entries = layerData.get(provider.id) ?? {};
-      delete entries[key];
+      deepRemove(entries, key);
       layerData.set(provider.id, entries);
       updateRevision();
 
@@ -344,5 +350,21 @@ export async function createWeaverConfigService(
       }
       updateRevision();
     },
+
+    async setMany(
+      layer: string,
+      entries: Record<string, unknown>,
+      opts?: WriteContext,
+    ): Promise<WriteResult> {
+      return service.batch(async () => {
+        for (const [key, value] of Object.entries(entries)) {
+          const result = await service.set(layer, key, value, opts);
+          if (!result.success) return result;
+        }
+        return { success: true, revision };
+      });
+    },
   };
+
+  return service;
 }

@@ -3,10 +3,10 @@ import { createWeaverClient } from "../src/client.js";
 
 function createMockSnapshot() {
   return {
-    entries: { "db.host": "localhost", "db.port": 5432, "cache.ttl": 300 },
+    entries: { db: { host: "localhost", port: 5432 }, cache: { ttl: 300 } },
     scopes: {
-      "tenant:tenant-a": { "feature.x": true, "feature.y": false },
-      "tenant:tenant-b": { "feature.x": false },
+      "tenant:tenant-a": { feature: { x: true, y: false } },
+      "tenant:tenant-b": { feature: { x: false } },
     },
     revision: "rev-001",
     timestamp: "2026-01-01T00:00:00Z",
@@ -72,11 +72,11 @@ describe("createWeaverClient", () => {
     await client.close();
   });
 
-  test("getNamespace() returns filtered keys", async () => {
+  test("getNamespace() returns subtree", async () => {
     const { transport } = createMockTransport();
     const client = await createWeaverClient({ transport });
-    const ns = client.getNamespace("db.");
-    expect(ns).toEqual({ "db.host": "localhost", "db.port": 5432 });
+    const ns = client.getNamespace("db");
+    expect(ns).toEqual({ host: "localhost", port: 5432 });
     await client.close();
   });
 

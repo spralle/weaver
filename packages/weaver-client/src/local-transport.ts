@@ -1,6 +1,7 @@
 import type { ScopeDefinition, ScopeInstance } from "@weaver/config-types";
 import type { ConfigDelta, ConfigSnapshot, GetOptions, ResolveOptions, Unsubscribe } from "./types.js";
 import type { WeaverTransport, WriteOptions, WriteResult } from "./transport.js";
+import { deepGet, deepSet, deepRemove } from "@weaver/config-engine";
 
 export interface LocalTransportOptions {
   snapshot: ConfigSnapshot;
@@ -35,20 +36,18 @@ export function createLocalTransport(options: LocalTransportOptions): LocalTrans
       const source = opts?.scopePath?.length
         ? snapshot.scopes[buildScopeKey(opts.scopePath)] ?? {}
         : snapshot.entries;
-      return withLatency(source[key]);
+      return withLatency(deepGet(source as Record<string, unknown>, key));
     },
 
     async getNamespace(prefix: string, opts?: GetOptions): Promise<Record<string, unknown>> {
       const source = opts?.scopePath?.length
         ? snapshot.scopes[buildScopeKey(opts.scopePath)] ?? {}
         : snapshot.entries;
-      const result: Record<string, unknown> = {};
-      for (const [key, value] of Object.entries(source)) {
-        if (key.startsWith(prefix)) {
-          result[key] = value;
-        }
+      const value = deepGet(source as Record<string, unknown>, prefix);
+      if (value !== null && typeof value === "object" && !Array.isArray(value)) {
+        return withLatency(value as Record<string, unknown>);
       }
-      return withLatency(result);
+      return withLatency({});
     },
 
     subscribe(handler: (delta: ConfigDelta) => void): Unsubscribe {
@@ -59,17 +58,24 @@ export function createLocalTransport(options: LocalTransportOptions): LocalTrans
     },
 
     async inspect(key: string): Promise<unknown> {
-      const value = snapshot.entries[key];
+      const value = deepGet(snapshot.entries as Record<string, unknown>, key);
       return withLatency({ key, value, source: "local" });
     },
 
     async set(key: string, value: unknown, _options?: WriteOptions): Promise<WriteResult> {
-      snapshot.entries[key] = value;
+      deepSet(snapshot.entries as Record<string, unknown>, key, value);
       return withLatency({ success: true, revision: `local-${Date.now()}` });
     },
 
     async remove(key: string, _options?: WriteOptions): Promise<WriteResult> {
-      delete snapshot.entries[key];
+      deepRemove(snapshot.entries as Record<string, unknown>, key);
+      return withLatency({ success: true, revision: `local-${Date.now()}` });
+    },
+
+    async setMany(entries: Record<string, unknown>, _options?: WriteOptions): Promise<WriteResult> {
+      for (const [key, value] of Object.entries(entries)) {
+        deepSet(snapshot.entries as Record<string, unknown>, key, value);
+      }
       return withLatency({ success: true, revision: `local-${Date.now()}` });
     },
 

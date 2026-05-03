@@ -3,6 +3,8 @@ import type { ConfigDelta, ConfigSnapshot, ConfigurationInspection, Unsubscribe 
 import type { WeaverTransport, WriteOptions, WriteResult } from "./transport.js";
 import type { WeaverClientPersistence } from "./persistence.js";
 import { createScopeLoader, type ScopeLoadingMode } from "./scope-manager.js";
+import { deepGet, deepSet, deepRemove } from "@weaver/config-engine";
+import { flattenObject } from "./flatten.js";
 
 export interface WeaverClientOptions {
   namespace?: string;
@@ -27,6 +29,8 @@ export interface WeaverClient {
 
   // ── Writes (async, goes to server) ──
   set(key: string, value: unknown, options?: WriteOptions): Promise<WriteResult>;
+  setMany(entries: Record<string, unknown>, options?: WriteOptions): Promise<WriteResult>;
+  setNamespace(prefix: string, values: Record<string, unknown>, options?: WriteOptions): Promise<WriteResult>;
   remove(key: string, options?: WriteOptions): Promise<WriteResult>;
 
   // ── Scopes ──
@@ -104,9 +108,9 @@ export async function createWeaverClient(options: WeaverClientOptions): Promise<
   const unsubTransport = transport.subscribe((delta: ConfigDelta) => {
     if (!delta.layer.includes(":")) {
       if (delta.action === "set") {
-        baseState[delta.key] = delta.value;
+        deepSet(baseState, delta.key, delta.value);
       } else {
-        delete baseState[delta.key];
+        deepRemove(baseState, delta.key);
       }
     }
 
@@ -128,9 +132,10 @@ export async function createWeaverClient(options: WeaverClientOptions): Promise<
       const resolvedKey = applyNamespace(namespace, key);
       if (scopePath) {
         const scopeState = scopeLoader.getScopeState(scopePath);
-        return scopeState?.[resolvedKey] as T | undefined;
+        if (!scopeState) return undefined;
+        return deepGet(scopeState as Record<string, unknown>, resolvedKey) as T | undefined;
       }
-      return baseState[resolvedKey] as T | undefined;
+      return deepGet(baseState, resolvedKey) as T | undefined;
     },
 
     getWithDefault<T>(key: string, defaultValue: T, scopePath?: ScopeInstance[]): T {
@@ -152,13 +157,11 @@ export async function createWeaverClient(options: WeaverClientOptions): Promise<
       const source = scopePath
         ? scopeLoader.getScopeState(scopePath) ?? {}
         : baseState;
-      const result: Record<string, unknown> = {};
-      for (const [key, value] of Object.entries(source)) {
-        if (key.startsWith(resolvedPrefix)) {
-          result[key] = value;
-        }
+      const value = deepGet(source as Record<string, unknown>, resolvedPrefix);
+      if (value !== null && typeof value === "object" && !Array.isArray(value)) {
+        return value as Record<string, unknown>;
       }
-      return result;
+      return {};
     },
 
     async inspect<T>(key: string): Promise<ConfigurationInspection<T>> {
@@ -175,6 +178,20 @@ export async function createWeaverClient(options: WeaverClientOptions): Promise<
     async remove(key: string, opts?: WriteOptions): Promise<WriteResult> {
       const resolvedKey = applyNamespace(namespace, key);
       return transport.remove(resolvedKey, opts);
+    },
+
+    async setMany(entries: Record<string, unknown>, opts?: WriteOptions): Promise<WriteResult> {
+      const prefixed: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(entries)) {
+        prefixed[applyNamespace(namespace, key)] = value;
+      }
+      return transport.setMany(prefixed, opts);
+    },
+
+    async setNamespace(prefix: string, values: Record<string, unknown>, opts?: WriteOptions): Promise<WriteResult> {
+      const resolvedPrefix = applyNamespace(namespace, prefix);
+      const flattened = flattenObject(values, resolvedPrefix);
+      return transport.setMany(flattened, opts);
     },
 
     async listScopes(): Promise<ScopeDefinition[]> {

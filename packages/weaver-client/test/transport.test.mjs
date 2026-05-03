@@ -9,6 +9,7 @@ describe("WeaverTransport interface", () => {
       inspect: async () => ({}),
       subscribe: () => () => {},
       set: async () => ({ success: true }),
+      setMany: async () => ({ success: true }),
       remove: async () => ({ success: true }),
       listScopes: async () => [],
       listScopeValues: async () => [],
@@ -20,6 +21,7 @@ describe("WeaverTransport interface", () => {
     expect(transport.inspect).toBeFunction();
     expect(transport.subscribe).toBeFunction();
     expect(transport.set).toBeFunction();
+    expect(transport.setMany).toBeFunction();
     expect(transport.remove).toBeFunction();
     expect(transport.listScopes).toBeFunction();
     expect(transport.listScopeValues).toBeFunction();

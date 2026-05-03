@@ -3,8 +3,8 @@ import { createWeaverClient } from "../src/client.js";
 import { createLocalTransport } from "../src/local-transport.js";
 
 const snapshot = {
-  entries: { "db.host": "localhost", "db.port": 5432 },
-  scopes: { "tenant:t1": { "feature.x": true } },
+  entries: { db: { host: "localhost", port: 5432 } },
+  scopes: { "tenant:t1": { feature: { x: true } } },
   revision: "rev-1",
   timestamp: "2026-01-01T00:00:00Z",
 };
@@ -21,7 +21,7 @@ describe("LocalTransport integration", () => {
   test("getNamespace works through full client", async () => {
     const transport = createLocalTransport({ snapshot });
     const client = await createWeaverClient({ transport });
-    expect(client.getNamespace("db.")).toEqual({ "db.host": "localhost", "db.port": 5432 });
+    expect(client.getNamespace("db")).toEqual({ host: "localhost", port: 5432 });
     await client.close();
   });
 

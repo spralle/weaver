@@ -4,9 +4,10 @@ import type { ScopeManager } from "../core/scope-manager.js";
 import { createWeaverError, httpStatusForError } from "../types/index.js";
 import type { WeaverErrorCode, WeaverError } from "../types/index.js";
 import { parseScopeQuery } from "../core/scope-utils.js";
+import { buildPath } from "@weaver/config-engine";
 
 export interface RestRoute {
-  method: "GET" | "POST" | "PUT" | "DELETE";
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   path: string;
   handler: (req: RestRequest) => Promise<RestResponse>;
 }
@@ -61,23 +62,32 @@ function matchPath(
 ): Record<string, string> | null {
   const patternParts = pattern.split("/");
   const pathParts = path.split("/");
-  if (patternParts.length !== pathParts.length) return null;
   const params: Record<string, string> = {};
+
   for (let i = 0; i < patternParts.length; i++) {
     const pp = patternParts[i]!;
+    if (pp.startsWith("*")) {
+      const remaining = pathParts.slice(i);
+      if (remaining.length === 0) return null;
+      params[pp.slice(1)] = remaining.join("/");
+      return params;
+    }
+    if (i >= pathParts.length) return null;
     if (pp.startsWith(":")) {
       params[pp.slice(1)] = pathParts[i]!;
     } else if (pp !== pathParts[i]) {
       return null;
     }
   }
+
+  if (patternParts.length !== pathParts.length) return null;
   return params;
 }
 
 function corsHeaders(origins: string[]): Record<string, string> {
   return {
     "Access-Control-Allow-Origin": origins.join(", "),
-    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
   };
 }
@@ -179,25 +189,16 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
         const scopePath = parseScopeQuery(queryOpt(req.query, "scope"));
         const opts = scopePath ? { scopePath } : {};
         const snapshot = await configService.resolveAll(opts);
-        const prefix = queryOpt(req.query, "prefix");
-        if (prefix) {
-          const dotPrefix = `${prefix}.`;
-          const filtered: Record<string, unknown> = {};
-          for (const [k, v] of Object.entries(snapshot.entries)) {
-            if (k.startsWith(dotPrefix) || k === prefix) {
-              filtered[k] = v;
-            }
-          }
-          return v1Response(200, { ...snapshot, entries: filtered });
-        }
         return v1Response(200, snapshot);
       },
     },
     {
       method: "GET",
-      path: "/v1/config/:key",
+      path: "/v1/config/*keyPath",
       async handler(req) {
-        const key = param(req.params, "key");
+        const keyPath = param(req.params, "keyPath");
+        const segments = keyPath.split("/");
+        const key = buildPath(segments);
         const scopePath = parseScopeQuery(queryOpt(req.query, "scope"));
         const opts = scopePath ? { scopePath } : {};
         if ("inspect" in req.query) {
@@ -211,12 +212,14 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
     // ── Config writes ─────────────────────────────────────
     {
       method: "PUT",
-      path: "/v1/config/:key",
+      path: "/v1/config/*keyPath",
       async handler(req) {
         const concurrency = checkConcurrency(req);
         if ("error" in concurrency) return concurrency.error;
 
-        const key = param(req.params, "key");
+        const keyPath = param(req.params, "keyPath");
+        const segments = keyPath.split("/");
+        const key = buildPath(segments);
         const layer = queryOpt(req.query, "layer") ?? "platform";
         const environment = queryOpt(req.query, "env");
         const body = req.body as Record<string, unknown> | undefined;
@@ -230,12 +233,14 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
     },
     {
       method: "DELETE",
-      path: "/v1/config/:key",
+      path: "/v1/config/*keyPath",
       async handler(req) {
         const concurrency = checkConcurrency(req);
         if ("error" in concurrency) return concurrency.error;
 
-        const key = param(req.params, "key");
+        const keyPath = param(req.params, "keyPath");
+        const segments = keyPath.split("/");
+        const key = buildPath(segments);
         const layer = queryOpt(req.query, "layer") ?? "platform";
         const environment = queryOpt(req.query, "env");
         const writeCtx = environment ? { environment } : {};
@@ -244,6 +249,33 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
           return v1Error("VALIDATION_ERROR", result.error ?? "Remove failed");
         }
         return v1Response(200, result);
+      },
+    },
+    // ── Batch writes ──────────────────────────────────────
+    {
+      method: "PATCH",
+      path: "/v1/config",
+      async handler(req) {
+        const concurrency = checkConcurrency(req);
+        if ("error" in concurrency) return concurrency.error;
+
+        const layer = queryOpt(req.query, "layer") ?? "platform";
+        const environment = queryOpt(req.query, "env");
+        const body = req.body as Record<string, unknown> | undefined;
+
+        if (!body?.entries || typeof body.entries !== "object") {
+          return v1Error("VALIDATION_ERROR", "Request body must include 'entries' object");
+        }
+
+        const entries = body.entries as Record<string, unknown>;
+        const writeCtx = environment ? { environment } : {};
+        const result = await configService.setMany(layer, entries, writeCtx);
+
+        if (!result.success) {
+          return v1Error("VALIDATION_ERROR", result.error ?? "Batch write failed");
+        }
+
+        return v1Response(200, { ...result, written: Object.keys(entries).length });
       },
     },
     // ── Scopes ────────────────────────────────────────────

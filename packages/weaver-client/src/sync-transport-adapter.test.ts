@@ -16,7 +16,7 @@ function makeSnapshot(entries: Record<string, unknown>): ConfigSnapshot {
 }
 
 function setup(entries?: Record<string, unknown>) {
-  const snapshot = makeSnapshot(entries ?? { "app.name": "test", "app.port": 3000 });
+  const snapshot = makeSnapshot(entries ?? { app: { name: "test", port: 3000 } });
   const transport = createLocalTransport({ snapshot });
   const syncTransport = createWeaverSyncTransport(transport);
   return { transport, syncTransport, snapshot };
@@ -27,33 +27,32 @@ describe("createWeaverSyncTransport", () => {
     it("returns all entries as set changes on first call", async () => {
       const { syncTransport } = setup();
       const result = await syncTransport.pull({});
-      assert.equal(result.changes.length, 2);
+      assert.equal(result.changes.length, 1);
       assert.ok(result.changes.every(c => c.operation === "set"));
       const keys = result.changes.map(c => c.key).sort();
-      assert.deepEqual(keys, ["app.name", "app.port"]);
+      assert.deepEqual(keys, ["app"]);
     });
 
     it("returns only changed entries on subsequent call", async () => {
       const { syncTransport, snapshot } = setup();
       await syncTransport.pull({});
 
-      snapshot.entries["app.name"] = "updated";
+      (snapshot.entries as Record<string, unknown>).app = { name: "updated", port: 3000 };
       const result = await syncTransport.pull({});
       assert.equal(result.changes.length, 1);
       const change = result.changes[0]!;
-      assert.equal(change.key, "app.name");
-      assert.equal(change.value, "updated");
+      assert.equal(change.key, "app");
     });
 
     it("detects removed keys", async () => {
       const { syncTransport, snapshot } = setup();
       await syncTransport.pull({});
 
-      delete snapshot.entries["app.port"];
+      delete (snapshot.entries as Record<string, unknown>).app;
       const result = await syncTransport.pull({});
       assert.equal(result.changes.length, 1);
       const change = result.changes[0]!;
-      assert.equal(change.key, "app.port");
+      assert.equal(change.key, "app");
       assert.equal(change.operation, "remove");
     });
 
@@ -85,11 +84,11 @@ describe("createWeaverSyncTransport", () => {
           metadata: testMeta,
         }],
       });
-      assert.equal(snapshot.entries["new.key"], "hello");
+      assert.equal((snapshot.entries as Record<string, Record<string, unknown>>).new?.key, "hello");
     });
 
     it("delegates remove mutation to transport.remove()", async () => {
-      const { syncTransport, snapshot } = setup({ "del.key": "bye" });
+      const { syncTransport, snapshot } = setup({ del: { key: "bye" } });
       await syncTransport.push({
         requestId: "req-2",
         mutations: [{
@@ -99,7 +98,7 @@ describe("createWeaverSyncTransport", () => {
           metadata: testMeta,
         }],
       });
-      assert.equal(snapshot.entries["del.key"], undefined);
+      assert.equal((snapshot.entries as Record<string, Record<string, unknown>>).del?.key, undefined);
     });
 
     it("returns accepted=true on success", async () => {

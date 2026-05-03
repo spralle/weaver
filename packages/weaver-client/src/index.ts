@@ -13,3 +13,4 @@ export { createIndexedDbPersistence } from "./indexeddb-persistence.js";
 export type { LocalTransportOptions, LocalTransport } from "./local-transport.js";
 export { createLocalTransport } from "./local-transport.js";
 export { createWeaverSyncTransport } from "./sync-transport-adapter.js";
+export { flattenObject } from "./flatten.js";

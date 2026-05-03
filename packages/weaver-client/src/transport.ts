@@ -23,6 +23,7 @@ export interface WeaverTransport {
 
   // Writes
   set(key: string, value: unknown, options?: WriteOptions): Promise<WriteResult>;
+  setMany(entries: Record<string, unknown>, options?: WriteOptions): Promise<WriteResult>;
   remove(key: string, options?: WriteOptions): Promise<WriteResult>;
 
   // Scopes

@@ -1,6 +1,6 @@
 import { mkdir, readFile, rename, stat, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
-import { deepMerge } from "@weaver/config-engine";
+import { deepMerge, deepSet, deepRemove } from "@weaver/config-engine";
 import type {
   ConfigurationLayer,
   ConfigurationLayerData,
@@ -56,7 +56,7 @@ export class FileSystemStorageProvider implements ConfigurationStorageProvider {
     }
 
     const entries = await this.readJsonFile(this.filePath);
-    entries[key] = value;
+    deepSet(entries, key, value);
     await this.atomicWrite(this.filePath, entries);
 
     const revision = await this.getRevision(this.filePath);
@@ -69,7 +69,7 @@ export class FileSystemStorageProvider implements ConfigurationStorageProvider {
     }
 
     const entries = await this.readJsonFile(this.filePath);
-    delete entries[key];
+    deepRemove(entries, key);
     await this.atomicWrite(this.filePath, entries);
 
     const revision = await this.getRevision(this.filePath);

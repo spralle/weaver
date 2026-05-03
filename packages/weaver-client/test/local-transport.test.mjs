@@ -2,8 +2,8 @@ import { test, expect, describe } from "bun:test";
 import { createLocalTransport } from "../src/local-transport.js";
 
 const snapshot = {
-  entries: { "db.host": "localhost", "db.port": 5432, "cache.ttl": 300 },
-  scopes: { "tenant:t1": { "feature.x": true }, "tenant:t1/env:prod": { "feature.y": false } },
+  entries: { db: { host: "localhost", port: 5432 }, cache: { ttl: 300 } },
+  scopes: { "tenant:t1": { feature: { x: true } }, "tenant:t1/env:prod": { feature: { y: false } } },
   revision: "rev-1",
   timestamp: "2026-01-01T00:00:00Z",
 };
@@ -25,10 +25,10 @@ describe("LocalTransport", () => {
     expect(await t.get("feature.x", { scopePath: [{ scopeId: "tenant", value: "t1" }] })).toBe(true);
   });
 
-  test("getNamespace returns filtered keys", async () => {
+  test("getNamespace returns subtree", async () => {
     const t = createLocalTransport({ snapshot: makeSnapshot() });
-    const ns = await t.getNamespace("db.");
-    expect(ns).toEqual({ "db.host": "localhost", "db.port": 5432 });
+    const ns = await t.getNamespace("db");
+    expect(ns).toEqual({ host: "localhost", port: 5432 });
   });
 
   test("subscribe + pushDelta fires handler", () => {
@@ -83,5 +83,13 @@ describe("LocalTransport", () => {
     expect(values).toEqual(["t1"]);
     const envValues = await t.listScopeValues("env");
     expect(envValues).toEqual(["prod"]);
+  });
+
+  test("setMany writes multiple entries", async () => {
+    const t = createLocalTransport({ snapshot: makeSnapshot() });
+    const result = await t.setMany({ "cache.ttl": 600, "cache.max": 1000 });
+    expect(result.success).toBe(true);
+    expect(await t.get("cache.ttl")).toBe(600);
+    expect(await t.get("cache.max")).toBe(1000);
   });
 });

@@ -135,6 +135,7 @@
       "name": "@weaver/weaver-client",
       "version": "0.0.0",
       "dependencies": {
+        "@weaver/config-engine": "workspace:*",
         "@weaver/config-providers": "workspace:*",
         "@weaver/config-types": "workspace:*",
         "zod": "^3.24.4",
