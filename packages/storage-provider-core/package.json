@@ -22,13 +22,15 @@
   "scripts": {
     "build": "tsc -b",
     "typecheck": "tsc --noEmit",
-    "test": "bun test",
+    "test": "node --test test/**/*.test.mjs",
     "lint": "biome check ."
   },
   "dependencies": {
-    "@weaver/config-types": "workspace:*"
+    "@weaver/config-types": "workspace:*",
+    "zod": "^4.0.0"
   },
   "devDependencies": {
+    "@types/node": "^22.15.3",
     "typescript": "^5.8.3"
   }
 }
