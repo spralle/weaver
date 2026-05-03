@@ -1,6 +1,6 @@
 // Mount resolution — follows ConfigMount indirections to resolve final values
 
-import { isConfigMount } from "@weaver/config-types";
+import { createWeaverError, isConfigMount } from "@weaver/config-types";
 
 /** Result of resolving a key through the mount chain */
 export interface MountResolution {
@@ -59,7 +59,8 @@ export function resolveMountedValue(
     }
 
     if (visited.has(source)) {
-      throw new Error(
+      throw createWeaverError(
+        "INTERNAL_ERROR",
         `Mount cycle detected: ${[...chain, source].join(" → ")}`,
       );
     }
@@ -70,7 +71,8 @@ export function resolveMountedValue(
   }
 
   if (mountMap.has(currentKey)) {
-    throw new Error(
+    throw createWeaverError(
+      "INTERNAL_ERROR",
       `Mount chain exceeded maximum depth (${String(maxDepth)}): ${chain.join(" → ")}`,
     );
   }

@@ -12,7 +12,7 @@ import type {
   ScopeResolutionCache,
   WeaverConfig,
 } from "@weaver/config-types";
-import { serializeScopePath } from "@weaver/config-types";
+import { createWeaverError, serializeScopePath } from "@weaver/config-types";
 import {
   buildMountMap,
   resolveMountedNamespace,
@@ -275,7 +275,8 @@ export async function createConfigurationService(
       }
 
       if (provider === undefined || !provider.writable) {
-        throw new Error(
+        throw createWeaverError(
+          "NOT_FOUND",
           layer !== undefined
             ? `No writable provider for layer "${layer}"`
             : "No writable provider available",
@@ -296,7 +297,7 @@ export async function createConfigurationService(
       const provider = findProviderForLayer(layer);
 
       if (provider === undefined || !provider.writable) {
-        throw new Error(`No writable provider for layer "${layer}"`);
+        throw createWeaverError("NOT_FOUND", `No writable provider for layer "${layer}"`);
       }
 
       provider.remove(key).catch((error: unknown) => {

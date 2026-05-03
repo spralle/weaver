@@ -214,6 +214,18 @@ export {
   configSnapshotSchema,
 } from "./schemas-transport.js";
 export type { ConfigDelta, ConfigSnapshot } from "./schemas-transport.js";
+// schemas-bootstrap.ts — Zod schemas for bootstrap configuration
+export {
+  builtinProviders,
+  layerProviderSchema,
+  bootstrapLayerSchema,
+  bootstrapConfigSchema,
+} from "./schemas-bootstrap.js";
+export type {
+  BootstrapConfig,
+  BootstrapLayer,
+  LayerProvider,
+} from "./schemas-bootstrap.js";
 // errors.ts — Shared error taxonomy
 export {
   weaverErrorCodes,

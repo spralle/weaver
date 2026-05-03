@@ -1,12 +1,13 @@
 // OverrideSession provider — session lifecycle management with expiration and audit
 
-import type {
-  ConfigurationLayerData,
-  ConfigurationStorageProvider,
-  OverrideSession,
-  SessionActivationRequest,
-  SessionDeactivationResult,
-  WriteResult,
+import {
+  createWeaverError,
+  type ConfigurationLayerData,
+  type ConfigurationStorageProvider,
+  type OverrideSession,
+  type SessionActivationRequest,
+  type SessionDeactivationResult,
+  type WriteResult,
 } from "@weaver/config-types";
 
 export interface AuditEntry {
@@ -118,7 +119,7 @@ export function createOverrideSessionProvider(
 
   function snapshotSession(): OverrideSession {
     if (session === null) {
-      throw new Error("No active session");
+      throw createWeaverError("SESSION_REQUIRED", "No active session");
     }
     return { ...session, overrides: { ...entries } };
   }
@@ -156,7 +157,7 @@ export function createOverrideSessionProvider(
   return {
     activate(request: SessionActivationRequest): OverrideSession {
       if (session !== null) {
-        throw new Error("Session already active");
+        throw createWeaverError("SESSION_BLOCKED", "Session already active");
       }
 
       const id = generateSessionId();
@@ -183,7 +184,7 @@ export function createOverrideSessionProvider(
 
     deactivate(): SessionDeactivationResult {
       if (session === null) {
-        throw new Error("No active session");
+        throw createWeaverError("SESSION_REQUIRED", "No active session");
       }
 
       clearTimer();
@@ -205,7 +206,7 @@ export function createOverrideSessionProvider(
 
     extend(durationMs?: number | undefined): OverrideSession {
       if (session === null) {
-        throw new Error("No active session");
+        throw createWeaverError("SESSION_REQUIRED", "No active session");
       }
 
       const newDurationMs = durationMs ?? currentDurationMs;

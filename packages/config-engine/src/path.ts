@@ -1,12 +1,14 @@
 // Bracket-aware path parsing for compound key identifiers
 
+import { createWeaverError } from "@weaver/config-types";
+
 /**
  * Parses a dot-delimited path with bracket notation into segments.
  * Brackets protect dots from being treated as separators.
  */
 export function parsePath(path: string): readonly string[] {
   if (path.length === 0) {
-    throw new Error("Path must not be empty");
+    throw createWeaverError("VALIDATION_ERROR", "Path must not be empty");
   }
 
   const segments: string[] = [];
@@ -19,11 +21,11 @@ export function parsePath(path: string): readonly string[] {
 
     if (inBracket) {
       if (ch === "[") {
-        throw new Error(`Nested brackets at position ${String(i)} in "${path}"`);
+        throw createWeaverError("VALIDATION_ERROR", `Nested brackets at position ${String(i)} in "${path}"`);
       }
       if (ch === "]") {
         if (current.length === 0) {
-          throw new Error(`Empty brackets in "${path}"`);
+          throw createWeaverError("VALIDATION_ERROR", `Empty brackets in "${path}"`);
         }
         segments.push(current);
         current = "";
@@ -34,10 +36,11 @@ export function parsePath(path: string): readonly string[] {
           if (path[i] === ".") {
             i++;
             if (i >= path.length) {
-              throw new Error(`Trailing dot in "${path}"`);
+              throw createWeaverError("VALIDATION_ERROR", `Trailing dot in "${path}"`);
             }
           } else if (path[i] !== "[") {
-            throw new Error(
+            throw createWeaverError(
+              "VALIDATION_ERROR",
               `Expected '.' or '[' after ']' at position ${String(i)} in "${path}"`,
             );
           }
@@ -48,7 +51,7 @@ export function parsePath(path: string): readonly string[] {
       i++;
     } else {
       if (ch === "]") {
-        throw new Error(`Unmatched ']' at position ${String(i)} in "${path}"`);
+        throw createWeaverError("VALIDATION_ERROR", `Unmatched ']' at position ${String(i)} in "${path}"`);
       }
       if (ch === "[") {
         if (current.length > 0) {
@@ -58,13 +61,14 @@ export function parsePath(path: string): readonly string[] {
         inBracket = true;
         i++;
         if (i < path.length && path[i] === "[") {
-          throw new Error(`Nested brackets at position ${String(i)} in "${path}"`);
+          throw createWeaverError("VALIDATION_ERROR", `Nested brackets at position ${String(i)} in "${path}"`);
         }
         continue;
       }
       if (ch === ".") {
         if (current.length === 0) {
-          throw new Error(
+          throw createWeaverError(
+            "VALIDATION_ERROR",
             `Empty segment (leading or double dot) in "${path}"`,
           );
         }
@@ -72,7 +76,7 @@ export function parsePath(path: string): readonly string[] {
         current = "";
         i++;
         if (i >= path.length) {
-          throw new Error(`Trailing dot in "${path}"`);
+          throw createWeaverError("VALIDATION_ERROR", `Trailing dot in "${path}"`);
         }
         continue;
       }
@@ -82,7 +86,7 @@ export function parsePath(path: string): readonly string[] {
   }
 
   if (inBracket) {
-    throw new Error(`Unmatched '[' in "${path}"`);
+    throw createWeaverError("VALIDATION_ERROR", `Unmatched '[' in "${path}"`);
   }
 
   if (current.length > 0) {
@@ -90,7 +94,7 @@ export function parsePath(path: string): readonly string[] {
   }
 
   if (segments.length === 0) {
-    throw new Error(`Path must not be empty`);
+    throw createWeaverError("VALIDATION_ERROR", `Path must not be empty`);
   }
 
   return segments;
