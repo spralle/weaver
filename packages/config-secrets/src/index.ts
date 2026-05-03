@@ -15,8 +15,10 @@ export type {
   SecretAuditEntry,
   SecretAuditLog,
   SecretResolutionServiceOptions,
+  SecretResolutionFailure,
+  SecretResolutionResult,
 } from "./secret-resolution-service.js";
 export { SecretResolutionService } from "./secret-resolution-service.js";
 
-export type { AzureKeyVaultProviderOptions } from "./azure-keyvault-provider.js";
-export { AzureKeyVaultProvider } from "./azure-keyvault-provider.js";
+export type { AzureKeyVaultProviderOptions, CircuitBreakerOptions } from "./azure-keyvault-provider.js";
+export { AzureKeyVaultProvider, SecretResolutionError } from "./azure-keyvault-provider.js";

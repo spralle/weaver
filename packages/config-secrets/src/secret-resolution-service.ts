@@ -16,6 +16,18 @@ export interface SecretAuditLog {
   log(entry: SecretAuditEntry): void;
 }
 
+export interface SecretResolutionFailure {
+  readonly key: string;
+  readonly provider: string;
+  readonly uri: string;
+  readonly error: string;
+}
+
+export interface SecretResolutionResult {
+  readonly resolved: Map<string, string>;
+  readonly failures: readonly SecretResolutionFailure[];
+}
+
 export interface SecretResolutionServiceOptions {
   readonly cacheTtlMs?: number;
   readonly maxCacheEntries?: number;
@@ -61,7 +73,7 @@ export class SecretResolutionService {
 
   async resolveAll(
     entries: Record<string, unknown>,
-  ): Promise<Map<string, string>> {
+  ): Promise<SecretResolutionResult> {
     const refs: Array<{ key: string; ref: SecretReference }> = [];
     for (const [key, value] of Object.entries(entries)) {
       if (isSecretReference(value)) {
@@ -69,18 +81,32 @@ export class SecretResolutionService {
       }
     }
 
-    const results = await Promise.all(
+    const settled = await Promise.allSettled(
       refs.map(async ({ key, ref }) => {
         const value = await this.resolve(ref);
         return { key, value };
       }),
     );
 
-    const map = new Map<string, string>();
-    for (const { key, value } of results) {
-      map.set(key, value);
+    const resolved = new Map<string, string>();
+    const failures: SecretResolutionFailure[] = [];
+
+    for (let i = 0; i < settled.length; i++) {
+      const outcome = settled[i]!;
+      const { key, ref } = refs[i]!;
+      if (outcome.status === "fulfilled") {
+        resolved.set(outcome.value.key, outcome.value.value);
+      } else {
+        failures.push({
+          key,
+          provider: ref.provider,
+          uri: ref.uri,
+          error: errorMessage(outcome.reason),
+        });
+      }
     }
-    return map;
+
+    return { resolved, failures };
   }
 
   async store(
