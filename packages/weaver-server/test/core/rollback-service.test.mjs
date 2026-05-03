@@ -21,9 +21,20 @@ function createTestProvider(id, layer, entries, writable = true) {
   };
 }
 
+function createRevertableProvider(id, layer, entries, revertResult = { revertedCommits: 1 }) {
+  const calls = [];
+  const provider = createTestProvider(id, layer, entries);
+  provider.revert = async (toRevision, actor) => {
+    calls.push({ toRevision, actor });
+    return revertResult;
+  };
+  provider._revertCalls = calls;
+  return provider;
+}
+
 describe("RollbackService", () => {
   test("rollback succeeds and returns result", async () => {
-    const provider = createTestProvider("p1", "platform", { "key": "val" });
+    const provider = createRevertableProvider("p1", "platform", { "key": "val" });
     const configService = await createWeaverConfigService({
       providers: [provider],
       environment: "dev",
@@ -41,8 +52,7 @@ describe("RollbackService", () => {
   });
 
   test("rollback bypasses changePolicy", async () => {
-    // Rollback always succeeds regardless of policy
-    const provider = createTestProvider("p1", "platform", {});
+    const provider = createRevertableProvider("p1", "platform", {});
     const configService = await createWeaverConfigService({
       providers: [provider],
       environment: "prod",
@@ -68,6 +78,7 @@ describe("RollbackService", () => {
       async load() { loadCount++; return { entries: {} }; },
       async write() { return { success: true }; },
       async remove() { return { success: true }; },
+      async revert() { return { revertedCommits: 1 }; },
     };
     const configService = await createWeaverConfigService({
       providers: [provider],
@@ -86,8 +97,28 @@ describe("RollbackService", () => {
     assert.equal(loadCount, initialLoads + 1);
   });
 
-  test("rollback returns success with revert count", async () => {
-    const provider = createTestProvider("p1", "platform", {});
+  test("rollback calls provider.revert with correct args", async () => {
+    const provider = createRevertableProvider("p1", "platform", {});
+    const configService = await createWeaverConfigService({
+      providers: [provider],
+      environment: "dev",
+    });
+    const svc = createRollbackService({ configService });
+
+    await svc.rollback({
+      layer: "platform",
+      environment: "dev",
+      toRevision: "abc123",
+      actor: "admin",
+    });
+
+    assert.equal(provider._revertCalls.length, 1);
+    assert.equal(provider._revertCalls[0].toRevision, "abc123");
+    assert.equal(provider._revertCalls[0].actor, "admin");
+  });
+
+  test("rollback returns actual revertedCommits count", async () => {
+    const provider = createRevertableProvider("p1", "platform", {}, { revertedCommits: 3 });
     const configService = await createWeaverConfigService({
       providers: [provider],
       environment: "dev",
@@ -102,6 +133,45 @@ describe("RollbackService", () => {
     });
 
     assert.equal(result.success, true);
-    assert.equal(result.revertedCommits, 1);
+    assert.equal(result.revertedCommits, 3);
+  });
+
+  test("rollback fails when provider does not support revert", async () => {
+    const provider = createTestProvider("p1", "platform", {});
+    const configService = await createWeaverConfigService({
+      providers: [provider],
+      environment: "dev",
+    });
+    const svc = createRollbackService({ configService });
+
+    const result = await svc.rollback({
+      layer: "platform",
+      environment: "dev",
+      toRevision: "abc123",
+      actor: "admin",
+    });
+
+    assert.equal(result.success, false);
+    assert.equal(result.revertedCommits, 0);
+    assert.ok(result.error);
+  });
+
+  test("rollback fails when no provider for layer", async () => {
+    const provider = createRevertableProvider("p1", "platform", {});
+    const configService = await createWeaverConfigService({
+      providers: [provider],
+      environment: "dev",
+    });
+    const svc = createRollbackService({ configService });
+
+    const result = await svc.rollback({
+      layer: "nonexistent",
+      environment: "dev",
+      toRevision: "abc123",
+      actor: "admin",
+    });
+
+    assert.equal(result.success, false);
+    assert.equal(result.revertedCommits, 0);
   });
 });
