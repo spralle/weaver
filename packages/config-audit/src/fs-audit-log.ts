@@ -2,18 +2,18 @@
 
 import { appendFile, mkdir, readFile } from "node:fs/promises";
 import { dirname } from "node:path";
-import { configAuditEntrySchema } from "@weaver/config-types";
-import type { ConfigAuditEntry } from "@weaver/config-types";
+import { configDomainAuditEntrySchema } from "@weaver/config-types";
+import type { ConfigDomainAuditEntry } from "@weaver/config-types";
 import { isNodeError } from "@weaver/storage-provider-core";
 import type { ConfigAuditLog } from "./types.js";
 
-function parseLines(content: string): ConfigAuditEntry[] {
-  const entries: ConfigAuditEntry[] = [];
+function parseLines(content: string): ConfigDomainAuditEntry[] {
+  const entries: ConfigDomainAuditEntry[] = [];
   for (const line of content.split("\n")) {
     const trimmed = line.trim();
     if (trimmed.length === 0) continue;
     try {
-      entries.push(configAuditEntrySchema.parse(JSON.parse(trimmed)));
+      entries.push(configDomainAuditEntrySchema.parse(JSON.parse(trimmed)));
     } catch {
       // Skip malformed lines
     }
@@ -21,7 +21,7 @@ function parseLines(content: string): ConfigAuditEntry[] {
   return entries;
 }
 
-async function readAllEntries(filePath: string): Promise<ConfigAuditEntry[]> {
+async function readAllEntries(filePath: string): Promise<ConfigDomainAuditEntry[]> {
   try {
     const content = await readFile(filePath, "utf-8");
     return parseLines(content);
@@ -46,12 +46,12 @@ async function readAllEntries(filePath: string): Promise<ConfigAuditEntry[]> {
  */
 export function createFileSystemAuditLog(filePath: string): ConfigAuditLog {
   return {
-    async append(entry: ConfigAuditEntry): Promise<void> {
+    async append(entry: ConfigDomainAuditEntry): Promise<void> {
       await mkdir(dirname(filePath), { recursive: true });
       await appendFile(filePath, `${JSON.stringify(entry)}\n`, "utf-8");
     },
 
-    async queryByKey(key: string): Promise<ConfigAuditEntry[]> {
+    async queryByKey(key: string): Promise<ConfigDomainAuditEntry[]> {
       const entries = await readAllEntries(filePath);
       return entries
         .filter((e) => e.key === key)
@@ -61,14 +61,14 @@ export function createFileSystemAuditLog(filePath: string): ConfigAuditLog {
     async queryByTimeRange(
       from: string,
       to: string,
-    ): Promise<ConfigAuditEntry[]> {
+    ): Promise<ConfigDomainAuditEntry[]> {
       const entries = await readAllEntries(filePath);
       return entries
         .filter((e) => e.timestamp >= from && e.timestamp <= to)
         .sort((a, b) => b.timestamp.localeCompare(a.timestamp));
     },
 
-    async getRecent(limit?: number | undefined): Promise<ConfigAuditEntry[]> {
+    async getRecent(limit?: number | undefined): Promise<ConfigDomainAuditEntry[]> {
       const entries = await readAllEntries(filePath);
       const sorted = entries.sort((a, b) =>
         b.timestamp.localeCompare(a.timestamp),

@@ -1,5 +1,11 @@
 // Types
-export type { ConfigAuditLog, ConfigAuditSink, AuditEntry } from "./types.js";
+export type {
+  ConfigAuditEntry,
+  ConfigAuditLog,
+  ConfigAuditSink,
+  ConfigDomainAuditEntry,
+  SinkDomainAuditEntry,
+} from "./types.js";
 
 // Implementations
 export { createFileSystemAuditLog } from "./fs-audit-log.js";

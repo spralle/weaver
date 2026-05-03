@@ -1,20 +1,11 @@
 import { isSecretReference } from "@weaver/config-types";
-import type { SecretReference } from "@weaver/config-types";
+import type { SecretReference, SecretDomainAuditEntry } from "@weaver/config-types";
 import { createSecretCache } from "./secret-cache.js";
 import type { SecretCache } from "./secret-cache.js";
 import type { SecretProvider, SecretStoreResult } from "./secret-provider.js";
 
-export interface SecretAuditEntry {
-  readonly action: "resolve" | "store" | "delete" | "invalidate" | "cache-hit";
-  readonly provider: string;
-  readonly uri: string;
-  readonly timestamp: number;
-  readonly success: boolean;
-  readonly error?: string | undefined;
-}
-
 export interface SecretAuditLog {
-  log(entry: SecretAuditEntry): void;
+  log(entry: SecretDomainAuditEntry): void;
 }
 
 export interface SecretResolutionFailure {
@@ -159,13 +150,22 @@ export class SecretResolutionService {
   }
 
   private audit(
-    action: SecretAuditEntry["action"],
+    action: SecretDomainAuditEntry["action"],
     provider: string,
     uri: string,
     success: boolean,
     error?: string,
   ): void {
-    this.auditLog?.log({ action, provider, uri, timestamp: Date.now(), success, error });
+    this.auditLog?.log({
+      domain: "secret",
+      action,
+      actor: "system",
+      provider,
+      uri,
+      timestamp: new Date().toISOString(),
+      success,
+      error,
+    });
   }
 }
 

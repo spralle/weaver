@@ -153,10 +153,10 @@ export type {
 // audit (from config-audit)
 export { createAuditService } from "@weaver/config-audit";
 export type {
-  AuditEntry,
   AuditService,
   AuditServiceOptions,
   ConfigAuditSink,
+  SinkDomainAuditEntry,
 } from "@weaver/config-audit";
 export { createStdoutAuditSink } from "@weaver/config-audit";
 export { createMongoAuditSink } from "@weaver/config-audit";

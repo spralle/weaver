@@ -12,7 +12,6 @@ export type { SecretCacheOptions, SecretCacheEntry } from "./secret-cache.js";
 export { createSecretCache, SecretCache } from "./secret-cache.js";
 
 export type {
-  SecretAuditEntry,
   SecretAuditLog,
   SecretResolutionServiceOptions,
   SecretResolutionFailure,

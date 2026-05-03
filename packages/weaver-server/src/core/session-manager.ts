@@ -83,6 +83,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       sessions.set(session.id, session);
 
       await auditService.record({
+        domain: "sink",
         timestamp: now.toISOString(),
         actor: request.activatedBy,
         action: "override",
@@ -102,6 +103,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       sessions.delete(sessionId);
 
       await auditService.record({
+        domain: "sink",
         timestamp: new Date().toISOString(),
         actor,
         action: "override",
@@ -131,6 +133,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       session.overrides[key] = value;
 
       await auditService.record({
+        domain: "sink",
         timestamp: new Date().toISOString(),
         actor,
         action: "override",

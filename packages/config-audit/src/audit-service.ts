@@ -1,7 +1,7 @@
 // Audit service with pluggable sinks and sensitive value masking
 import type { WeaverLogger } from "@weaver/storage-provider-core";
 import { consoleLogger } from "@weaver/storage-provider-core";
-import type { ConfigAuditSink, AuditEntry } from "./types.js";
+import type { ConfigAuditSink, SinkDomainAuditEntry } from "./types.js";
 
 export interface AuditServiceOptions {
   sinks: ConfigAuditSink[];
@@ -10,14 +10,14 @@ export interface AuditServiceOptions {
 }
 
 export interface AuditService {
-  record(entry: AuditEntry): Promise<void>;
+  record(entry: SinkDomainAuditEntry): Promise<void>;
 }
 
 export function createAuditService(options: AuditServiceOptions): AuditService {
   const { sinks, sensitiveKeys } = options;
   const logger = options.logger ?? consoleLogger;
 
-  function maskEntry(entry: AuditEntry): AuditEntry {
+  function maskEntry(entry: SinkDomainAuditEntry): SinkDomainAuditEntry {
     if (!sensitiveKeys || !sensitiveKeys.has(entry.key)) {
       return entry;
     }
@@ -29,7 +29,7 @@ export function createAuditService(options: AuditServiceOptions): AuditService {
   }
 
   return {
-    async record(entry: AuditEntry): Promise<void> {
+    async record(entry: SinkDomainAuditEntry): Promise<void> {
       const masked = maskEntry(entry);
       const results = await Promise.allSettled(
         sinks.map((sink) => sink.record(masked)),

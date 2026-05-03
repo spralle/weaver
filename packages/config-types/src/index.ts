@@ -35,10 +35,15 @@ export type {
 export type { MergeFunction } from "./merge-types.js";
 // promotion-types.ts — Promotion pipeline, audit, and emergency override types
 export type {
+  AuditEntryBase,
   ConfigAuditEntry,
+  ConfigDomainAuditEntry,
   EmergencyOverrideRecord,
   PromotionRequest,
   PromotionStatus,
+  SecretDomainAuditEntry,
+  SessionDomainAuditEntry,
+  SinkDomainAuditEntry,
 } from "./promotion-types.js";
 // property-schema.ts — Property schema and policy types
 export type {
@@ -127,9 +132,13 @@ export {
 // schemas-promotion.ts — Zod schemas for promotion types
 export {
   configAuditEntrySchema,
+  configDomainAuditEntrySchema,
   emergencyOverrideRecordSchema,
   promotionRequestSchema,
   promotionStatusSchema,
+  secretDomainAuditEntrySchema,
+  sessionDomainAuditEntrySchema,
+  sinkDomainAuditEntrySchema,
 } from "./schemas-promotion.js";
 // schemas-providers.ts — Zod schemas for provider types
 export {

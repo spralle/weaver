@@ -27,7 +27,8 @@ export const promotionRequestSchema = z.strictObject({
   reviewedAt: z.string().optional(),
 });
 
-export const configAuditEntrySchema = z.strictObject({
+export const configDomainAuditEntrySchema = z.strictObject({
+  domain: z.literal("config"),
   timestamp: z.string(),
   actor: z.string(),
   action: z.enum([
@@ -48,6 +49,55 @@ export const configAuditEntrySchema = z.strictObject({
   isEmergencyOverride: z.boolean(),
   overrideReason: z.string().optional(),
 });
+
+export const sinkDomainAuditEntrySchema = z.strictObject({
+  domain: z.literal("sink"),
+  timestamp: z.string(),
+  actor: z.string(),
+  action: z.enum([
+    "set",
+    "remove",
+    "promote",
+    "rollback",
+    "override",
+    "provision",
+  ]),
+  key: z.string(),
+  layer: z.string(),
+  environment: z.string(),
+  scopePath: z.string().optional(),
+  oldValue: z.unknown().optional(),
+  newValue: z.unknown().optional(),
+  isEmergencyOverride: z.boolean(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+
+export const sessionDomainAuditEntrySchema = z.strictObject({
+  domain: z.literal("session"),
+  timestamp: z.string(),
+  actor: z.string(),
+  action: z.enum(["activate", "deactivate", "extend", "expire"]),
+  sessionId: z.string(),
+  details: z.record(z.string(), z.unknown()).optional(),
+});
+
+export const secretDomainAuditEntrySchema = z.strictObject({
+  domain: z.literal("secret"),
+  timestamp: z.string(),
+  actor: z.string(),
+  action: z.enum(["resolve", "store", "delete", "invalidate", "cache-hit"]),
+  provider: z.string(),
+  uri: z.string(),
+  success: z.boolean(),
+  error: z.string().optional(),
+});
+
+export const configAuditEntrySchema = z.discriminatedUnion("domain", [
+  configDomainAuditEntrySchema,
+  sinkDomainAuditEntrySchema,
+  sessionDomainAuditEntrySchema,
+  secretDomainAuditEntrySchema,
+]);
 
 export const emergencyOverrideRecordSchema = z.strictObject({
   id: z.string(),
