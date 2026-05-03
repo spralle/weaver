@@ -2,6 +2,7 @@
 
 import { appendFile, mkdir, readFile } from "node:fs/promises";
 import { dirname } from "node:path";
+import { configAuditEntrySchema } from "@weaver/config-types";
 import type { ConfigAuditEntry } from "@weaver/config-types";
 import type { ConfigAuditLog } from "./audit-log.js";
 
@@ -11,7 +12,7 @@ function parseLines(content: string): ConfigAuditEntry[] {
     const trimmed = line.trim();
     if (trimmed.length === 0) continue;
     try {
-      entries.push(JSON.parse(trimmed) as ConfigAuditEntry);
+      entries.push(configAuditEntrySchema.parse(JSON.parse(trimmed)));
     } catch {
       // Skip malformed lines
     }

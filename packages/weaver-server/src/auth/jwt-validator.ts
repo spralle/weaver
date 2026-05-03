@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { createWeaverError } from "../types/errors.js";
 
 export interface JwtValidatorOptions {
@@ -37,10 +38,12 @@ function base64UrlDecode(input: string): Uint8Array {
   return bytes;
 }
 
+const jwtPartSchema = z.record(z.string(), z.unknown());
+
 function decodeJsonPart(part: string): Record<string, unknown> {
   const bytes = base64UrlDecode(part);
   const text = new TextDecoder().decode(bytes);
-  return JSON.parse(text) as Record<string, unknown>;
+  return jwtPartSchema.parse(JSON.parse(text));
 }
 
 async function verifyHs256(

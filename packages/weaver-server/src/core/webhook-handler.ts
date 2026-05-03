@@ -21,6 +21,9 @@ function verifySignature(
   return timingSafeEqual(Buffer.from(expected), Buffer.from(signature));
 }
 
+/**
+ * @alpha Not yet wired into startWeaverServer — planned for GitHub webhook integration.
+ */
 export function createWebhookHandler(
   options: WebhookHandlerOptions,
 ): WebhookHandler {

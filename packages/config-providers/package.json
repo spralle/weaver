@@ -39,11 +39,11 @@
   },
   "dependencies": {
     "@weaver/config-types": "workspace:*",
-    "@weaver/config-engine": "workspace:*",
-    "@weaver/config-secrets": "workspace:*",
-    "@weaver/config-sessions": "workspace:*"
+    "@weaver/config-engine": "workspace:*"
   },
   "devDependencies": {
+    "@weaver/config-secrets": "workspace:*",
+    "@weaver/config-sessions": "workspace:*",
     "typescript": "^5.8.3"
   }
 }

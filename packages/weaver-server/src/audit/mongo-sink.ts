@@ -14,7 +14,12 @@ export function createMongoAuditSink(options: MongoAuditSinkOptions): ConfigAudi
 
   return {
     async record(entry: AuditEntry): Promise<void> {
-      await collection.insertOne(entry as unknown as Record<string, unknown>);
+      try {
+        await collection.insertOne(entry as unknown as Record<string, unknown>);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error(`[weaver] Audit record failed (non-blocking): ${message}`);
+      }
     },
   };
 }

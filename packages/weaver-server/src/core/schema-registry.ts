@@ -89,10 +89,20 @@ function getPropertyType(
   const properties =
     (obj as { properties?: Record<string, unknown> }).properties;
   if (typeof properties === "object" && properties !== null) {
-    const propDef = (properties as Record<string, Record<string, unknown>>)[prop];
-    return propDef?.type as string | undefined;
+    const propDef = properties[prop] as Record<string, unknown> | undefined;
+    if (typeof propDef?.type === "string") {
+      return propDef.type;
+    }
+    return undefined;
   }
-  return typeof (obj as Record<string, unknown>)[prop] as string;
+  const value = obj[prop];
+  if (typeof value === "object" && value !== null && "type" in value) {
+    const schemaType = (value as Record<string, unknown>).type;
+    if (typeof schemaType === "string") {
+      return schemaType;
+    }
+  }
+  return undefined;
 }
 
 function schemasEqual(a: unknown, b: unknown): boolean {

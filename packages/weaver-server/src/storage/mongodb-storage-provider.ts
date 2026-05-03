@@ -1,5 +1,6 @@
 // MongoDBStorageProvider — native MongoDB driver for user/device config layers
 import type { Collection, ChangeStream } from "mongodb";
+import { z } from "zod";
 import type {
   ConfigurationChange,
   ConfigurationLayerData,
@@ -21,6 +22,14 @@ export interface MongoDBStorageProviderOptions {
   logger?: WeaverLogger;
 }
 
+const configDocumentSchema = z.object({
+  layer: z.string(),
+  environment: z.string(),
+  key: z.string(),
+  value: z.unknown(),
+  updatedAt: z.string(),
+});
+
 interface ConfigDocument {
   layer: string;
   environment: string;
@@ -38,7 +47,6 @@ export class MongoDBStorageProvider implements ConfigurationStorageProvider {
   private readonly collection: Collection;
   private readonly environment: string;
   private readonly logger: WeaverLogger;
-  private disposed = false;
 
   constructor(options: MongoDBStorageProviderOptions) {
     this.id = options.id;
@@ -50,9 +58,11 @@ export class MongoDBStorageProvider implements ConfigurationStorageProvider {
   }
 
   async load(): Promise<ConfigurationLayerData> {
-    const docs = await this.collection
+    const rawDocs = await this.collection
       .find({ layer: this.layer, environment: this.environment })
-      .toArray() as unknown as ConfigDocument[];
+      .toArray();
+
+    const docs = z.array(configDocumentSchema).parse(rawDocs);
 
     const entries: Record<string, unknown> = {};
     for (const doc of docs) {
@@ -67,11 +77,16 @@ export class MongoDBStorageProvider implements ConfigurationStorageProvider {
     }
 
     const updatedAt = new Date().toISOString();
-    await this.collection.updateOne(
-      { layer: this.layer, environment: this.environment, key },
-      { $set: { value, updatedAt } },
-      { upsert: true },
-    );
+    try {
+      await this.collection.updateOne(
+        { layer: this.layer, environment: this.environment, key },
+        { $set: { value, updatedAt } },
+        { upsert: true },
+      );
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return { success: false, error: `MongoDB write failed for key "${key}": ${message}` };
+    }
     return { success: true };
   }
 
@@ -80,11 +95,16 @@ export class MongoDBStorageProvider implements ConfigurationStorageProvider {
       return { success: false, error: "Provider is read-only" };
     }
 
-    await this.collection.deleteOne({
-      layer: this.layer,
-      environment: this.environment,
-      key,
-    });
+    try {
+      await this.collection.deleteOne({
+        layer: this.layer,
+        environment: this.environment,
+        key,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      return { success: false, error: `MongoDB remove failed for key "${key}": ${message}` };
+    }
     return { success: true };
   }
 
@@ -93,9 +113,11 @@ export class MongoDBStorageProvider implements ConfigurationStorageProvider {
   ): () => void {
     let backoffMs = BASE_BACKOFF_MS;
     let currentStream: ChangeStream | null = null;
+    let disposed = false;
+    let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
 
     const setupChangeStream = (): void => {
-      if (this.disposed) return;
+      if (disposed) return;
 
       const stream = this.collection.watch([
         { $match: { "fullDocument.layer": this.layer } },
@@ -116,18 +138,19 @@ export class MongoDBStorageProvider implements ConfigurationStorageProvider {
           `[weaver] MongoDB changeStream error for provider "${this.id}": ${message}`,
         );
         void stream.close();
-        if (this.disposed) return;
+        if (disposed) return;
 
         const delay = Math.min(backoffMs, MAX_BACKOFF_MS);
         backoffMs = Math.min(backoffMs * 2, MAX_BACKOFF_MS);
-        setTimeout(setupChangeStream, delay);
+        reconnectTimer = setTimeout(setupChangeStream, delay);
       });
     };
 
     setupChangeStream();
 
     return () => {
-      this.disposed = true;
+      disposed = true;
+      clearTimeout(reconnectTimer);
       if (currentStream) {
         void currentStream.close();
       }

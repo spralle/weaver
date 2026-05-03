@@ -2,6 +2,7 @@
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
+import { emergencyOverrideRecordSchema } from "@weaver/config-types";
 import type { EmergencyOverrideRecord } from "@weaver/config-types";
 import type {
   OverrideTracker,
@@ -14,7 +15,7 @@ async function readRecords(
 ): Promise<EmergencyOverrideRecord[]> {
   try {
     const content = await readFile(filePath, "utf-8");
-    return JSON.parse(content) as EmergencyOverrideRecord[];
+    return emergencyOverrideRecordSchema.array().parse(JSON.parse(content));
   } catch (err: unknown) {
     if (isNodeError(err) && err.code === "ENOENT") {
       return [];

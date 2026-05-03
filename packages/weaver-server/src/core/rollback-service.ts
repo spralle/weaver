@@ -32,6 +32,9 @@ export interface RollbackService {
   rollback(request: RollbackRequest): Promise<RollbackResult>;
 }
 
+/**
+ * @alpha Not yet wired into startWeaverServer — planned for revision rollback support.
+ */
 export function createRollbackService(
   options: RollbackServiceOptions,
 ): RollbackService {

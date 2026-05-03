@@ -19,24 +19,4 @@ export const scopeProvisionBodySchema = z.object({
   displayName: z.string().optional(),
 });
 
-/** POST /v1/admin/promote body (for when route is implemented) */
-export const promoteBodySchema = z.object({
-  key: z.string(),
-  layer: z.string(),
-  sourceEnv: z.string(),
-  targetEnv: z.string(),
-});
 
-/** POST /v1/admin/rollback body (for when route is implemented) */
-export const rollbackBodySchema = z.object({
-  layer: z.string(),
-  environment: z.string(),
-  toRevision: z.string(),
-});
-
-/** POST /v1/admin/schemas body (for when route is implemented) */
-export const schemaRegisterBodySchema = z.object({
-  serviceId: z.string(),
-  schema: z.record(z.string(), z.unknown()),
-  environment: z.string().optional(),
-});

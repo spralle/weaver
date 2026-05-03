@@ -39,7 +39,8 @@
   },
   "dependencies": {
     "@weaver/config-types": "workspace:*",
-    "@weaver/config-engine": "workspace:*"
+    "@weaver/config-engine": "workspace:*",
+    "zod": "^4.0.0"
   },
   "devDependencies": {
     "@types/node": "25.6.0",

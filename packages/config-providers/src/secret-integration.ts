@@ -72,7 +72,9 @@ export async function createSecretIntegration(
     options.refreshIntervalMs > 0
   ) {
     refreshTimer = setInterval(() => {
-      resolveAll(latestEntries).catch(options.onRefreshError ?? (() => {}));
+      resolveAll(latestEntries).catch(options.onRefreshError ?? ((err) => {
+        console.warn("[weaver] secret refresh failed:", err);
+      }));
     }, options.refreshIntervalMs);
   }
 

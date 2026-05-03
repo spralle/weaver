@@ -102,7 +102,7 @@ export async function createWeaverConfigService(
     if (debounceTimer !== null) clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
       debounceTimer = null;
-      void flushAllDirty();
+      flushAllDirty().catch((err) => logger.error("[config] flush failed:", err));
     }, flushDebounceMs);
   }
 

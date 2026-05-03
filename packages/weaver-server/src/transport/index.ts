@@ -41,7 +41,4 @@ export {
   configWriteBodySchema,
   configBatchBodySchema,
   scopeProvisionBodySchema,
-  promoteBodySchema,
-  rollbackBodySchema,
-  schemaRegisterBodySchema,
 } from "./rest-schemas.js";

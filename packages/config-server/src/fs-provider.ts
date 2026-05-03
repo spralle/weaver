@@ -1,5 +1,6 @@
 import { mkdir, readFile, rename, stat, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
+import { z } from "zod";
 import { deepMerge, deepSet, deepRemove } from "@weaver/config-engine";
 import type {
   ConfigurationLayer,
@@ -80,7 +81,7 @@ export class FileSystemStorageProvider implements ConfigurationStorageProvider {
   private async readJsonFile(path: string): Promise<Record<string, unknown>> {
     try {
       const content = await readFile(path, "utf-8");
-      return JSON.parse(content) as Record<string, unknown>;
+      return z.record(z.string(), z.unknown()).parse(JSON.parse(content));
     } catch (err: unknown) {
       if (err instanceof SyntaxError) {
         console.warn(`Invalid JSON in config file: ${path}`);

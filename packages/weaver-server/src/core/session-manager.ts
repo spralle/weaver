@@ -39,6 +39,9 @@ function isExpired(session: OverrideSessionInfo): boolean {
   return new Date(session.expiresAt).getTime() <= Date.now();
 }
 
+/**
+ * @alpha Not yet wired into startWeaverServer — planned for ephemeral override sessions.
+ */
 export function createSessionManager(options: SessionManagerOptions): SessionManager {
   const { auditService } = options;
   const sessions = new Map<string, OverrideSessionInfo>();

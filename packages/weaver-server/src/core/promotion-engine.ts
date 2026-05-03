@@ -30,6 +30,9 @@ function isPromotableLayer(layer: string): boolean {
   return layer === "platform" || isScopedLayer(layer);
 }
 
+/**
+ * @alpha Not yet wired into startWeaverServer — planned for cross-environment promotion.
+ */
 export function createPromotionEngine(
   options: PromotionEngineOptions,
 ): PromotionEngine {

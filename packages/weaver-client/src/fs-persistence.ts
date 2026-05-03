@@ -1,5 +1,6 @@
 import { existsSync, mkdirSync, renameSync, writeFileSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import { configSnapshotSchema } from "./types.js";
 import type { ConfigSnapshot } from "./types.js";
 import type { WeaverClientPersistence } from "./persistence.js";
 
@@ -23,7 +24,7 @@ export function createFileSystemPersistence(options: FileSystemPersistenceOption
       const filePath = join(directory, `${namespace}.json`);
       if (!existsSync(filePath)) return null;
       const content = readFileSync(filePath, "utf-8");
-      return JSON.parse(content) as ConfigSnapshot;
+      return configSnapshotSchema.parse(JSON.parse(content));
     },
   };
 }

@@ -1,6 +1,8 @@
 import { z } from "zod";
 
-export const layerProviderSchema = z.enum(["git", "mongodb", "memory"]);
+/** Built-in provider types. The registry also accepts custom strings. */
+export const builtinProviders = ["git", "mongodb", "memory"] as const;
+export const layerProviderSchema = z.string().min(1);
 
 export const bootstrapLayerSchema = z.object({
   id: z.string(),
