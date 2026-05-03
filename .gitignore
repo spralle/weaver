@@ -23,3 +23,5 @@ docs-dist/
 .opencode/package-lock.json
 .opencode/bun.lock
 .opencode/.gitignore
+
+trees/
