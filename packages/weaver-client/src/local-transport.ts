@@ -1,6 +1,6 @@
-import type { ScopeInstance } from "@weaver/config-types";
+import type { ScopeDefinition, ScopeInstance } from "@weaver/config-types";
 import type { ConfigDelta, ConfigSnapshot, GetOptions, ResolveOptions, Unsubscribe } from "./types.js";
-import type { WeaverTransport } from "./transport.js";
+import type { WeaverTransport, WriteOptions, WriteResult } from "./transport.js";
 
 export interface LocalTransportOptions {
   snapshot: ConfigSnapshot;
@@ -56,6 +56,47 @@ export function createLocalTransport(options: LocalTransportOptions): LocalTrans
       return () => {
         subscribers.delete(handler);
       };
+    },
+
+    async inspect(key: string): Promise<unknown> {
+      const value = snapshot.entries[key];
+      return withLatency({ key, value, source: "local" });
+    },
+
+    async set(key: string, value: unknown, _options?: WriteOptions): Promise<WriteResult> {
+      snapshot.entries[key] = value;
+      return withLatency({ success: true, revision: `local-${Date.now()}` });
+    },
+
+    async remove(key: string, _options?: WriteOptions): Promise<WriteResult> {
+      delete snapshot.entries[key];
+      return withLatency({ success: true, revision: `local-${Date.now()}` });
+    },
+
+    async listScopes(): Promise<ScopeDefinition[]> {
+      const scopeIds = new Set<string>();
+      for (const scopePathStr of Object.keys(snapshot.scopes ?? {})) {
+        const parts = scopePathStr.split("/");
+        for (const part of parts) {
+          const colonIdx = part.indexOf(":");
+          if (colonIdx !== -1) scopeIds.add(part.slice(0, colonIdx));
+        }
+      }
+      return withLatency([...scopeIds].map(id => ({ id, label: id })));
+    },
+
+    async listScopeValues(scopeId: string, _parentScope?: ScopeInstance[]): Promise<string[]> {
+      const values = new Set<string>();
+      for (const scopePathStr of Object.keys(snapshot.scopes ?? {})) {
+        const parts = scopePathStr.split("/");
+        for (const part of parts) {
+          const colonIdx = part.indexOf(":");
+          if (colonIdx !== -1 && part.slice(0, colonIdx) === scopeId) {
+            values.add(part.slice(colonIdx + 1));
+          }
+        }
+      }
+      return withLatency([...values]);
     },
 
     async close(): Promise<void> {
