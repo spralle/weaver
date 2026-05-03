@@ -83,6 +83,17 @@ export const propertySessionModeSchema = z.enum([
   "blocked",
 ]);
 
+export const weaverPropertyExtensionsSchema = z.strictObject({
+  sensitive: z.boolean().optional(),
+  visibility: configurationVisibilitySchema.optional(),
+  changePolicy: configChangePolicySchema.optional(),
+  reloadBehavior: configReloadBehaviorSchema.optional(),
+  expressionAllowed: z.boolean().optional(),
+  maxOverrideLayer: configurationLayerSchema.optional(),
+  writeRestriction: z.array(configurationRoleSchema).readonly().optional(),
+  sessionMode: propertySessionModeSchema.optional(),
+});
+
 export const configurationPropertySchemaSchema: z.ZodType<ConfigurationPropertySchema> =
   z.lazy(() =>
     z.strictObject({
@@ -135,16 +146,7 @@ export const configurationPropertySchemaSchema: z.ZodType<ConfigurationPropertyS
       $ref: z.never().optional(),
       $defs: z.never().optional(),
 
-      expressionAllowed: z.boolean().optional(),
-      changePolicy: configChangePolicySchema.optional(),
-      visibility: configurationVisibilitySchema.optional(),
-      sensitive: z.boolean().optional(),
-      maxOverrideLayer: configurationLayerSchema.optional(),
-      writeRestriction: z.array(configurationRoleSchema).readonly().optional(),
-      viewConfig: z.boolean().optional(),
-      instanceOverridable: z.boolean().optional(),
-      reloadBehavior: configReloadBehaviorSchema.optional(),
-      sessionMode: propertySessionModeSchema.optional(),
+      "x-weaver": weaverPropertyExtensionsSchema.optional(),
     }),
   );
 
@@ -224,11 +226,35 @@ export const layerWritePolicySchema = z.strictObject({
   constraints: z.array(layerWriteConstraintSchema).readonly().optional(),
 });
 
+export const configurationSchemaFragmentSchema = z.strictObject({
+  description: z.string(),
+  schemaVersion: z.number().int().positive(),
+  owner: z.string(),
+  configuration: configurationPropertySchemaSchema,
+});
+
 export const serviceConfigurationDeclarationSchema = z.strictObject({
   serviceId: z.string(),
   description: z.string(),
-  configuration: z.strictObject({
-    properties: z.record(z.string(), configurationPropertySchemaSchema),
-  }),
+  schemaVersion: z.number().int().positive(),
+  owner: z.string(),
+  namespaces: z.array(z.string()).readonly().optional(),
+  configuration: configurationPropertySchemaSchema,
   reads: z.array(z.string()).readonly().optional(),
+  fragments: z.record(z.string(), configurationSchemaFragmentSchema).optional(),
+  instanceConfig: z.strictObject({
+    instanceKey: z.string(),
+    maxInstances: z.number().int().positive().optional(),
+  }).optional(),
+});
+
+export const serviceAccessPolicySchema = z.strictObject({
+  serviceId: z.string(),
+  allowedNamespaces: z.array(z.string()).readonly(),
+  allowedReads: z.array(z.string()).readonly(),
+  allowedSecrets: z.boolean(),
+  tenantScope: z.union([z.literal("all"), z.array(z.string()).readonly()]),
+  approvedBy: z.string(),
+  approvedAt: z.string(),
+  expiresAt: z.string().optional(),
 });

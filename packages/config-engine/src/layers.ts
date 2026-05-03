@@ -79,7 +79,7 @@ export function inspectKey<T>(
  */
 export function resolveConfigurationWithCeiling(
   stack: ConfigurationLayerStack,
-  schemaMap: Map<string, { maxOverrideLayer?: ConfigurationLayer | undefined }>,
+  schemaMap: Map<string, { "x-weaver"?: { maxOverrideLayer?: ConfigurationLayer | undefined } | undefined }>,
   isEmergencyOverride: boolean,
   getRank: (layer: string) => number,
 ): ResolvedConfiguration {
@@ -94,8 +94,8 @@ export function resolveConfigurationWithCeiling(
 
     for (const key of Object.keys(layerEntry.entries)) {
       const schema = schemaMap.get(key);
-      if (schema?.maxOverrideLayer !== undefined) {
-        const ceilingRank = getRank(schema.maxOverrideLayer);
+      if (schema?.["x-weaver"]?.maxOverrideLayer !== undefined) {
+        const ceilingRank = getRank(schema["x-weaver"].maxOverrideLayer);
         if (layerRank > ceilingRank) {
           continue; // Skip: this layer is above the ceiling for this key
         }

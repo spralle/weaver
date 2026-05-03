@@ -32,6 +32,8 @@ export {
   qualifyKey,
   validateKeyFormat,
 } from "./namespace.js";
+// path.ts — Bracket-aware path parsing
+export { buildPath, isCompoundSegment, parsePath, pathDepth } from "./path.js";
 // schema-registry.ts — Schema aggregation
 export type {
   ComposedSchemaEntry,

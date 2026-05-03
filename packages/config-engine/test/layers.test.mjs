@@ -135,7 +135,7 @@ test("resolveConfigurationWithCeiling respects maxOverrideLayer", () => {
     ],
   };
   const schemaMap = new Map([
-    ["ghost.app.zoom", { maxOverrideLayer: "tenant" }],
+    ["ghost.app.zoom", { "x-weaver": { maxOverrideLayer: "tenant" } }],
   ]);
   const result = resolveConfigurationWithCeiling(stack, schemaMap, false, getRank);
   // user layer should be ignored because maxOverrideLayer is tenant
@@ -151,7 +151,7 @@ test("resolveConfigurationWithCeiling emergency override bypasses ceiling", () =
     ],
   };
   const schemaMap = new Map([
-    ["ghost.app.zoom", { maxOverrideLayer: "tenant" }],
+    ["ghost.app.zoom", { "x-weaver": { maxOverrideLayer: "tenant" } }],
   ]);
   const result = resolveConfigurationWithCeiling(stack, schemaMap, true, getRank);
   // Emergency override: user layer should NOT be ignored

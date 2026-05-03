@@ -184,35 +184,29 @@ export function generateSinglePropertySchema(
   // x-weaver extension object
   const xWeaver: Record<string, unknown> = { namespace: ownerId };
 
-  if (schema.changePolicy !== undefined) {
-    xWeaver.changePolicy = schema.changePolicy;
+  if (schema["x-weaver"]?.changePolicy !== undefined) {
+    xWeaver.changePolicy = schema["x-weaver"].changePolicy;
   }
-  if (schema.visibility !== undefined) {
-    xWeaver.visibility = schema.visibility;
+  if (schema["x-weaver"]?.visibility !== undefined) {
+    xWeaver.visibility = schema["x-weaver"].visibility;
   }
-  if (schema.reloadBehavior !== undefined) {
-    xWeaver.reloadBehavior = schema.reloadBehavior;
+  if (schema["x-weaver"]?.reloadBehavior !== undefined) {
+    xWeaver.reloadBehavior = schema["x-weaver"].reloadBehavior;
   }
-  if (schema.sensitive !== undefined) {
-    xWeaver.sensitive = schema.sensitive;
+  if (schema["x-weaver"]?.sensitive !== undefined) {
+    xWeaver.sensitive = schema["x-weaver"].sensitive;
   }
-  if (schema.maxOverrideLayer !== undefined) {
-    xWeaver.maxOverrideLayer = schema.maxOverrideLayer;
+  if (schema["x-weaver"]?.maxOverrideLayer !== undefined) {
+    xWeaver.maxOverrideLayer = schema["x-weaver"].maxOverrideLayer;
   }
-  if (schema.writeRestriction !== undefined) {
-    xWeaver.writeRestriction = [...schema.writeRestriction];
+  if (schema["x-weaver"]?.writeRestriction !== undefined) {
+    xWeaver.writeRestriction = [...schema["x-weaver"].writeRestriction];
   }
-  if (schema.sessionMode !== undefined) {
-    xWeaver.sessionMode = schema.sessionMode;
+  if (schema["x-weaver"]?.sessionMode !== undefined) {
+    xWeaver.sessionMode = schema["x-weaver"].sessionMode;
   }
-  if (schema.expressionAllowed !== undefined) {
-    xWeaver.expressionAllowed = schema.expressionAllowed;
-  }
-  if (schema.instanceOverridable !== undefined) {
-    xWeaver.instanceOverridable = schema.instanceOverridable;
-  }
-  if (schema.viewConfig !== undefined) {
-    xWeaver.viewConfig = schema.viewConfig;
+  if (schema["x-weaver"]?.expressionAllowed !== undefined) {
+    xWeaver.expressionAllowed = schema["x-weaver"].expressionAllowed;
   }
 
   prop["x-weaver"] = xWeaver;

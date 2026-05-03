@@ -47,7 +47,7 @@ export function evaluateChangePolicy(
   }
 
   // Step 2: Evaluate changePolicy
-  const policy = schema.changePolicy ?? "direct-allowed";
+  const policy = schema["x-weaver"]?.changePolicy ?? "direct-allowed";
 
   switch (policy) {
     case "direct-allowed":
