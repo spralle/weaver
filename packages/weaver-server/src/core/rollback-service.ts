@@ -1,5 +1,4 @@
 import type { WeaverConfigService } from "./config-service.js";
-import type { GitWriteQueue } from "../git/write-queue.js";
 import type { WeaverError } from "../types/errors.js";
 import { createWeaverError } from "../types/errors.js";
 
@@ -18,7 +17,6 @@ export interface RollbackResult {
 
 export interface RollbackServiceOptions {
   configService: WeaverConfigService;
-  gitWriteQueue: GitWriteQueue;
 }
 
 export interface RollbackService {
@@ -28,7 +26,7 @@ export interface RollbackService {
 export function createRollbackService(
   options: RollbackServiceOptions,
 ): RollbackService {
-  const { configService, gitWriteQueue } = options;
+  const { configService } = options;
 
   return {
     async rollback(request: RollbackRequest): Promise<RollbackResult> {
@@ -45,16 +43,8 @@ export function createRollbackService(
         };
       }
 
-      // Enqueue the rollback operation through the write queue
-      // Rollback bypasses changePolicy per ADR
-      const revertedCommits = await gitWriteQueue.enqueue(async () => {
-        // In a real implementation, this would:
-        // 1. Determine commits between current HEAD and toRevision
-        // 2. Execute `git revert` for each commit
-        // For v1: simulate the revert operation and return count
-        // The actual Git revert depends on real Git integration
-        return 1;
-      });
+      // TODO: Implement actual Git revert via configService or provider
+      const revertedCommits = 1;
 
       // Reload affected provider
       const provider = configService.providers.find(

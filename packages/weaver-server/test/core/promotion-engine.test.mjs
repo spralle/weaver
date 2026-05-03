@@ -2,7 +2,6 @@ import { test, describe } from "bun:test";
 import assert from "node:assert/strict";
 import { createPromotionEngine } from "../../src/core/promotion-engine.ts";
 import { createWeaverConfigService } from "../../src/core/config-service.ts";
-import { createGitWriteQueue } from "../../src/git/write-queue.ts";
 
 function createTestProvider(id, layer, entries, writable = true) {
   let data = { ...entries };
@@ -31,10 +30,7 @@ describe("PromotionEngine", () => {
       providers: [provider],
       environment: "staging",
     });
-    const engine = createPromotionEngine({
-      configService,
-      gitWriteQueue: createGitWriteQueue(),
-    });
+    const engine = createPromotionEngine({ configService });
 
     const result = await engine.promote({
       key: "db.host",
@@ -54,10 +50,7 @@ describe("PromotionEngine", () => {
       providers: [provider],
       environment: "staging",
     });
-    const engine = createPromotionEngine({
-      configService,
-      gitWriteQueue: createGitWriteQueue(),
-    });
+    const engine = createPromotionEngine({ configService });
 
     const result = await engine.promote({
       key: "nonexistent",
@@ -77,10 +70,7 @@ describe("PromotionEngine", () => {
       providers: [provider],
       environment: "dev",
     });
-    const engine = createPromotionEngine({
-      configService,
-      gitWriteQueue: createGitWriteQueue(),
-    });
+    const engine = createPromotionEngine({ configService });
 
     const result = await engine.promote({
       key: "key",
@@ -94,17 +84,13 @@ describe("PromotionEngine", () => {
     assert.equal(result.error?.code, "POLICY_VIOLATION");
   });
 
-  test("direct promotion method writes through queue", async () => {
+  test("direct promotion method writes value", async () => {
     const provider = createTestProvider("p1", "platform", { "feature.flag": true });
     const configService = await createWeaverConfigService({
       providers: [provider],
       environment: "dev",
     });
-    const queue = createGitWriteQueue();
-    const engine = createPromotionEngine({
-      configService,
-      gitWriteQueue: queue,
-    });
+    const engine = createPromotionEngine({ configService });
 
     const result = await engine.promote({
       key: "feature.flag",

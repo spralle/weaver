@@ -1,6 +1,5 @@
 import type { ScopeDefinition } from "@weaver/config-types";
 import type { WeaverConfigService } from "./config-service.js";
-import type { GitWriteQueue } from "../git/write-queue.js";
 import type { SchemaRegistry } from "./schema-registry.js";
 import type { WeaverError } from "../types/errors.js";
 import { createWeaverError } from "../types/errors.js";
@@ -29,7 +28,6 @@ export interface ScopeProvisionResult {
 
 export interface ScopeManagerOptions {
   configService: WeaverConfigService;
-  gitWriteQueue: GitWriteQueue;
   schemaRegistry: SchemaRegistry;
 }
 
@@ -43,7 +41,7 @@ export interface ScopeManager {
 export function createScopeManager(
   options: ScopeManagerOptions,
 ): ScopeManager {
-  const { configService, gitWriteQueue } = options;
+  const { configService } = options;
   const activeScopes = new Map<string, Set<string>>();
 
   // Initialize from existing providers
@@ -76,18 +74,16 @@ export function createScopeManager(
         };
       }
 
-      await gitWriteQueue.enqueue(async () => {
-        const layer = `${scopeId}:${value}`;
-        const provider = configService.providers.find(
-          (p) => p.layer === layer,
-        );
-        if (provider) {
-          await configService.set(layer, `_weaver.scope.${scopeId}`, value, {
-            environment: "default",
-            actor,
-          });
-        }
-      });
+      const scopeLayer = `${scopeId}:${value}`;
+      const provider = configService.providers.find(
+        (p) => p.layer === scopeLayer,
+      );
+      if (provider) {
+        await configService.set(scopeLayer, `_weaver.scope.${scopeId}`, value, {
+          environment: "default",
+          actor,
+        });
+      }
 
       if (!activeScopes.has(scopeId)) {
         activeScopes.set(scopeId, new Set());
@@ -114,12 +110,10 @@ export function createScopeManager(
         };
       }
 
-      await gitWriteQueue.enqueue(async () => {
-        const layer = `${scopeId}:${value}`;
-        await configService.remove(layer, `_weaver.scope.${scopeId}`, {
-          environment: "default",
-          actor,
-        });
+      const scopeLayer = `${scopeId}:${value}`;
+      await configService.remove(scopeLayer, `_weaver.scope.${scopeId}`, {
+        environment: "default",
+        actor,
       });
 
       values.delete(value);

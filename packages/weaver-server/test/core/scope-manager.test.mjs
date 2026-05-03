@@ -3,7 +3,6 @@ import assert from "node:assert/strict";
 import { createScopeManager } from "../../src/core/scope-manager.ts";
 import { createSchemaRegistry } from "../../src/core/schema-registry.ts";
 import { createWeaverConfigService } from "../../src/core/config-service.ts";
-import { createGitWriteQueue } from "../../src/git/write-queue.ts";
 
 function createTestProvider(id, layer, entries, writable = true) {
   let data = { ...entries };
@@ -24,9 +23,8 @@ describe("ScopeManager", () => {
       providers: [platformProvider],
       environment: "dev",
     });
-    const gitWriteQueue = createGitWriteQueue();
-    const schemaRegistry = createSchemaRegistry({ configService, gitWriteQueue });
-    const sm = createScopeManager({ configService, gitWriteQueue, schemaRegistry });
+    const schemaRegistry = createSchemaRegistry({ configService });
+    const sm = createScopeManager({ configService, schemaRegistry });
 
     const result = await sm.provision({ scopeId: "tenant", value: "acme", actor: "admin" });
     assert.equal(result.scopeId, "tenant");
@@ -40,9 +38,8 @@ describe("ScopeManager", () => {
       providers: [createTestProvider("p1", "platform", {}), tenantProvider],
       environment: "dev",
     });
-    const gitWriteQueue = createGitWriteQueue();
-    const schemaRegistry = createSchemaRegistry({ configService, gitWriteQueue });
-    const sm = createScopeManager({ configService, gitWriteQueue, schemaRegistry });
+    const schemaRegistry = createSchemaRegistry({ configService });
+    const sm = createScopeManager({ configService, schemaRegistry });
 
     const result = await sm.deprovision({ scopeId: "tenant", value: "old-co", actor: "admin" });
     assert.equal(result.success, true);
@@ -56,9 +53,8 @@ describe("ScopeManager", () => {
       providers: [createTestProvider("p1", "platform", {}), t1, t2],
       environment: "dev",
     });
-    const gitWriteQueue = createGitWriteQueue();
-    const schemaRegistry = createSchemaRegistry({ configService, gitWriteQueue });
-    const sm = createScopeManager({ configService, gitWriteQueue, schemaRegistry });
+    const schemaRegistry = createSchemaRegistry({ configService });
+    const sm = createScopeManager({ configService, schemaRegistry });
 
     const values = sm.listScopeValues("tenant");
     assert.ok(values.includes("alpha"));
@@ -72,9 +68,8 @@ describe("ScopeManager", () => {
       providers: [createTestProvider("p1", "platform", {}), t1, s1],
       environment: "dev",
     });
-    const gitWriteQueue = createGitWriteQueue();
-    const schemaRegistry = createSchemaRegistry({ configService, gitWriteQueue });
-    const sm = createScopeManager({ configService, gitWriteQueue, schemaRegistry });
+    const schemaRegistry = createSchemaRegistry({ configService });
+    const sm = createScopeManager({ configService, schemaRegistry });
 
     const scopes = sm.listScopes();
     assert.ok(scopes.some(s => s.id === "tenant"));
@@ -87,9 +82,8 @@ describe("ScopeManager", () => {
       providers: [createTestProvider("p1", "platform", {}), tenantProvider],
       environment: "dev",
     });
-    const gitWriteQueue = createGitWriteQueue();
-    const schemaRegistry = createSchemaRegistry({ configService, gitWriteQueue });
-    const sm = createScopeManager({ configService, gitWriteQueue, schemaRegistry });
+    const schemaRegistry = createSchemaRegistry({ configService });
+    const sm = createScopeManager({ configService, schemaRegistry });
 
     const result = await sm.provision({ scopeId: "tenant", value: "dup", actor: "admin" });
     assert.equal(result.success, false);

@@ -1,5 +1,4 @@
 import type { WeaverConfigService } from "./config-service.js";
-import type { GitWriteQueue } from "../git/write-queue.js";
 import type { WeaverError } from "../types/errors.js";
 import { createWeaverError } from "../types/errors.js";
 import { isScopedLayer, parseScopeLayer } from "./scope-utils.js";
@@ -21,7 +20,6 @@ export interface PromotionResult {
 
 export interface PromotionEngineOptions {
   configService: WeaverConfigService;
-  gitWriteQueue: GitWriteQueue;
 }
 
 export interface PromotionEngine {
@@ -35,7 +33,7 @@ function isPromotableLayer(layer: string): boolean {
 export function createPromotionEngine(
   options: PromotionEngineOptions,
 ): PromotionEngine {
-  const { configService, gitWriteQueue } = options;
+  const { configService } = options;
 
   return {
     async promote(request: PromotionRequest): Promise<PromotionResult> {
@@ -77,18 +75,20 @@ export function createPromotionEngine(
         return { success: true, method: "pull-request" };
       }
 
-      await gitWriteQueue.enqueue(async () => {
-        const result = await configService.set(layer, key, value, {
-          environment: toEnvironment,
-          actor,
-        });
-        if (!result.success) {
-          throw createWeaverError(
+      const result = await configService.set(layer, key, value, {
+        environment: toEnvironment,
+        actor,
+      });
+      if (!result.success) {
+        return {
+          success: false,
+          method: "direct" as const,
+          error: createWeaverError(
             "GIT_ERROR",
             result.error ?? "Write failed during promotion",
-          );
-        }
-      });
+          ),
+        };
+      }
 
       const provider = configService.providers.find(
         (p) => p.layer === layer,
