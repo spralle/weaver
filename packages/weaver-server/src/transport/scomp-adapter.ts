@@ -98,37 +98,30 @@ export function createScompAdapter(options: ScompAdapterOptions): ScompAdapter {
     return await configService.remove(layer, key, writeOpts);
   }
 
+  type OperationHandler = (payload: unknown) => Promise<unknown>;
+
+  const operationRegistry = new Map<string, OperationHandler>([
+    ["resolveAll", handleResolveAll],
+    ["get", handleGet],
+    ["getNamespace", handleGetNamespace],
+    ["inspect", handleInspect],
+    ["set", handleSet],
+    ["remove", handleRemove],
+  ]);
+
   async function handleRequest(
     operation: string,
     payload: unknown,
   ): Promise<unknown> {
     try {
-      switch (operation) {
-        case "resolveAll":
-          return await handleResolveAll(payload);
-        case "get":
-          return await handleGet(payload);
-        case "getNamespace":
-          return await handleGetNamespace(payload);
-        case "inspect":
-          return await handleInspect(payload);
-        case "set":
-          return await handleSet(payload);
-        case "remove":
-          return await handleRemove(payload);
-        case "promote":
-        case "rollback":
-        case "registerSchema":
-          return {
-            success: false,
-            error: `Operation "${operation}" not yet implemented`,
-          };
-        default:
-          return createWeaverError(
-            "VALIDATION_ERROR",
-            `Unknown operation: ${operation}`,
-          );
+      const handler = operationRegistry.get(operation);
+      if (!handler) {
+        return createWeaverError(
+          "VALIDATION_ERROR",
+          `Unknown operation: ${operation}`,
+        );
       }
+      return await handler(payload);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       return createWeaverError("VALIDATION_ERROR", message);
