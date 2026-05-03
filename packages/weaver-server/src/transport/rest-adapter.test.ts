@@ -31,6 +31,8 @@ function createMockConfigService(): WeaverConfigService {
     },
     async reloadProvider() {},
     onDelta() { return () => {}; },
+    async flush() {},
+    async refreshProviders() {},
   } as unknown as WeaverConfigService;
 }
 

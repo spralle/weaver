@@ -6,6 +6,8 @@ import type {
   WriteResult,
 } from "@weaver/config-types";
 import type { ConfigSnapshot, ConfigDelta } from "../types/index.js";
+import type { WeaverLogger } from "../logger.js";
+import { consoleLogger } from "../logger.js";
 import { isScopedLayer, parseScopeLayer, buildScopePathString } from "./scope-utils.js";
 
 export interface WriteContext {
@@ -17,6 +19,7 @@ export interface WriteContext {
 export interface WeaverConfigServiceOptions {
   providers: ConfigurationStorageProvider[];
   environment: string;
+  logger?: WeaverLogger;
 }
 
 type Unsubscribe = () => void;
@@ -47,6 +50,12 @@ export interface WeaverConfigService {
   ): Promise<WriteResult>;
   remove(layer: string, key: string, options?: WriteContext): Promise<WriteResult>;
   onDelta(handler: (delta: ConfigDelta) => void): Unsubscribe;
+
+  /** Flush all dirty providers (commit+push pending changes). */
+  flush(): Promise<void>;
+
+  /** Refresh all providers from remote sources, then reload state. */
+  refreshProviders(): Promise<void>;
 }
 
 const SIZE_WARNING = 1_048_576; // 1MB
@@ -64,6 +73,7 @@ export async function createWeaverConfigService(
   options: WeaverConfigServiceOptions,
 ): Promise<WeaverConfigService> {
   const { providers, environment } = options;
+  const logger = options.logger ?? consoleLogger;
 
   const layerData = new Map<string, Record<string, unknown>>();
   let revision = "";
@@ -216,7 +226,7 @@ export async function createWeaverConfigService(
       }
 
       if (typeof value === "string" && value.length > SIZE_WARNING) {
-        console.warn(
+        logger.warn(
           `[weaver] Value for key "${key}" exceeds 1MB (${value.length} bytes)`,
         );
       }
@@ -281,6 +291,25 @@ export async function createWeaverConfigService(
       return () => {
         deltaHandlers.delete(handler);
       };
+    },
+
+    async flush(): Promise<void> {
+      for (const provider of providers) {
+        if (provider.flush && provider.dirty) {
+          await provider.flush();
+        }
+      }
+    },
+
+    async refreshProviders(): Promise<void> {
+      for (const provider of providers) {
+        if (provider.refresh) {
+          await provider.refresh();
+        }
+        const data = await provider.load();
+        layerData.set(provider.id, data.entries);
+      }
+      updateRevision();
     },
   };
 }

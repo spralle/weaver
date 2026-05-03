@@ -225,6 +225,7 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
         if (!result.success) {
           return v1Error("VALIDATION_ERROR", result.error ?? "Write failed");
         }
+        await configService.flush();
         return v1Response(200, result);
       },
     },
@@ -243,6 +244,7 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
         if (!result.success) {
           return v1Error("VALIDATION_ERROR", result.error ?? "Remove failed");
         }
+        await configService.flush();
         return v1Response(200, result);
       },
     },

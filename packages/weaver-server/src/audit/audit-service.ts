@@ -1,4 +1,6 @@
 // Audit service with pluggable sinks and sensitive value masking
+import type { WeaverLogger } from "../logger.js";
+import { consoleLogger } from "../logger.js";
 
 export interface AuditEntry {
   timestamp: string;
@@ -21,6 +23,7 @@ export interface ConfigAuditSink {
 export interface AuditServiceOptions {
   sinks: ConfigAuditSink[];
   sensitiveKeys?: Set<string>;
+  logger?: WeaverLogger;
 }
 
 export interface AuditService {
@@ -29,6 +32,7 @@ export interface AuditService {
 
 export function createAuditService(options: AuditServiceOptions): AuditService {
   const { sinks, sensitiveKeys } = options;
+  const logger = options.logger ?? consoleLogger;
 
   function maskEntry(entry: AuditEntry): AuditEntry {
     if (!sensitiveKeys || !sensitiveKeys.has(entry.key)) {
@@ -49,7 +53,7 @@ export function createAuditService(options: AuditServiceOptions): AuditService {
       );
       for (const result of results) {
         if (result.status === "rejected") {
-          console.error("[audit] sink failed:", result.reason);
+          logger.error("[audit] sink failed:", result.reason);
         }
       }
     },

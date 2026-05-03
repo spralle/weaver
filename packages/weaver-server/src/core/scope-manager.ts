@@ -83,6 +83,7 @@ export function createScopeManager(
           environment: "default",
           actor,
         });
+        await configService.flush();
       }
 
       if (!activeScopes.has(scopeId)) {
@@ -115,6 +116,7 @@ export function createScopeManager(
         environment: "default",
         actor,
       });
+      await configService.flush();
 
       values.delete(value);
       return { success: true, scopeId, value };
