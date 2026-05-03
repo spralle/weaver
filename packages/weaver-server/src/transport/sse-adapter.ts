@@ -4,8 +4,13 @@ import type { ConfigDelta } from "../types/index.js";
 import { parseScopeQuery } from "../core/scope-utils.js";
 import { type SSEMessage, formatSSEMessage } from "./sse-events.js";
 
+/** Default max messages retained per client to prevent unbounded memory growth */
+const DEFAULT_MAX_BUFFER_SIZE = 1000;
+
 export interface SSEAdapterOptions {
   configService: WeaverConfigService;
+  /** Max messages retained per client (oldest evicted when full). Default: 1000 */
+  maxBufferSize?: number;
 }
 
 export interface SSEClientOptions {
@@ -57,7 +62,7 @@ function matchesScopeFilter(delta: ConfigDelta, scope: string | undefined): bool
 }
 
 export function createSSEAdapter(options: SSEAdapterOptions): SSEAdapter {
-  const { configService } = options;
+  const { configService, maxBufferSize = DEFAULT_MAX_BUFFER_SIZE } = options;
   const clients = new Set<SSEClient & { unsubscribe: () => void }>();
   let clientIdCounter = 0;
   let checkpointTimer: ReturnType<typeof setInterval> | null = null;
@@ -96,6 +101,9 @@ export function createSSEAdapter(options: SSEAdapterOptions): SSEAdapter {
       unsubscribe,
       send(message: SSEMessage): void {
         if (closed) return;
+        if (messages.length >= maxBufferSize) {
+          messages.shift();
+        }
         messages.push(formatSSEMessage(message));
       },
       close(): void {
