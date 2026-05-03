@@ -144,17 +144,21 @@ async function handleSSE(url: URL, sseAdapter: SSEAdapter): Promise<Response> {
       }
 
       const originalSend = client.send.bind(client);
-      (client as { send: (message: SSEMessage) => void }).send = (message: SSEMessage) => {
-        originalSend(message);
-        const formatted = client.messages[client.messages.length - 1];
-        if (formatted) {
-          try {
-            controller.enqueue(new TextEncoder().encode(formatted));
-          } catch {
-            client.close();
+      Object.defineProperty(client, "send", {
+        value(message: SSEMessage) {
+          originalSend(message);
+          const formatted = client.messages[client.messages.length - 1];
+          if (formatted) {
+            try {
+              controller.enqueue(new TextEncoder().encode(formatted));
+            } catch {
+              client.close();
+            }
           }
-        }
-      };
+        },
+        writable: true,
+        configurable: true,
+      });
     },
     cancel() {
       client.close();

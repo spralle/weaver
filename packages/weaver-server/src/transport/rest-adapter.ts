@@ -135,7 +135,11 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
   const { configService, scopeManager, corsOrigins } = options;
 
   function param(params: Record<string, string>, name: string): string {
-    return params[name] as string;
+    const value = params[name];
+    if (!value) {
+      throw createWeaverError("VALIDATION_ERROR", `Missing required route parameter: ${name}`);
+    }
+    return value;
   }
 
   function queryOpt(query: Record<string, string>, name: string): string | undefined {
@@ -423,7 +427,7 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
       const rev = configService.revision;
       return {
         status: 500,
-        body: errorEnvelope(createWeaverError("VALIDATION_ERROR", message), rev),
+        body: errorEnvelope(createWeaverError("INTERNAL_ERROR", message), rev),
         headers: v1Headers(rev),
       };
     }
