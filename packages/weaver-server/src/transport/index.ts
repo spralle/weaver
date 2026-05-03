@@ -36,3 +36,12 @@ export {
 } from "./sse-events.js";
 
 export { matchGlob } from "./glob-matcher.js";
+
+export {
+  configWriteBodySchema,
+  configBatchBodySchema,
+  scopeProvisionBodySchema,
+  promoteBodySchema,
+  rollbackBodySchema,
+  schemaRegisterBodySchema,
+} from "./rest-schemas.js";
