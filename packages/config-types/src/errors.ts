@@ -29,10 +29,24 @@ export const weaverErrorSchema = z.object({
 });
 export type WeaverError = z.infer<typeof weaverErrorSchema>;
 
+export class WeaverErrorInstance extends Error {
+  readonly code: WeaverErrorCode;
+  readonly details?: Record<string, unknown>;
+
+  constructor(code: WeaverErrorCode, message: string, details?: Record<string, unknown>) {
+    super(message);
+    this.name = "WeaverError";
+    this.code = code;
+    if (details !== undefined) {
+      this.details = details;
+    }
+  }
+}
+
 export function createWeaverError(
   code: WeaverErrorCode,
   message: string,
   details?: Record<string, unknown>,
-): WeaverError {
-  return details !== undefined ? { code, message, details } : { code, message };
+): WeaverErrorInstance {
+  return new WeaverErrorInstance(code, message, details);
 }

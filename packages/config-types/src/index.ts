@@ -232,5 +232,6 @@ export {
   weaverErrorCodeSchema,
   weaverErrorSchema,
   createWeaverError,
+  WeaverErrorInstance,
 } from "./errors.js";
 export type { WeaverErrorCode, WeaverError } from "./errors.js";
