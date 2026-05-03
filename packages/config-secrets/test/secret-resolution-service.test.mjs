@@ -57,8 +57,8 @@ test("resolveAll scans entries and resolves secret references", async () => {
     dbPassword: { _weaver: "secret-ref", provider: "test", uri: "db-pass" },
   });
 
-  assert.equal(results.size, 1);
-  assert.equal(results.get("dbPassword"), "hunter2");
+  assert.equal(results.resolved.size, 1);
+  assert.equal(results.resolved.get("dbPassword"), "hunter2");
 });
 
 test("cache is used on second resolve (mock provider called once)", async () => {
@@ -131,8 +131,8 @@ test("resolveAll() with mixed entries only resolves secret refs", async () => {
     nested: { foo: "bar" },
   });
 
-  assert.equal(results.size, 1);
-  assert.equal(results.get("secret"), "secret1");
+  assert.equal(results.resolved.size, 1);
+  assert.equal(results.resolved.get("secret"), "secret1");
 });
 
 test("resolveAll() with multiple providers routes correctly", async () => {
@@ -145,14 +145,14 @@ test("resolveAll() with multiple providers routes correctly", async () => {
     k2: { _weaver: "secret-ref", provider: "azure", uri: "b" },
   });
 
-  assert.equal(results.get("k1"), "aws-val");
-  assert.equal(results.get("k2"), "azure-val");
+  assert.equal(results.resolved.get("k1"), "aws-val");
+  assert.equal(results.resolved.get("k2"), "azure-val");
 });
 
 test("resolveAll() with empty entries returns empty map", async () => {
   const svc = new SecretResolutionService();
   const results = await svc.resolveAll({});
-  assert.equal(results.size, 0);
+  assert.equal(results.resolved.size, 0);
 });
 
 // --- Store/delete ---

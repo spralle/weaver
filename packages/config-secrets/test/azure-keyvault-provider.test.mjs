@@ -36,6 +36,10 @@ function createProviderWithMock(secretStore = new Map(), options = {}) {
   Object.defineProperty(provider, "name", { value: "azure-keyvault", writable: false });
   Object.defineProperty(provider, "client", { value: mockClient, writable: false });
   Object.defineProperty(provider, "prefix", { value: options.secretPrefix, writable: false });
+  Object.defineProperty(provider, "timeoutMs", { value: 10000, writable: false });
+  Object.defineProperty(provider, "failureThreshold", { value: 5, writable: false });
+  Object.defineProperty(provider, "cooldownMs", { value: 30000, writable: false });
+  Object.defineProperty(provider, "breaker", { value: { consecutiveFailures: 0, lastFailureTime: 0 }, writable: true });
   return { provider, mockClient, secretStore };
 }
 
