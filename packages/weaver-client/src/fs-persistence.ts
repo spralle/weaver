@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, renameSync, writeFileSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import { configSnapshotSchema } from "./types.js";
+import { configSnapshotSchema } from "@weaver/config-types";
 import type { ConfigSnapshot } from "./types.js";
 import type { WeaverClientPersistence } from "./persistence.js";
 

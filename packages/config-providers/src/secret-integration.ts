@@ -45,12 +45,12 @@ export async function createSecretIntegration(
   async function resolveAll(
     entries: Readonly<Record<string, unknown>>,
   ): Promise<void> {
-    const resolved = await service.resolveAll(
+    const result = await service.resolveAll(
       entries as Record<string, unknown>,
     );
     resolvedSecrets.clear();
     secretKeys.clear();
-    for (const [key, value] of resolved) {
+    for (const [key, value] of result.resolved) {
       resolvedSecrets.set(key, value);
       secretKeys.add(key);
     }
