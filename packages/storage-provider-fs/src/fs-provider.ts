@@ -2,6 +2,7 @@ import { mkdir, readFile, rename, stat, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { deepMerge, deepRemove, deepSet } from "@weaver/config-engine";
 import type {
+  ConfigurationChange,
   ConfigurationLayer,
   ConfigurationLayerData,
   ConfigurationStorageProvider,
@@ -11,6 +12,7 @@ import {
   isNodeError,
   safeParseConfigEntries,
 } from "@weaver/storage-provider-core";
+import { FsConfigWatcher } from "./fs-watcher.js";
 
 export interface FileSystemProviderOptions {
   id: string;
@@ -18,6 +20,8 @@ export interface FileSystemProviderOptions {
   filePath: string;
   writable?: boolean | undefined;
   environmentOverlayPath?: string | undefined;
+  /** Debounce interval in ms for file-system watch events (default: 100). */
+  watchDebounceMs?: number | undefined;
 }
 
 /** @see {@link createFileSystemStorageProvider} — prefer the factory function for consistency */
@@ -28,6 +32,8 @@ export class FileSystemStorageProvider implements ConfigurationStorageProvider {
 
   private readonly filePath: string;
   private readonly envOverlayPath: string | undefined;
+  private readonly watchDebounceMs: number;
+  private watcher: FsConfigWatcher | null = null;
 
   constructor(options: FileSystemProviderOptions) {
     this.id = options.id;
@@ -37,6 +43,7 @@ export class FileSystemStorageProvider implements ConfigurationStorageProvider {
     this.envOverlayPath = options.environmentOverlayPath
       ? resolve(options.environmentOverlayPath)
       : undefined;
+    this.watchDebounceMs = options.watchDebounceMs ?? 100;
   }
 
   async load(): Promise<ConfigurationLayerData> {
@@ -79,6 +86,32 @@ export class FileSystemStorageProvider implements ConfigurationStorageProvider {
 
     const revision = await this.getRevision(this.filePath);
     return { success: true, revision };
+  }
+
+  onExternalChange(
+    listener: (changes: ConfigurationChange[]) => void,
+  ): () => void {
+    this.watcher?.dispose();
+    const watcher = new FsConfigWatcher({
+      filePath: this.filePath,
+      debounceMs: this.watchDebounceMs,
+    });
+    this.watcher = watcher;
+
+    // Load current state as baseline snapshot, then start watching
+    void this.readJsonFile(this.filePath).then((entries) => {
+      watcher.start(listener, entries);
+    });
+
+    return () => {
+      watcher.dispose();
+      if (this.watcher === watcher) this.watcher = null;
+    };
+  }
+
+  dispose(): void {
+    this.watcher?.dispose();
+    this.watcher = null;
   }
 
   private async readJsonFile(path: string): Promise<Record<string, unknown>> {

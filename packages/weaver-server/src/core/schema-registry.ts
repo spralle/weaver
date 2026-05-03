@@ -1,3 +1,7 @@
+import {
+  detectBreakingChanges,
+  schemasEqual,
+} from "@weaver/config-engine";
 import { z } from "zod";
 import type { WeaverError } from "../types/errors.js";
 import { createWeaverError } from "../types/errors.js";
@@ -40,76 +44,6 @@ function schemaKey(serviceId: string, environment: string): string {
   return `${serviceId}:${environment}`;
 }
 
-function detectBreakingChanges(
-  existing: SchemaDeclaration,
-  incoming: SchemaDeclaration,
-): string[] {
-  const changes: string[] = [];
-
-  const existingObj = existing;
-  const incomingObj = incoming;
-
-  // Check for removed properties
-  const existingProps = getProperties(existingObj);
-  const incomingProps = getProperties(incomingObj);
-
-  for (const prop of existingProps) {
-    if (!incomingProps.has(prop)) {
-      changes.push(`Removed property: ${prop}`);
-    }
-  }
-
-  // Check for type changes on existing properties
-  for (const prop of existingProps) {
-    if (incomingProps.has(prop)) {
-      const existingType = getPropertyType(existingObj, prop);
-      const incomingType = getPropertyType(incomingObj, prop);
-      if (existingType && incomingType && existingType !== incomingType) {
-        changes.push(
-          `Type changed for "${prop}": ${existingType} → ${incomingType}`,
-        );
-      }
-    }
-  }
-
-  return changes;
-}
-
-function getProperties(obj: Record<string, unknown>): Set<string> {
-  const properties = (obj as { properties?: Record<string, unknown> })
-    .properties;
-  if (typeof properties === "object" && properties !== null) {
-    return new Set(Object.keys(properties));
-  }
-  return new Set(Object.keys(obj));
-}
-
-function getPropertyType(
-  obj: Record<string, unknown>,
-  prop: string,
-): string | undefined {
-  const properties = (obj as { properties?: Record<string, unknown> })
-    .properties;
-  if (typeof properties === "object" && properties !== null) {
-    const propDef = properties[prop] as Record<string, unknown> | undefined;
-    if (typeof propDef?.type === "string") {
-      return propDef.type;
-    }
-    return undefined;
-  }
-  const value = obj[prop];
-  if (typeof value === "object" && value !== null && "type" in value) {
-    const schemaType = (value as Record<string, unknown>).type;
-    if (typeof schemaType === "string") {
-      return schemaType;
-    }
-  }
-  return undefined;
-}
-
-function schemasEqual(a: unknown, b: unknown): boolean {
-  return JSON.stringify(a) === JSON.stringify(b);
-}
 
 export function createSchemaRegistry(
   options: SchemaRegistryOptions,
@@ -173,7 +107,7 @@ export function createSchemaRegistry(
         hasBreakingChanges: breakingChanges.length > 0,
       };
       if (breakingChanges.length > 0) {
-        result.breakingChanges = breakingChanges;
+        result.breakingChanges = breakingChanges.map((c) => c.message);
       }
       return result;
     },

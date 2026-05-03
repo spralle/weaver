@@ -4,7 +4,7 @@ import {
   resolveConfiguration,
   inspectKey,
   resolveConfigurationWithCeiling,
-} from "../dist/index.js";
+} from "../dist/layers.js";
 
 const testLayers = ["core","app","module","integrator","tenant","user","device","session"];
 const getRank = (l) => { const i = testLayers.indexOf(l); return i >= 0 ? i : testLayers.length; };

@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { deriveContractFromPackageJson } from "../dist/index.js";
+import { deriveContractFromPackageJson } from "../dist/contract-derivation.js";
 
 describe("deriveContractFromPackageJson", () => {
   it("derives correct namespace from scoped package name", () => {

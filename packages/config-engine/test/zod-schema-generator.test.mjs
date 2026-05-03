@@ -4,7 +4,7 @@ import {
   generateZodSchemaSource,
   generateZodForProperty,
   sanitizeKeyToIdentifier,
-} from "../dist/index.js";
+} from "../dist/zod-schema-generator.js";
 
 /** @param {object} schema */
 function entry(ownerId, schema) {

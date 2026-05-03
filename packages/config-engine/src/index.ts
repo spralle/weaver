@@ -5,7 +5,6 @@ export type {
   ContractMetadata,
   PackageJsonInput,
 } from "./contract-derivation.js";
-export { deriveContractFromPackageJson } from "./contract-derivation.js";
 // deep.ts — Deep object path utilities
 export { deepGet, deepRemove, deepSet } from "./deep.js";
 // json-schema-generator.ts — JSON Schema generation
@@ -13,16 +12,12 @@ export type {
   JsonSchemaDocument,
   JsonSchemaProperty,
 } from "./json-schema-generator.js";
-export {
-  generateJsonSchema,
-  generateSinglePropertySchema,
-} from "./json-schema-generator.js";
+
 // layers.ts — Layer resolution engine
 export type { ResolvedConfiguration } from "./layers.js";
 export {
   inspectKey,
   resolveConfiguration,
-  resolveConfigurationWithCeiling,
 } from "./layers.js";
 // merge.ts — Deep merge utility
 export { deepMerge } from "./merge.js";
@@ -35,6 +30,15 @@ export {
 } from "./namespace.js";
 // path.ts — Bracket-aware path parsing
 export { buildPath, isCompoundSegment, parsePath, pathDepth } from "./path.js";
+// schema-diff.ts — Schema comparison utilities
+export type { BreakingChange } from "./schema-diff.js";
+export {
+  detectBreakingChanges,
+  diffSchemaKeys,
+  getSchemaProperties,
+  getSchemaPropertyType,
+  schemasEqual,
+} from "./schema-diff.js";
 // schema-registry.ts — Schema aggregation
 export type {
   ComposedSchemaEntry,
@@ -51,11 +55,5 @@ export {
 } from "./schema-registry.js";
 // scope.ts — Scope chain builder
 export type { BuildScopeChainResult, ScopeChainEntry } from "./scope.js";
-export { buildScopeChain } from "./scope.js";
 
-// zod-schema-generator.ts — Zod codegen (string-based)
-export {
-  generateZodForProperty,
-  generateZodSchemaSource,
-  sanitizeKeyToIdentifier,
-} from "./zod-schema-generator.js";
+
