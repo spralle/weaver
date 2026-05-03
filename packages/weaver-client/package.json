@@ -26,7 +26,8 @@
   },
   "dependencies": {
     "@weaver/config-types": "workspace:*",
-    "@weaver/config-providers": "workspace:*"
+    "@weaver/config-providers": "workspace:*",
+    "zod": "^3.24.4"
   },
   "devDependencies": {
     "@types/node": "25.6.0",
