@@ -1,0 +1,225 @@
+import { describe, it, beforeEach } from "node:test";
+import assert from "node:assert/strict";
+import { createSSEAdapter } from "./sse-adapter.js";
+import type { SSEAdapter } from "./sse-adapter.js";
+import type { WeaverConfigService } from "../core/config-service.js";
+import type { ConfigDelta } from "../types/index.js";
+
+function createMockConfigService(initialEntries?: Record<string, unknown>) {
+  const deltaHandlers: Array<(delta: ConfigDelta) => void> = [];
+  let currentRevision = "rev-1";
+  const entries = initialEntries ?? {
+    "app.name": "test",
+    "app.port": 3000,
+    "db.host": "localhost",
+  };
+
+  return {
+    configService: {
+      get revision() {
+        return currentRevision;
+      },
+      providers: [],
+      resolveAll: async (options?: { scopePath?: unknown }) => ({
+        entries: { ...entries },
+        scopes: {},
+        revision: currentRevision,
+      }),
+      onDelta: (handler: (delta: ConfigDelta) => void) => {
+        deltaHandlers.push(handler);
+        return () => {
+          const idx = deltaHandlers.indexOf(handler);
+          if (idx >= 0) deltaHandlers.splice(idx, 1);
+        };
+      },
+      get: async () => undefined,
+      getNamespace: async () => ({}),
+      inspect: async () => ({ key: "", layers: [], resolved: undefined }),
+      reloadProvider: async () => {},
+      set: async () => ({ ok: true as const }),
+      remove: async () => ({ ok: true as const }),
+    } as unknown as WeaverConfigService,
+    emitDelta(delta: ConfigDelta) {
+      for (const h of [...deltaHandlers]) h(delta);
+    },
+    setRevision(rev: string) {
+      currentRevision = rev;
+    },
+  };
+}
+
+function makeDelta(overrides?: Partial<ConfigDelta>): ConfigDelta {
+  return {
+    action: "set",
+    key: "app.name",
+    value: "updated",
+    layer: "platform",
+    environment: "production",
+    timestamp: "2026-05-03T12:00:00Z",
+    ...overrides,
+  };
+}
+
+interface ParsedMessage {
+  event: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data: Record<string, any>;
+}
+
+function parseMessages(client: { messages: readonly string[] }): ParsedMessage[] {
+  return client.messages.map((raw) => {
+    const eventMatch = raw.match(/^event: (.+)$/m);
+    const dataMatch = raw.match(/^data: (.+)$/m);
+    assert.ok(eventMatch, "expected event field in SSE message");
+    assert.ok(dataMatch, "expected data field in SSE message");
+    return {
+      event: eventMatch[1]!,
+      data: JSON.parse(dataMatch[1]!) as Record<string, unknown>,
+    };
+  });
+}
+
+function msg(msgs: ParsedMessage[], idx: number): ParsedMessage {
+  const m = msgs[idx];
+  assert.ok(m, `expected message at index ${idx}`);
+  return m;
+}
+
+describe("SSEAdapter", () => {
+  let mock: ReturnType<typeof createMockConfigService>;
+  let adapter: SSEAdapter;
+
+  beforeEach(() => {
+    mock = createMockConfigService();
+    adapter = createSSEAdapter({ configService: mock.configService });
+  });
+
+  it("sends snapshot event on client creation", async () => {
+    const client = await adapter.createClient();
+    const msgs = parseMessages(client);
+    assert.equal(msgs.length, 1);
+    assert.equal(msg(msgs, 0).event, "snapshot");
+    assert.deepEqual(msg(msgs, 0).data.entries, {
+      "app.name": "test",
+      "app.port": 3000,
+      "db.host": "localhost",
+    });
+    assert.equal(msg(msgs, 0).data.revision, "rev-1");
+    client.close();
+  });
+
+  it("filters snapshot entries by prefix", async () => {
+    const client = await adapter.createClient({ prefix: "app" });
+    const msgs = parseMessages(client);
+    assert.equal(msg(msgs, 0).event, "snapshot");
+    assert.deepEqual(Object.keys(msg(msgs, 0).data.entries).sort(), [
+      "app.name",
+      "app.port",
+    ]);
+    assert.equal(msg(msgs, 0).data.entries["db.host"], undefined);
+    client.close();
+  });
+
+  it("receives change events for matching deltas", async () => {
+    const client = await adapter.createClient();
+    mock.setRevision("rev-2");
+    mock.emitDelta(makeDelta({ key: "app.name", value: "newval" }));
+    const msgs = parseMessages(client);
+    assert.equal(msgs.length, 2); // snapshot + change
+    assert.equal(msg(msgs, 1).event, "change");
+    assert.equal(msg(msgs, 1).data.key, "app.name");
+    assert.equal(msg(msgs, 1).data.value, "newval");
+    assert.equal(msg(msgs, 1).data.revision, "rev-2");
+    client.close();
+  });
+
+  it("filters change events by prefix", async () => {
+    const client = await adapter.createClient({ prefix: "db" });
+    mock.emitDelta(makeDelta({ key: "app.name" }));
+    mock.emitDelta(makeDelta({ key: "db.host", value: "newhost" }));
+    const msgs = parseMessages(client);
+    // snapshot + 1 matching change (app.name filtered out)
+    assert.equal(msgs.length, 2);
+    assert.equal(msg(msgs, 1).event, "change");
+    assert.equal(msg(msgs, 1).data.key, "db.host");
+    client.close();
+  });
+
+  it("sends checkpoint events to all clients on timer", async (t) => {
+    const client1 = await adapter.createClient();
+    const client2 = await adapter.createClient({ prefix: "db" });
+    mock.setRevision("rev-5");
+
+    // Use a very short interval for testing
+    adapter.startCheckpointTimer(10);
+    await new Promise((r) => setTimeout(r, 50));
+    adapter.stopCheckpointTimer();
+
+    const msgs1 = parseMessages(client1);
+    const msgs2 = parseMessages(client2);
+
+    const checkpoints1 = msgs1.filter((m) => m.event === "checkpoint");
+    const checkpoints2 = msgs2.filter((m) => m.event === "checkpoint");
+
+    assert.ok(checkpoints1.length >= 1, "client1 should receive checkpoints");
+    assert.ok(checkpoints2.length >= 1, "client2 should receive checkpoints");
+    assert.equal(msg(checkpoints1, 0).data.revision, "rev-5");
+
+    client1.close();
+    client2.close();
+  });
+
+  it("removes client and stops receiving events", async () => {
+    const client = await adapter.createClient();
+    assert.equal(adapter.clientCount, 1);
+    adapter.removeClient(client);
+    assert.equal(adapter.clientCount, 0);
+
+    mock.emitDelta(makeDelta());
+    const msgs = parseMessages(client);
+    // Only the initial snapshot, no change events after removal
+    assert.equal(msgs.length, 1);
+  });
+
+  it("closeAll disconnects all clients", async () => {
+    const client1 = await adapter.createClient();
+    const client2 = await adapter.createClient();
+    assert.equal(adapter.clientCount, 2);
+    adapter.closeAll();
+    assert.equal(adapter.clientCount, 0);
+
+    mock.emitDelta(makeDelta());
+    assert.equal(parseMessages(client1).length, 1); // only snapshot
+    assert.equal(parseMessages(client2).length, 1); // only snapshot
+  });
+
+  it("multiple clients with different filters receive correct events", async () => {
+    const appClient = await adapter.createClient({ prefix: "app" });
+    const dbClient = await adapter.createClient({ prefix: "db" });
+
+    mock.emitDelta(makeDelta({ key: "app.name", value: "v2" }));
+    mock.emitDelta(makeDelta({ key: "db.host", value: "newdb" }));
+
+    const appMsgs = parseMessages(appClient);
+    const dbMsgs = parseMessages(dbClient);
+
+    // appClient: snapshot + app.name change
+    assert.equal(appMsgs.length, 2);
+    assert.equal(msg(appMsgs, 1).data.key, "app.name");
+
+    // dbClient: snapshot + db.host change
+    assert.equal(dbMsgs.length, 2);
+    assert.equal(msg(dbMsgs, 1).data.key, "db.host");
+
+    appClient.close();
+    dbClient.close();
+  });
+
+  it("client with since parameter still gets snapshot (v1)", async () => {
+    const client = await adapter.createClient({ since: "rev-42" });
+    const msgs = parseMessages(client);
+    assert.equal(msgs.length, 1);
+    assert.equal(msg(msgs, 0).event, "snapshot");
+    client.close();
+  });
+});

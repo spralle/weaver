@@ -2,47 +2,31 @@ import { test, describe } from "bun:test";
 import assert from "node:assert/strict";
 import { createChangeDetector } from "../../src/core/change-detector.ts";
 
-function createMockConfigService(providerIds) {
-  const reloaded = [];
+function createMockConfigService() {
+  let refreshCount = 0;
   return {
-    reloaded,
-    providers: providerIds.map((id) => ({ id, layer: "platform", writable: true })),
-    async reloadProvider(id) { reloaded.push(id); },
-  };
-}
-
-function createMockGitManager() {
-  let pullCount = 0;
-  return {
-    get pullCount() { return pullCount; },
-    localPath: "/tmp/repo",
-    async ensureClone() {},
-    async pull() { pullCount++; },
+    get refreshCount() { return refreshCount; },
+    providers: [],
+    async refreshProviders() { refreshCount++; },
   };
 }
 
 describe("ChangeDetector", () => {
-  test("triggerCheck reloads git providers", async () => {
-    const svc = createMockConfigService(["git-p1", "git-p2"]);
-    const git = createMockGitManager();
+  test("triggerCheck calls configService.refreshProviders", async () => {
+    const svc = createMockConfigService();
 
     const detector = createChangeDetector({
       configService: svc,
-      gitManager: git,
-      gitProviderIds: ["git-p1", "git-p2"],
     });
 
     await detector.triggerCheck();
-    assert.equal(git.pullCount, 1);
-    assert.deepEqual(svc.reloaded, ["git-p1", "git-p2"]);
+    assert.equal(svc.refreshCount, 1);
   });
 
   test("start/stop manages polling", async () => {
-    const svc = createMockConfigService([]);
+    const svc = createMockConfigService();
     const detector = createChangeDetector({
       configService: svc,
-      gitManager: createMockGitManager(),
-      gitProviderIds: [],
       pollIntervalMs: 50,
     });
 
@@ -51,22 +35,19 @@ describe("ChangeDetector", () => {
     detector.stop();
 
     // Should have polled at least once
-    // (gitManager.pull was called)
+    assert.ok(svc.refreshCount >= 1);
   });
 
   test("stop prevents further polling", async () => {
-    const git = createMockGitManager();
-    const svc = createMockConfigService([]);
+    const svc = createMockConfigService();
     const detector = createChangeDetector({
       configService: svc,
-      gitManager: git,
-      gitProviderIds: [],
       pollIntervalMs: 30,
     });
 
     detector.start();
     detector.stop();
     await new Promise((r) => setTimeout(r, 100));
-    assert.equal(git.pullCount, 0);
+    assert.equal(svc.refreshCount, 0);
   });
 });

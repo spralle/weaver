@@ -1,3 +1,5 @@
+import type { ScopeInstance } from "./types.js";
+
 // Promotion pipeline, audit, and emergency override types for Iteration 5
 
 export type PromotionStatus =
@@ -13,7 +15,7 @@ export interface PromotionRequest {
   readonly fromValue: unknown;
   readonly toValue: unknown;
   readonly layer: string;
-  readonly tenantId: string;
+  readonly scopePath?: readonly ScopeInstance[] | undefined;
   readonly requestedBy: string;
   readonly requestedAt: string; // ISO timestamp
   readonly status: PromotionStatus;
@@ -36,7 +38,7 @@ export interface ConfigAuditEntry {
     | "promote";
   readonly key: string;
   readonly layer: string;
-  readonly tenantId?: string | undefined;
+  readonly scopePath?: readonly ScopeInstance[] | undefined;
   readonly oldValue?: unknown | undefined;
   readonly newValue?: unknown | undefined;
   readonly changePolicy?: string | undefined;
@@ -49,7 +51,7 @@ export interface EmergencyOverrideRecord {
   readonly key: string;
   readonly actor: string;
   readonly reason: string;
-  readonly tenantId: string;
+  readonly scopePath?: readonly ScopeInstance[] | undefined;
   readonly layer: string;
   readonly createdAt: string; // ISO
   readonly followUpDeadline: string; // ISO (createdAt + 24h)

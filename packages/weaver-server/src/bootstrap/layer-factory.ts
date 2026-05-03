@@ -3,15 +3,12 @@ import type { Collection } from "mongodb";
 import type { ConfigurationStorageProvider } from "@weaver/config-types";
 import { InMemoryStorageProvider } from "@weaver/config-providers";
 import type { BootstrapConfig } from "../types/bootstrap.js";
-import type { GitWriteQueue } from "../git/write-queue.js";
 import type { GitManager } from "../storage/git-manager.js";
 import { GitStorageProvider } from "../storage/git-storage-provider.js";
 import { MongoDBStorageProvider } from "../storage/mongodb-storage-provider.js";
 
 export interface LayerFactoryDeps {
   gitManager: GitManager;
-  writeQueue: GitWriteQueue;
-  git: import("simple-git").SimpleGit;
   mongoCollection?: Collection | undefined;
   environment: string;
 }
@@ -26,10 +23,8 @@ export function createProviders(
         return new GitStorageProvider({
           id: layer.id,
           layer: layer.id,
-          repoPath: deps.gitManager.localPath,
+          gitManager: deps.gitManager,
           filePath: layer.path ?? `${layer.id}.json`,
-          writeQueue: deps.writeQueue,
-          git: deps.git,
         });
 
       case "mongodb":

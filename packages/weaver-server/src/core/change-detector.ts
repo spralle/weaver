@@ -1,11 +1,8 @@
-// Change detection — Git polling and manual trigger for webhook integration
-import type { GitManager } from "../storage/git-manager.js";
+// Change detection — polling and manual trigger for webhook integration
 import type { WeaverConfigService } from "./config-service.js";
 
 export interface ChangeDetectorOptions {
   configService: WeaverConfigService;
-  gitProviderIds?: string[];
-  gitManager?: GitManager;
   pollIntervalMs?: number;
 }
 
@@ -18,22 +15,11 @@ export interface ChangeDetector {
 export function createChangeDetector(
   options: ChangeDetectorOptions,
 ): ChangeDetector {
-  const {
-    configService,
-    gitManager,
-    gitProviderIds = [],
-    pollIntervalMs = 5000,
-  } = options;
-
+  const { configService, pollIntervalMs = 5000 } = options;
   let intervalHandle: ReturnType<typeof setInterval> | undefined;
 
   async function performCheck(): Promise<void> {
-    if (gitManager) {
-      await gitManager.pull();
-    }
-    for (const providerId of gitProviderIds) {
-      await configService.reloadProvider(providerId);
-    }
+    await configService.refreshProviders();
   }
 
   return {

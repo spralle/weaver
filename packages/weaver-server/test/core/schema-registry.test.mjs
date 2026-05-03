@@ -2,7 +2,6 @@ import { test, describe } from "bun:test";
 import assert from "node:assert/strict";
 import { createSchemaRegistry } from "../../src/core/schema-registry.ts";
 import { createWeaverConfigService } from "../../src/core/config-service.ts";
-import { createGitWriteQueue } from "../../src/git/write-queue.ts";
 
 function createTestProvider(id, layer, entries) {
   let data = { ...entries };
@@ -23,7 +22,6 @@ function makeOptions() {
     environment: "dev",
   }).then((configService) => ({
     configService,
-    gitWriteQueue: createGitWriteQueue(),
   }));
 }
 

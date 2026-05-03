@@ -43,14 +43,21 @@ export type {
   SchemaRegistrationResult,
 } from "./schema-registry.js";
 
-export { createTenantManager } from "./tenant-manager.js";
+export { createScopeManager } from "./scope-manager.js";
 export type {
-  TenantManager,
-  TenantManagerOptions,
-  ProvisionTenantRequest,
-  DeprovisionTenantRequest,
-  TenantProvisionResult,
-} from "./tenant-manager.js";
+  ScopeManager,
+  ScopeManagerOptions,
+  ProvisionScopeRequest,
+  DeprovisionScopeRequest,
+  ScopeProvisionResult,
+} from "./scope-manager.js";
+
+export {
+  parseScopeLayer,
+  isScopedLayer,
+  buildScopePathString,
+  parseScopeQuery,
+} from "./scope-utils.js";
 
 export { createSessionManager } from "./session-manager.js";
 export type {

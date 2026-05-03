@@ -32,7 +32,7 @@ describe("WeaverConfigService write path", () => {
 
     const result = await svc.set("platform", "key", "new");
     assert.equal(result.success, true);
-    assert.equal(await svc.get("svc", "key"), "new");
+    assert.equal(await svc.get("key"), "new");
   });
 
   test("remove removes key and updates merged state", async () => {
@@ -44,7 +44,7 @@ describe("WeaverConfigService write path", () => {
 
     const result = await svc.remove("platform", "key");
     assert.equal(result.success, true);
-    assert.equal(await svc.get("svc", "key"), undefined);
+    assert.equal(await svc.get("key"), undefined);
   });
 
   test("set on read-only provider returns error", async () => {

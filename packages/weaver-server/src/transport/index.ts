@@ -18,6 +18,21 @@ export type {
   SSEAdapter,
   SSEAdapterOptions,
   SSEClient,
+  SSEClientOptions,
 } from "./sse-adapter.js";
+
+export { formatSSEMessage } from "./sse-events.js";
+export type {
+  SSEMessage,
+  SSEEventType,
+  SSESnapshotEvent,
+  SSEChangeEvent,
+  SSECheckpointEvent,
+} from "./sse-events.js";
+export {
+  sseSnapshotEventSchema,
+  sseChangeEventSchema,
+  sseCheckpointEventSchema,
+} from "./sse-events.js";
 
 export { matchGlob } from "./glob-matcher.js";

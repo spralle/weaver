@@ -19,6 +19,16 @@ export interface ConfigurationStorageProvider {
   load(): Promise<ConfigurationLayerData>;
   write(key: string, value: unknown): Promise<WriteResult>;
   remove(key: string): Promise<WriteResult>;
+
+  /** Pull latest state from remote source (e.g., git pull). No-op for local-only providers. */
+  refresh?(): Promise<void>;
+
+  /** Commit and push any buffered writes (e.g., git commit + push). No-op for immediate-write providers. */
+  flush?(): Promise<void>;
+
+  /** Whether this provider has unflushed local changes. */
+  readonly dirty?: boolean;
+
   onExternalChange?(
     listener: (changes: ConfigurationChange[]) => void,
   ): () => void;

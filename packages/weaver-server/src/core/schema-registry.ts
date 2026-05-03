@@ -1,5 +1,4 @@
 import type { WeaverConfigService } from "./config-service.js";
-import type { GitWriteQueue } from "../git/write-queue.js";
 import type { WeaverError } from "../types/errors.js";
 import { createWeaverError } from "../types/errors.js";
 
@@ -19,7 +18,6 @@ export interface SchemaRegistrationResult {
 
 export interface SchemaRegistryOptions {
   configService: WeaverConfigService;
-  gitWriteQueue: GitWriteQueue;
 }
 
 export interface SchemaRegistry {
@@ -106,7 +104,6 @@ function schemasEqual(a: unknown, b: unknown): boolean {
 export function createSchemaRegistry(
   options: SchemaRegistryOptions,
 ): SchemaRegistry {
-  const { gitWriteQueue } = options;
   const schemas = new Map<string, SchemaEntry>();
 
   return {
@@ -119,9 +116,7 @@ export function createSchemaRegistry(
 
       if (!existing) {
         // New schema
-        await gitWriteQueue.enqueue(async () => {
-          schemas.set(key, { declaration, environment });
-        });
+        schemas.set(key, { declaration, environment });
         return {
           success: true,
           isNewSchema: true,
@@ -145,9 +140,7 @@ export function createSchemaRegistry(
       );
 
       // Persist updated schema
-      await gitWriteQueue.enqueue(async () => {
-        schemas.set(key, { declaration, environment });
-      });
+      schemas.set(key, { declaration, environment });
 
       const result: SchemaRegistrationResult = {
         success: true,

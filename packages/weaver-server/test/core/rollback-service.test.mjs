@@ -2,7 +2,6 @@ import { test, describe } from "bun:test";
 import assert from "node:assert/strict";
 import { createRollbackService } from "../../src/core/rollback-service.ts";
 import { createWeaverConfigService } from "../../src/core/config-service.ts";
-import { createGitWriteQueue } from "../../src/git/write-queue.ts";
 
 function createTestProvider(id, layer, entries, writable = true) {
   let data = { ...entries };
@@ -23,14 +22,13 @@ function createTestProvider(id, layer, entries, writable = true) {
 }
 
 describe("RollbackService", () => {
-  test("rollback enqueues operation through write queue", async () => {
+  test("rollback succeeds and returns result", async () => {
     const provider = createTestProvider("p1", "platform", { "key": "val" });
     const configService = await createWeaverConfigService({
       providers: [provider],
       environment: "dev",
     });
-    const queue = createGitWriteQueue();
-    const svc = createRollbackService({ configService, gitWriteQueue: queue });
+    const svc = createRollbackService({ configService });
 
     const result = await svc.rollback({
       layer: "platform",
@@ -40,7 +38,6 @@ describe("RollbackService", () => {
     });
 
     assert.equal(result.success, true);
-    assert.equal(queue.pending, 0); // queue drained
   });
 
   test("rollback bypasses changePolicy", async () => {
@@ -50,10 +47,7 @@ describe("RollbackService", () => {
       providers: [provider],
       environment: "prod",
     });
-    const svc = createRollbackService({
-      configService,
-      gitWriteQueue: createGitWriteQueue(),
-    });
+    const svc = createRollbackService({ configService });
 
     const result = await svc.rollback({
       layer: "platform",
@@ -80,10 +74,7 @@ describe("RollbackService", () => {
       environment: "dev",
     });
     const initialLoads = loadCount;
-    const svc = createRollbackService({
-      configService,
-      gitWriteQueue: createGitWriteQueue(),
-    });
+    const svc = createRollbackService({ configService });
 
     await svc.rollback({
       layer: "platform",
@@ -101,10 +92,7 @@ describe("RollbackService", () => {
       providers: [provider],
       environment: "dev",
     });
-    const svc = createRollbackService({
-      configService,
-      gitWriteQueue: createGitWriteQueue(),
-    });
+    const svc = createRollbackService({ configService });
 
     const result = await svc.rollback({
       layer: "platform",

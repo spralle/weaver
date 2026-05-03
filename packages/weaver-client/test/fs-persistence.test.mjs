@@ -9,8 +9,8 @@ function createTempDir() {
 }
 
 const testSnapshot = {
-  platform: { "db.host": "localhost" },
-  tenants: { "t1": { "key": "val" } },
+  entries: { "db.host": "localhost" },
+  scopes: { "tenant:t1": { "key": "val" } },
   revision: "rev-1",
   timestamp: "2026-01-01T00:00:00Z",
 };
@@ -20,9 +20,9 @@ describe("FileSystemPersistence", () => {
     const dir = createTempDir();
     try {
       const p = createFileSystemPersistence({ directory: dir });
-      await p.save("my-service", testSnapshot);
+      await p.save("my-namespace", testSnapshot);
       const { existsSync } = await import("node:fs");
-      expect(existsSync(join(dir, "my-service.json"))).toBe(true);
+      expect(existsSync(join(dir, "my-namespace.json"))).toBe(true);
     } finally {
       rmSync(dir, { recursive: true });
     }
@@ -32,8 +32,8 @@ describe("FileSystemPersistence", () => {
     const dir = createTempDir();
     try {
       const p = createFileSystemPersistence({ directory: dir });
-      await p.save("svc", testSnapshot);
-      const loaded = await p.load("svc");
+      await p.save("ns", testSnapshot);
+      const loaded = await p.load("ns");
       expect(loaded).toEqual(testSnapshot);
     } finally {
       rmSync(dir, { recursive: true });

@@ -205,7 +205,6 @@ function handleSet(
   if (schema) {
     const ctx = {
       userId: "demo-user",
-      tenantId: "demo-tenant",
       roles: ["admin"] as readonly string[],
       sessionMode: isSessionActive()
         ? ("emergency-override" as const)

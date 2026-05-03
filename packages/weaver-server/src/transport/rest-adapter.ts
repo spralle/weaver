@@ -1,10 +1,13 @@
 // REST transport adapter — maps HTTP routes to WeaverConfigService
 import type { WeaverConfigService } from "../core/config-service.js";
+import type { ScopeManager } from "../core/scope-manager.js";
 import { createWeaverError, httpStatusForError } from "../types/index.js";
-import type { WeaverErrorCode } from "../types/index.js";
+import type { WeaverErrorCode, WeaverError } from "../types/index.js";
+import { parseScopeQuery } from "../core/scope-utils.js";
+import { buildPath } from "@weaver/config-engine";
 
 export interface RestRoute {
-  method: "GET" | "POST" | "PUT" | "DELETE";
+  method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   path: string;
   handler: (req: RestRequest) => Promise<RestResponse>;
 }
@@ -22,8 +25,20 @@ export interface RestResponse {
   headers?: Record<string, string>;
 }
 
+export interface ApiResponse<T> {
+  data: T;
+  meta: { revision: string; timestamp: string };
+}
+
+export interface ApiErrorResponse {
+  data: null;
+  meta: { revision: string; timestamp: string };
+  error: { code: string; message: string; details?: Record<string, unknown> };
+}
+
 export interface RestAdapterOptions {
   configService: WeaverConfigService;
+  scopeManager?: ScopeManager;
   corsOrigins?: string[];
 }
 
@@ -47,41 +62,72 @@ function matchPath(
 ): Record<string, string> | null {
   const patternParts = pattern.split("/");
   const pathParts = path.split("/");
-  if (patternParts.length !== pathParts.length) return null;
   const params: Record<string, string> = {};
+
   for (let i = 0; i < patternParts.length; i++) {
     const pp = patternParts[i]!;
+    if (pp.startsWith("*")) {
+      const remaining = pathParts.slice(i);
+      if (remaining.length === 0) return null;
+      params[pp.slice(1)] = remaining.join("/");
+      return params;
+    }
+    if (i >= pathParts.length) return null;
     if (pp.startsWith(":")) {
       params[pp.slice(1)] = pathParts[i]!;
     } else if (pp !== pathParts[i]) {
       return null;
     }
   }
+
+  if (patternParts.length !== pathParts.length) return null;
   return params;
 }
 
 function corsHeaders(origins: string[]): Record<string, string> {
   return {
     "Access-Control-Allow-Origin": origins.join(", "),
-    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type, Authorization",
   };
 }
 
-function errorResponse(
-  code: WeaverErrorCode,
-  message: string,
-): RestResponse {
+function envelope<T>(data: T, revision: string): ApiResponse<T> {
+  return { data, meta: { revision, timestamp: new Date().toISOString() } };
+}
+
+function errorEnvelope(error: WeaverError, revision: string): ApiErrorResponse {
   return {
-    status: httpStatusForError(code),
-    body: createWeaverError(code, message),
+    data: null,
+    meta: { revision, timestamp: new Date().toISOString() },
+    error: {
+      code: error.code,
+      message: error.message,
+      ...(error.details ? { details: error.details } : {}),
+    },
+  };
+}
+
+function v1Headers(revision: string, extra?: Record<string, string>): Record<string, string> {
+  return {
+    "Content-Type": "application/json",
+    "ETag": `"${revision}"`,
+    "Cache-Control": "no-cache",
+    ...extra,
+  };
+}
+
+function stub501(revision: string): RestResponse {
+  return {
+    status: 501,
+    body: envelope({ error: "Not implemented" }, revision),
+    headers: v1Headers(revision),
   };
 }
 
 export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
-  const { configService, corsOrigins } = options;
+  const { configService, scopeManager, corsOrigins } = options;
 
-  // Route params are guaranteed by path matching; this helper satisfies noUncheckedIndexedAccess
   function param(params: Record<string, string>, name: string): string {
     return params[name] as string;
   }
@@ -91,127 +137,244 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
     return v === undefined ? undefined : v;
   }
 
+  function v1Response<T>(status: number, data: T): RestResponse {
+    const rev = configService.revision;
+    return { status, body: envelope(data, rev), headers: v1Headers(rev) };
+  }
+
+  function v1Error(code: WeaverErrorCode, message: string): RestResponse {
+    const rev = configService.revision;
+    const err = createWeaverError(code, message);
+    return {
+      status: httpStatusForError(code),
+      body: errorEnvelope(err, rev),
+      headers: v1Headers(rev),
+    };
+  }
+
+  function checkConcurrency(req: RestRequest): { ok: true } | { error: RestResponse } {
+    const ifMatch = req.headers["if-match"];
+    const ifNoneMatch = req.headers["if-none-match"];
+    const rev = configService.revision;
+
+    if (ifMatch !== undefined) {
+      const expected = ifMatch.replace(/^"|"$/g, "");
+      if (expected !== rev) {
+        return {
+          error: {
+            status: 409,
+            body: errorEnvelope(
+              createWeaverError("REVISION_CONFLICT", `Expected revision ${expected}, current is ${rev}`),
+              rev,
+            ),
+            headers: v1Headers(rev),
+          },
+        };
+      }
+    }
+
+    if (ifNoneMatch === "*") {
+      // "create-only" semantics — with global revision, pass through for v1
+    }
+
+    return { ok: true };
+  }
+
   const routes: RestRoute[] = [
+    // ── Config reads ──────────────────────────────────────
     {
       method: "GET",
-      path: "/api/config/:serviceId",
+      path: "/v1/config",
       async handler(req) {
-        const tenantId = queryOpt(req.query, "tenantId");
-        const opts = tenantId !== undefined ? { tenantId } : {};
-        const snapshot = await configService.resolveAll(param(req.params, "serviceId"), opts);
-        return { status: 200, body: snapshot };
+        const scopePath = parseScopeQuery(queryOpt(req.query, "scope"));
+        const opts = scopePath ? { scopePath } : {};
+        const snapshot = await configService.resolveAll(opts);
+        return v1Response(200, snapshot);
       },
     },
     {
       method: "GET",
-      path: "/api/config/:serviceId/namespace/:prefix",
+      path: "/v1/config/*keyPath",
       async handler(req) {
-        const tenantId = queryOpt(req.query, "tenantId");
-        const opts = tenantId !== undefined ? { tenantId } : {};
-        const entries = await configService.getNamespace(
-          param(req.params, "serviceId"),
-          param(req.params, "prefix"),
-          opts,
-        );
-        return { status: 200, body: { entries } };
+        const keyPath = param(req.params, "keyPath");
+        const segments = keyPath.split("/");
+        const key = buildPath(segments);
+        const scopePath = parseScopeQuery(queryOpt(req.query, "scope"));
+        const opts = scopePath ? { scopePath } : {};
+        if ("inspect" in req.query) {
+          const inspection = await configService.inspect(key);
+          return v1Response(200, inspection);
+        }
+        const value = await configService.get(key, opts);
+        return v1Response(200, { key, value });
       },
     },
-    {
-      method: "GET",
-      path: "/api/config/:serviceId/inspect/:key",
-      async handler(req) {
-        const inspection = await configService.inspect(
-          param(req.params, "serviceId"),
-          param(req.params, "key"),
-        );
-        return { status: 200, body: inspection };
-      },
-    },
-    {
-      method: "GET",
-      path: "/api/config/:serviceId/:key",
-      async handler(req) {
-        const tenantId = queryOpt(req.query, "tenantId");
-        const opts = tenantId !== undefined ? { tenantId } : {};
-        const value = await configService.get(
-          param(req.params, "serviceId"),
-          param(req.params, "key"),
-          opts,
-        );
-        return { status: 200, body: { value } };
-      },
-    },
+    // ── Config writes ─────────────────────────────────────
     {
       method: "PUT",
-      path: "/api/config/:layer/:environment/:key",
+      path: "/v1/config/*keyPath",
       async handler(req) {
-        const layer = param(req.params, "layer");
-        const environment = param(req.params, "environment");
-        const key = param(req.params, "key");
+        const concurrency = checkConcurrency(req);
+        if ("error" in concurrency) return concurrency.error;
+
+        const keyPath = param(req.params, "keyPath");
+        const segments = keyPath.split("/");
+        const key = buildPath(segments);
+        const layer = queryOpt(req.query, "layer") ?? "platform";
+        const environment = queryOpt(req.query, "env");
         const body = req.body as Record<string, unknown> | undefined;
-        const result = await configService.set(layer, key, body?.value, { environment });
+        const writeCtx = environment ? { environment } : {};
+        const result = await configService.set(layer, key, body?.value, writeCtx);
         if (!result.success) {
-          return errorResponse("VALIDATION_ERROR", result.error ?? "Write failed");
+          return v1Error("VALIDATION_ERROR", result.error ?? "Write failed");
         }
-        return { status: 200, body: result };
+        return v1Response(200, result);
       },
     },
     {
       method: "DELETE",
-      path: "/api/config/:layer/:environment/:key",
+      path: "/v1/config/*keyPath",
       async handler(req) {
-        const layer = param(req.params, "layer");
-        const environment = param(req.params, "environment");
-        const key = param(req.params, "key");
-        const result = await configService.remove(layer, key, { environment });
+        const concurrency = checkConcurrency(req);
+        if ("error" in concurrency) return concurrency.error;
+
+        const keyPath = param(req.params, "keyPath");
+        const segments = keyPath.split("/");
+        const key = buildPath(segments);
+        const layer = queryOpt(req.query, "layer") ?? "platform";
+        const environment = queryOpt(req.query, "env");
+        const writeCtx = environment ? { environment } : {};
+        const result = await configService.remove(layer, key, writeCtx);
         if (!result.success) {
-          return errorResponse("VALIDATION_ERROR", result.error ?? "Remove failed");
+          return v1Error("VALIDATION_ERROR", result.error ?? "Remove failed");
         }
-        return { status: 200, body: result };
+        return v1Response(200, result);
       },
     },
+    // ── Batch writes ──────────────────────────────────────
     {
-      method: "POST",
-      path: "/api/admin/promote",
-      async handler() {
-        return { status: 501, body: { error: "Not implemented" } };
+      method: "PATCH",
+      path: "/v1/config",
+      async handler(req) {
+        const concurrency = checkConcurrency(req);
+        if ("error" in concurrency) return concurrency.error;
+
+        const layer = queryOpt(req.query, "layer") ?? "platform";
+        const environment = queryOpt(req.query, "env");
+        const body = req.body as Record<string, unknown> | undefined;
+
+        if (!body?.entries || typeof body.entries !== "object") {
+          return v1Error("VALIDATION_ERROR", "Request body must include 'entries' object");
+        }
+
+        const entries = body.entries as Record<string, unknown>;
+        const writeCtx = environment ? { environment } : {};
+        const result = await configService.setMany(layer, entries, writeCtx);
+
+        if (!result.success) {
+          return v1Error("VALIDATION_ERROR", result.error ?? "Batch write failed");
+        }
+
+        return v1Response(200, { ...result, written: Object.keys(entries).length });
       },
     },
+    // ── Scopes ────────────────────────────────────────────
     {
-      method: "POST",
-      path: "/api/admin/rollback",
+      method: "GET",
+      path: "/v1/scopes",
       async handler() {
-        return { status: 501, body: { error: "Not implemented" } };
-      },
-    },
-    {
-      method: "POST",
-      path: "/api/schemas/register",
-      async handler() {
-        return { status: 501, body: { error: "Not implemented" } };
+        if (!scopeManager) {
+          return v1Response(200, { definitions: [] });
+        }
+        const definitions = scopeManager.listScopes();
+        return v1Response(200, { definitions });
       },
     },
     {
       method: "GET",
-      path: "/api/admin/policies/:serviceId",
-      async handler() {
-        return { status: 501, body: { error: "Not implemented" } };
+      path: "/v1/scopes/:scopeId",
+      async handler(req) {
+        if (!scopeManager) {
+          return v1Response(200, { values: [] });
+        }
+        const scopeId = param(req.params, "scopeId");
+        const values = scopeManager.listScopeValues(scopeId);
+        return v1Response(200, { values });
       },
+    },
+    // ── Admin ─────────────────────────────────────────────
+    {
+      method: "POST",
+      path: "/v1/admin/promote",
+      async handler() { return stub501(configService.revision); },
     },
     {
       method: "POST",
-      path: "/api/admin/policies",
-      async handler() {
-        return { status: 501, body: { error: "Not implemented" } };
-      },
+      path: "/v1/admin/rollback",
+      async handler() { return stub501(configService.revision); },
     },
     {
       method: "POST",
-      path: "/api/admin/tenants",
-      async handler() {
-        return { status: 501, body: { error: "Not implemented" } };
+      path: "/v1/admin/schemas",
+      async handler() { return stub501(configService.revision); },
+    },
+    {
+      method: "GET",
+      path: "/v1/admin/schemas/:namespace",
+      async handler() { return stub501(configService.revision); },
+    },
+    {
+      method: "POST",
+      path: "/v1/admin/scopes/:scopeId",
+      async handler(req) {
+        if (!scopeManager) {
+          return stub501(configService.revision);
+        }
+        const scopeId = param(req.params, "scopeId");
+        const body = req.body as Record<string, unknown> | undefined;
+        const value = body?.value as string | undefined;
+        if (!value) {
+          return v1Error("VALIDATION_ERROR", "Missing 'value' in request body");
+        }
+        const displayName = body?.displayName as string | undefined;
+        const result = await scopeManager.provision({
+          scopeId,
+          value,
+          ...(displayName !== undefined ? { displayName } : {}),
+          actor: "api",
+        });
+        if (!result.success) {
+          return v1Error("VALIDATION_ERROR", result.error?.message ?? "Provision failed");
+        }
+        return v1Response(201, result);
       },
     },
+    {
+      method: "DELETE",
+      path: "/v1/admin/scopes/:scopeId/:value",
+      async handler(req) {
+        if (!scopeManager) {
+          return stub501(configService.revision);
+        }
+        const scopeId = param(req.params, "scopeId");
+        const value = param(req.params, "value");
+        const result = await scopeManager.deprovision({
+          scopeId,
+          value,
+          actor: "api",
+        });
+        if (!result.success) {
+          return v1Error("SCOPE_NOT_FOUND", result.error?.message ?? "Scope not found");
+        }
+        return v1Response(200, result);
+      },
+    },
+    // ── Sessions ──────────────────────────────────────────
+    { method: "POST", path: "/v1/admin/sessions", async handler() { return stub501(configService.revision); } },
+    { method: "GET", path: "/v1/admin/sessions/active", async handler() { return stub501(configService.revision); } },
+    { method: "DELETE", path: "/v1/admin/sessions/active", async handler() { return stub501(configService.revision); } },
+    // ── Events (SSE) ──────────────────────────────────────
+    { method: "GET", path: "/v1/events", async handler() { return stub501(configService.revision); } },
   ];
 
   function findRoute(method: string, path: string): RouteMatch | null {
@@ -230,7 +393,12 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
   ): Promise<RestResponse> {
     const match = findRoute(method, path);
     if (!match) {
-      return { status: 404, body: createWeaverError("NOT_FOUND", `No route: ${method} ${path}`) };
+      const rev = configService.revision;
+      return {
+        status: 404,
+        body: errorEnvelope(createWeaverError("NOT_FOUND", `No route: ${method} ${path}`), rev),
+        headers: v1Headers(rev),
+      };
     }
 
     const fullReq: RestRequest = { ...req, params: { ...req.params, ...match.params } };
@@ -243,7 +411,12 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
       return response;
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
-      return { status: 500, body: createWeaverError("VALIDATION_ERROR", message) };
+      const rev = configService.revision;
+      return {
+        status: 500,
+        body: errorEnvelope(createWeaverError("VALIDATION_ERROR", message), rev),
+        headers: v1Headers(rev),
+      };
     }
   }
 

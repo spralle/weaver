@@ -1,6 +1,7 @@
 // Zod schemas for promotion pipeline, audit, and emergency override types
 
 import { z } from "zod";
+import { scopeInstanceSchema } from "./schemas-core.js";
 
 export const promotionStatusSchema = z.enum([
   "pending",
@@ -16,7 +17,7 @@ export const promotionRequestSchema = z.strictObject({
   fromValue: z.unknown(),
   toValue: z.unknown(),
   layer: z.string(),
-  tenantId: z.string(),
+  scopePath: z.array(scopeInstanceSchema).optional(),
   requestedBy: z.string(),
   requestedAt: z.string(),
   status: promotionStatusSchema,
@@ -40,7 +41,7 @@ export const configAuditEntrySchema = z.strictObject({
   ]),
   key: z.string(),
   layer: z.string(),
-  tenantId: z.string().optional(),
+  scopePath: z.array(scopeInstanceSchema).optional(),
   oldValue: z.unknown().optional(),
   newValue: z.unknown().optional(),
   changePolicy: z.string().optional(),
@@ -53,7 +54,7 @@ export const emergencyOverrideRecordSchema = z.strictObject({
   key: z.string(),
   actor: z.string(),
   reason: z.string(),
-  tenantId: z.string(),
+  scopePath: z.array(scopeInstanceSchema).optional(),
   layer: z.string(),
   createdAt: z.string(),
   followUpDeadline: z.string(),

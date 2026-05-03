@@ -22,7 +22,6 @@ export const tenantScopeHierarchySchema = z.strictObject({
 });
 
 export const configurationContextSchema = z.strictObject({
-  tenantId: z.string(),
   scopePath: z.array(scopeInstanceSchema),
   userId: z.string(),
   deviceId: z.string(),
@@ -208,7 +207,6 @@ export const sessionDeactivationResultSchema = z.strictObject({
 
 export const configurationAccessContextSchema = z.strictObject({
   userId: z.string(),
-  tenantId: z.string(),
   roles: z.array(configurationRoleSchema).readonly(),
   assignedScopes: z.array(scopeInstanceSchema).readonly().optional(),
   sessionMode: z
@@ -253,7 +251,7 @@ export const serviceAccessPolicySchema = z.strictObject({
   allowedNamespaces: z.array(z.string()).readonly(),
   allowedReads: z.array(z.string()).readonly(),
   allowedSecrets: z.boolean(),
-  tenantScope: z.union([z.literal("all"), z.array(z.string()).readonly()]),
+  scopeAccess: z.union([z.literal("all"), z.array(z.string()).readonly()]),
   approvedBy: z.string(),
   approvedAt: z.string(),
   expiresAt: z.string().optional(),

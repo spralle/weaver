@@ -4,23 +4,32 @@ import { configSnapshotSchema } from "../../src/types/snapshot.ts";
 
 test("configSnapshotSchema validates valid snapshot", () => {
   const result = configSnapshotSchema.safeParse({
-    platform: { "app.theme": "light" },
-    tenants: {},
+    entries: { "app.theme": "light" },
+    scopes: {},
     revision: "abc123",
     timestamp: "2026-05-01T00:00:00Z",
   });
   assert.equal(result.success, true);
 });
 
-test("configSnapshotSchema validates snapshot with multiple tenants", () => {
+test("configSnapshotSchema validates snapshot with scopes", () => {
   const result = configSnapshotSchema.safeParse({
-    platform: {},
-    tenants: {
-      "tenant-a": { "app.theme": "dark" },
-      "tenant-b": { "app.logo": "logo.png" },
+    entries: {},
+    scopes: {
+      "tenant:acme": { "app.theme": "dark" },
+      "tenant:globex": { "app.logo": "logo.png" },
     },
     revision: "def456",
     timestamp: "2026-05-01T00:00:00Z",
+  });
+  assert.equal(result.success, true);
+});
+
+test("configSnapshotSchema allows optional timestamp", () => {
+  const result = configSnapshotSchema.safeParse({
+    entries: {},
+    scopes: {},
+    revision: "rev1",
   });
   assert.equal(result.success, true);
 });

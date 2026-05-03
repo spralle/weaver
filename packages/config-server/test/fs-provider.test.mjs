@@ -215,6 +215,98 @@ test("revision is returned as ISO string", async () => {
   }
 });
 
+test("write() with dot-path creates nested structure", async () => {
+  const dir = makeTempDir();
+  await mkdir(dir, { recursive: true });
+  const filePath = join(dir, "config.json");
+
+  try {
+    const provider = new FileSystemStorageProvider({
+      id: "test",
+      layer: "tenant",
+      filePath,
+      writable: true,
+    });
+    await provider.write("db.host", "localhost");
+    await provider.write("db.port", 5432);
+    const result = await provider.write("db.name", "mydb");
+    assert.equal(result.success, true);
+
+    const raw = JSON.parse(await readFile(filePath, "utf-8"));
+    assert.deepEqual(raw, { db: { host: "localhost", port: 5432, name: "mydb" } });
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("write() with dot-path preserves sibling keys", async () => {
+  const dir = makeTempDir();
+  await mkdir(dir, { recursive: true });
+  const filePath = join(dir, "config.json");
+  await writeFile(filePath, JSON.stringify({ db: { host: "old", port: 5432 }, cache: { ttl: 60 } }));
+
+  try {
+    const provider = new FileSystemStorageProvider({
+      id: "test",
+      layer: "tenant",
+      filePath,
+      writable: true,
+    });
+    await provider.write("db.host", "new");
+
+    const raw = JSON.parse(await readFile(filePath, "utf-8"));
+    assert.equal(raw.db.host, "new");
+    assert.equal(raw.db.port, 5432);
+    assert.equal(raw.cache.ttl, 60);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("remove() with dot-path removes only the leaf", async () => {
+  const dir = makeTempDir();
+  await mkdir(dir, { recursive: true });
+  const filePath = join(dir, "config.json");
+  await writeFile(filePath, JSON.stringify({ db: { host: "localhost", port: 5432 } }));
+
+  try {
+    const provider = new FileSystemStorageProvider({
+      id: "test",
+      layer: "tenant",
+      filePath,
+      writable: true,
+    });
+    const result = await provider.remove("db.host");
+    assert.equal(result.success, true);
+
+    const raw = JSON.parse(await readFile(filePath, "utf-8"));
+    assert.deepEqual(raw, { db: { port: 5432 } });
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
+test("write() sets entire subtree when value is object", async () => {
+  const dir = makeTempDir();
+  await mkdir(dir, { recursive: true });
+  const filePath = join(dir, "config.json");
+
+  try {
+    const provider = new FileSystemStorageProvider({
+      id: "test",
+      layer: "tenant",
+      filePath,
+      writable: true,
+    });
+    await provider.write("db", { host: "localhost", port: 5432 });
+
+    const raw = JSON.parse(await readFile(filePath, "utf-8"));
+    assert.deepEqual(raw, { db: { host: "localhost", port: 5432 } });
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+});
+
 test("writable defaults to false", () => {
   const provider = new FileSystemStorageProvider({
     id: "test",

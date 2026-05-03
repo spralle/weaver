@@ -5,7 +5,6 @@ import type { SimpleGit } from "simple-git";
 import type { Collection } from "mongodb";
 import type { ConfigurationStorageProvider } from "@weaver/config-types";
 import { bootstrapConfigSchema } from "../types/bootstrap.js";
-import { createGitWriteQueue } from "../git/write-queue.js";
 import { createGitManager } from "../storage/git-manager.js";
 import type { GitManager } from "../storage/git-manager.js";
 import { resolveEnvVars } from "./env-resolver.js";
@@ -61,11 +60,8 @@ export async function bootstrap(
 
   const parsed = bootstrapConfigSchema.parse(resolvedConfig);
 
-  const writeQueue = createGitWriteQueue();
   const providers = createProviders(parsed, {
     gitManager,
-    writeQueue,
-    git,
     mongoCollection: options.mongoCollection,
     environment,
   });

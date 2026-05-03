@@ -2,40 +2,42 @@
 import type {
   ConfigurationInspection,
   ConfigurationStorageProvider,
+  ScopeInstance,
   WriteResult,
 } from "@weaver/config-types";
 import type { ConfigSnapshot, ConfigDelta } from "../types/index.js";
+import type { WeaverLogger } from "../logger.js";
+import { consoleLogger } from "../logger.js";
+import { isScopedLayer, parseScopeLayer, buildScopePathString } from "./scope-utils.js";
+import { deepGet, deepSet, deepRemove, deepMerge } from "@weaver/config-engine";
 
 export interface WriteContext {
   environment?: string;
-  tenantId?: string;
+  scopePath?: ScopeInstance[];
   actor?: string;
 }
 
 export interface WeaverConfigServiceOptions {
   providers: ConfigurationStorageProvider[];
   environment: string;
+  logger?: WeaverLogger;
 }
 
 type Unsubscribe = () => void;
 
 export interface WeaverConfigService {
   resolveAll(
-    serviceId: string,
-    options?: { tenantId?: string },
+    options?: { scopePath?: ScopeInstance[] },
   ): Promise<ConfigSnapshot>;
   get(
-    serviceId: string,
     key: string,
-    options?: { tenantId?: string },
+    options?: { scopePath?: ScopeInstance[] },
   ): Promise<unknown>;
   getNamespace(
-    serviceId: string,
     prefix: string,
-    options?: { tenantId?: string },
+    options?: { scopePath?: ScopeInstance[] },
   ): Promise<Record<string, unknown>>;
   inspect(
-    serviceId: string,
     key: string,
   ): Promise<ConfigurationInspection<unknown>>;
   readonly providers: ReadonlyArray<ConfigurationStorageProvider>;
@@ -49,13 +51,28 @@ export interface WeaverConfigService {
   ): Promise<WriteResult>;
   remove(layer: string, key: string, options?: WriteContext): Promise<WriteResult>;
   onDelta(handler: (delta: ConfigDelta) => void): Unsubscribe;
+
+  /** Group multiple writes into one commit. Auto-flushes at the end. */
+  batch<T>(fn: () => Promise<T>): Promise<T>;
+
+  /** Write multiple key-value pairs in a single batch. */
+  setMany(
+    layer: string,
+    entries: Record<string, unknown>,
+    options?: WriteContext,
+  ): Promise<WriteResult>;
+
+  /** Flush all dirty providers. Rarely needed — set/remove auto-flush. */
+  flush(): Promise<void>;
+
+  /** Refresh all providers from remote sources, then reload state. */
+  refreshProviders(): Promise<void>;
 }
 
 const SIZE_WARNING = 1_048_576; // 1MB
 
 function computeRevision(state: Record<string, unknown>): string {
   const content = JSON.stringify(state);
-  // Simple hash based on content length + checksum chars
   let hash = 0;
   for (let i = 0; i < content.length; i++) {
     hash = ((hash << 5) - hash + content.charCodeAt(i)) | 0;
@@ -63,70 +80,74 @@ function computeRevision(state: Record<string, unknown>): string {
   return `rev-${(hash >>> 0).toString(36)}-${Date.now().toString(36)}`;
 }
 
-function isTenantLayer(layer: string): boolean {
-  return layer.startsWith("tenant:");
-}
-
-function extractTenantId(layer: string): string {
-  return layer.slice("tenant:".length);
-}
-
 export async function createWeaverConfigService(
   options: WeaverConfigServiceOptions,
 ): Promise<WeaverConfigService> {
   const { providers, environment } = options;
+  const logger = options.logger ?? consoleLogger;
 
-  // Per-provider loaded entries
   const layerData = new Map<string, Record<string, unknown>>();
   let revision = "";
   const deltaHandlers = new Set<(delta: ConfigDelta) => void>();
+  let batchDepth = 0;
 
-  // Load all providers
+  async function autoFlush(): Promise<void> {
+    if (batchDepth === 0) {
+      for (const provider of providers) {
+        if (provider.flush && provider.dirty) {
+          await provider.flush();
+        }
+      }
+    }
+  }
+
   for (const provider of providers) {
     const data = await provider.load();
     layerData.set(provider.id, data.entries);
   }
 
-  function getMergedPlatformState(): Record<string, unknown> {
-    const merged: Record<string, unknown> = {};
+  function getBaseEntries(): Record<string, unknown> {
+    let merged: Record<string, unknown> = {};
     for (const provider of providers) {
-      if (isTenantLayer(provider.layer)) continue;
+      if (isScopedLayer(provider.layer)) continue;
       const entries = layerData.get(provider.id) ?? {};
-      Object.assign(merged, entries);
+      merged = deepMerge(merged, entries);
     }
     return merged;
   }
 
-  function getTenantState(tenantId: string): Record<string, unknown> {
-    const merged: Record<string, unknown> = {};
-    for (const provider of providers) {
-      if (provider.layer === `tenant:${tenantId}`) {
-        const entries = layerData.get(provider.id) ?? {};
-        Object.assign(merged, entries);
+  function getScopeState(scopePath: ScopeInstance[]): Record<string, unknown> {
+    let merged: Record<string, unknown> = {};
+    for (const scope of scopePath) {
+      const layerName = `${scope.scopeId}:${scope.value}`;
+      for (const provider of providers) {
+        if (provider.layer === layerName) {
+          const entries = layerData.get(provider.id) ?? {};
+          merged = deepMerge(merged, entries);
+        }
       }
     }
     return merged;
   }
 
-  function getAllTenants(): Record<string, Record<string, unknown>> {
-    const tenants: Record<string, Record<string, unknown>> = {};
+  function getAllScopes(): Record<string, Record<string, unknown>> {
+    const scopes: Record<string, Record<string, unknown>> = {};
     for (const provider of providers) {
-      if (!isTenantLayer(provider.layer)) continue;
-      const tid = extractTenantId(provider.layer);
+      if (!isScopedLayer(provider.layer)) continue;
       const entries = layerData.get(provider.id) ?? {};
-      tenants[tid] = { ...(tenants[tid] ?? {}), ...entries };
+      scopes[provider.layer] = { ...(scopes[provider.layer] ?? {}), ...entries };
     }
-    return tenants;
+    return scopes;
   }
 
-  function getMergedState(tenantId?: string): Record<string, unknown> {
-    const platform = getMergedPlatformState();
-    if (!tenantId) return platform;
-    return { ...platform, ...getTenantState(tenantId) };
+  function getMergedState(scopePath?: ScopeInstance[]): Record<string, unknown> {
+    const base = getBaseEntries();
+    if (!scopePath?.length) return base;
+    return deepMerge(base, getScopeState(scopePath));
   }
 
   function updateRevision(): void {
-    revision = computeRevision(getMergedPlatformState());
+    revision = computeRevision(getBaseEntries());
   }
 
   updateRevision();
@@ -137,7 +158,7 @@ export async function createWeaverConfigService(
     }
   }
 
-  return {
+  const service: WeaverConfigService = {
     get providers() {
       return providers;
     },
@@ -147,49 +168,42 @@ export async function createWeaverConfigService(
     },
 
     async resolveAll(
-      _serviceId: string,
-      opts?: { tenantId?: string },
+      opts?: { scopePath?: ScopeInstance[] },
     ): Promise<ConfigSnapshot> {
-      const platform = getMergedPlatformState();
-      const tenants = opts?.tenantId
-        ? { [opts.tenantId]: getTenantState(opts.tenantId) }
-        : getAllTenants();
+      const entries = getBaseEntries();
+      const scopes = opts?.scopePath?.length
+        ? { [buildScopePathString(opts.scopePath)]: getScopeState(opts.scopePath) }
+        : getAllScopes();
 
       return {
-        platform,
-        tenants,
+        entries,
+        scopes,
         revision,
         timestamp: new Date().toISOString(),
       };
     },
 
     async get(
-      _serviceId: string,
       key: string,
-      opts?: { tenantId?: string },
+      opts?: { scopePath?: ScopeInstance[] },
     ): Promise<unknown> {
-      const state = getMergedState(opts?.tenantId);
-      return state[key];
+      const state = getMergedState(opts?.scopePath);
+      return deepGet(state, key);
     },
 
     async getNamespace(
-      _serviceId: string,
       prefix: string,
-      opts?: { tenantId?: string },
+      opts?: { scopePath?: ScopeInstance[] },
     ): Promise<Record<string, unknown>> {
-      const state = getMergedState(opts?.tenantId);
-      const dotPrefix = `${prefix}.`;
-      const result: Record<string, unknown> = {};
-      for (const [key, value] of Object.entries(state)) {
-        if (key.startsWith(dotPrefix)) {
-          result[key] = value;
-        }
+      const state = getMergedState(opts?.scopePath);
+      const value = deepGet(state, prefix);
+      if (value !== null && typeof value === "object" && !Array.isArray(value)) {
+        return value as Record<string, unknown>;
       }
-      return result;
+      return {};
     },
 
     async inspect(
-      _serviceId: string,
       key: string,
     ): Promise<ConfigurationInspection<unknown>> {
       const layerValues: Record<string, unknown> = {};
@@ -198,9 +212,10 @@ export async function createWeaverConfigService(
 
       for (const provider of providers) {
         const entries = layerData.get(provider.id) ?? {};
-        if (key in entries) {
-          layerValues[provider.layer] = entries[key];
-          effectiveValue = entries[key];
+        const value = deepGet(entries, key);
+        if (value !== undefined) {
+          layerValues[provider.layer] = value;
+          effectiveValue = value;
           effectiveLayer = provider.layer;
         }
       }
@@ -231,7 +246,7 @@ export async function createWeaverConfigService(
       }
 
       if (typeof value === "string" && value.length > SIZE_WARNING) {
-        console.warn(
+        logger.warn(
           `[weaver] Value for key "${key}" exceeds 1MB (${value.length} bytes)`,
         );
       }
@@ -239,9 +254,8 @@ export async function createWeaverConfigService(
       const result = await provider.write(key, value);
       if (!result.success) return result;
 
-      // Update local state
       const entries = layerData.get(provider.id) ?? {};
-      entries[key] = value;
+      deepSet(entries, key, value);
       layerData.set(provider.id, entries);
       updateRevision();
 
@@ -255,6 +269,7 @@ export async function createWeaverConfigService(
       };
       fireDelta(delta);
 
+      await autoFlush();
       return result;
     },
 
@@ -275,7 +290,7 @@ export async function createWeaverConfigService(
       if (!result.success) return result;
 
       const entries = layerData.get(provider.id) ?? {};
-      delete entries[key];
+      deepRemove(entries, key);
       layerData.set(provider.id, entries);
       updateRevision();
 
@@ -289,6 +304,7 @@ export async function createWeaverConfigService(
       };
       fireDelta(delta);
 
+      await autoFlush();
       return result;
     },
 
@@ -298,5 +314,57 @@ export async function createWeaverConfigService(
         deltaHandlers.delete(handler);
       };
     },
+
+    async batch<T>(fn: () => Promise<T>): Promise<T> {
+      batchDepth++;
+      try {
+        const result = await fn();
+        return result;
+      } finally {
+        batchDepth--;
+        if (batchDepth === 0) {
+          for (const provider of providers) {
+            if (provider.flush && provider.dirty) {
+              await provider.flush();
+            }
+          }
+        }
+      }
+    },
+
+    async flush(): Promise<void> {
+      for (const provider of providers) {
+        if (provider.flush && provider.dirty) {
+          await provider.flush();
+        }
+      }
+    },
+
+    async refreshProviders(): Promise<void> {
+      for (const provider of providers) {
+        if (provider.refresh) {
+          await provider.refresh();
+        }
+        const data = await provider.load();
+        layerData.set(provider.id, data.entries);
+      }
+      updateRevision();
+    },
+
+    async setMany(
+      layer: string,
+      entries: Record<string, unknown>,
+      opts?: WriteContext,
+    ): Promise<WriteResult> {
+      return service.batch(async () => {
+        for (const [key, value] of Object.entries(entries)) {
+          const result = await service.set(layer, key, value, opts);
+          if (!result.success) return result;
+        }
+        return { success: true, revision };
+      });
+    },
   };
+
+  return service;
 }

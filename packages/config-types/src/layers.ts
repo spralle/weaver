@@ -9,7 +9,8 @@ import type { ScopeDefinition } from "./types.js";
 
 /** Resolution context passed to layer resolvers */
 export interface ResolutionContext {
-  readonly tenantId?: string | undefined;
+  readonly scopeId?: string | undefined;
+  readonly scopeValue?: string | undefined;
   readonly userId?: string | undefined;
   readonly deviceId?: string | undefined;
   readonly scopeInstances?: ReadonlyMap<string, string> | undefined;

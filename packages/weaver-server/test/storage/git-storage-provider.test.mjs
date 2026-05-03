@@ -1,20 +1,19 @@
-import { test, describe } from "bun:test";
+import { test } from "bun:test";
 import assert from "node:assert/strict";
-import { mkdtemp, writeFile, mkdir } from "node:fs/promises";
+import { mkdtemp, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { createGitWriteQueue } from "../../src/git/write-queue.ts";
 import { GitStorageProvider } from "../../src/storage/git-storage-provider.ts";
 
-function createMockGit() {
+function createMockGitManager(localPath) {
   const calls = [];
   return {
     calls,
-    cwd(path) { calls.push(["cwd", path]); return Promise.resolve(); },
-    add(file) { calls.push(["add", file]); return Promise.resolve(); },
-    commit(msg) { calls.push(["commit", msg]); return Promise.resolve(); },
-    pull(args) { calls.push(["pull", args]); return Promise.resolve(); },
-    push() { calls.push(["push"]); return Promise.resolve(); },
+    localPath,
+    async ensureClone() { calls.push(["ensureClone"]); },
+    async pull() { calls.push(["pull"]); },
+    async refresh() { calls.push(["refresh"]); },
+    async commitAndPush(message, files) { calls.push(["commitAndPush", message, files]); },
   };
 }
 
@@ -22,115 +21,167 @@ test("load() delegates to FileSystemStorageProvider", async () => {
   const tmp = await mkdtemp(join(tmpdir(), "git-sp-"));
   await writeFile(join(tmp, "config.json"), JSON.stringify({ foo: "bar" }));
 
-  const git = createMockGit();
-  const queue = createGitWriteQueue();
+  const gitManager = createMockGitManager(tmp);
 
   const provider = new GitStorageProvider({
     id: "test-git",
     layer: "defaults",
-    repoPath: tmp,
+    gitManager,
     filePath: "config.json",
-    writeQueue: queue,
-    git,
   });
 
   const data = await provider.load();
   assert.deepEqual(data.entries, { foo: "bar" });
 });
 
-test("write() calls FSP then git add/commit/pull/push in order", async () => {
+test("write() is local-only — no git calls happen", async () => {
   const tmp = await mkdtemp(join(tmpdir(), "git-sp-"));
   await writeFile(join(tmp, "config.json"), JSON.stringify({}));
 
-  const git = createMockGit();
-  const queue = createGitWriteQueue();
+  const gitManager = createMockGitManager(tmp);
 
   const provider = new GitStorageProvider({
     id: "test-git",
     layer: "defaults",
-    repoPath: tmp,
+    gitManager,
     filePath: "config.json",
-    writeQueue: queue,
-    git,
   });
 
   const result = await provider.write("key1", "value1");
   assert.equal(result.success, true);
-
-  const ops = git.calls.map(c => c[0]);
-  assert.deepEqual(ops, ["cwd", "add", "commit", "pull", "push"]);
-  assert.equal(git.calls[1][1], "config.json");
-  assert.equal(git.calls[2][1], "config: set key1");
+  assert.equal(gitManager.calls.length, 0);
 });
 
-test("remove() calls FSP then git add/commit/pull/push", async () => {
+test("write() marks provider as dirty", async () => {
   const tmp = await mkdtemp(join(tmpdir(), "git-sp-"));
-  await writeFile(join(tmp, "config.json"), JSON.stringify({ key1: "val" }));
+  await writeFile(join(tmp, "config.json"), JSON.stringify({}));
 
-  const git = createMockGit();
-  const queue = createGitWriteQueue();
+  const gitManager = createMockGitManager(tmp);
 
   const provider = new GitStorageProvider({
     id: "test-git",
     layer: "defaults",
-    repoPath: tmp,
+    gitManager,
     filePath: "config.json",
-    writeQueue: queue,
-    git,
+  });
+
+  assert.equal(provider.dirty, false);
+  await provider.write("key1", "value1");
+  assert.equal(provider.dirty, true);
+});
+
+test("flush() calls gitManager.commitAndPush() with dirty files", async () => {
+  const tmp = await mkdtemp(join(tmpdir(), "git-sp-"));
+  await writeFile(join(tmp, "config.json"), JSON.stringify({}));
+
+  const gitManager = createMockGitManager(tmp);
+
+  const provider = new GitStorageProvider({
+    id: "test-git",
+    layer: "defaults",
+    gitManager,
+    filePath: "config.json",
+  });
+
+  await provider.write("key1", "value1");
+  await provider.flush();
+
+  assert.equal(gitManager.calls.length, 1);
+  assert.equal(gitManager.calls[0][0], "commitAndPush");
+  assert.equal(gitManager.calls[0][1], "config: set key1");
+  assert.deepEqual(gitManager.calls[0][2], ["config.json"]);
+  assert.equal(provider.dirty, false);
+});
+
+test("flush() on clean provider is no-op", async () => {
+  const tmp = await mkdtemp(join(tmpdir(), "git-sp-"));
+  await writeFile(join(tmp, "config.json"), JSON.stringify({}));
+
+  const gitManager = createMockGitManager(tmp);
+
+  const provider = new GitStorageProvider({
+    id: "test-git",
+    layer: "defaults",
+    gitManager,
+    filePath: "config.json",
+  });
+
+  await provider.flush();
+  assert.equal(gitManager.calls.length, 0);
+});
+
+test("flush() builds batch commit message for multiple changes", async () => {
+  const tmp = await mkdtemp(join(tmpdir(), "git-sp-"));
+  await writeFile(join(tmp, "config.json"), JSON.stringify({}));
+
+  const gitManager = createMockGitManager(tmp);
+
+  const provider = new GitStorageProvider({
+    id: "test-git",
+    layer: "defaults",
+    gitManager,
+    filePath: "config.json",
+  });
+
+  await provider.write("a", 1);
+  await provider.write("b", 2);
+  await provider.flush();
+
+  assert.equal(gitManager.calls[0][1], "config: 2 changes in defaults");
+});
+
+test("remove() is local-only, marks dirty", async () => {
+  const tmp = await mkdtemp(join(tmpdir(), "git-sp-"));
+  await writeFile(join(tmp, "config.json"), JSON.stringify({ key1: "val" }));
+
+  const gitManager = createMockGitManager(tmp);
+
+  const provider = new GitStorageProvider({
+    id: "test-git",
+    layer: "defaults",
+    gitManager,
+    filePath: "config.json",
   });
 
   const result = await provider.remove("key1");
   assert.equal(result.success, true);
-
-  const commitCall = git.calls.find(c => c[0] === "commit");
-  assert.equal(commitCall[1], "config: remove key1");
+  assert.equal(provider.dirty, true);
+  assert.equal(gitManager.calls.length, 0);
 });
 
-test("writes are serialized through the queue", async () => {
+test("refresh() calls gitManager.pull()", async () => {
   const tmp = await mkdtemp(join(tmpdir(), "git-sp-"));
   await writeFile(join(tmp, "config.json"), JSON.stringify({}));
 
-  const git = createMockGit();
-  const queue = createGitWriteQueue();
+  const gitManager = createMockGitManager(tmp);
 
   const provider = new GitStorageProvider({
     id: "test-git",
     layer: "defaults",
-    repoPath: tmp,
+    gitManager,
     filePath: "config.json",
-    writeQueue: queue,
-    git,
   });
 
-  const p1 = provider.write("a", 1);
-  const p2 = provider.write("b", 2);
-  await Promise.all([p1, p2]);
-
-  // Both should have completed with git operations interleaved correctly
-  const commitCalls = git.calls.filter(c => c[0] === "commit");
-  assert.equal(commitCalls.length, 2);
-  assert.equal(commitCalls[0][1], "config: set a");
-  assert.equal(commitCalls[1][1], "config: set b");
+  await provider.refresh();
+  assert.equal(gitManager.calls.length, 1);
+  assert.deepEqual(gitManager.calls[0], ["refresh"]);
 });
 
 test("read-only provider rejects writes", async () => {
   const tmp = await mkdtemp(join(tmpdir(), "git-sp-"));
   await writeFile(join(tmp, "config.json"), JSON.stringify({}));
 
-  const git = createMockGit();
-  const queue = createGitWriteQueue();
+  const gitManager = createMockGitManager(tmp);
 
   const provider = new GitStorageProvider({
     id: "test-git",
     layer: "defaults",
-    repoPath: tmp,
+    gitManager,
     filePath: "config.json",
-    writeQueue: queue,
-    git,
     writable: false,
   });
 
   const result = await provider.write("x", 1);
   assert.equal(result.success, false);
-  assert.equal(git.calls.length, 0);
+  assert.equal(gitManager.calls.length, 0);
 });

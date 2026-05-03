@@ -10,7 +10,7 @@ function createDelayedTransport(snapshot, delayMs) {
     },
     async get() { return undefined; },
     async getNamespace() { return {}; },
-    subscribe(_sid, handler) {
+    subscribe(handler) {
       subscribers.add(handler);
       return () => subscribers.delete(handler);
     },
@@ -19,15 +19,15 @@ function createDelayedTransport(snapshot, delayMs) {
 }
 
 const snapshot = {
-  platform: { "key": "fresh" },
-  tenants: {},
+  entries: { "key": "fresh" },
+  scopes: {},
   revision: "rev-2",
   timestamp: "2026-01-01T00:00:00Z",
 };
 
 const cachedSnapshot = {
-  platform: { "key": "cached" },
-  tenants: {},
+  entries: { "key": "cached" },
+  scopes: {},
   revision: "rev-1",
   timestamp: "2025-12-01T00:00:00Z",
 };
@@ -37,11 +37,10 @@ describe("Persistence integration", () => {
     let saved = null;
     const persistence = {
       async load() { return cachedSnapshot; },
-      async save(_sid, snap) { saved = snap; },
+      async save(_ns, snap) { saved = snap; },
     };
     const transport = createDelayedTransport(snapshot, 10);
-    const client = await createWeaverClient({ serviceId: "svc", transport, persistence });
-    // After creation, fresh snapshot is used
+    const client = await createWeaverClient({ transport, persistence });
     expect(client.get("key")).toBe("fresh");
     expect(client.revision).toBe("rev-2");
     expect(saved).toEqual(snapshot);
@@ -52,10 +51,10 @@ describe("Persistence integration", () => {
     let saved = null;
     const persistence = {
       async load() { return cachedSnapshot; },
-      async save(_sid, snap) { saved = snap; },
+      async save(_ns, snap) { saved = snap; },
     };
     const transport = createDelayedTransport(snapshot, 0);
-    const client = await createWeaverClient({ serviceId: "svc", transport, persistence });
+    const client = await createWeaverClient({ transport, persistence });
     expect(saved).toEqual(snapshot);
     await client.close();
   });

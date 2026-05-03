@@ -1,4 +1,5 @@
 import { z } from "zod";
+import type { ScopeInstance } from "@weaver/config-types";
 
 export const configDeltaSchema = z.object({
   action: z.enum(["set", "remove"]),
@@ -11,20 +12,26 @@ export const configDeltaSchema = z.object({
 export type ConfigDelta = z.infer<typeof configDeltaSchema>;
 
 export const configSnapshotSchema = z.object({
-  platform: z.record(z.string(), z.unknown()),
-  tenants: z.record(z.string(), z.record(z.string(), z.unknown())),
+  entries: z.record(z.string(), z.unknown()),
+  scopes: z.record(z.string(), z.record(z.string(), z.unknown())),
   revision: z.string(),
-  timestamp: z.string(),
+  timestamp: z.string().optional(),
 });
 export type ConfigSnapshot = z.infer<typeof configSnapshotSchema>;
 
 export interface ResolveOptions {
-  tenantId?: string;
+  scopePath?: ScopeInstance[];
   environment?: string;
 }
 
 export interface GetOptions {
-  tenantId?: string;
+  scopePath?: ScopeInstance[];
+}
+
+export interface ConfigurationInspection<T> {
+  key: string;
+  effectiveValue: T | undefined;
+  layers: Array<{ layer: string; value: T | undefined; environment?: string }>;
 }
 
 export type Unsubscribe = () => void;
