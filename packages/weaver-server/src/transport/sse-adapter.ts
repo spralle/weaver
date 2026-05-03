@@ -31,8 +31,6 @@ export interface SSEAdapter {
   stopCheckpointTimer(): void;
 }
 
-let clientIdCounter = 0;
-
 function matchesPrefix(key: string, prefix: string | undefined): boolean {
   if (!prefix) return true;
   return key === prefix || key.startsWith(prefix + ".");
@@ -61,6 +59,7 @@ function matchesScopeFilter(delta: ConfigDelta, scope: string | undefined): bool
 export function createSSEAdapter(options: SSEAdapterOptions): SSEAdapter {
   const { configService } = options;
   const clients = new Set<SSEClient & { unsubscribe: () => void }>();
+  let clientIdCounter = 0;
   let checkpointTimer: ReturnType<typeof setInterval> | null = null;
 
   async function createClient(clientOptions?: SSEClientOptions): Promise<SSEClient> {

@@ -19,7 +19,6 @@ export interface WeaverClient {
   get<T>(key: string, scopePath: ScopeInstance[]): T | undefined;
   getWithDefault<T>(key: string, defaultValue: T): T;
   getWithDefault<T>(key: string, defaultValue: T, scopePath: ScopeInstance[]): T;
-  getAtLayer<T>(layer: string, key: string): T | undefined;
   getNamespace(prefix: string): Record<string, unknown>;
   getNamespace(prefix: string, scopePath: ScopeInstance[]): Record<string, unknown>;
   getForScope<T>(key: string, scopePath: ScopeInstance[]): T | undefined;
@@ -141,11 +140,6 @@ export async function createWeaverClient(options: WeaverClientOptions): Promise<
     getWithDefault<T>(key: string, defaultValue: T, scopePath?: ScopeInstance[]): T {
       const value = client.get<T>(key, scopePath as ScopeInstance[]);
       return value !== undefined ? value : defaultValue;
-    },
-
-    // Per-layer reads require local layer tracking; returns undefined for v1
-    getAtLayer<T>(_layer: string, _key: string): T | undefined {
-      return undefined;
     },
 
     getForScope<T>(key: string, scopePath: ScopeInstance[]): T | undefined {
