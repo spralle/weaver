@@ -1,8 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createConfigSyncOrchestrator } from "../dist/index.js";
-import { MemoryDurableConfigCacheAdapter } from "../../config-providers/dist/index.js";
+import { createConfigSyncOrchestrator, MemoryDurableConfigCacheAdapter } from "../dist/index.js";
 
 function createTransportHarness() {
   const pushQueue = [];
@@ -601,4 +600,60 @@ test("getPendingWrites is cleared after successful sync", async () => {
   const pending = orchestrator.getPendingWrites();
   assert.equal(pending.has("ghost.pending"), false);
   assert.equal(pending.size, 0);
+});
+
+// --- Pull error handling ---
+
+test("pullChanges error sets error state and schedules retry for retryable errors", async () => {
+  const cache = new MemoryDurableConfigCacheAdapter();
+  const harness = createTransportHarness();
+  const orchestrator = createConfigSyncOrchestrator({
+    snapshotCache: cache,
+    mutationQueue: cache,
+    transport: harness.transport,
+  });
+
+  orchestrator.setOnline(false);
+  await orchestrator.load();
+
+  // Make pull throw a retryable network error
+  const pullError = new Error("connection refused");
+  pullError.syncError = { code: "network", message: "connection refused", retryable: true };
+  harness.pullQueue.length = 0;
+  const originalPull = harness.transport.pull;
+  harness.transport.pull = async () => { throw pullError; };
+
+  orchestrator.setOnline(true);
+  const result = await orchestrator.sync();
+
+  assert.equal(result.pulled, 0);
+  assert.equal(orchestrator.getSyncState().status, "error");
+  const diag = orchestrator.getDiagnostics();
+  assert.deepEqual(diag.lastError, { code: "network", message: "connection refused", retryable: true });
+
+  // Restore pull for cleanup
+  harness.transport.pull = originalPull;
+});
+
+test("pullChanges non-retryable error sets error state without scheduling retry", async () => {
+  const cache = new MemoryDurableConfigCacheAdapter();
+  const harness = createTransportHarness();
+  const orchestrator = createConfigSyncOrchestrator({
+    snapshotCache: cache,
+    mutationQueue: cache,
+    transport: harness.transport,
+  });
+
+  orchestrator.setOnline(false);
+  await orchestrator.load();
+
+  harness.transport.pull = async () => { throw new Error("fatal parse error"); };
+
+  orchestrator.setOnline(true);
+  const result = await orchestrator.sync();
+
+  assert.equal(result.pulled, 0);
+  assert.equal(orchestrator.getSyncState().status, "error");
+  const diag = orchestrator.getDiagnostics();
+  assert.deepEqual(diag.lastError, { code: "unknown", message: "fatal parse error", retryable: false });
 });
