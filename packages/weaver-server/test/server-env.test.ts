@@ -1,5 +1,5 @@
 import { describe, test, expect } from "bun:test";
-import { parseServerEnv, serverEnvSchema } from "./server-env.js";
+import { parseServerEnv, serverEnvSchema } from "../src/server-env.js";
 
 describe("serverEnvSchema", () => {
   test("accepts empty env (all optional)", () => {
