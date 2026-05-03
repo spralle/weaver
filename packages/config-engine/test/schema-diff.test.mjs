@@ -31,8 +31,8 @@ describe("schema-diff", () => {
       assert.equal(getSchemaPropertyType(schema, "name"), "string");
     });
 
-    it("reads type from flat schema", () => {
-      const schema = { name: { type: "string" } };
+    it("reads type from properties-wrapped schema", () => {
+      const schema = { type: "object", properties: { name: { type: "string" } } };
       assert.equal(getSchemaPropertyType(schema, "name"), "string");
     });
 

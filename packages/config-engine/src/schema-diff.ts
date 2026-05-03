@@ -1,16 +1,16 @@
 // schema-diff.ts — Pure utility functions for schema comparison and conflict detection
 
+import type { ConfigurationPropertySchema } from "@weaver/config-types";
+
 /**
  * Extracts property names from a schema object.
  * Handles both `{ properties: { ... } }` wrapper format and flat key-value format.
  */
 export function getSchemaProperties(
-  schema: Record<string, unknown>,
+  schema: ConfigurationPropertySchema,
 ): Set<string> {
-  const properties = (schema as { properties?: Record<string, unknown> })
-    .properties;
-  if (typeof properties === "object" && properties !== null) {
-    return new Set(Object.keys(properties));
+  if (schema.properties) {
+    return new Set(Object.keys(schema.properties));
   }
   return new Set(Object.keys(schema));
 }
@@ -20,24 +20,18 @@ export function getSchemaProperties(
  * Returns undefined if the type cannot be determined.
  */
 export function getSchemaPropertyType(
-  schema: Record<string, unknown>,
+  schema: ConfigurationPropertySchema,
   prop: string,
 ): string | undefined {
-  const properties = (schema as { properties?: Record<string, unknown> })
-    .properties;
-  if (typeof properties === "object" && properties !== null) {
-    const propDef = properties[prop] as Record<string, unknown> | undefined;
-    if (typeof propDef?.type === "string") {
-      return propDef.type;
+  if (schema.properties) {
+    const propDef = schema.properties[prop];
+    if (propDef) {
+      const { type } = propDef;
+      if (typeof type === "string") {
+        return type;
+      }
     }
     return undefined;
-  }
-  const value = schema[prop];
-  if (typeof value === "object" && value !== null && "type" in value) {
-    const schemaType = (value as Record<string, unknown>).type;
-    if (typeof schemaType === "string") {
-      return schemaType;
-    }
   }
   return undefined;
 }
@@ -60,8 +54,8 @@ export interface BreakingChange {
  * Breaking changes include removed properties and type changes on existing properties.
  */
 export function detectBreakingChanges(
-  existing: Record<string, unknown>,
-  incoming: Record<string, unknown>,
+  existing: ConfigurationPropertySchema,
+  incoming: ConfigurationPropertySchema,
 ): BreakingChange[] {
   const changes: BreakingChange[] = [];
 
@@ -99,8 +93,8 @@ export function detectBreakingChanges(
  * Returns the set of property keys that were removed between two schemas.
  */
 export function diffSchemaKeys(
-  existing: Record<string, unknown>,
-  incoming: Record<string, unknown>,
+  existing: ConfigurationPropertySchema,
+  incoming: ConfigurationPropertySchema,
 ): { added: Set<string>; removed: Set<string> } {
   const existingProps = getSchemaProperties(existing);
   const incomingProps = getSchemaProperties(incoming);

@@ -2,13 +2,11 @@ import {
   detectBreakingChanges,
   schemasEqual,
 } from "@weaver/config-engine";
-import { z } from "zod";
+import type { ConfigurationPropertySchema } from "@weaver/config-types";
+import { configurationPropertySchemaSchema } from "@weaver/config-types";
 import type { WeaverError } from "../types/errors.js";
 import { createWeaverError } from "../types/errors.js";
 import type { WeaverConfigService } from "./config-service.js";
-
-const SchemaDeclaration = z.record(z.string(), z.unknown());
-type SchemaDeclaration = z.infer<typeof SchemaDeclaration>;
 
 export interface SchemaRegistrationRequest {
   serviceId: string;
@@ -36,7 +34,7 @@ export interface SchemaRegistry {
 }
 
 interface SchemaEntry {
-  declaration: SchemaDeclaration;
+  declaration: ConfigurationPropertySchema;
   environment: string;
 }
 
@@ -56,7 +54,7 @@ export function createSchemaRegistry(
     ): Promise<SchemaRegistrationResult> {
       const { serviceId, environment } = request;
 
-      const parseResult = SchemaDeclaration.safeParse(request.declaration);
+      const parseResult = configurationPropertySchemaSchema.safeParse(request.declaration);
       if (!parseResult.success) {
         return {
           success: false,

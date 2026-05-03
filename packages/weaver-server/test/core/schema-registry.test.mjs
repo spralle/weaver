@@ -32,7 +32,7 @@ describe("SchemaRegistry", () => {
 
     const result = await registry.register({
       serviceId: "my-service",
-      declaration: { properties: { port: { type: "number", default: 3000 } } },
+      declaration: { type: "object", properties: { port: { type: "number", default: 3000 } } },
       environment: "dev",
     });
 
@@ -44,7 +44,7 @@ describe("SchemaRegistry", () => {
   test("register unchanged schema is idempotent", async () => {
     const opts = await makeOptions();
     const registry = createSchemaRegistry(opts);
-    const declaration = { properties: { port: { type: "number" } } };
+    const declaration = { type: "object", properties: { port: { type: "number" } } };
 
     await registry.register({ serviceId: "svc", declaration, environment: "dev" });
     const result = await registry.register({ serviceId: "svc", declaration, environment: "dev" });
@@ -60,13 +60,13 @@ describe("SchemaRegistry", () => {
 
     await registry.register({
       serviceId: "svc",
-      declaration: { properties: { port: { type: "number" }, host: { type: "string" } } },
+      declaration: { type: "object", properties: { port: { type: "number" }, host: { type: "string" } } },
       environment: "dev",
     });
 
     const result = await registry.register({
       serviceId: "svc",
-      declaration: { properties: { port: { type: "number" } } },
+      declaration: { type: "object", properties: { port: { type: "number" } } },
       environment: "dev",
     });
 
@@ -78,7 +78,7 @@ describe("SchemaRegistry", () => {
   test("getSchema returns registered schema", async () => {
     const opts = await makeOptions();
     const registry = createSchemaRegistry(opts);
-    const declaration = { properties: { key: { type: "string" } } };
+    const declaration = { type: "object", properties: { key: { type: "string" } } };
 
     await registry.register({ serviceId: "svc", declaration, environment: "dev" });
     const schema = await registry.getSchema("svc", "dev");
