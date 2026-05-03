@@ -7,6 +7,7 @@ import { createRestAdapter } from "./transport/rest-adapter.js";
 import { createSSEAdapter } from "./transport/sse-adapter.js";
 import { createWeaverConfigService } from "./core/config-service.js";
 import { createInMemoryStorageProvider } from "@weaver/storage-provider-memory";
+import { parseServerEnv } from "./server-env.js";
 import type { HealthEndpoints } from "./health.js";
 import type { RestAdapter } from "./transport/rest-adapter.js";
 import type { SSEAdapter, SSEClient } from "./transport/sse-adapter.js";
@@ -39,13 +40,14 @@ export interface WeaverServer {
 }
 
 function resolveOptions(options?: WeaverServerOptions) {
+  const env = parseServerEnv(process.env);
   return {
-    port: options?.port ?? (Number(process.env["WEAVER_PORT"]) || 3399),
-    repoUrl: options?.repoUrl ?? process.env["WEAVER_CONFIG_REPO"] ?? "",
-    environment: options?.environment ?? process.env["WEAVER_ENVIRONMENT"] ?? "development",
-    gitToken: options?.gitToken ?? process.env["WEAVER_GIT_TOKEN"],
-    mongoUri: options?.mongoUri ?? process.env["WEAVER_MONGO_URI"],
-    jwtSecret: options?.jwtSecret ?? process.env["WEAVER_JWT_SECRET"],
+    port: options?.port ?? env.WEAVER_PORT ?? 3399,
+    repoUrl: options?.repoUrl ?? env.WEAVER_CONFIG_REPO ?? "",
+    environment: options?.environment ?? env.WEAVER_ENVIRONMENT ?? "development",
+    gitToken: options?.gitToken ?? env.WEAVER_GIT_TOKEN,
+    mongoUri: options?.mongoUri ?? env.WEAVER_MONGO_URI,
+    jwtSecret: options?.jwtSecret ?? env.WEAVER_JWT_SECRET,
     adminRoles: options?.adminRoles ?? ["admin"],
     corsOrigins: options?.corsOrigins,
     providers: options?.providers,

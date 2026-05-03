@@ -9,7 +9,8 @@ export type {
 } from "./secret-provider.js";
 
 export type { SecretCacheOptions, SecretCacheEntry } from "./secret-cache.js";
-export { createSecretCache, SecretCache } from "./secret-cache.js";
+export { createSecretCache } from "./secret-cache.js";
+export type { SecretCache } from "./secret-cache.js";
 
 export type {
   SecretAuditLog,
@@ -17,7 +18,9 @@ export type {
   SecretResolutionFailure,
   SecretResolutionResult,
 } from "./secret-resolution-service.js";
-export { SecretResolutionService } from "./secret-resolution-service.js";
+export { createSecretResolutionService } from "./secret-resolution-service.js";
+export type { SecretResolutionService } from "./secret-resolution-service.js";
 
 export type { AzureKeyVaultProviderOptions, CircuitBreakerOptions } from "./azure-keyvault-provider.js";
-export { AzureKeyVaultProvider, SecretResolutionError } from "./azure-keyvault-provider.js";
+export { createAzureKeyVaultProvider, SecretResolutionError } from "./azure-keyvault-provider.js";
+export type { AzureKeyVaultProvider } from "./azure-keyvault-provider.js";

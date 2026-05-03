@@ -171,3 +171,5 @@ export type { ShutdownManager, ShutdownManagerOptions } from "./shutdown.js";
 // server
 export { startWeaverServer } from "./server.js";
 export type { WeaverServer, WeaverServerOptions } from "./server.js";
+export { serverEnvSchema, parseServerEnv } from "./server-env.js";
+export type { ServerEnv } from "./server-env.js";

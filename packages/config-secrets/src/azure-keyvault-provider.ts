@@ -171,3 +171,10 @@ function isRestError(err: unknown): err is { statusCode: number } {
     typeof (err as Record<string, unknown>)["statusCode"] === "number"
   );
 }
+
+/** Creates an Azure Key Vault secret provider instance. */
+export function createAzureKeyVaultProvider(
+  options: AzureKeyVaultProviderOptions,
+): AzureKeyVaultProvider {
+  return new AzureKeyVaultProvider(options);
+}

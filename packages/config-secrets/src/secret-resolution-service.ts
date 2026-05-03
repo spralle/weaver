@@ -172,3 +172,10 @@ export class SecretResolutionService {
 function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
+
+/** Creates a secret resolution service instance. */
+export function createSecretResolutionService(
+  options?: SecretResolutionServiceOptions,
+): SecretResolutionService {
+  return new SecretResolutionService(options);
+}

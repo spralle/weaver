@@ -11,7 +11,10 @@ function createMockCollection() {
       const results = docs.filter(
         (d) => d.layer === filter.layer && d.environment === filter.environment,
       );
-      return { toArray: () => Promise.resolve(results) };
+      return {
+        maxTimeMS() { return this; },
+        toArray: () => Promise.resolve(results),
+      };
     },
     async updateOne(filter, update, options) {
       const idx = docs.findIndex(
@@ -99,4 +102,45 @@ test("read-only provider rejects writes", async () => {
 
   const result = await provider.write("x", 1);
   assert.equal(result.success, false);
+});
+
+test("load() throws with descriptive error when collection fails", async () => {
+  const col = createMockCollection();
+  col.find = () => ({
+    maxTimeMS() { return this; },
+    toArray: () => Promise.reject(new Error("connection timed out")),
+  });
+
+  const provider = createMongoDBStorageProvider({
+    id: "mongo-user",
+    layer: "user",
+    collection: col,
+    environment: "prod",
+    logger: { info() {}, warn() {}, error() {}, debug() {} },
+  });
+
+  await assert.rejects(
+    () => provider.load(),
+    (err) => {
+      assert.match(err.message, /MongoDB load failed/);
+      assert.match(err.message, /connection timed out/);
+      return true;
+    },
+  );
+});
+
+test("write() returns error result when collection fails", async () => {
+  const col = createMockCollection();
+  col.updateOne = () => Promise.reject(new Error("write timeout"));
+
+  const provider = createMongoDBStorageProvider({
+    id: "mongo-user",
+    layer: "user",
+    collection: col,
+    environment: "prod",
+  });
+
+  const result = await provider.write("key", "val");
+  assert.equal(result.success, false);
+  assert.match(result.error, /write timeout/);
 });

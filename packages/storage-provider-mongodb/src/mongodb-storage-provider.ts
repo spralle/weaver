@@ -23,6 +23,8 @@ export interface MongoDBStorageProviderOptions {
   environment: string;
   writable?: boolean | undefined;
   logger?: WeaverLogger;
+  /** Timeout in milliseconds for MongoDB operations. Defaults to 30000 (30s). */
+  timeoutMs?: number | undefined;
 }
 
 const configDocumentSchema = z.object({
@@ -50,6 +52,7 @@ class MongoDBStorageProvider implements ConfigurationStorageProvider {
   private readonly collection: Collection;
   private readonly environment: string;
   private readonly logger: WeaverLogger;
+  private readonly timeoutMs: number;
 
   constructor(options: MongoDBStorageProviderOptions) {
     this.id = options.id;
@@ -58,12 +61,25 @@ class MongoDBStorageProvider implements ConfigurationStorageProvider {
     this.collection = options.collection;
     this.environment = options.environment;
     this.logger = options.logger ?? consoleLogger;
+    this.timeoutMs = options.timeoutMs ?? 30_000;
   }
 
   async load(): Promise<ConfigurationLayerData> {
-    const rawDocs = await this.collection
-      .find({ layer: this.layer, environment: this.environment })
-      .toArray();
+    let rawDocs;
+    try {
+      rawDocs = await this.collection
+        .find({ layer: this.layer, environment: this.environment })
+        .maxTimeMS(this.timeoutMs)
+        .toArray();
+    } catch (err) {
+      const message = extractErrorMessage(err);
+      this.logger.error(
+        `[weaver] MongoDB load failed for provider "${this.id}": ${message}`,
+      );
+      throw new Error(
+        `MongoDB load failed for provider "${this.id}": ${message}`,
+      );
+    }
 
     const docs = z.array(configDocumentSchema).parse(rawDocs);
 
@@ -84,7 +100,7 @@ class MongoDBStorageProvider implements ConfigurationStorageProvider {
       await this.collection.updateOne(
         { layer: this.layer, environment: this.environment, key },
         { $set: { value, updatedAt } },
-        { upsert: true },
+        { upsert: true, maxTimeMS: this.timeoutMs },
       );
     } catch (err) {
       const message = extractErrorMessage(err);
@@ -103,7 +119,7 @@ class MongoDBStorageProvider implements ConfigurationStorageProvider {
         layer: this.layer,
         environment: this.environment,
         key,
-      });
+      }, { maxTimeMS: this.timeoutMs });
     } catch (err) {
       const message = extractErrorMessage(err);
       return { success: false, error: `MongoDB remove failed for key "${key}": ${message}` };
