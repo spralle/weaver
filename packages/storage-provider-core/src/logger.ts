@@ -22,7 +22,9 @@ export interface WeaverLogger {
 function isLogFields(value: unknown): value is LogFields {
   if (typeof value !== "object" || value === null || Array.isArray(value))
     return false;
+  if (Object.getPrototypeOf(value) !== Object.prototype) return false;
   const keys = Object.keys(value);
+  if (keys.length === 0) return false;
   return keys.every((k) => k === "correlationId" || k === "context");
 }
 
