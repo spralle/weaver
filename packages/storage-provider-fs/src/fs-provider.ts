@@ -1,3 +1,4 @@
+import { watch, type FSWatcher } from "node:fs";
 import { mkdir, readFile, rename, stat, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { deepMerge, deepRemove, deepSet } from "@weaver/config-engine";
@@ -12,7 +13,6 @@ import {
   isNodeError,
   safeParseConfigEntries,
 } from "@weaver/storage-provider-core";
-import { FsConfigWatcher } from "./fs-watcher.js";
 
 export interface FileSystemProviderOptions {
   id: string;
@@ -33,7 +33,11 @@ export class FileSystemStorageProvider implements ConfigurationStorageProvider {
   private readonly filePath: string;
   private readonly envOverlayPath: string | undefined;
   private readonly watchDebounceMs: number;
-  private watcher: FsConfigWatcher | null = null;
+  private fsWatcher: FSWatcher | null = null;
+  private debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  private snapshot: Record<string, unknown> = {};
+  private changeListener: ((changes: ConfigurationChange[]) => void) | null =
+    null;
 
   constructor(options: FileSystemProviderOptions) {
     this.id = options.id;
@@ -71,6 +75,9 @@ export class FileSystemStorageProvider implements ConfigurationStorageProvider {
     deepSet(entries, key, value);
     await this.atomicWrite(this.filePath, entries);
 
+    // Update snapshot so our own writes don't trigger change events
+    this.snapshot = { ...entries };
+
     const revision = await this.getRevision(this.filePath);
     return { success: true, revision };
   }
@@ -84,34 +91,81 @@ export class FileSystemStorageProvider implements ConfigurationStorageProvider {
     deepRemove(entries, key);
     await this.atomicWrite(this.filePath, entries);
 
+    // Update snapshot so our own writes don't trigger change events
+    this.snapshot = { ...entries };
+
     const revision = await this.getRevision(this.filePath);
     return { success: true, revision };
   }
 
+  /**
+   * Start watching the config file for external changes.
+   * Only starts the watcher when called (opt-in).
+   * Returns an unsubscribe function that stops watching.
+   */
   onExternalChange(
     listener: (changes: ConfigurationChange[]) => void,
   ): () => void {
-    this.watcher?.dispose();
-    const watcher = new FsConfigWatcher({
-      filePath: this.filePath,
-      debounceMs: this.watchDebounceMs,
-    });
-    this.watcher = watcher;
+    this.stopWatching();
+    this.changeListener = listener;
 
-    // Load current state as baseline snapshot, then start watching
+    // Load current state as baseline, then start the fs watcher
     void this.readJsonFile(this.filePath).then((entries) => {
-      watcher.start(listener, entries);
+      // Guard: listener may have been cleared by dispose before async completes
+      if (!this.changeListener) return;
+      this.snapshot = entries;
+      this.startWatching();
     });
 
-    return () => {
-      watcher.dispose();
-      if (this.watcher === watcher) this.watcher = null;
-    };
+    return () => this.stopWatching();
   }
 
   dispose(): void {
-    this.watcher?.dispose();
-    this.watcher = null;
+    this.stopWatching();
+  }
+
+  private startWatching(): void {
+    const dir = dirname(this.filePath);
+    const filename = this.filePath.slice(dir.length + 1);
+
+    this.fsWatcher = watch(dir, (_eventType, changedFile) => {
+      if (changedFile !== filename) return;
+      this.scheduleCheck();
+    });
+  }
+
+  private stopWatching(): void {
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer);
+      this.debounceTimer = null;
+    }
+    if (this.fsWatcher) {
+      this.fsWatcher.close();
+      this.fsWatcher = null;
+    }
+    this.changeListener = null;
+  }
+
+  private scheduleCheck(): void {
+    if (this.debounceTimer) {
+      clearTimeout(this.debounceTimer);
+    }
+    this.debounceTimer = setTimeout(() => {
+      this.debounceTimer = null;
+      void this.checkForChanges();
+    }, this.watchDebounceMs);
+  }
+
+  private async checkForChanges(): Promise<void> {
+    if (!this.changeListener) return;
+
+    const current = await this.readJsonFile(this.filePath);
+    const changes = diffEntries(this.snapshot, current);
+
+    if (changes.length > 0) {
+      this.snapshot = current;
+      this.changeListener(changes);
+    }
   }
 
   private async readJsonFile(path: string): Promise<Record<string, unknown>> {
@@ -156,4 +210,40 @@ export function createFileSystemStorageProvider(
   options: FileSystemProviderOptions,
 ): FileSystemStorageProvider {
   return new FileSystemStorageProvider(options);
+}
+
+/** Shallow diff of top-level keys between two entry maps. */
+function diffEntries(
+  oldEntries: Record<string, unknown>,
+  newEntries: Record<string, unknown>,
+): ConfigurationChange[] {
+  const changes: ConfigurationChange[] = [];
+  const allKeys = new Set([
+    ...Object.keys(oldEntries),
+    ...Object.keys(newEntries),
+  ]);
+
+  for (const key of allKeys) {
+    const oldVal = oldEntries[key];
+    const newVal = newEntries[key];
+    if (!deepEqual(oldVal, newVal)) {
+      changes.push({ key, oldValue: oldVal, newValue: newVal });
+    }
+  }
+
+  return changes;
+}
+
+function deepEqual(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (a === null || b === null) return false;
+  if (typeof a !== "object" || typeof b !== "object") return false;
+
+  const aObj = a as Record<string, unknown>;
+  const bObj = b as Record<string, unknown>;
+  const aKeys = Object.keys(aObj);
+  const bKeys = Object.keys(bObj);
+
+  if (aKeys.length !== bKeys.length) return false;
+  return aKeys.every((k) => deepEqual(aObj[k], bObj[k]));
 }
