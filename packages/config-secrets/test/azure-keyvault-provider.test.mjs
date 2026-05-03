@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { AzureKeyVaultProvider } from "../dist/index.js";
+import { createAzureKeyVaultProvider } from "../dist/index.js";
 
 function createMockSecretClient(secretStore = new Map()) {
   return {
@@ -28,18 +28,20 @@ function createMockSecretClient(secretStore = new Map()) {
   };
 }
 
+/**
+ * Creates a provider instance with an injected mock SecretClient.
+ * We use the factory with a fake credential, then replace the internal client.
+ */
 function createProviderWithMock(secretStore = new Map(), options = {}) {
   const mockClient = createMockSecretClient(secretStore);
-  // We need to bypass the constructor's SecretClient creation.
-  // Use Object.create to build an instance with our mock client.
-  const provider = Object.create(AzureKeyVaultProvider.prototype);
-  Object.defineProperty(provider, "name", { value: "azure-keyvault", writable: false });
-  Object.defineProperty(provider, "client", { value: mockClient, writable: false });
-  Object.defineProperty(provider, "prefix", { value: options.secretPrefix, writable: false });
-  Object.defineProperty(provider, "timeoutMs", { value: 10000, writable: false });
-  Object.defineProperty(provider, "failureThreshold", { value: 5, writable: false });
-  Object.defineProperty(provider, "cooldownMs", { value: 30000, writable: false });
-  Object.defineProperty(provider, "breaker", { value: { consecutiveFailures: 0, lastFailureTime: 0 }, writable: true });
+  const fakeCredential = { getToken: async () => ({ token: "fake", expiresOnTimestamp: Date.now() + 3600000 }) };
+  const provider = createAzureKeyVaultProvider({
+    vaultUrl: "https://fake-vault.vault.azure.net",
+    credential: fakeCredential,
+    secretPrefix: options.secretPrefix,
+  });
+  // Inject mock client via property override
+  Object.defineProperty(provider, "client", { value: mockClient, writable: false, configurable: true });
   return { provider, mockClient, secretStore };
 }
 

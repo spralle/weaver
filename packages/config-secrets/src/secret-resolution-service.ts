@@ -2,7 +2,7 @@ import type {
   SecretDomainAuditEntry,
   SecretReference,
 } from "@weaver/config-types";
-import { isSecretReference } from "@weaver/config-types";
+import { createWeaverError, isSecretReference } from "@weaver/config-types";
 import type { SecretCache } from "./secret-cache.js";
 import { createSecretCache } from "./secret-cache.js";
 import type { SecretProvider, SecretStoreResult } from "./secret-provider.js";
@@ -151,7 +151,7 @@ export class SecretResolutionService {
   private getProvider(name: string): SecretProvider {
     const provider = this.providers.get(name);
     if (!provider) {
-      throw new Error(`Secret provider "${name}" not registered`);
+      throw createWeaverError("NOT_FOUND", `Secret provider "${name}" not registered`, { provider: name });
     }
     return provider;
   }
