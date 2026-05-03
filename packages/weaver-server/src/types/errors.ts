@@ -15,6 +15,7 @@ export const weaverErrorCodes = [
   "QUEUE_FULL",
   "SESSION_REQUIRED",
   "SESSION_BLOCKED",
+  "REVISION_CONFLICT",
 ] as const;
 
 export const weaverErrorCodeSchema = z.enum(weaverErrorCodes);
@@ -50,6 +51,7 @@ export const HTTP_STATUS_MAP: Record<WeaverErrorCode, number> = {
   QUEUE_FULL: 429,
   SESSION_REQUIRED: 428,
   SESSION_BLOCKED: 403,
+  REVISION_CONFLICT: 409,
 };
 
 export function httpStatusForError(code: WeaverErrorCode): number {

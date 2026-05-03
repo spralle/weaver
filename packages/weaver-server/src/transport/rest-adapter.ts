@@ -140,6 +140,34 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
     };
   }
 
+  function checkConcurrency(req: RestRequest): { ok: true } | { error: RestResponse } {
+    const ifMatch = req.headers["if-match"];
+    const ifNoneMatch = req.headers["if-none-match"];
+    const rev = configService.revision;
+
+    if (ifMatch !== undefined) {
+      const expected = ifMatch.replace(/^"|"$/g, "");
+      if (expected !== rev) {
+        return {
+          error: {
+            status: 409,
+            body: errorEnvelope(
+              createWeaverError("REVISION_CONFLICT", `Expected revision ${expected}, current is ${rev}`),
+              rev,
+            ),
+            headers: v1Headers(rev),
+          },
+        };
+      }
+    }
+
+    if (ifNoneMatch === "*") {
+      // "create-only" semantics — with global revision, pass through for v1
+    }
+
+    return { ok: true };
+  }
+
   const routes: RestRoute[] = [
     // ── Config reads ──────────────────────────────────────
     {
@@ -183,6 +211,9 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
       method: "PUT",
       path: "/v1/config/:key",
       async handler(req) {
+        const concurrency = checkConcurrency(req);
+        if ("error" in concurrency) return concurrency.error;
+
         const key = param(req.params, "key");
         const layer = queryOpt(req.query, "layer") ?? "platform";
         const environment = queryOpt(req.query, "env");
@@ -199,6 +230,9 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
       method: "DELETE",
       path: "/v1/config/:key",
       async handler(req) {
+        const concurrency = checkConcurrency(req);
+        if ("error" in concurrency) return concurrency.error;
+
         const key = param(req.params, "key");
         const layer = queryOpt(req.query, "layer") ?? "platform";
         const environment = queryOpt(req.query, "env");
