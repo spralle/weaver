@@ -303,6 +303,11 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
         if (!scopeManager) {
           return v1Error("VALIDATION_ERROR", "Scope manager not configured");
         }
+        if (authGate && req.authContext) {
+          const accessCtx = authGate.toAccessContext(req.authContext);
+          const denied = authGate.gateWrite(accessCtx, "admin", `scopes.${param(req.params, "scopeId")}`, undefined);
+          if (denied) return denied;
+        }
         const scopeId = param(req.params, "scopeId");
         const body = scopeProvisionBodySchema.parse(req.body);
         const value = body.value;
@@ -328,6 +333,11 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
       async handler(req) {
         if (!scopeManager) {
           return v1Error("VALIDATION_ERROR", "Scope manager not configured");
+        }
+        if (authGate && req.authContext) {
+          const accessCtx = authGate.toAccessContext(req.authContext);
+          const denied = authGate.gateWrite(accessCtx, "admin", `scopes.${param(req.params, "scopeId")}`, undefined);
+          if (denied) return denied;
         }
         const scopeId = param(req.params, "scopeId");
         const value = param(req.params, "value");

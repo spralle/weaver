@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
 import { mkdir, writeFile, readFile, rm } from "node:fs/promises";
 import { join } from "node:path";
-import { FileSystemStorageProvider } from "../src/fs-provider.ts";
+import { createFileSystemStorageProvider } from "../src/fs-provider.ts";
 
 function makeTempDir() {
   const dir = join(tmpdir(), `config-server-test-${randomUUID()}`);
@@ -18,7 +18,7 @@ test("load() reads valid JSON file", async () => {
   await writeFile(filePath, JSON.stringify({ theme: "dark", fontSize: 14 }));
 
   try {
-    const provider = new FileSystemStorageProvider({
+    const provider = createFileSystemStorageProvider({
       id: "test",
       layer: "app",
       filePath,
@@ -40,7 +40,7 @@ test("load() merges environment overlay", async () => {
   await writeFile(overlayPath, JSON.stringify({ b: { c: 20 }, e: 5 }));
 
   try {
-    const provider = new FileSystemStorageProvider({
+    const provider = createFileSystemStorageProvider({
       id: "test",
       layer: "app",
       filePath: basePath,
@@ -57,7 +57,7 @@ test("load() returns empty entries for missing file", async () => {
   const dir = makeTempDir();
   const filePath = join(dir, "nonexistent.json");
 
-  const provider = new FileSystemStorageProvider({
+  const provider = createFileSystemStorageProvider({
     id: "test",
     layer: "core",
     filePath,
@@ -78,7 +78,7 @@ test("load() returns empty entries for invalid JSON with console.warn", async ()
     const originalWarn = console.warn;
     console.warn = (...args) => warnings.push(args.join(" "));
 
-    const provider = new FileSystemStorageProvider({
+    const provider = createFileSystemStorageProvider({
       id: "test",
       layer: "core",
       filePath,
@@ -101,7 +101,7 @@ test("write() creates file and writes key", async () => {
   const filePath = join(dir, "config.json");
 
   try {
-    const provider = new FileSystemStorageProvider({
+    const provider = createFileSystemStorageProvider({
       id: "test",
       layer: "tenant",
       filePath,
@@ -122,7 +122,7 @@ test("write() on read-only provider returns failure", async () => {
   const dir = makeTempDir();
   const filePath = join(dir, "config.json");
 
-  const provider = new FileSystemStorageProvider({
+  const provider = createFileSystemStorageProvider({
     id: "test",
     layer: "core",
     filePath,
@@ -140,7 +140,7 @@ test("remove() removes key from file", async () => {
   await writeFile(filePath, JSON.stringify({ a: 1, b: 2, c: 3 }));
 
   try {
-    const provider = new FileSystemStorageProvider({
+    const provider = createFileSystemStorageProvider({
       id: "test",
       layer: "tenant",
       filePath,
@@ -162,7 +162,7 @@ test("write() creates parent directory if needed", async () => {
   const filePath = join(nested, "config.json");
 
   try {
-    const provider = new FileSystemStorageProvider({
+    const provider = createFileSystemStorageProvider({
       id: "test",
       layer: "tenant",
       filePath,
@@ -182,7 +182,7 @@ test("remove() on read-only provider returns failure", async () => {
   const dir = makeTempDir();
   const filePath = join(dir, "config.json");
 
-  const provider = new FileSystemStorageProvider({
+  const provider = createFileSystemStorageProvider({
     id: "test",
     layer: "core",
     filePath,
@@ -193,7 +193,7 @@ test("remove() on read-only provider returns failure", async () => {
 });
 
 test("writable defaults to false", () => {
-  const provider = new FileSystemStorageProvider({
+  const provider = createFileSystemStorageProvider({
     id: "test",
     layer: "core",
     filePath: "/tmp/nonexistent.json",

@@ -5,7 +5,7 @@ import { randomUUID } from "node:crypto";
 import { mkdir, writeFile, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
-import { FileSystemStorageProvider } from "../src/fs-provider.ts";
+import { createFileSystemStorageProvider } from "../src/fs-provider.ts";
 
 function makeTempDir() {
   return join(tmpdir(), `fs-watch-test-${randomUUID()}`);
@@ -18,7 +18,7 @@ test("onExternalChange fires when file is modified externally", async () => {
   await writeFile(filePath, JSON.stringify({ a: 1, b: 2 }));
 
   try {
-    const provider = new FileSystemStorageProvider({
+    const provider = createFileSystemStorageProvider({
       id: "test",
       layer: "app",
       filePath,
@@ -57,7 +57,7 @@ test("onExternalChange debounces rapid writes", async () => {
   await writeFile(filePath, JSON.stringify({ x: 1 }));
 
   try {
-    const provider = new FileSystemStorageProvider({
+    const provider = createFileSystemStorageProvider({
       id: "test",
       layer: "app",
       filePath,
@@ -98,7 +98,7 @@ test("dispose() stops watching", async () => {
   await writeFile(filePath, JSON.stringify({ v: 1 }));
 
   try {
-    const provider = new FileSystemStorageProvider({
+    const provider = createFileSystemStorageProvider({
       id: "test",
       layer: "app",
       filePath,
@@ -130,7 +130,7 @@ test("onExternalChange does not fire when no keys actually changed", async () =>
   await writeFile(filePath, JSON.stringify({ a: 1 }));
 
   try {
-    const provider = new FileSystemStorageProvider({
+    const provider = createFileSystemStorageProvider({
       id: "test",
       layer: "app",
       filePath,

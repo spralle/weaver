@@ -76,7 +76,7 @@ export class FileSystemStorageProvider implements ConfigurationStorageProvider {
     await this.atomicWrite(this.filePath, entries);
 
     // Update snapshot so our own writes don't trigger change events
-    this.snapshot = { ...entries };
+    this.snapshot = JSON.parse(JSON.stringify(entries));
 
     const revision = await this.getRevision(this.filePath);
     return { success: true, revision };
@@ -92,7 +92,7 @@ export class FileSystemStorageProvider implements ConfigurationStorageProvider {
     await this.atomicWrite(this.filePath, entries);
 
     // Update snapshot so our own writes don't trigger change events
-    this.snapshot = { ...entries };
+    this.snapshot = JSON.parse(JSON.stringify(entries));
 
     const revision = await this.getRevision(this.filePath);
     return { success: true, revision };
@@ -154,6 +154,7 @@ export class FileSystemStorageProvider implements ConfigurationStorageProvider {
       this.debounceTimer = null;
       void this.checkForChanges();
     }, this.watchDebounceMs);
+    this.debounceTimer.unref();
   }
 
   private async checkForChanges(): Promise<void> {
@@ -238,6 +239,14 @@ function deepEqual(a: unknown, b: unknown): boolean {
   if (a === b) return true;
   if (a === null || b === null) return false;
   if (typeof a !== "object" || typeof b !== "object") return false;
+
+  const aIsArray = Array.isArray(a);
+  const bIsArray = Array.isArray(b);
+  if (aIsArray !== bIsArray) return false;
+  if (aIsArray && bIsArray) {
+    if (a.length !== b.length) return false;
+    return a.every((val, i) => deepEqual(val, b[i]));
+  }
 
   const aObj = a as Record<string, unknown>;
   const bObj = b as Record<string, unknown>;
