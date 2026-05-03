@@ -5,3 +5,4 @@ export * from "./storage/index.js";
 export * from "./bootstrap/index.js";
 export * from "./core/index.js";
 export * from "./transport/index.js";
+export * from "./auth/index.js";
