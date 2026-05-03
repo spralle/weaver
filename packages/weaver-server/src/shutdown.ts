@@ -34,7 +34,8 @@ export function createShutdownManager(options?: ShutdownManagerOptions): Shutdow
       shuttingDown = true;
 
       const timeout = new Promise<void>((resolve) => {
-        setTimeout(resolve, drainTimeoutMs);
+        const timer = setTimeout(resolve, drainTimeoutMs);
+        timer.unref?.();
       });
 
       const runHandlers = async () => {

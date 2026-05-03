@@ -144,7 +144,7 @@ export function createSSEAdapter(options: SSEAdapterOptions): SSEAdapter {
 
   function startCheckpointTimer(intervalMs = 30_000): void {
     stopCheckpointTimer();
-    checkpointTimer = setInterval(() => {
+    const timer = setInterval(() => {
       const msg: SSEMessage = {
         event: "checkpoint",
         data: { revision: configService.revision },
@@ -153,6 +153,8 @@ export function createSSEAdapter(options: SSEAdapterOptions): SSEAdapter {
         client.send(msg);
       }
     }, intervalMs);
+    timer.unref?.();
+    checkpointTimer = timer;
   }
 
   function stopCheckpointTimer(): void {

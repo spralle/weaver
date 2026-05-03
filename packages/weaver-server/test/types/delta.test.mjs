@@ -1,6 +1,6 @@
 import { test } from "bun:test";
 import assert from "node:assert/strict";
-import { configDeltaSchema } from "../../src/types/delta.ts";
+import { configDeltaSchema } from "@weaver/config-types";
 
 test("configDeltaSchema validates set delta", () => {
   const result = configDeltaSchema.safeParse({

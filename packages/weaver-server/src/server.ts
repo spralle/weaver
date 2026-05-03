@@ -185,12 +185,12 @@ export async function startWeaverServer(options?: WeaverServerOptions): Promise<
     sinks: [createStdoutAuditSink()],
   });
 
-  const providers = config.providers ?? [
+  const inputProviders = config.providers ?? [
     createInMemoryStorageProvider({ id: "default", layer: "platform" }),
   ];
 
   const configService = await createWeaverConfigService({
-    providers,
+    providers: inputProviders,
     environment: config.environment,
   });
 
@@ -213,6 +213,10 @@ export async function startWeaverServer(options?: WeaverServerOptions): Promise<
     fetch: handleRequest,
   });
 
+  health.setDegradedInfo({
+    degradedProviders: configService.degradedProviders,
+    totalProviders: inputProviders.length,
+  });
   health.setReady(true);
 
   shutdownManager.onShutdown(async () => {

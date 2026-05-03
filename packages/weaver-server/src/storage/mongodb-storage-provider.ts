@@ -1,12 +1,16 @@
 // MongoDBStorageProvider — native MongoDB driver for user/device config layers
-import type { Collection } from "mongodb";
+import type { Collection, ChangeStream } from "mongodb";
 import type {
   ConfigurationChange,
   ConfigurationLayerData,
   ConfigurationStorageProvider,
   WriteResult,
 } from "@weaver/config-types";
+import type { WeaverLogger } from "../logger.js";
 import { consoleLogger } from "../logger.js";
+
+const MAX_BACKOFF_MS = 30_000;
+const BASE_BACKOFF_MS = 1_000;
 
 export interface MongoDBStorageProviderOptions {
   id: string;
@@ -14,6 +18,7 @@ export interface MongoDBStorageProviderOptions {
   collection: Collection;
   environment: string;
   writable?: boolean | undefined;
+  logger?: WeaverLogger;
 }
 
 interface ConfigDocument {
@@ -32,6 +37,8 @@ export class MongoDBStorageProvider implements ConfigurationStorageProvider {
 
   private readonly collection: Collection;
   private readonly environment: string;
+  private readonly logger: WeaverLogger;
+  private disposed = false;
 
   constructor(options: MongoDBStorageProviderOptions) {
     this.id = options.id;
@@ -39,6 +46,7 @@ export class MongoDBStorageProvider implements ConfigurationStorageProvider {
     this.writable = options.writable ?? true;
     this.collection = options.collection;
     this.environment = options.environment;
+    this.logger = options.logger ?? consoleLogger;
   }
 
   async load(): Promise<ConfigurationLayerData> {
@@ -83,27 +91,46 @@ export class MongoDBStorageProvider implements ConfigurationStorageProvider {
   onExternalChange(
     listener: (changes: ConfigurationChange[]) => void,
   ): () => void {
-    const changeStream = this.collection.watch([
-      { $match: { "fullDocument.layer": this.layer } },
-    ]);
+    let backoffMs = BASE_BACKOFF_MS;
+    let currentStream: ChangeStream | null = null;
 
-    changeStream.on("change", (change: unknown) => {
-      const doc = (change as { fullDocument?: ConfigDocument }).fullDocument;
-      if (doc) {
-        listener([{ key: doc.key, oldValue: undefined, newValue: doc.value }]);
-      }
-    });
+    const setupChangeStream = (): void => {
+      if (this.disposed) return;
 
-    changeStream.on("error", (err: unknown) => {
-      const message = err instanceof Error ? err.message : String(err);
-      consoleLogger.error(
-        `[weaver] MongoDB changeStream error for provider "${this.id}": ${message}`,
-      );
-      void changeStream.close();
-    });
+      const stream = this.collection.watch([
+        { $match: { "fullDocument.layer": this.layer } },
+      ]);
+      currentStream = stream;
+
+      stream.on("change", (change: unknown) => {
+        backoffMs = BASE_BACKOFF_MS;
+        const doc = (change as { fullDocument?: ConfigDocument }).fullDocument;
+        if (doc) {
+          listener([{ key: doc.key, oldValue: undefined, newValue: doc.value }]);
+        }
+      });
+
+      stream.on("error", (err: unknown) => {
+        const message = err instanceof Error ? err.message : String(err);
+        this.logger.error(
+          `[weaver] MongoDB changeStream error for provider "${this.id}": ${message}`,
+        );
+        void stream.close();
+        if (this.disposed) return;
+
+        const delay = Math.min(backoffMs, MAX_BACKOFF_MS);
+        backoffMs = Math.min(backoffMs * 2, MAX_BACKOFF_MS);
+        setTimeout(setupChangeStream, delay);
+      });
+    };
+
+    setupChangeStream();
 
     return () => {
-      void changeStream.close();
+      this.disposed = true;
+      if (currentStream) {
+        void currentStream.close();
+      }
     };
   }
 }

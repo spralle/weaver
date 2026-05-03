@@ -1,3 +1,10 @@
+/**
+ * IndexedDB persistence adapter — currently a deferred stub.
+ *
+ * Real implementation will use an IndexedDB object store ("snapshots") keyed by
+ * namespace to persist resolved config snapshots in the browser. This is
+ * intentionally unimplemented until the browser-client package is prioritized.
+ */
 import type { ConfigSnapshot } from "./types.js";
 import type { WeaverClientPersistence } from "./persistence.js";
 

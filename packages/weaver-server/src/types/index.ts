@@ -8,11 +8,11 @@ export {
 } from "./errors.js";
 export type { WeaverErrorCode, WeaverError } from "./errors.js";
 
-export { configDeltaSchema } from "./delta.js";
-export type { ConfigDelta } from "./delta.js";
+export { configDeltaSchema } from "@weaver/config-types";
+export type { ConfigDelta } from "@weaver/config-types";
 
-export { configSnapshotSchema } from "./snapshot.js";
-export type { ConfigSnapshot } from "./snapshot.js";
+export { configSnapshotSchema } from "@weaver/config-types";
+export type { ConfigSnapshot } from "@weaver/config-types";
 
 export {
   layerProviderSchema,

@@ -1,6 +1,10 @@
+import { z } from "zod";
 import type { WeaverConfigService } from "./config-service.js";
 import type { WeaverError } from "../types/errors.js";
 import { createWeaverError } from "../types/errors.js";
+
+const SchemaDeclaration = z.record(z.string(), z.unknown());
+type SchemaDeclaration = z.infer<typeof SchemaDeclaration>;
 
 export interface SchemaRegistrationRequest {
   serviceId: string;
@@ -28,7 +32,7 @@ export interface SchemaRegistry {
 }
 
 interface SchemaEntry {
-  declaration: unknown;
+  declaration: SchemaDeclaration;
   environment: string;
 }
 
@@ -37,19 +41,13 @@ function schemaKey(serviceId: string, environment: string): string {
 }
 
 function detectBreakingChanges(
-  existing: unknown,
-  incoming: unknown,
+  existing: SchemaDeclaration,
+  incoming: SchemaDeclaration,
 ): string[] {
   const changes: string[] = [];
-  if (
-    typeof existing !== "object" || existing === null ||
-    typeof incoming !== "object" || incoming === null
-  ) {
-    return changes;
-  }
 
-  const existingObj = existing as Record<string, unknown>;
-  const incomingObj = incoming as Record<string, unknown>;
+  const existingObj = existing;
+  const incomingObj = incoming;
 
   // Check for removed properties
   const existingProps = getProperties(existingObj);
@@ -110,7 +108,22 @@ export function createSchemaRegistry(
     async register(
       request: SchemaRegistrationRequest,
     ): Promise<SchemaRegistrationResult> {
-      const { serviceId, declaration, environment } = request;
+      const { serviceId, environment } = request;
+
+      const parseResult = SchemaDeclaration.safeParse(request.declaration);
+      if (!parseResult.success) {
+        return {
+          success: false,
+          isNewSchema: false,
+          hasBreakingChanges: false,
+          error: createWeaverError(
+            "VALIDATION_ERROR",
+            `Invalid schema declaration: ${parseResult.error.message}`,
+          ),
+        };
+      }
+      const declaration = parseResult.data;
+
       const key = schemaKey(serviceId, environment);
       const existing = schemas.get(key);
 
