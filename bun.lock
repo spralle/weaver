@@ -131,6 +131,32 @@
         "typescript": "^5.8.3",
       },
     },
+    "packages/weaver-client": {
+      "name": "@weaver/weaver-client",
+      "version": "0.0.0",
+      "dependencies": {
+        "@weaver/config-providers": "workspace:*",
+        "@weaver/config-types": "workspace:*",
+      },
+      "devDependencies": {
+        "@types/node": "25.6.0",
+        "typescript": "^5.8.3",
+      },
+    },
+    "packages/weaver-server": {
+      "name": "@weaver/weaver-server",
+      "version": "0.0.0",
+      "dependencies": {
+        "@weaver/config-engine": "workspace:*",
+        "@weaver/config-providers": "workspace:*",
+        "@weaver/config-types": "workspace:*",
+        "zod": "^4.0.0",
+      },
+      "devDependencies": {
+        "@types/node": "25.6.0",
+        "typescript": "^5.8.3",
+      },
+    },
   },
   "packages": {
     "@azure-rest/core-client": ["@azure-rest/core-client@2.6.0", "", { "dependencies": { "@azure/abort-controller": "^2.1.2", "@azure/core-auth": "^1.10.0", "@azure/core-rest-pipeline": "^1.22.0", "@azure/core-tracing": "^1.3.0", "@typespec/ts-http-runtime": "^0.3.0", "tslib": "^2.6.2" } }, "sha512-iuFKDm8XPzNxPfRjhyU5/xKZmcRDzSuEghXDHHk4MjBV/wFL34GmYVBZnn9wmuoLBeS1qAw9ceMdaeJBPcB1QQ=="],
@@ -438,6 +464,10 @@
     "@weaver/config-types": ["@weaver/config-types@workspace:packages/config-types"],
 
     "@weaver/demo": ["@weaver/demo@workspace:apps/demo"],
+
+    "@weaver/weaver-client": ["@weaver/weaver-client@workspace:packages/weaver-client"],
+
+    "@weaver/weaver-server": ["@weaver/weaver-server@workspace:packages/weaver-server"],
 
     "acorn": ["acorn@8.16.0", "", { "bin": { "acorn": "bin/acorn" } }, "sha512-UVJyE9MttOsBQIDKw1skb9nAwQuR5wuGD3+82K6JgJlm/Y+KI92oNsMNGZCYdDsVtRHSak0pcV5Dno5+4jh9sw=="],
 
