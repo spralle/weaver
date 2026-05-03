@@ -11,6 +11,17 @@ import {
   configBatchBodySchema,
   scopeProvisionBodySchema,
 } from "./rest-schemas.js";
+import type { AuthContext } from "../auth/auth-middleware.js";
+import type { ConfigurationPropertySchema } from "@weaver/config-types";
+import type { AuthGate } from "./auth-gate.js";
+import {
+  matchPath,
+  corsHeaders,
+  envelope,
+  errorEnvelope,
+  v1Headers,
+} from "./rest-helpers.js";
+export type { ApiResponse, ApiErrorResponse } from "./rest-helpers.js";
 
 export interface RestRoute {
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -23,6 +34,8 @@ export interface RestRequest {
   query: Record<string, string>;
   body?: unknown;
   headers: Record<string, string>;
+  authContext?: AuthContext;
+  schemaMap?: Map<string, ConfigurationPropertySchema>;
 }
 
 export interface RestResponse {
@@ -31,21 +44,11 @@ export interface RestResponse {
   headers?: Record<string, string>;
 }
 
-export interface ApiResponse<T> {
-  data: T;
-  meta: { revision: string; timestamp: string };
-}
-
-export interface ApiErrorResponse {
-  data: null;
-  meta: { revision: string; timestamp: string };
-  error: { code: string; message: string; details?: Record<string, unknown> };
-}
-
 export interface RestAdapterOptions {
   configService: WeaverConfigService;
   scopeManager?: ScopeManager;
   corsOrigins?: string[];
+  authGate?: AuthGate;
 }
 
 export interface RestAdapter {
@@ -62,66 +65,8 @@ interface RouteMatch {
   params: Record<string, string>;
 }
 
-function matchPath(
-  pattern: string,
-  path: string,
-): Record<string, string> | null {
-  const patternParts = pattern.split("/");
-  const pathParts = path.split("/");
-  const params: Record<string, string> = {};
-
-  for (let i = 0; i < patternParts.length; i++) {
-    const pp = patternParts[i]!;
-    if (pp.startsWith("*")) {
-      const remaining = pathParts.slice(i);
-      if (remaining.length === 0) return null;
-      params[pp.slice(1)] = remaining.join("/");
-      return params;
-    }
-    if (i >= pathParts.length) return null;
-    if (pp.startsWith(":")) {
-      params[pp.slice(1)] = pathParts[i]!;
-    } else if (pp !== pathParts[i]) {
-      return null;
-    }
-  }
-
-  if (patternParts.length !== pathParts.length) return null;
-  return params;
-}
-
-function corsHeaders(origins: string[]): Record<string, string> {
-  return {
-    "Access-Control-Allow-Origin": origins.join(", "),
-    "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  };
-}
-
-function envelope<T>(data: T, revision: string): ApiResponse<T> {
-  return { data, meta: { revision, timestamp: new Date().toISOString() } };
-}
-
-function errorEnvelope(error: WeaverError, revision: string): ApiErrorResponse {
-  const details = error.details ? { details: error.details } : {};
-  return {
-    data: null,
-    meta: { revision, timestamp: new Date().toISOString() },
-    error: { code: error.code, message: error.message, ...details },
-  };
-}
-
-function v1Headers(revision: string, extra?: Record<string, string>): Record<string, string> {
-  return {
-    "Content-Type": "application/json",
-    "ETag": `"${revision}"`,
-    "Cache-Control": "no-cache",
-    ...extra,
-  };
-}
-
 export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
-  const { configService, scopeManager, corsOrigins } = options;
+  const { configService, scopeManager, corsOrigins, authGate } = options;
 
   function param(params: Record<string, string>, name: string): string {
     const value = params[name];
@@ -174,6 +119,11 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
         const scopePath = parseScopeQuery(queryOpt(req.query, "scope"));
         const opts = scopePath ? { scopePath } : {};
         const snapshot = await configService.resolveAll(opts);
+        if (authGate && req.authContext) {
+          const accessCtx = authGate.toAccessContext(req.authContext);
+          const filtered = authGate.filterVisible(accessCtx, snapshot, req.schemaMap ?? new Map());
+          return v1Response(200, filtered);
+        }
         return v1Response(200, snapshot);
       },
     },
@@ -186,6 +136,11 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
         const key = buildPath(segments);
         const scopePath = parseScopeQuery(queryOpt(req.query, "scope"));
         const opts = scopePath ? { scopePath } : {};
+        if (authGate && req.authContext) {
+          const accessCtx = authGate.toAccessContext(req.authContext);
+          const denied = authGate.gateRead(accessCtx, key, req.schemaMap?.get(key));
+          if (denied) return denied;
+        }
         if ("inspect" in req.query) {
           const inspection = await configService.inspect(key);
           return v1Response(200, inspection);
@@ -203,6 +158,11 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
         const key = buildPath(segments);
         const layer = queryOpt(req.query, "layer") ?? "platform";
         const environment = queryOpt(req.query, "env");
+        if (authGate && req.authContext) {
+          const accessCtx = authGate.toAccessContext(req.authContext);
+          const denied = authGate.gateWrite(accessCtx, layer, key, req.schemaMap?.get(key));
+          if (denied) return denied;
+        }
         const body = configWriteBodySchema.parse(req.body);
         const expectedRevision = extractExpectedRevision(req);
         const writeCtx: WriteContext = {};
@@ -222,6 +182,11 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
         const key = buildPath(segments);
         const layer = queryOpt(req.query, "layer") ?? "platform";
         const environment = queryOpt(req.query, "env");
+        if (authGate && req.authContext) {
+          const accessCtx = authGate.toAccessContext(req.authContext);
+          const denied = authGate.gateWrite(accessCtx, layer, key, req.schemaMap?.get(key));
+          if (denied) return denied;
+        }
         const expectedRevision = extractExpectedRevision(req);
         const writeCtx: WriteContext = {};
         if (expectedRevision) writeCtx.expectedRevision = expectedRevision;
@@ -239,6 +204,13 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
         const environment = queryOpt(req.query, "env");
         const body = configBatchBodySchema.parse(req.body);
         const entries = body.entries;
+        if (authGate && req.authContext) {
+          const accessCtx = authGate.toAccessContext(req.authContext);
+          for (const key of Object.keys(entries)) {
+            const denied = authGate.gateWrite(accessCtx, layer, key, req.schemaMap?.get(key));
+            if (denied) return denied;
+          }
+        }
         const expectedRevision = extractExpectedRevision(req);
         const writeCtx: WriteContext = {};
         if (expectedRevision) writeCtx.expectedRevision = expectedRevision;

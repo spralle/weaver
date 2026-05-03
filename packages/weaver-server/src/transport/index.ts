@@ -4,6 +4,9 @@ export type { WeaverConfigContract } from "./scomp-contract.js";
 export { createScompAdapter } from "./scomp-adapter.js";
 export type { ScompAdapter, ScompAdapterOptions } from "./scomp-adapter.js";
 
+export { createAuthGate } from "./auth-gate.js";
+export type { AuthGate, AuthGateOptions } from "./auth-gate.js";
+
 export { createRestAdapter } from "./rest-adapter.js";
 export type {
   RestAdapter,
@@ -42,3 +45,5 @@ export {
   configBatchBodySchema,
   scopeProvisionBodySchema,
 } from "./rest-schemas.js";
+
+export { matchPath, corsHeaders, envelope, errorEnvelope, v1Headers } from "./rest-helpers.js";

@@ -81,6 +81,7 @@
       },
       "devDependencies": {
         "@types/node": "25.6.0",
+        "@weaver/config-auth": "workspace:*",
         "typescript": "^5.8.3",
       },
     },
@@ -270,6 +271,7 @@
       "version": "0.0.0",
       "dependencies": {
         "@weaver/config-audit": "workspace:*",
+        "@weaver/config-auth": "workspace:*",
         "@weaver/config-engine": "workspace:*",
         "@weaver/config-types": "workspace:*",
         "@weaver/storage-provider-core": "workspace:*",
