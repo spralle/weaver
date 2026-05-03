@@ -1,4 +1,4 @@
-import { test } from "bun:test";
+import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createProviders } from "../../src/bootstrap/layer-factory.ts";
 import { GitStorageProvider } from "../../src/storage/git-storage-provider.ts";

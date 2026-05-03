@@ -1,4 +1,4 @@
-import { test, describe } from "bun:test";
+import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import { createRollbackService } from "../../src/core/rollback-service.ts";
 import { createWeaverConfigService } from "../../src/core/config-service.ts";

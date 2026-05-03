@@ -1,39 +1,36 @@
-import { describe, expect, test } from "bun:test";
-import { createAuthMiddleware } from "../../src/auth/auth-middleware.js";
-import type {
-  JwtIdentity,
-  JwtValidator,
-} from "../../src/auth/jwt-validator.js";
+import { describe, test } from "node:test";
+import assert from "node:assert/strict";
+import { createAuthMiddleware } from "../../src/auth/auth-middleware.ts";
 
-function mockValidator(identity: JwtIdentity): JwtValidator {
+function mockValidator(identity) {
   return {
-    async validate(_token: string): Promise<JwtIdentity> {
+    async validate(_token) {
       return identity;
     },
   };
 }
 
-function failingValidator(error: unknown): JwtValidator {
+function failingValidator(error) {
   return {
-    async validate(_token: string): Promise<JwtIdentity> {
+    async validate(_token) {
       throw error;
     },
   };
 }
 
 describe("AuthMiddleware", () => {
-  const userIdentity: JwtIdentity = {
+  const userIdentity = {
     userId: "user-42",
     roles: ["editor"],
     claims: { sub: "user-42", roles: ["editor"] },
   };
 
-  const serviceIdentity: JwtIdentity = {
+  const serviceIdentity = {
     serviceId: "svc-deploy",
     claims: { serviceId: "svc-deploy" },
   };
 
-  const adminIdentity: JwtIdentity = {
+  const adminIdentity = {
     userId: "admin-1",
     roles: ["admin"],
     claims: { sub: "admin-1", roles: ["admin"] },
@@ -44,19 +41,20 @@ describe("AuthMiddleware", () => {
       jwtValidator: mockValidator(userIdentity),
     });
     const ctx = await mw.authenticate("valid-token");
-    expect(ctx.identity.userId).toBe("user-42");
-    expect(ctx.isUser).toBe(true);
-    expect(ctx.isService).toBe(false);
-    expect(ctx.isAdmin).toBe(false);
+    assert.strictEqual(ctx.identity.userId, "user-42");
+    assert.strictEqual(ctx.isUser, true);
+    assert.strictEqual(ctx.isService, false);
+    assert.strictEqual(ctx.isAdmin, false);
   });
 
   test("authenticate with missing token throws UNAUTHORIZED", async () => {
     const mw = createAuthMiddleware({
       jwtValidator: mockValidator(userIdentity),
     });
-    await expect(mw.authenticate(undefined)).rejects.toMatchObject({
-      code: "UNAUTHORIZED",
-    });
+    await assert.rejects(
+      mw.authenticate(undefined),
+      (err) => err.code === "UNAUTHORIZED",
+    );
   });
 
   test("authenticate with invalid token throws UNAUTHORIZED", async () => {
@@ -66,9 +64,10 @@ describe("AuthMiddleware", () => {
         message: "Invalid signature",
       }),
     });
-    await expect(mw.authenticate("bad-token")).rejects.toMatchObject({
-      code: "UNAUTHORIZED",
-    });
+    await assert.rejects(
+      mw.authenticate("bad-token"),
+      (err) => err.code === "UNAUTHORIZED",
+    );
   });
 
   test("isService=true for M2M tokens", async () => {
@@ -76,9 +75,9 @@ describe("AuthMiddleware", () => {
       jwtValidator: mockValidator(serviceIdentity),
     });
     const ctx = await mw.authenticate("svc-token");
-    expect(ctx.isService).toBe(true);
-    expect(ctx.isAdmin).toBe(true); // services are admin
-    expect(ctx.isUser).toBe(false);
+    assert.strictEqual(ctx.isService, true);
+    assert.strictEqual(ctx.isAdmin, true);
+    assert.strictEqual(ctx.isUser, false);
   });
 
   test("requireAdmin with admin role passes", () => {
@@ -91,7 +90,7 @@ describe("AuthMiddleware", () => {
       isService: false,
       isUser: true,
     };
-    expect(() => mw.requireAdmin(ctx)).not.toThrow();
+    assert.doesNotThrow(() => mw.requireAdmin(ctx));
   });
 
   test("requireAdmin without admin role throws FORBIDDEN", () => {
@@ -104,7 +103,7 @@ describe("AuthMiddleware", () => {
       isService: false,
       isUser: true,
     };
-    expect(() => mw.requireAdmin(ctx)).toThrow();
+    assert.throws(() => mw.requireAdmin(ctx));
   });
 
   test("extractToken from Authorization header", () => {
@@ -112,7 +111,7 @@ describe("AuthMiddleware", () => {
       jwtValidator: mockValidator(userIdentity),
     });
     const token = mw.extractToken({ authorization: "Bearer my-jwt-token" });
-    expect(token).toBe("my-jwt-token");
+    assert.strictEqual(token, "my-jwt-token");
   });
 
   test("extractToken returns undefined for missing header", () => {
@@ -120,6 +119,6 @@ describe("AuthMiddleware", () => {
       jwtValidator: mockValidator(userIdentity),
     });
     const token = mw.extractToken({});
-    expect(token).toBeUndefined();
+    assert.strictEqual(token, undefined);
   });
 });
