@@ -20,11 +20,11 @@ describe("WeaverClient", () => {
     const transport = createLocalTransport({
       snapshot: makeSnapshot(
         { app: { name: "base" } },
-        { "tenant:acme": { app: { name: "acme-app" } } },
+        { "scope:acme": { app: { name: "acme-app" } } },
       ),
     });
     const client = await createWeaverClient({ transport, scopeLoading: "eager" });
-    const value = client.get<string>("app.name", [{ scopeId: "tenant", value: "acme" }]);
+    const value = client.get<string>("app.name", [{ scopeId: "scope", value: "acme" }]);
     assert.equal(value, "acme-app");
   });
 
@@ -79,21 +79,21 @@ describe("WeaverClient", () => {
 
   it("listScopes() delegates to transport", async () => {
     const transport = createLocalTransport({
-      snapshot: makeSnapshot({}, { "tenant:acme": {} }),
+      snapshot: makeSnapshot({}, { "scope:acme": {} }),
     });
     const client = await createWeaverClient({ transport });
     const scopes = await client.listScopes();
     assert.ok(Array.isArray(scopes));
     assert.equal(scopes.length, 1);
-    assert.equal(scopes[0]!.id, "tenant");
+    assert.equal(scopes[0]!.id, "scope");
   });
 
   it("listScopeValues() delegates to transport", async () => {
     const transport = createLocalTransport({
-      snapshot: makeSnapshot({}, { "tenant:acme": {}, "tenant:beta": {} }),
+      snapshot: makeSnapshot({}, { "scope:acme": {}, "scope:beta": {} }),
     });
     const client = await createWeaverClient({ transport });
-    const values = await client.listScopeValues("tenant");
+    const values = await client.listScopeValues("scope");
     assert.ok(values.includes("acme"));
     assert.ok(values.includes("beta"));
   });

@@ -13,6 +13,7 @@ export interface SecretCacheEntry {
 const DEFAULT_TTL_MS = 300_000;
 const DEFAULT_MAX_ENTRIES = 1000;
 
+/** @see {@link createSecretCache} — prefer the factory function for consistency */
 export class SecretCache {
   private readonly cache = new Map<string, SecretCacheEntry>();
   private readonly defaultTtlMs: number;
@@ -62,4 +63,9 @@ export class SecretCache {
   entries(): ReadonlyMap<string, SecretCacheEntry> {
     return this.cache;
   }
+}
+
+/** Creates a secret cache instance. */
+export function createSecretCache(options?: SecretCacheOptions): SecretCache {
+  return new SecretCache(options);
 }

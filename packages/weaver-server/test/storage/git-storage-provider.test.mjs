@@ -11,9 +11,9 @@ function createMockGitManager(localPath) {
     calls,
     localPath,
     async ensureClone() { calls.push(["ensureClone"]); },
-    async pull() { calls.push(["pull"]); },
-    async refresh() { calls.push(["refresh"]); },
-    async commitAndPush(message, files) { calls.push(["commitAndPush", message, files]); },
+    async pull() { calls.push(["pull"]); return { success: true }; },
+    async refresh() { calls.push(["refresh"]); return { success: true }; },
+    async commitAndPush(message, files) { calls.push(["commitAndPush", message, files]); return { success: true }; },
   };
 }
 

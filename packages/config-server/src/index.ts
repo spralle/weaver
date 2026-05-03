@@ -2,6 +2,7 @@
 export type { ConfigAuditLog } from "./audit-log.js";
 export { createFileSystemAuditLog } from "./fs-audit-log.js";
 export {
+  createFileSystemStorageProvider,
   type FileSystemProviderOptions,
   FileSystemStorageProvider,
 } from "./fs-provider.js";

@@ -11,9 +11,12 @@ export interface ScopeInstance {
   value: string;
 }
 
-export interface TenantScopeHierarchy {
+export interface ScopeHierarchy {
   scopes: ScopeDefinition[];
 }
+
+/** @deprecated Use `ScopeHierarchy` instead. */
+export type TenantScopeHierarchy = ScopeHierarchy;
 
 export interface ConfigurationContext {
   scopePath: ScopeInstance[];

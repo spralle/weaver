@@ -69,7 +69,6 @@
         "@weaver/config-engine": "workspace:*",
         "@weaver/config-secrets": "workspace:*",
         "@weaver/config-sessions": "workspace:*",
-        "@weaver/config-sync": "workspace:*",
         "@weaver/config-types": "workspace:*",
       },
       "devDependencies": {
@@ -136,9 +135,8 @@
       "version": "0.0.0",
       "dependencies": {
         "@weaver/config-engine": "workspace:*",
-        "@weaver/config-providers": "workspace:*",
         "@weaver/config-types": "workspace:*",
-        "zod": "^3.24.4",
+        "zod": "^4.0.0",
       },
       "devDependencies": {
         "@types/node": "25.6.0",
@@ -845,8 +843,6 @@
     "@manypkg/get-packages/fs-extra": ["fs-extra@8.1.0", "", { "dependencies": { "graceful-fs": "^4.2.0", "jsonfile": "^4.0.0", "universalify": "^0.1.0" } }, "sha512-yhlQgA6mnOJUKOsRUFsgJdQCvkKhcz8tlZG5HBQfReYZy46OwLcY+Zia0mtdHsOo9y/hP+CxMN0TU9QxoOtG4g=="],
 
     "@typescript-eslint/eslint-plugin/ignore": ["ignore@7.0.5", "", {}, "sha512-Hs59xBNfUIunMFgWAbGX5cq6893IbWg4KnrjbYwX3tx0ztorVgTDA6B2sxf8ejHJ4wz8BqGUMYlnzNBer5NvGg=="],
-
-    "@weaver/weaver-client/zod": ["zod@3.25.76", "", {}, "sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ=="],
 
     "fast-glob/glob-parent": ["glob-parent@5.1.2", "", { "dependencies": { "is-glob": "^4.0.1" } }, "sha512-AOIgSQCepiJYwP3ARnGx+5VnTu2HBYdzbGP45eLw1vr3zB3vZLeyed1sC9hnbcOc9/SrMyM5RPQrkGz4aS9Zow=="],
 

@@ -108,6 +108,7 @@ export {
   sessionLayerMetadataSchema,
   sessionModeSchema,
   sessionTypeSchema,
+  scopeHierarchySchema,
   tenantScopeHierarchySchema,
   weaverPropertyExtensionsSchema,
 } from "./schemas-core.js";
@@ -169,6 +170,7 @@ export type {
   ConfigurationLayerStack,
   ScopeDefinition,
   ScopeInstance,
+  ScopeHierarchy,
   TenantScopeHierarchy,
 } from "./types.js";
 // view-config-declaration.ts — View config declaration type and factory
@@ -194,3 +196,17 @@ export {
   secretReferenceSchema,
   weaverMarkerSchema,
 } from "./schemas-markers.js";
+// schemas-transport.ts — Zod schemas for transport types (ConfigDelta, ConfigSnapshot)
+export {
+  configDeltaSchema,
+  configSnapshotSchema,
+} from "./schemas-transport.js";
+export type { ConfigDelta, ConfigSnapshot } from "./schemas-transport.js";
+// errors.ts — Shared error taxonomy
+export {
+  weaverErrorCodes,
+  weaverErrorCodeSchema,
+  weaverErrorSchema,
+  createWeaverError,
+} from "./errors.js";
+export type { WeaverErrorCode, WeaverError } from "./errors.js";

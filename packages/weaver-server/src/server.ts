@@ -6,7 +6,7 @@ import { createStdoutAuditSink } from "./audit/stdout-sink.js";
 import { createRestAdapter } from "./transport/rest-adapter.js";
 import { createSSEAdapter } from "./transport/sse-adapter.js";
 import { createWeaverConfigService } from "./core/config-service.js";
-import { InMemoryStorageProvider } from "@weaver/config-providers";
+import { createInMemoryStorageProvider } from "@weaver/config-providers";
 import type { HealthEndpoints } from "./health.js";
 import type { RestAdapter } from "./transport/rest-adapter.js";
 import type { SSEAdapter, SSEClient } from "./transport/sse-adapter.js";
@@ -186,7 +186,7 @@ export async function startWeaverServer(options?: WeaverServerOptions): Promise<
   });
 
   const providers = config.providers ?? [
-    new InMemoryStorageProvider({ id: "default", layer: "platform" }),
+    createInMemoryStorageProvider({ id: "default", layer: "platform" }),
   ];
 
   const configService = await createWeaverConfigService({
@@ -217,6 +217,7 @@ export async function startWeaverServer(options?: WeaverServerOptions): Promise<
 
   shutdownManager.onShutdown(async () => {
     health.setReady(false);
+    await configService.flush();
     sseAdapter.stopCheckpointTimer();
     sseAdapter.closeAll();
     server.stop();

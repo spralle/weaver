@@ -8,19 +8,21 @@ import type {
 import type { ConfigSnapshot, ConfigDelta } from "../types/index.js";
 import type { WeaverLogger } from "../logger.js";
 import { consoleLogger } from "../logger.js";
-import { isScopedLayer, parseScopeLayer, buildScopePathString } from "./scope-utils.js";
+import { isScopedLayer, buildScopePathString } from "./scope-utils.js";
 import { deepGet, deepSet, deepRemove, deepMerge } from "@weaver/config-engine";
 
 export interface WriteContext {
   environment?: string;
   scopePath?: ScopeInstance[];
   actor?: string;
+  expectedRevision?: string;
 }
 
 export interface WeaverConfigServiceOptions {
   providers: ConfigurationStorageProvider[];
   environment: string;
   logger?: WeaverLogger;
+  flushDebounceMs?: number;
 }
 
 type Unsubscribe = () => void;
@@ -41,6 +43,7 @@ export interface WeaverConfigService {
     key: string,
   ): Promise<ConfigurationInspection<unknown>>;
   readonly providers: ReadonlyArray<ConfigurationStorageProvider>;
+  readonly degradedProviders: ReadonlyArray<string>;
   readonly revision: string;
   reloadProvider(providerId: string): Promise<void>;
   set(
@@ -51,20 +54,12 @@ export interface WeaverConfigService {
   ): Promise<WriteResult>;
   remove(layer: string, key: string, options?: WriteContext): Promise<WriteResult>;
   onDelta(handler: (delta: ConfigDelta) => void): Unsubscribe;
-
   /** Group multiple writes into one commit. Auto-flushes at the end. */
   batch<T>(fn: () => Promise<T>): Promise<T>;
-
   /** Write multiple key-value pairs in a single batch. */
-  setMany(
-    layer: string,
-    entries: Record<string, unknown>,
-    options?: WriteContext,
-  ): Promise<WriteResult>;
-
+  setMany(layer: string, entries: Record<string, unknown>, options?: WriteContext): Promise<WriteResult>;
   /** Flush all dirty providers. Rarely needed — set/remove auto-flush. */
   flush(): Promise<void>;
-
   /** Refresh all providers from remote sources, then reload state. */
   refreshProviders(): Promise<void>;
 }
@@ -83,28 +78,56 @@ function computeRevision(state: Record<string, unknown>): string {
 export async function createWeaverConfigService(
   options: WeaverConfigServiceOptions,
 ): Promise<WeaverConfigService> {
-  const { providers, environment } = options;
+  const { providers: inputProviders, environment } = options;
   const logger = options.logger ?? consoleLogger;
+  const flushDebounceMs = options.flushDebounceMs ?? 500;
 
   const layerData = new Map<string, Record<string, unknown>>();
+  const degradedProviders: string[] = [];
   let revision = "";
   const deltaHandlers = new Set<(delta: ConfigDelta) => void>();
   let batchDepth = 0;
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
-  async function autoFlush(): Promise<void> {
-    if (batchDepth === 0) {
-      for (const provider of providers) {
-        if (provider.flush && provider.dirty) {
-          await provider.flush();
-        }
+  async function flushAllDirty(): Promise<void> {
+    for (const provider of providers) {
+      if (provider.flush && provider.dirty) {
+        await provider.flush();
       }
     }
   }
 
-  for (const provider of providers) {
-    const data = await provider.load();
-    layerData.set(provider.id, data.entries);
+  function autoFlush(): void {
+    if (batchDepth > 0) return;
+    if (debounceTimer !== null) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      debounceTimer = null;
+      void flushAllDirty();
+    }, flushDebounceMs);
   }
+
+  function checkRevision(expectedRevision: string | undefined): WriteResult | null {
+    if (expectedRevision === undefined) return null;
+    if (expectedRevision !== revision) {
+      return { success: false, error: `Revision conflict: expected ${expectedRevision}, current is ${revision}` };
+    }
+    return null;
+  }
+
+  const activeProviders: ConfigurationStorageProvider[] = [];
+  for (const provider of inputProviders) {
+    try {
+      const data = await provider.load();
+      layerData.set(provider.id, data.entries);
+      activeProviders.push(provider);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      logger.error(`[weaver] Provider "${provider.id}" failed to load: ${message}`);
+      degradedProviders.push(provider.id);
+    }
+  }
+
+  const providers = activeProviders;
 
   function getBaseEntries(): Record<string, unknown> {
     let merged: Record<string, unknown> = {};
@@ -161,6 +184,10 @@ export async function createWeaverConfigService(
   const service: WeaverConfigService = {
     get providers() {
       return providers;
+    },
+
+    get degradedProviders() {
+      return degradedProviders as ReadonlyArray<string>;
     },
 
     get revision() {
@@ -237,6 +264,9 @@ export async function createWeaverConfigService(
       value: unknown,
       opts?: WriteContext,
     ): Promise<WriteResult> {
+      const revConflict = checkRevision(opts?.expectedRevision);
+      if (revConflict) return revConflict;
+
       const provider = providers.find((p) => p.layer === layer);
       if (!provider) {
         return { success: false, error: `No provider for layer "${layer}"` };
@@ -269,7 +299,7 @@ export async function createWeaverConfigService(
       };
       fireDelta(delta);
 
-      await autoFlush();
+      autoFlush();
       return result;
     },
 
@@ -278,6 +308,9 @@ export async function createWeaverConfigService(
       key: string,
       opts?: WriteContext,
     ): Promise<WriteResult> {
+      const revConflict = checkRevision(opts?.expectedRevision);
+      if (revConflict) return revConflict;
+
       const provider = providers.find((p) => p.layer === layer);
       if (!provider) {
         return { success: false, error: `No provider for layer "${layer}"` };
@@ -304,7 +337,7 @@ export async function createWeaverConfigService(
       };
       fireDelta(delta);
 
-      await autoFlush();
+      autoFlush();
       return result;
     },
 
@@ -323,21 +356,17 @@ export async function createWeaverConfigService(
       } finally {
         batchDepth--;
         if (batchDepth === 0) {
-          for (const provider of providers) {
-            if (provider.flush && provider.dirty) {
-              await provider.flush();
-            }
-          }
+          await flushAllDirty();
         }
       }
     },
 
     async flush(): Promise<void> {
-      for (const provider of providers) {
-        if (provider.flush && provider.dirty) {
-          await provider.flush();
-        }
+      if (debounceTimer !== null) {
+        clearTimeout(debounceTimer);
+        debounceTimer = null;
       }
+      await flushAllDirty();
     },
 
     async refreshProviders(): Promise<void> {

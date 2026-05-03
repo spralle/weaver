@@ -1,11 +1,11 @@
 // Layer factory — creates storage providers from validated bootstrap config
 import type { Collection } from "mongodb";
 import type { ConfigurationStorageProvider } from "@weaver/config-types";
-import { InMemoryStorageProvider } from "@weaver/config-providers";
+import { createInMemoryStorageProvider } from "@weaver/config-providers";
 import type { BootstrapConfig } from "../types/bootstrap.js";
 import type { GitManager } from "../storage/git-manager.js";
-import { GitStorageProvider } from "../storage/git-storage-provider.js";
-import { MongoDBStorageProvider } from "../storage/mongodb-storage-provider.js";
+import { createGitStorageProvider } from "../storage/git-storage-provider.js";
+import { createMongoDBStorageProvider } from "../storage/mongodb-storage-provider.js";
 
 export interface LayerFactoryDeps {
   gitManager: GitManager;
@@ -20,7 +20,7 @@ export function createProviders(
   return config.layers.map((layer) => {
     switch (layer.provider) {
       case "git":
-        return new GitStorageProvider({
+        return createGitStorageProvider({
           id: layer.id,
           layer: layer.id,
           gitManager: deps.gitManager,
@@ -33,7 +33,7 @@ export function createProviders(
             `MongoDB collection required for layer "${layer.id}"`,
           );
         }
-        return new MongoDBStorageProvider({
+        return createMongoDBStorageProvider({
           id: layer.id,
           layer: layer.id,
           collection: deps.mongoCollection,
@@ -41,7 +41,7 @@ export function createProviders(
         });
 
       case "memory":
-        return new InMemoryStorageProvider({
+        return createInMemoryStorageProvider({
           id: layer.id,
           layer: layer.id,
         });

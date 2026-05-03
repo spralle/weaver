@@ -9,7 +9,7 @@ export type {
 } from "./secret-provider.js";
 
 export type { SecretCacheOptions, SecretCacheEntry } from "./secret-cache.js";
-export { SecretCache } from "./secret-cache.js";
+export { createSecretCache, SecretCache } from "./secret-cache.js";
 
 export type {
   SecretAuditEntry,

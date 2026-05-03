@@ -75,7 +75,7 @@ export const DEFAULT_PLUGIN_MANAGEMENT_RATCHET_RULES: readonly RatchetRule[] = [
       "session",
       "device",
       "user",
-      "tenant",
+      "scope",
       "integrator",
       "module",
       "app",
@@ -90,11 +90,11 @@ function rankLayer(layer: string, layerOrder: readonly string[]): number {
     return rank;
   }
 
-  // Unknown dynamic scopes are evaluated between tenant and user.
-  const tenantRank = layerOrder.indexOf("tenant");
+  // Unknown dynamic scopes are evaluated between scope and user.
+  const scopeRank = layerOrder.indexOf("scope");
   const userRank = layerOrder.indexOf("user");
-  if (tenantRank >= 0 && userRank >= 0 && userRank > tenantRank) {
-    return tenantRank + 0.5;
+  if (scopeRank >= 0 && userRank >= 0 && userRank > scopeRank) {
+    return scopeRank + 0.5;
   }
 
   return Number.MAX_SAFE_INTEGER;

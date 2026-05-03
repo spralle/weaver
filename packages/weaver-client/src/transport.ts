@@ -1,4 +1,4 @@
-import type { ScopeDefinition, ScopeInstance } from "@weaver/config-types";
+import type { ScopeDefinition, ScopeInstance, WeaverErrorCode } from "@weaver/config-types";
 import type { ConfigDelta, GetOptions, ResolveOptions, Unsubscribe, ConfigSnapshot } from "./types.js";
 
 export interface WriteOptions {
@@ -10,7 +10,7 @@ export interface WriteOptions {
 export interface WriteResult {
   success: boolean;
   revision?: string;
-  error?: { code: string; message: string; details?: Record<string, unknown> };
+  error?: { code: WeaverErrorCode | string; message: string; details?: Record<string, unknown> };
 }
 
 export interface WeaverTransport {

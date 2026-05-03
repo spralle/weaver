@@ -16,6 +16,7 @@ export interface FileSystemProviderOptions {
   environmentOverlayPath?: string | undefined;
 }
 
+/** @see {@link createFileSystemStorageProvider} — prefer the factory function for consistency */
 export class FileSystemStorageProvider implements ConfigurationStorageProvider {
   readonly id: string;
   readonly layer: ConfigurationLayer | string;
@@ -115,4 +116,11 @@ export class FileSystemStorageProvider implements ConfigurationStorageProvider {
 
 function isNodeError(err: unknown): err is NodeJS.ErrnoException {
   return err instanceof Error && "code" in err;
+}
+
+/** Creates a file-system-backed storage provider instance. */
+export function createFileSystemStorageProvider(
+  options: FileSystemProviderOptions,
+): FileSystemStorageProvider {
+  return new FileSystemStorageProvider(options);
 }

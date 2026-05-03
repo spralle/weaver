@@ -15,6 +15,7 @@ export interface LocalStorageProviderOptions {
   storage?: Storage | undefined;
 }
 
+/** @see {@link createLocalStorageProvider} — prefer the factory function for consistency */
 export class LocalStorageProvider implements ConfigurationStorageProvider {
   readonly id: string;
   readonly layer: ConfigurationLayer | string;
@@ -142,4 +143,11 @@ export class LocalStorageProvider implements ConfigurationStorageProvider {
       return {};
     }
   }
+}
+
+/** Creates a localStorage-backed storage provider instance. */
+export function createLocalStorageProvider(
+  options: LocalStorageProviderOptions,
+): LocalStorageProvider {
+  return new LocalStorageProvider(options);
 }

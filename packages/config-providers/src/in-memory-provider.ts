@@ -13,6 +13,7 @@ export interface InMemoryProviderOptions {
   initialEntries?: Record<string, unknown> | undefined;
 }
 
+/** @see {@link createInMemoryStorageProvider} — prefer the factory function for consistency */
 export class InMemoryStorageProvider implements ConfigurationStorageProvider {
   readonly id: string;
   readonly layer: ConfigurationLayer | string;
@@ -40,4 +41,11 @@ export class InMemoryStorageProvider implements ConfigurationStorageProvider {
     delete this.entries[key];
     return { success: true };
   }
+}
+
+/** Creates an in-memory storage provider instance. */
+export function createInMemoryStorageProvider(
+  options: InMemoryProviderOptions,
+): InMemoryStorageProvider {
+  return new InMemoryStorageProvider(options);
 }

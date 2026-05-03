@@ -4,7 +4,7 @@ import type {
   ConfigurationStorageProvider,
   WriteResult,
 } from "@weaver/config-types";
-import { FileSystemStorageProvider } from "@weaver/config-server";
+import { createFileSystemStorageProvider, type FileSystemStorageProvider } from "@weaver/config-server";
 import type { GitManager } from "./git-manager.js";
 
 export interface GitStorageProviderOptions {
@@ -16,6 +16,7 @@ export interface GitStorageProviderOptions {
   writable?: boolean | undefined;
 }
 
+/** @see {@link createGitStorageProvider} — prefer the factory function for consistency */
 export class GitStorageProvider implements ConfigurationStorageProvider {
   readonly id: string;
   readonly layer: string;
@@ -40,7 +41,7 @@ export class GitStorageProvider implements ConfigurationStorageProvider {
       ? join(options.gitManager.localPath, options.environmentOverlayPath)
       : undefined;
 
-    this.fsp = new FileSystemStorageProvider({
+    this.fsp = createFileSystemStorageProvider({
       id: `${options.id}-fsp`,
       layer: options.layer,
       filePath: absoluteFilePath,
@@ -89,14 +90,31 @@ export class GitStorageProvider implements ConfigurationStorageProvider {
         : `config: ${this.dirtyKeys.length} changes in ${this.layer}`;
     this.dirtyKeys.length = 0;
     this.isDirty = false;
-    await this.gitManager.commitAndPush(summary, [this.filePath]);
+    const result = await this.gitManager.commitAndPush(summary, [this.filePath]);
+    if (!result.success) {
+      throw new Error(`Git flush failed: ${result.error}`);
+    }
   }
 
   async revert(toRevision: string, actor: string): Promise<{ revertedCommits: number }> {
-    return this.gitManager.revert(toRevision, actor);
+    const result = await this.gitManager.revert(toRevision, actor);
+    if (!result.success) {
+      throw new Error(`Git revert failed: ${result.error}`);
+    }
+    return result.data;
   }
 
   async refresh(): Promise<void> {
-    await this.gitManager.refresh();
+    const result = await this.gitManager.refresh();
+    if (!result.success) {
+      throw new Error(`Git refresh failed: ${result.error}`);
+    }
   }
+}
+
+/** Creates a Git-backed storage provider instance. */
+export function createGitStorageProvider(
+  options: GitStorageProviderOptions,
+): GitStorageProvider {
+  return new GitStorageProvider(options);
 }

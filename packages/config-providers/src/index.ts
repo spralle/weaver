@@ -5,6 +5,7 @@ export {
   createConfigurationService,
 } from "./configuration-service.js";
 export {
+  createInMemoryStorageProvider,
   type InMemoryProviderOptions,
   InMemoryStorageProvider,
 } from "./in-memory-provider.js";
@@ -19,6 +20,7 @@ export type { SecretIntegrationHandle, SecretIntegrationOptions } from "./secret
 export { createSecretIntegration } from "./secret-integration.js";
 
 export {
+  createLocalStorageProvider,
   LocalStorageProvider,
   type LocalStorageProviderOptions,
 } from "./local-storage-provider.js";

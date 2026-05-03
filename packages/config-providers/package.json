@@ -41,8 +41,7 @@
     "@weaver/config-types": "workspace:*",
     "@weaver/config-engine": "workspace:*",
     "@weaver/config-secrets": "workspace:*",
-    "@weaver/config-sessions": "workspace:*",
-    "@weaver/config-sync": "workspace:*"
+    "@weaver/config-sessions": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.8.3"

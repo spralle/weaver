@@ -5,13 +5,13 @@ import {
   validateOneWayRatchet,
 } from "../dist/index.js";
 
-const testLayerOrder = ["core","app","module","integrator","tenant","user","device","session"];
+const testLayerOrder = ["core","app","module","integrator","scope","user","device","session"];
 
 test("reports violation when higher-priority layer loosens policy", () => {
   const result = validateOneWayRatchet(
     [
       { layer: "core", values: { changePolicy: "full-pipeline" } },
-      { layer: "tenant", values: { changePolicy: "staging-gate" } },
+      { layer: "scope", values: { changePolicy: "staging-gate" } },
     ],
     DEFAULT_PLUGIN_MANAGEMENT_RATCHET_RULES,
     { layerOrder: testLayerOrder },
@@ -33,7 +33,7 @@ test("allows equal and tightening transitions", () => {
         },
       },
       {
-        layer: "tenant",
+        layer: "scope",
         values: {
           changePolicy: "staging-gate",
           visibility: "admin",
@@ -65,7 +65,7 @@ test("handles ordering gaps by comparing nearest defined values", () => {
     [
       { layer: "core", values: { changePolicy: "direct-allowed" } },
       { layer: "app", values: {} },
-      { layer: "tenant", values: { changePolicy: "staging-gate" } },
+      { layer: "scope", values: { changePolicy: "staging-gate" } },
       { layer: "user", values: {} },
       { layer: "session", values: { changePolicy: "full-pipeline" } },
     ],
@@ -79,8 +79,8 @@ test("handles ordering gaps by comparing nearest defined values", () => {
   );
   assert.equal(changePolicyEvaluations.length, 2);
   assert.equal(changePolicyEvaluations[0].fromLayer, "core");
-  assert.equal(changePolicyEvaluations[0].toLayer, "tenant");
-  assert.equal(changePolicyEvaluations[1].fromLayer, "tenant");
+  assert.equal(changePolicyEvaluations[0].toLayer, "scope");
+  assert.equal(changePolicyEvaluations[1].fromLayer, "scope");
   assert.equal(changePolicyEvaluations[1].toLayer, "session");
 });
 
@@ -88,7 +88,7 @@ test("blocked semantics are sticky by default", () => {
   const result = validateOneWayRatchet(
     [
       { layer: "core", values: { changePolicy: "direct-allowed" } },
-      { layer: "tenant", values: { changePolicy: "unknown-policy" } },
+      { layer: "scope", values: { changePolicy: "unknown-policy" } },
       { layer: "user", values: { changePolicy: "full-pipeline" } },
     ],
     DEFAULT_PLUGIN_MANAGEMENT_RATCHET_RULES,
@@ -108,7 +108,7 @@ test("blocked semantics can be non-sticky when configured", () => {
   const result = validateOneWayRatchet(
     [
       { layer: "core", values: { changePolicy: "direct-allowed" } },
-      { layer: "tenant", values: { changePolicy: "unknown-policy" } },
+      { layer: "scope", values: { changePolicy: "unknown-policy" } },
       { layer: "user", values: { changePolicy: "full-pipeline" } },
     ],
     DEFAULT_PLUGIN_MANAGEMENT_RATCHET_RULES,
@@ -129,9 +129,9 @@ test("blocked semantics can be non-sticky when configured", () => {
 test("maxOverrideLayer default rule enforces tighter ceiling", () => {
   const result = validateOneWayRatchet(
     [
-      { layer: "core", values: { maxOverrideLayer: "tenant" } },
-      { layer: "tenant", values: { maxOverrideLayer: "core" } },
-      { layer: "user", values: { maxOverrideLayer: "tenant" } },
+      { layer: "core", values: { maxOverrideLayer: "scope" } },
+      { layer: "scope", values: { maxOverrideLayer: "core" } },
+      { layer: "user", values: { maxOverrideLayer: "scope" } },
     ],
     DEFAULT_PLUGIN_MANAGEMENT_RATCHET_RULES,
     { layerOrder: testLayerOrder },

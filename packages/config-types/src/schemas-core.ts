@@ -17,9 +17,12 @@ export const scopeInstanceSchema = z.strictObject({
   value: z.string(),
 });
 
-export const tenantScopeHierarchySchema = z.strictObject({
+export const scopeHierarchySchema = z.strictObject({
   scopes: z.array(scopeDefinitionSchema),
 });
+
+/** @deprecated Use `scopeHierarchySchema` instead. */
+export const tenantScopeHierarchySchema = scopeHierarchySchema;
 
 export const configurationContextSchema = z.strictObject({
   scopePath: z.array(scopeInstanceSchema),
@@ -215,7 +218,7 @@ export const configurationAccessContextSchema = z.strictObject({
 });
 
 export const layerWriteConstraintSchema = z.strictObject({
-  scopeRestriction: z.enum(["own-tenant", "own-scope", "own-user"]).optional(),
+  scopeRestriction: z.enum(["own-scope", "own-user"]).optional(),
 });
 
 export const layerWritePolicySchema = z.strictObject({

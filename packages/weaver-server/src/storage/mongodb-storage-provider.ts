@@ -6,6 +6,7 @@ import type {
   ConfigurationStorageProvider,
   WriteResult,
 } from "@weaver/config-types";
+import { consoleLogger } from "../logger.js";
 
 export interface MongoDBStorageProviderOptions {
   id: string;
@@ -23,6 +24,7 @@ interface ConfigDocument {
   updatedAt: string;
 }
 
+/** @see {@link createMongoDBStorageProvider} — prefer the factory function for consistency */
 export class MongoDBStorageProvider implements ConfigurationStorageProvider {
   readonly id: string;
   readonly layer: string;
@@ -92,8 +94,23 @@ export class MongoDBStorageProvider implements ConfigurationStorageProvider {
       }
     });
 
+    changeStream.on("error", (err: unknown) => {
+      const message = err instanceof Error ? err.message : String(err);
+      consoleLogger.error(
+        `[weaver] MongoDB changeStream error for provider "${this.id}": ${message}`,
+      );
+      void changeStream.close();
+    });
+
     return () => {
       void changeStream.close();
     };
   }
+}
+
+/** Creates a MongoDB-backed storage provider instance. */
+export function createMongoDBStorageProvider(
+  options: MongoDBStorageProviderOptions,
+): MongoDBStorageProvider {
+  return new MongoDBStorageProvider(options);
 }

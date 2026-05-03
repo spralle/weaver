@@ -10,7 +10,7 @@ export interface ConfigurationAccessContext {
 }
 
 export interface LayerWriteConstraint {
-  scopeRestriction?: "own-tenant" | "own-scope" | "own-user" | undefined;
+  scopeRestriction?: "own-scope" | "own-user" | undefined;
 }
 
 export interface LayerWritePolicy {

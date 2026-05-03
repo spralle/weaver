@@ -149,14 +149,6 @@ describe("RestAdapter v1", () => {
     assert.ok(res.headers["Access-Control-Allow-Origin"]);
   });
 
-  test("admin stub routes return 501 with envelope", async () => {
-    const { adapter } = await setup();
-    const res = await adapter.handleRequest("POST", "/v1/admin/promote", req());
-    assert.equal(res.status, 501);
-    assertEnvelope(res.body);
-    assertV1Headers(res);
-  });
-
   test("scope routes return envelope", async () => {
     const { adapter } = await setup();
     const res = await adapter.handleRequest("GET", "/v1/scopes", req());
@@ -165,19 +157,6 @@ describe("RestAdapter v1", () => {
     assertV1Headers(res);
   });
 
-  test("session routes return 501 with envelope", async () => {
-    const { adapter } = await setup();
-    const res = await adapter.handleRequest("POST", "/v1/admin/sessions", req());
-    assert.equal(res.status, 501);
-    assertEnvelope(res.body);
-  });
-
-  test("events route returns 501 with envelope", async () => {
-    const { adapter } = await setup();
-    const res = await adapter.handleRequest("GET", "/v1/events", req());
-    assert.equal(res.status, 501);
-    assertEnvelope(res.body);
-  });
 
   test("ETag header present on all responses", async () => {
     const { adapter } = await setup();

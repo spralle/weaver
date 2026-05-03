@@ -216,8 +216,13 @@ export async function createConfigurationService(
     options.session !== undefined ? options.session : undefined;
 
   return {
+    /**
+     * Retrieves a configuration value by key.
+     * Trust boundary: stored values are `unknown` at runtime. The caller asserts
+     * the type via the generic parameter. Use a typed wrapper or runtime validator
+     * at consumption sites where type safety is critical.
+     */
     get<T>(key: string): T | undefined {
-      // Check secret shadow map first
       if (secretHandle?.hasSecret(key) === true) {
         return secretHandle.getResolved(key) as T | undefined;
       }
@@ -230,7 +235,6 @@ export async function createConfigurationService(
           mountMap,
           (k) => container.get(k),
         );
-        // Check if mounted target is itself a secret
         if (secretHandle !== undefined && resolution.isMounted) {
           const targetKey = resolution.chain[resolution.chain.length - 1] ?? key;
           if (secretHandle.hasSecret(targetKey)) {
@@ -243,6 +247,7 @@ export async function createConfigurationService(
       }
     },
 
+    /** Trust boundary: see `get<T>()` — caller asserts type at consumption site. */
     getWithDefault<T>(key: string, defaultValue: T): T {
       // Check secret shadow map first
       if (secretHandle?.hasSecret(key) === true) {
@@ -273,6 +278,7 @@ export async function createConfigurationService(
       }
     },
 
+    /** Trust boundary: see `get<T>()` — caller asserts type at consumption site. */
     getAtLayer<T>(
       layer: ConfigurationLayer | string,
       key: string,
@@ -281,6 +287,7 @@ export async function createConfigurationService(
       return entries[key] as T | undefined;
     },
 
+    /** Trust boundary: see `get<T>()` — caller asserts type at consumption site. */
     getForScope<T>(key: string, scopePath: ScopeInstance[]): T | undefined {
       const cache = options.scopeCache;
       if (cache !== undefined) {
