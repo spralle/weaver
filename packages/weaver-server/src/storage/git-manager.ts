@@ -35,7 +35,7 @@ export function createGitManager(options: GitManagerOptions): GitManager {
   let mutexChain: Promise<void> = Promise.resolve();
 
   function serialize<T>(fn: () => Promise<T>): Promise<T> {
-    const result = mutexChain.then(fn, fn);
+    const result = mutexChain.then(fn);
     mutexChain = result.then(
       () => {},
       () => {},
