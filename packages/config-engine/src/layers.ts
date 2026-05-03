@@ -30,7 +30,8 @@ export function resolveConfiguration(
       continue;
     }
 
-    entries = deepMerge(entries, layerEntry.entries);
+    const mergeFn = layerEntry.merge ?? deepMerge;
+    entries = mergeFn(entries, layerEntry.entries) as Record<string, unknown>;
 
     for (const key of layerKeys) {
       if (layerEntry.entries[key] !== undefined) {

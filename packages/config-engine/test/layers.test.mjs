@@ -158,6 +158,19 @@ test("resolveConfigurationWithCeiling emergency override bypasses ceiling", () =
   assert.equal(result.entries["ghost.app.zoom"], 10);
 });
 
+test("uses per-layer merge function when provided", () => {
+  const shallowReplace = (base, override) => ({ ...base, ...override });
+  const stack = {
+    layers: [
+      { layer: "defaults", entries: { nested: { a: 1, b: 2 } } },
+      { layer: "overrides", entries: { nested: { b: 3 } }, merge: shallowReplace },
+    ],
+  };
+  const result = resolveConfiguration(stack);
+  // shallowReplace spreads top-level keys, so nested is replaced entirely
+  assert.deepEqual(result.entries, { nested: { b: 3 } });
+});
+
 test("resolveConfigurationWithCeiling allows keys without schema", () => {
   const stack = {
     layers: [
