@@ -28,6 +28,9 @@
     "@weaver/config-types": "workspace:*",
     "@weaver/config-engine": "workspace:*",
     "@weaver/config-providers": "workspace:*",
+    "@weaver/config-server": "workspace:*",
+    "mongodb": "^6.12.0",
+    "simple-git": "^3.27.0",
     "zod": "^4.0.0"
   },
   "devDependencies": {
