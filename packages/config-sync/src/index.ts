@@ -13,3 +13,5 @@ export type {
   SyncDiagnostics,
   SyncRetryPolicy,
 } from "./types.js";
+
+export { MemoryDurableConfigCacheAdapter } from "./durable-cache-memory.js";

@@ -23,17 +23,17 @@ export type {
   LayerProvider,
 } from "./types/index.js";
 
-// logger
-export { consoleLogger } from "./logger.js";
-export type { WeaverLogger } from "./logger.js";
+// logger (from storage-provider-core)
+export { consoleLogger } from "@weaver/storage-provider-core";
+export type { WeaverLogger } from "@weaver/storage-provider-core";
 
-// storage
-export { createGitManager } from "./storage/index.js";
-export type { GitManager, GitManagerOptions } from "./storage/index.js";
-export { createGitStorageProvider, GitStorageProvider } from "./storage/index.js";
-export type { GitStorageProviderOptions } from "./storage/index.js";
-export { createMongoDBStorageProvider, MongoDBStorageProvider } from "./storage/index.js";
-export type { MongoDBStorageProviderOptions } from "./storage/index.js";
+// storage (from individual provider packages)
+export { createGitManager } from "@weaver/storage-provider-git";
+export type { GitManager, GitManagerOptions } from "@weaver/storage-provider-git";
+export { createGitStorageProvider } from "@weaver/storage-provider-git";
+export type { GitStorageProviderOptions } from "@weaver/storage-provider-git";
+export { createMongoDBStorageProvider } from "@weaver/storage-provider-mongodb";
+export type { MongoDBStorageProviderOptions } from "@weaver/storage-provider-mongodb";
 
 // bootstrap
 export { bootstrap } from "./bootstrap/index.js";
@@ -150,17 +150,17 @@ export type {
   AuthMiddlewareOptions,
 } from "./auth/index.js";
 
-// audit
-export { createAuditService } from "./audit/index.js";
+// audit (from config-audit)
+export { createAuditService } from "@weaver/config-audit";
 export type {
   AuditEntry,
   AuditService,
   AuditServiceOptions,
   ConfigAuditSink,
-} from "./audit/index.js";
-export { createStdoutAuditSink } from "./audit/index.js";
-export { createMongoAuditSink } from "./audit/index.js";
-export type { MongoAuditSinkOptions, MongoCollection } from "./audit/index.js";
+} from "@weaver/config-audit";
+export { createStdoutAuditSink } from "@weaver/config-audit";
+export { createMongoAuditSink } from "@weaver/config-audit";
+export type { MongoAuditSinkOptions, MongoCollection } from "@weaver/config-audit";
 
 // health & shutdown
 export { createHealthEndpoints } from "./health.js";

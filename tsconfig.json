@@ -4,10 +4,20 @@
     { "path": "packages/config-types" },
     { "path": "packages/config-engine" },
     { "path": "packages/config-sync" },
-    { "path": "packages/config-providers" },
-    { "path": "packages/config-server" },
     { "path": "packages/config-auth" },
+    { "path": "packages/config-audit" },
     { "path": "packages/config-policy" },
-    { "path": "packages/config-sessions" }
+    { "path": "packages/config-runtime" },
+    { "path": "packages/config-sessions" },
+    { "path": "packages/storage-provider-core" },
+    { "path": "packages/storage-provider-memory" },
+    { "path": "packages/storage-provider-fs" },
+    { "path": "packages/storage-provider-git" },
+    { "path": "packages/storage-provider-mongodb" },
+    { "path": "packages/storage-provider-local-storage" },
+    { "path": "packages/storage-provider-static-json" },
+    { "path": "packages/storage-provider-env-overlay" },
+    { "path": "packages/weaver-server" },
+    { "path": "packages/weaver-client" }
   ]
 }

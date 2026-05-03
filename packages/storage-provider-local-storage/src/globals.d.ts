@@ -1,5 +1,5 @@
 // Ambient type declarations for browser/Node cross-environment globals
-// config-providers operates in both browser and Node.js environments
+// storage-provider-local-storage operates in both browser and Node.js environments
 
 // Timer functions (available in both environments)
 declare function setTimeout(callback: () => void, ms: number): unknown;

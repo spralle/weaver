@@ -27,8 +27,12 @@
   "dependencies": {
     "@weaver/config-types": "workspace:*",
     "@weaver/config-engine": "workspace:*",
-    "@weaver/config-providers": "workspace:*",
-    "@weaver/config-server": "workspace:*",
+    "@weaver/config-audit": "workspace:*",
+    "@weaver/storage-provider-core": "workspace:*",
+    "@weaver/storage-provider-memory": "workspace:*",
+    "@weaver/storage-provider-mongodb": "workspace:*",
+    "@weaver/storage-provider-git": "workspace:*",
+    "@weaver/storage-provider-fs": "workspace:*",
     "zod": "^4.0.0"
   },
   "peerDependencies": {

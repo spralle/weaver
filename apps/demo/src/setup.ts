@@ -1,9 +1,7 @@
-import {
-  createConfigurationService,
-  InMemoryStorageProvider,
-  LocalStorageProvider,
-  StaticJsonStorageProvider,
-} from "@weaver/config-providers";
+import { createConfigurationService } from "@weaver/config-runtime";
+import { createInMemoryStorageProvider } from "@weaver/storage-provider-memory";
+import { createLocalStorageProvider } from "@weaver/storage-provider-local-storage";
+import { createStaticJsonStorageProvider } from "@weaver/storage-provider-static-json";
 import { createOverrideSessionProvider } from "@weaver/config-sessions";
 import { defineWeaver, Layers } from "@weaver/config-types";
 import {
@@ -39,56 +37,56 @@ export async function initService() {
     Layers.Ephemeral("session"),
   ] as const);
 
-  const coreProvider = new StaticJsonStorageProvider({
+  const coreProvider = createStaticJsonStorageProvider({
     id: "core-defaults",
     layer: "core",
     data: CORE_DEFAULTS,
   });
 
-  const appProvider = new StaticJsonStorageProvider({
+  const appProvider = createStaticJsonStorageProvider({
     id: "app-defaults",
     layer: "app",
     data: APP_DEFAULTS,
   });
 
-  const tenantProvider = new InMemoryStorageProvider({
+  const tenantProvider = createInMemoryStorageProvider({
     id: "tenant-config",
     layer: "tenant",
   });
 
-  const userProvider = new LocalStorageProvider({
+  const userProvider = createLocalStorageProvider({
     id: "user-prefs",
     layer: "user",
     storageKey: "weaver-demo-user",
   });
 
   // Country scope providers (no FR!)
-  const countryGB = new InMemoryStorageProvider({
+  const countryGB = createInMemoryStorageProvider({
     id: "country-gb",
     layer: "country:GB",
     initialEntries: COUNTRY_GB_DEFAULTS,
   });
 
-  const countryNL = new InMemoryStorageProvider({
+  const countryNL = createInMemoryStorageProvider({
     id: "country-nl",
     layer: "country:NL",
     initialEntries: COUNTRY_NL_DEFAULTS,
   });
 
   // Location scope providers
-  const locationGBDVR = new InMemoryStorageProvider({
+  const locationGBDVR = createInMemoryStorageProvider({
     id: "location-gbdvr",
     layer: "location:GBDVR",
     initialEntries: LOCATION_GBDVR_DEFAULTS,
   });
 
-  const locationFRCQF = new InMemoryStorageProvider({
+  const locationFRCQF = createInMemoryStorageProvider({
     id: "location-frcqf",
     layer: "location:FRCQF",
     initialEntries: LOCATION_FRCQF_DEFAULTS,
   });
 
-  const locationNLEUR = new InMemoryStorageProvider({
+  const locationNLEUR = createInMemoryStorageProvider({
     id: "location-nleur",
     layer: "location:NLEUR",
     initialEntries: LOCATION_NLEUR_DEFAULTS,

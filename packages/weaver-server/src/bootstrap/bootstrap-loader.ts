@@ -5,8 +5,8 @@ import type { SimpleGit } from "simple-git";
 import type { Collection } from "mongodb";
 import type { ConfigurationStorageProvider } from "@weaver/config-types";
 import { bootstrapConfigSchema } from "../types/bootstrap.js";
-import { createGitManager } from "../storage/git-manager.js";
-import type { GitManager } from "../storage/git-manager.js";
+import { createGitManager } from "@weaver/storage-provider-git";
+import type { GitManager } from "@weaver/storage-provider-git";
 import { resolveEnvVars } from "./env-resolver.js";
 import { createProviders } from "./layer-factory.js";
 

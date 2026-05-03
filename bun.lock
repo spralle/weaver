@@ -21,9 +21,12 @@
       "dependencies": {
         "@weaver/config-engine": "workspace:*",
         "@weaver/config-policy": "workspace:*",
-        "@weaver/config-providers": "workspace:*",
+        "@weaver/config-runtime": "workspace:*",
         "@weaver/config-sessions": "workspace:*",
         "@weaver/config-types": "workspace:*",
+        "@weaver/storage-provider-local-storage": "workspace:*",
+        "@weaver/storage-provider-memory": "workspace:*",
+        "@weaver/storage-provider-static-json": "workspace:*",
       },
       "devDependencies": {
         "typescript": "^5.8.3",
@@ -81,19 +84,6 @@
         "typescript": "^5.8.3",
       },
     },
-    "packages/config-providers": {
-      "name": "@weaver/config-providers",
-      "version": "0.0.0",
-      "dependencies": {
-        "@weaver/config-engine": "workspace:*",
-        "@weaver/config-types": "workspace:*",
-      },
-      "devDependencies": {
-        "@weaver/config-secrets": "workspace:*",
-        "@weaver/config-sessions": "workspace:*",
-        "typescript": "^5.8.3",
-      },
-    },
     "packages/config-runtime": {
       "name": "@weaver/config-runtime",
       "version": "0.0.0",
@@ -121,19 +111,6 @@
         "typescript": "^5.8.3",
       },
     },
-    "packages/config-server": {
-      "name": "@weaver/config-server",
-      "version": "0.0.0",
-      "dependencies": {
-        "@weaver/config-engine": "workspace:*",
-        "@weaver/config-types": "workspace:*",
-        "zod": "^4.0.0",
-      },
-      "devDependencies": {
-        "@types/node": "25.6.0",
-        "typescript": "^5.8.3",
-      },
-    },
     "packages/config-sessions": {
       "name": "@weaver/config-sessions",
       "version": "0.0.0",
@@ -149,6 +126,7 @@
       "version": "0.0.0",
       "dependencies": {
         "@weaver/config-types": "workspace:*",
+        "@weaver/storage-provider-core": "workspace:*",
       },
       "devDependencies": {
         "typescript": "^5.8.3",
@@ -291,10 +269,14 @@
       "name": "@weaver/weaver-server",
       "version": "0.0.0",
       "dependencies": {
+        "@weaver/config-audit": "workspace:*",
         "@weaver/config-engine": "workspace:*",
-        "@weaver/config-providers": "workspace:*",
-        "@weaver/config-server": "workspace:*",
         "@weaver/config-types": "workspace:*",
+        "@weaver/storage-provider-core": "workspace:*",
+        "@weaver/storage-provider-fs": "workspace:*",
+        "@weaver/storage-provider-git": "workspace:*",
+        "@weaver/storage-provider-memory": "workspace:*",
+        "@weaver/storage-provider-mongodb": "workspace:*",
         "zod": "^4.0.0",
       },
       "devDependencies": {
@@ -620,13 +602,9 @@
 
     "@weaver/config-policy": ["@weaver/config-policy@workspace:packages/config-policy"],
 
-    "@weaver/config-providers": ["@weaver/config-providers@workspace:packages/config-providers"],
-
     "@weaver/config-runtime": ["@weaver/config-runtime@workspace:packages/config-runtime"],
 
     "@weaver/config-secrets": ["@weaver/config-secrets@workspace:packages/config-secrets"],
-
-    "@weaver/config-server": ["@weaver/config-server@workspace:packages/config-server"],
 
     "@weaver/config-sessions": ["@weaver/config-sessions@workspace:packages/config-sessions"],
 
@@ -1018,8 +996,6 @@
 
     "@weaver/config-secrets/@types/node": ["@types/node@25.6.0", "", { "dependencies": { "undici-types": "~7.19.0" } }, "sha512-+qIYRKdNYJwY3vRCZMdJbPLJAtGjQBudzZzdzwQYkEPQd+PJGixUL5QfvCLDaULoLv+RhT3LDkwEfKaAkgSmNQ=="],
 
-    "@weaver/config-server/@types/node": ["@types/node@25.6.0", "", { "dependencies": { "undici-types": "~7.19.0" } }, "sha512-+qIYRKdNYJwY3vRCZMdJbPLJAtGjQBudzZzdzwQYkEPQd+PJGixUL5QfvCLDaULoLv+RhT3LDkwEfKaAkgSmNQ=="],
-
     "@weaver/weaver-client/@types/node": ["@types/node@25.6.0", "", { "dependencies": { "undici-types": "~7.19.0" } }, "sha512-+qIYRKdNYJwY3vRCZMdJbPLJAtGjQBudzZzdzwQYkEPQd+PJGixUL5QfvCLDaULoLv+RhT3LDkwEfKaAkgSmNQ=="],
 
     "@weaver/weaver-server/@types/node": ["@types/node@25.6.0", "", { "dependencies": { "undici-types": "~7.19.0" } }, "sha512-+qIYRKdNYJwY3vRCZMdJbPLJAtGjQBudzZzdzwQYkEPQd+PJGixUL5QfvCLDaULoLv+RhT3LDkwEfKaAkgSmNQ=="],
@@ -1037,8 +1013,6 @@
     "@weaver/config-policy/@types/node/undici-types": ["undici-types@7.19.2", "", {}, "sha512-qYVnV5OEm2AW8cJMCpdV20CDyaN3g0AjDlOGf1OW4iaDEx8MwdtChUp4zu4H0VP3nDRF/8RKWH+IPp9uW0YGZg=="],
 
     "@weaver/config-secrets/@types/node/undici-types": ["undici-types@7.19.2", "", {}, "sha512-qYVnV5OEm2AW8cJMCpdV20CDyaN3g0AjDlOGf1OW4iaDEx8MwdtChUp4zu4H0VP3nDRF/8RKWH+IPp9uW0YGZg=="],
-
-    "@weaver/config-server/@types/node/undici-types": ["undici-types@7.19.2", "", {}, "sha512-qYVnV5OEm2AW8cJMCpdV20CDyaN3g0AjDlOGf1OW4iaDEx8MwdtChUp4zu4H0VP3nDRF/8RKWH+IPp9uW0YGZg=="],
 
     "@weaver/weaver-client/@types/node/undici-types": ["undici-types@7.19.2", "", {}, "sha512-qYVnV5OEm2AW8cJMCpdV20CDyaN3g0AjDlOGf1OW4iaDEx8MwdtChUp4zu4H0VP3nDRF/8RKWH+IPp9uW0YGZg=="],
 

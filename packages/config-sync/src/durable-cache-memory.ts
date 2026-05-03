@@ -6,6 +6,7 @@ import type {
   SyncQueuedMutation,
   SyncQueueMetadata,
 } from "@weaver/config-types";
+import { cloneValue } from "@weaver/storage-provider-core";
 
 interface InFlightRequest {
   requestId: string;
@@ -15,13 +16,6 @@ interface InFlightRequest {
 interface QueueState {
   pending: SyncQueuedMutation[];
   inFlight: InFlightRequest[];
-}
-
-function cloneValue<T>(value: T): T {
-  if (typeof structuredClone === "function") {
-    return structuredClone(value);
-  }
-  return JSON.parse(JSON.stringify(value)) as T;
 }
 
 function emptySnapshot(): ConfigurationLayerData {

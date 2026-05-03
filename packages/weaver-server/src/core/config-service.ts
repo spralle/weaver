@@ -6,8 +6,8 @@ import type {
   WriteResult,
 } from "@weaver/config-types";
 import type { ConfigSnapshot, ConfigDelta } from "../types/index.js";
-import type { WeaverLogger } from "../logger.js";
-import { consoleLogger } from "../logger.js";
+import type { WeaverLogger } from "@weaver/storage-provider-core";
+import { consoleLogger } from "@weaver/storage-provider-core";
 import { isScopedLayer, buildScopePathString } from "./scope-utils.js";
 import { deepGet, deepSet, deepRemove, deepMerge } from "@weaver/config-engine";
 

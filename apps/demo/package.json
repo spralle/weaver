@@ -10,7 +10,10 @@
   "dependencies": {
     "@weaver/config-types": "workspace:*",
     "@weaver/config-engine": "workspace:*",
-    "@weaver/config-providers": "workspace:*",
+    "@weaver/config-runtime": "workspace:*",
+    "@weaver/storage-provider-memory": "workspace:*",
+    "@weaver/storage-provider-static-json": "workspace:*",
+    "@weaver/storage-provider-local-storage": "workspace:*",
     "@weaver/config-sessions": "workspace:*",
     "@weaver/config-policy": "workspace:*"
   },
