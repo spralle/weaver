@@ -14,7 +14,7 @@ describe("LocalTransport integration", () => {
     const transport = createLocalTransport({ snapshot });
     const client = await createWeaverClient({ transport, scopeLoading: "eager" });
     expect(client.get("db.host")).toBe("localhost");
-    expect(client.get("feature.x", { scopePath: [{ scopeId: "tenant", value: "t1" }] })).toBe(true);
+    expect(client.get("feature.x", [{ scopeId: "tenant", value: "t1" }])).toBe(true);
     await client.close();
   });
 

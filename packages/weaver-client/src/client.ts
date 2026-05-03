@@ -1,6 +1,6 @@
-import type { ScopeInstance } from "@weaver/config-types";
-import type { ConfigDelta, ConfigSnapshot, GetOptions, Unsubscribe } from "./types.js";
-import type { WeaverTransport } from "./transport.js";
+import type { ScopeDefinition, ScopeInstance } from "@weaver/config-types";
+import type { ConfigDelta, ConfigSnapshot, ConfigurationInspection, Unsubscribe } from "./types.js";
+import type { WeaverTransport, WriteOptions, WriteResult } from "./transport.js";
 import type { WeaverClientPersistence } from "./persistence.js";
 import { createScopeLoader, type ScopeLoadingMode } from "./scope-manager.js";
 
@@ -12,13 +12,40 @@ export interface WeaverClientOptions {
 }
 
 export interface WeaverClient {
-  get(key: string, options?: GetOptions): unknown;
-  getNamespace(prefix: string, options?: GetOptions): Record<string, unknown>;
+  // ── Reads (sync, from local state) ──
+  get<T>(key: string): T | undefined;
+  get<T>(key: string, scopePath: ScopeInstance[]): T | undefined;
+  getWithDefault<T>(key: string, defaultValue: T): T;
+  getWithDefault<T>(key: string, defaultValue: T, scopePath: ScopeInstance[]): T;
+  getAtLayer<T>(layer: string, key: string): T | undefined;
+  getNamespace(prefix: string): Record<string, unknown>;
+  getNamespace(prefix: string, scopePath: ScopeInstance[]): Record<string, unknown>;
+  getForScope<T>(key: string, scopePath: ScopeInstance[]): T | undefined;
+
+  // ── Inspection (async, server round-trip) ──
+  inspect<T>(key: string): Promise<ConfigurationInspection<T>>;
+
+  // ── Writes (async, goes to server) ──
+  set(key: string, value: unknown, options?: WriteOptions): Promise<WriteResult>;
+  remove(key: string, options?: WriteOptions): Promise<WriteResult>;
+
+  // ── Scopes ──
+  listScopes(): Promise<ScopeDefinition[]>;
+  listScopeValues(scopeId: string, parentScope?: ScopeInstance[]): Promise<string[]>;
+  preloadScope(scopePath: ScopeInstance[]): Promise<void>;
+
+  // ── Change tracking ──
   onChange(pattern: string, handler: (changes: ConfigDelta[]) => void): Unsubscribe;
   onRestartRequired(handler: () => void): Unsubscribe;
-  preloadScope(scopePath: ScopeInstance[]): Promise<void>;
+  readonly pendingRestart: boolean;
+
+  // ── Health ──
   readonly revision: string;
   readonly connected: boolean;
+  readonly lastSyncedAt: Date | null;
+  readonly staleSince: Date | null;
+
+  // ── Lifecycle ──
   close(): Promise<void>;
 }
 
@@ -41,14 +68,16 @@ export async function createWeaverClient(options: WeaverClientOptions): Promise<
   let baseState: Record<string, unknown> = {};
   let revision = "";
   let connected = false;
+  let lastSyncedAt: Date | null = null;
+  let staleSince: Date | null = null;
+  let pendingRestart = false;
 
   // Try loading from cache first
-  let snapshot: ConfigSnapshot | null = null;
   if (persistence) {
-    snapshot = await persistence.load(namespace ?? "default");
-    if (snapshot) {
-      baseState = { ...snapshot.entries };
-      revision = snapshot.revision;
+    const cached = await persistence.load(namespace ?? "default");
+    if (cached) {
+      baseState = { ...cached.entries };
+      revision = cached.revision;
     }
   }
 
@@ -56,7 +85,7 @@ export async function createWeaverClient(options: WeaverClientOptions): Promise<
   const freshSnapshot = await transport.resolveAll();
   baseState = { ...freshSnapshot.entries };
   revision = freshSnapshot.revision;
-  snapshot = freshSnapshot;
+  lastSyncedAt = new Date();
 
   if (persistence) {
     await persistence.save(namespace ?? "default", freshSnapshot);
@@ -73,7 +102,6 @@ export async function createWeaverClient(options: WeaverClientOptions): Promise<
 
   // Subscribe to deltas
   const unsubTransport = transport.subscribe((delta: ConfigDelta) => {
-    // Apply to base or scope state
     if (!delta.layer.includes(":")) {
       if (delta.action === "set") {
         baseState[delta.key] = delta.value;
@@ -81,9 +109,9 @@ export async function createWeaverClient(options: WeaverClientOptions): Promise<
         delete baseState[delta.key];
       }
     }
-    // Scoped deltas would need scope path parsing — for now just update base
 
-    // Fire matching onChange listeners
+    lastSyncedAt = new Date();
+
     for (const [pattern, handlers] of changeListeners) {
       if (matchGlob(pattern, delta.key)) {
         for (const handler of handlers) {
@@ -96,19 +124,33 @@ export async function createWeaverClient(options: WeaverClientOptions): Promise<
   connected = true;
 
   const client: WeaverClient = {
-    get(key: string, opts?: GetOptions): unknown {
+    get<T>(key: string, scopePath?: ScopeInstance[]): T | undefined {
       const resolvedKey = applyNamespace(namespace, key);
-      if (opts?.scopePath) {
-        const scopeState = scopeLoader.getScopeState(opts.scopePath);
-        return scopeState?.[resolvedKey];
+      if (scopePath) {
+        const scopeState = scopeLoader.getScopeState(scopePath);
+        return scopeState?.[resolvedKey] as T | undefined;
       }
-      return baseState[resolvedKey];
+      return baseState[resolvedKey] as T | undefined;
     },
 
-    getNamespace(prefix: string, opts?: GetOptions): Record<string, unknown> {
+    getWithDefault<T>(key: string, defaultValue: T, scopePath?: ScopeInstance[]): T {
+      const value = client.get<T>(key, scopePath as ScopeInstance[]);
+      return value !== undefined ? value : defaultValue;
+    },
+
+    // Per-layer reads require local layer tracking; returns undefined for v1
+    getAtLayer<T>(_layer: string, _key: string): T | undefined {
+      return undefined;
+    },
+
+    getForScope<T>(key: string, scopePath: ScopeInstance[]): T | undefined {
+      return client.get<T>(key, scopePath);
+    },
+
+    getNamespace(prefix: string, scopePath?: ScopeInstance[]): Record<string, unknown> {
       const resolvedPrefix = applyNamespace(namespace, prefix);
-      const source = opts?.scopePath
-        ? scopeLoader.getScopeState(opts.scopePath) ?? {}
+      const source = scopePath
+        ? scopeLoader.getScopeState(scopePath) ?? {}
         : baseState;
       const result: Record<string, unknown> = {};
       for (const [key, value] of Object.entries(source)) {
@@ -117,6 +159,30 @@ export async function createWeaverClient(options: WeaverClientOptions): Promise<
         }
       }
       return result;
+    },
+
+    async inspect<T>(key: string): Promise<ConfigurationInspection<T>> {
+      const resolvedKey = applyNamespace(namespace, key);
+      const raw = await transport.inspect(resolvedKey);
+      return raw as ConfigurationInspection<T>;
+    },
+
+    async set(key: string, value: unknown, opts?: WriteOptions): Promise<WriteResult> {
+      const resolvedKey = applyNamespace(namespace, key);
+      return transport.set(resolvedKey, value, opts);
+    },
+
+    async remove(key: string, opts?: WriteOptions): Promise<WriteResult> {
+      const resolvedKey = applyNamespace(namespace, key);
+      return transport.remove(resolvedKey, opts);
+    },
+
+    async listScopes(): Promise<ScopeDefinition[]> {
+      return transport.listScopes();
+    },
+
+    async listScopeValues(scopeId: string, parentScope?: ScopeInstance[]): Promise<string[]> {
+      return transport.listScopeValues(scopeId, parentScope);
     },
 
     onChange(pattern: string, handler: (changes: ConfigDelta[]) => void): Unsubscribe {
@@ -140,6 +206,10 @@ export async function createWeaverClient(options: WeaverClientOptions): Promise<
       await scopeLoader.preloadScope(scopePath);
     },
 
+    get pendingRestart(): boolean {
+      return pendingRestart;
+    },
+
     get revision(): string {
       return revision;
     },
@@ -148,9 +218,18 @@ export async function createWeaverClient(options: WeaverClientOptions): Promise<
       return connected;
     },
 
+    get lastSyncedAt(): Date | null {
+      return lastSyncedAt;
+    },
+
+    get staleSince(): Date | null {
+      return staleSince;
+    },
+
     async close(): Promise<void> {
       unsubTransport();
       connected = false;
+      staleSince = new Date();
       await transport.close();
     },
   };

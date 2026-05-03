@@ -67,8 +67,8 @@ describe("createWeaverClient", () => {
     const client = await createWeaverClient({ transport, scopeLoading: "eager" });
     const scopeA = [{ scopeId: "tenant", value: "tenant-a" }];
     const scopeB = [{ scopeId: "tenant", value: "tenant-b" }];
-    expect(client.get("feature.x", { scopePath: scopeA })).toBe(true);
-    expect(client.get("feature.x", { scopePath: scopeB })).toBe(false);
+    expect(client.get("feature.x", scopeA)).toBe(true);
+    expect(client.get("feature.x", scopeB)).toBe(false);
     await client.close();
   });
 
@@ -97,9 +97,9 @@ describe("createWeaverClient", () => {
     const { transport } = createMockTransport();
     const client = await createWeaverClient({ transport, scopeLoading: "lazy" });
     const scopeA = [{ scopeId: "tenant", value: "tenant-a" }];
-    expect(client.get("feature.x", { scopePath: scopeA })).toBeUndefined();
+    expect(client.get("feature.x", scopeA)).toBeUndefined();
     await client.preloadScope(scopeA);
-    expect(client.get("feature.x", { scopePath: scopeA })).toBe(true);
+    expect(client.get("feature.x", scopeA)).toBe(true);
     await client.close();
   });
 
