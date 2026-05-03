@@ -79,39 +79,51 @@ export type {
   SyncStatus,
   WriteResult,
 } from "./providers.js";
-// schemas-core.ts — Zod schemas for core types
+// schemas-layers.ts — Zod schemas for layer and context types
 export {
-  configurationSchemaFragmentSchema,
-  configChangePolicySchema,
-  configReloadBehaviorSchema,
-  configurationAccessContextSchema,
   configurationContextSchema,
   configurationLayerDataSchema,
   configurationLayerEntrySchema,
   configurationLayerSchema,
   configurationLayerStackSchema,
-  configurationPropertySchemaSchema,
+  scopeDefinitionSchema,
+  scopeHierarchySchema,
+  scopeInstanceSchema,
+  tenantScopeHierarchySchema,
+} from "./schemas-layers.js";
+// schemas-policy.ts — Zod schemas for change policy, visibility, and role types
+export {
+  configChangePolicySchema,
+  configReloadBehaviorSchema,
+  configurationJsonSchemaTypeSchema,
   configurationRoleSchema,
   configurationVisibilitySchema,
-  expressionValidationResultSchema,
-  godModeSessionSchema,
-  layerWriteConstraintSchema,
-  layerWritePolicySchema,
-  overrideSessionSchema,
   propertySessionModeSchema,
-  scopeDefinitionSchema,
-  scopeInstanceSchema,
-  serviceAccessPolicySchema,
-  serviceConfigurationDeclarationSchema,
+  weaverPropertyExtensionsSchema,
+} from "./schemas-policy.js";
+// schemas-property.ts — Zod schemas for configuration property schema types
+export { configurationPropertySchemaSchema } from "./schemas-property.js";
+// schemas-expression.ts — Zod schemas for expression validation types
+export { expressionValidationResultSchema } from "./schemas-expression.js";
+// schemas-session.ts — Zod schemas for session types
+export {
+  godModeSessionSchema,
+  overrideSessionSchema,
   sessionActivationRequestSchema,
   sessionDeactivationResultSchema,
   sessionLayerMetadataSchema,
   sessionModeSchema,
   sessionTypeSchema,
-  scopeHierarchySchema,
-  tenantScopeHierarchySchema,
-  weaverPropertyExtensionsSchema,
-} from "./schemas-core.js";
+} from "./schemas-session.js";
+// schemas-access.ts — Zod schemas for access context and write policy types
+export {
+  configurationAccessContextSchema,
+  configurationSchemaFragmentSchema,
+  layerWriteConstraintSchema,
+  layerWritePolicySchema,
+  serviceAccessPolicySchema,
+  serviceConfigurationDeclarationSchema,
+} from "./schemas-access.js";
 // schemas-promotion.ts — Zod schemas for promotion types
 export {
   configAuditEntrySchema,

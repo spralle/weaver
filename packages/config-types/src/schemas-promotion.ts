@@ -1,7 +1,7 @@
 // Zod schemas for promotion pipeline, audit, and emergency override types
 
 import { z } from "zod";
-import { scopeInstanceSchema } from "./schemas-core.js";
+import { scopeInstanceSchema } from "./schemas-layers.js";
 
 export const promotionStatusSchema = z.enum([
   "pending",
