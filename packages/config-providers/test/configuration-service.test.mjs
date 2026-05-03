@@ -333,3 +333,106 @@ test("get remains unchanged and can include out-of-scope dynamic providers", asy
     "nb",
   );
 });
+
+// --- Mount resolution integration tests ---
+
+test("get() resolves ConfigMount to source value", async () => {
+  const provider = new StaticJsonStorageProvider({
+    id: "core",
+    layer: "core",
+    data: {
+      "app.db.host": "real-host",
+      "app.alias.host": { _weaver: "mount", source: "app.db.host" },
+    },
+  });
+  const svc = await createConfigurationService({ providers: [provider], weaverConfig: testConfig });
+  assert.equal(svc.get("app.alias.host"), "real-host");
+});
+
+test("get() resolves chained mounts A→B→C", async () => {
+  const provider = new StaticJsonStorageProvider({
+    id: "core",
+    layer: "core",
+    data: {
+      "a": { _weaver: "mount", source: "b" },
+      "b": { _weaver: "mount", source: "c" },
+      "c": "final-value",
+    },
+  });
+  const svc = await createConfigurationService({ providers: [provider], weaverConfig: testConfig });
+  assert.equal(svc.get("a"), "final-value");
+});
+
+test("get() returns undefined for mount cycle", async () => {
+  const provider = new StaticJsonStorageProvider({
+    id: "core",
+    layer: "core",
+    data: {
+      "a": { _weaver: "mount", source: "b" },
+      "b": { _weaver: "mount", source: "a" },
+    },
+  });
+  const svc = await createConfigurationService({ providers: [provider], weaverConfig: testConfig });
+  assert.equal(svc.get("a"), undefined);
+});
+
+test("getWithDefault() falls back on mount error", async () => {
+  const provider = new StaticJsonStorageProvider({
+    id: "core",
+    layer: "core",
+    data: {
+      "x": { _weaver: "mount", source: "y" },
+      "y": { _weaver: "mount", source: "x" },
+    },
+  });
+  const svc = await createConfigurationService({ providers: [provider], weaverConfig: testConfig });
+  assert.equal(svc.getWithDefault("x", "fallback"), "fallback");
+});
+
+test("getNamespace() resolves mounts in namespace", async () => {
+  const provider = new StaticJsonStorageProvider({
+    id: "core",
+    layer: "core",
+    data: {
+      "ns.real": "value",
+      "ns.alias": { _weaver: "mount", source: "ns.real" },
+      "ns.plain": 42,
+    },
+  });
+  const svc = await createConfigurationService({ providers: [provider], weaverConfig: testConfig });
+  const ns = svc.getNamespace("ns");
+  assert.equal(ns["ns.alias"], "value");
+  assert.equal(ns["ns.plain"], 42);
+});
+
+test("inspect() includes mountChain for mounted key", async () => {
+  const provider = new StaticJsonStorageProvider({
+    id: "core",
+    layer: "core",
+    data: {
+      "a": { _weaver: "mount", source: "b" },
+      "b": "resolved",
+    },
+  });
+  const svc = await createConfigurationService({ providers: [provider], weaverConfig: testConfig });
+  const inspection = svc.inspect("a");
+  assert.deepEqual(inspection.mountChain, ["a", "b"]);
+  assert.equal(inspection.effectiveValue, "resolved");
+});
+
+test("mount map rebuilds on layer change", async () => {
+  const mem = new InMemoryStorageProvider({
+    id: "session",
+    layer: "session",
+    initialEntries: {
+      "k": { _weaver: "mount", source: "target" },
+      "target": "mounted-value",
+    },
+  });
+  const svc = await createConfigurationService({ providers: [mem], weaverConfig: testConfig });
+  assert.equal(svc.get("k"), "mounted-value");
+
+  // Remove the mount by overwriting with a plain value
+  svc.set("k", "direct-value");
+  assert.equal(svc.get("k"), "direct-value");
+});

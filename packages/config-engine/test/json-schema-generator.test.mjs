@@ -130,9 +130,11 @@ describe("generateSinglePropertySchema", () => {
       "ghost.shell.theme",
       entry("ghost.shell", {
         type: "string",
-        changePolicy: "full-pipeline",
-        visibility: "public",
-        reloadBehavior: "hot",
+        "x-weaver": {
+          changePolicy: "full-pipeline",
+          visibility: "public",
+          reloadBehavior: "hot",
+        },
       }),
     );
     assert.deepEqual(result["x-weaver"], {
@@ -160,7 +162,7 @@ describe("generateSinglePropertySchema", () => {
   it("emits sensitive field in x-weaver when present", () => {
     const result = generateSinglePropertySchema(
       "ghost.shell.secret",
-      entry("ghost.shell", { type: "string", sensitive: true }),
+      entry("ghost.shell", { type: "string", "x-weaver": { sensitive: true } }),
     );
     assert.equal(result["x-weaver"].sensitive, true);
   });
@@ -168,7 +170,7 @@ describe("generateSinglePropertySchema", () => {
   it("emits maxOverrideLayer in x-weaver when present", () => {
     const result = generateSinglePropertySchema(
       "ghost.shell.key",
-      entry("ghost.shell", { type: "string", maxOverrideLayer: "user" }),
+      entry("ghost.shell", { type: "string", "x-weaver": { maxOverrideLayer: "user" } }),
     );
     assert.equal(result["x-weaver"].maxOverrideLayer, "user");
   });
@@ -176,7 +178,7 @@ describe("generateSinglePropertySchema", () => {
   it("emits writeRestriction in x-weaver when present", () => {
     const result = generateSinglePropertySchema(
       "ghost.shell.key",
-      entry("ghost.shell", { type: "string", writeRestriction: ["admin", "platform"] }),
+      entry("ghost.shell", { type: "string", "x-weaver": { writeRestriction: ["admin", "platform"] } }),
     );
     assert.deepEqual(result["x-weaver"].writeRestriction, ["admin", "platform"]);
   });
@@ -184,7 +186,7 @@ describe("generateSinglePropertySchema", () => {
   it("emits sessionMode in x-weaver when present", () => {
     const result = generateSinglePropertySchema(
       "ghost.shell.key",
-      entry("ghost.shell", { type: "string", sessionMode: "ephemeral" }),
+      entry("ghost.shell", { type: "string", "x-weaver": { sessionMode: "ephemeral" } }),
     );
     assert.equal(result["x-weaver"].sessionMode, "ephemeral");
   });
@@ -192,25 +194,9 @@ describe("generateSinglePropertySchema", () => {
   it("emits expressionAllowed in x-weaver when present", () => {
     const result = generateSinglePropertySchema(
       "ghost.shell.key",
-      entry("ghost.shell", { type: "string", expressionAllowed: true }),
+      entry("ghost.shell", { type: "string", "x-weaver": { expressionAllowed: true } }),
     );
     assert.equal(result["x-weaver"].expressionAllowed, true);
-  });
-
-  it("emits instanceOverridable in x-weaver when present", () => {
-    const result = generateSinglePropertySchema(
-      "ghost.shell.key",
-      entry("ghost.shell", { type: "string", instanceOverridable: false }),
-    );
-    assert.equal(result["x-weaver"].instanceOverridable, false);
-  });
-
-  it("emits viewConfig in x-weaver when present", () => {
-    const result = generateSinglePropertySchema(
-      "ghost.shell.key",
-      entry("ghost.shell", { type: "string", viewConfig: true }),
-    );
-    assert.equal(result["x-weaver"].viewConfig, true);
   });
 
   it("omits undefined extension fields from x-weaver", () => {

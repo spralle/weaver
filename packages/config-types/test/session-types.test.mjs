@@ -53,7 +53,7 @@ test("configurationPropertySchemaSchema accepts sessionMode field", () => {
   const schema = {
     type: "string",
     default: "dark",
-    sessionMode: "allowed",
+    "x-weaver": { sessionMode: "allowed" },
   };
   const result = configurationPropertySchemaSchema.safeParse(schema);
   assert.equal(result.success, true);
@@ -61,14 +61,14 @@ test("configurationPropertySchemaSchema accepts sessionMode field", () => {
 
 test("configurationPropertySchemaSchema accepts all sessionMode values", () => {
   for (const mode of ["allowed", "restricted", "blocked"]) {
-    const schema = { type: "boolean", sessionMode: mode };
+    const schema = { type: "boolean", "x-weaver": { sessionMode: mode } };
     const result = configurationPropertySchemaSchema.safeParse(schema);
     assert.equal(result.success, true, `Expected sessionMode "${mode}" to be accepted`);
   }
 });
 
 test("configurationPropertySchemaSchema rejects invalid sessionMode", () => {
-  const schema = { type: "string", sessionMode: "invalid" };
+  const schema = { type: "string", "x-weaver": { sessionMode: "invalid" } };
   const result = configurationPropertySchemaSchema.safeParse(schema);
   assert.equal(result.success, false);
 });
