@@ -5,6 +5,8 @@ import type { WeaverConfigService } from "./config-service.js";
 export interface SessionManagerOptions {
   configService: WeaverConfigService;
   auditService: AuditService;
+  /** Sweep interval in milliseconds (default 60000). Set to 0 to disable. */
+  sweepIntervalMs?: number;
 }
 
 export interface OverrideSessionRequest {
@@ -29,6 +31,7 @@ export interface SessionManager {
   getSession(sessionId: string): OverrideSessionInfo | undefined;
   setOverride(sessionId: string, key: string, value: unknown, actor: string): Promise<void>;
   listActiveSessions(): OverrideSessionInfo[];
+  dispose(): void;
 }
 
 function generateId(): string {
@@ -45,6 +48,24 @@ function isExpired(session: OverrideSessionInfo): boolean {
 export function createSessionManager(options: SessionManagerOptions): SessionManager {
   const { auditService } = options;
   const sessions = new Map<string, OverrideSessionInfo>();
+  const sweepIntervalMs = options.sweepIntervalMs ?? 60_000;
+
+  let sweepTimer: ReturnType<typeof setInterval> | undefined;
+  if (sweepIntervalMs > 0) {
+    sweepTimer = setInterval(() => sweepExpired(), sweepIntervalMs);
+    sweepTimer.unref();
+  }
+
+  function sweepExpired(): number {
+    let swept = 0;
+    for (const [id, session] of sessions) {
+      if (isExpired(session)) {
+        sessions.delete(id);
+        swept++;
+      }
+    }
+    return swept;
+  }
 
   return {
     async activate(request: OverrideSessionRequest): Promise<OverrideSessionInfo> {
@@ -132,6 +153,13 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
         }
       }
       return active;
+    },
+
+    dispose(): void {
+      if (sweepTimer) {
+        clearInterval(sweepTimer);
+        sweepTimer = undefined;
+      }
     },
   };
 }
