@@ -74,14 +74,16 @@ export interface ConfigurationPropertySchema {
   $ref?: undefined;
   $defs?: undefined;
 
-  expressionAllowed?: boolean | undefined;
-  changePolicy?: ConfigChangePolicy | undefined;
-  visibility?: ConfigurationVisibility | undefined;
+  "x-weaver"?: WeaverPropertyExtensions | undefined;
+}
+
+export interface WeaverPropertyExtensions {
   sensitive?: boolean | undefined;
+  visibility?: ConfigurationVisibility | undefined;
+  changePolicy?: ConfigChangePolicy | undefined;
+  reloadBehavior?: ConfigReloadBehavior | undefined;
+  expressionAllowed?: boolean | undefined;
   maxOverrideLayer?: ConfigurationLayer | undefined;
   writeRestriction?: ReadonlyArray<ConfigurationRole> | undefined;
-  viewConfig?: boolean | undefined;
-  instanceOverridable?: boolean | undefined;
-  reloadBehavior?: ConfigReloadBehavior | undefined;
   sessionMode?: PropertySessionMode | undefined;
 }

@@ -101,9 +101,10 @@ export function createStateContainer(
 
     getNamespace(prefix: string): Record<string, unknown> {
       const dotPrefix = `${prefix}.`;
+      const bracketPrefix = `${prefix}[`;
       const result: Record<string, unknown> = {};
       for (const key of Object.keys(resolvedEntries)) {
-        if (key.startsWith(dotPrefix)) {
+        if (key.startsWith(dotPrefix) || key.startsWith(bracketPrefix)) {
           result[key] = resolvedEntries[key];
         }
       }

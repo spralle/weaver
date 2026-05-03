@@ -89,7 +89,7 @@ test("onChange() returns unsubscribe function", () => {
 test("pendingRestart becomes true when restart-required key changes", () => {
   const mock = createMockConfigService({});
   const schemaMap = new Map([
-    ["port", { type: "number", reloadBehavior: "restart-required" }],
+    ["port", { type: "number", "x-weaver": { reloadBehavior: "restart-required" } }],
   ]);
   const svc = createServiceConfigurationService({
     configService: mock,
@@ -104,7 +104,7 @@ test("pendingRestart becomes true when restart-required key changes", () => {
 test("onRestartRequired() listener fires on restart-requiring change", () => {
   const mock = createMockConfigService({});
   const schemaMap = new Map([
-    ["port", { type: "number", reloadBehavior: "restart-required" }],
+    ["port", { type: "number", "x-weaver": { reloadBehavior: "restart-required" } }],
   ]);
   const svc = createServiceConfigurationService({
     configService: mock,
@@ -120,7 +120,7 @@ test("onRestartRequired() listener fires on restart-requiring change", () => {
 test("onRestartRequired() unsubscribe works", () => {
   const mock = createMockConfigService({});
   const schemaMap = new Map([
-    ["port", { type: "number", reloadBehavior: "restart-required" }],
+    ["port", { type: "number", "x-weaver": { reloadBehavior: "restart-required" } }],
   ]);
   const svc = createServiceConfigurationService({
     configService: mock,
@@ -139,7 +139,7 @@ test("onRestartRequired() unsubscribe works", () => {
 test("pendingRestart stays false when hot-reload key changes", () => {
   const mock = createMockConfigService({});
   const schemaMap = new Map([
-    ["theme", { type: "string", reloadBehavior: "hot" }],
+    ["theme", { type: "string", "x-weaver": { reloadBehavior: "hot" } }],
   ]);
   const svc = createServiceConfigurationService({
     configService: mock,
@@ -153,7 +153,7 @@ test("pendingRestart stays false when hot-reload key changes", () => {
 test("rolling-restart keys also trigger pendingRestart", () => {
   const mock = createMockConfigService({});
   const schemaMap = new Map([
-    ["workers", { type: "number", reloadBehavior: "rolling-restart" }],
+    ["workers", { type: "number", "x-weaver": { reloadBehavior: "rolling-restart" } }],
   ]);
   const svc = createServiceConfigurationService({
     configService: mock,

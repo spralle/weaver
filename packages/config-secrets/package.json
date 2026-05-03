@@ -1,14 +1,14 @@
 {
-  "name": "@weaver/config-providers",
+  "name": "@weaver/config-secrets",
   "version": "0.0.0",
-  "description": "Storage provider implementations and the configuration service factory for Weaver",
+  "description": "Server-side secret resolution for Weaver configuration",
   "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/spralle/weaver.git",
-    "directory": "packages/config-providers"
+    "directory": "packages/config-secrets"
   },
-  "homepage": "https://github.com/spralle/weaver/tree/main/packages/config-providers#readme",
+  "homepage": "https://github.com/spralle/weaver/tree/main/packages/config-secrets#readme",
   "bugs": {
     "url": "https://github.com/spralle/weaver/issues"
   },
@@ -16,10 +16,8 @@
     "weaver",
     "configuration",
     "config",
-    "layered",
-    "providers",
-    "storage",
-    "service"
+    "secrets",
+    "keyvault"
   ],
   "type": "module",
   "exports": {
@@ -38,13 +36,12 @@
     "lint": "biome check ."
   },
   "dependencies": {
-    "@weaver/config-types": "workspace:*",
-    "@weaver/config-engine": "workspace:*",
-    "@weaver/config-secrets": "workspace:*",
-    "@weaver/config-sessions": "workspace:*",
-    "@weaver/config-sync": "workspace:*"
+    "@azure/identity": "4.13.1",
+    "@azure/keyvault-secrets": "4.11.1",
+    "@weaver/config-types": "workspace:*"
   },
   "devDependencies": {
+    "@types/node": "25.6.0",
     "typescript": "^5.8.3"
   }
 }

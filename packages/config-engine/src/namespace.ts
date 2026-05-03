@@ -1,5 +1,7 @@
 // Namespace utilities for configuration key management
 
+import { buildPath, parsePath } from "./path.js";
+
 /**
  * Combines a namespace and a relative key with a dot separator.
  * e.g., qualifyKey("app.vesselView", "map.defaultZoom") → "app.vesselView.map.defaultZoom"
@@ -51,33 +53,45 @@ const SEGMENT_PATTERN = /^[a-zA-Z][a-zA-Z0-9]*$/;
 
 /**
  * Validates a fully-qualified configuration key format.
- * Must have 3-5 dot-separated segments, each starting with a letter and alphanumeric.
+ * Must have 3-5 segments (bracket-aware), each plain segment alphanumeric.
+ * Compound segments (from brackets) must have dot-separated sub-segments that are each valid.
  */
 export function validateKeyFormat(key: string): {
   valid: boolean;
   error?: string;
 } {
-  const segments = key.split(".");
+  let segments: readonly string[];
+  try {
+    segments = parsePath(key);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { valid: false, error: message };
+  }
 
   if (segments.length < 3 || segments.length > 5) {
     return {
       valid: false,
-      error: `Key "${key}" must have 3-5 dot-separated segments, got ${String(segments.length)}`,
+      error: `Key "${key}" must have 3-5 segments, got ${String(segments.length)}`,
     };
   }
 
   for (const segment of segments) {
-    if (segment.length === 0) {
-      return {
-        valid: false,
-        error: `Key "${key}" contains an empty segment`,
-      };
-    }
-    if (!SEGMENT_PATTERN.test(segment)) {
-      return {
-        valid: false,
-        error: `Key "${key}" segment "${segment}" must start with a letter and contain only alphanumeric characters`,
-      };
+    const subSegments = segment.includes(".")
+      ? segment.split(".")
+      : [segment];
+    for (const sub of subSegments) {
+      if (sub.length === 0) {
+        return {
+          valid: false,
+          error: `Key "${key}" contains an empty segment`,
+        };
+      }
+      if (!SEGMENT_PATTERN.test(sub)) {
+        return {
+          valid: false,
+          error: `Key "${key}" segment "${sub}" must start with a letter and contain only alphanumeric characters`,
+        };
+      }
     }
   }
 
@@ -87,8 +101,9 @@ export function validateKeyFormat(key: string): {
 /**
  * Extracts the namespace (first two segments) from a fully-qualified key.
  * "app.vesselView.map.zoom" → "app.vesselView"
+ * "lynx.plugins[ghost.settings.panel].retentionDays" → "lynx.plugins"
  */
 export function extractNamespace(fullyQualifiedKey: string): string {
-  const segments = fullyQualifiedKey.split(".");
-  return `${segments[0]}.${segments[1]}`;
+  const segments = parsePath(fullyQualifiedKey);
+  return buildPath(segments.slice(0, 2));
 }
