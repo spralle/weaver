@@ -1576,6 +1576,494 @@ until migrated. After migration window: v1 is removed.
 Non-breaking additions (new operations) do not require a version bump —
 old clients simply don't call the new operations.
 
+## Addendum B: Architectural Redesign
+
+The following items (B.1–B.9) capture binding architectural decisions made after the original ADR and Addendum A were written. They are the result of deep analysis of the existing codebase and industry research across Consul, etcd, Azure App Configuration, LaunchDarkly, SpiceDB, OpenFGA, and Ory Keto. Each item explicitly states which original ADR sections it supersedes.
+
+---
+
+### B.1 Scope-Only Model — Kill Tenant Abstraction
+
+**Severity**: Critical
+
+**Supersedes**: ADR sections 9.3, 14, A.7, A.15
+
+**Decision**: Replace all `tenantId` / `tenantScope` / `TenantManager` references with a generic scope model built on `ScopeInstance[]` and `ScopeDefinition` — types that already exist in `@weaver/config-types` but are underused.
+
+**Context**: The layer naming convention already works generically. Providers named `tenant:acme`, `site:oslo`, `user:u123` encode scope via `{scopeId}:{value}`. The codebase special-cases `tenant` throughout — `isTenantLayer()`, `extractTenantId()`, `warmTenant()`, `TENANT_NOT_FOUND` — but the underlying resolution engine treats all scoped layers uniformly. Tenant is just one scope dimension.
+
+**What changes**:
+
+| Location | Original ADR | Redesign |
+|---|---|---|
+| `ConfigurationContext` | `tenantId: string` + `scopePath: ScopeInstance[]` | `scopePath: ScopeInstance[]` only |
+| `ConfigSnapshot` | `{ platform, tenants: Record<string, ...> }` | `{ entries: Record<string, unknown>, scopes: Record<string, Record<string, Record<string, unknown>>>, revision, timestamp }` — scopes keyed by scope path string (e.g. `"tenant:stenaline"`, `"tenant:stenaline/site:oslo"`) |
+| `WeaverConfigService` methods | `options?: { tenantId?: string }` | `options?: { scopePath?: ScopeInstance[] }` |
+| `WeaverTransport.resolveAll` | `ResolveOptions { tenantId?: string }` | `ResolveOptions { scopePath?: ScopeInstance[] }` |
+| `TenantManager` (server) | Scans `tenant:*` providers | `ScopeManager` — scans `{scopeId}:*` for any scope dimension |
+| `TenantManager` (client) | `warmTenant(id)` | `preloadScope(scopePath: ScopeInstance[])` |
+| `ResolutionContext` | `tenantId` + `scopeInstances` | `scopeInstances` only |
+| REST routes | `?tenantId=` | `?scope=tenant:stenaline,site:oslo` |
+| `isTenantLayer()` / `extractTenantId()` | Hardcoded `"tenant:"` prefix | Generic `parseScopeLayer(layer) → { scopeId, value }` |
+| Error codes | `TENANT_NOT_FOUND`, `TENANT_NOT_LOADED` | `SCOPE_NOT_FOUND`, `SCOPE_NOT_LOADED` |
+| Server provisioning | `provisionTenant` / `deprovisionTenant` | `provisionScope` / `deprovisionScope` |
+
+**Scope loading strategies** replace tenant loading modes:
+
+```typescript
+const config = createWeaverClient({
+  scopeLoading: "lazy",  // load on first getForScope(), cache after
+  // or "eager" — load all known scope values on startup
+  // or { strategy: "eager", scopes: ["tenant"] } — eager for specific scope types
+});
+
+// Pre-load specific scope path
+await config.preloadScope([
+  { scopeId: "tenant", value: "stenaline" },
+  { scopeId: "site", value: "gothenburg" },
+]);
+```
+
+**Rationale**: `ScopeInstance` and `ScopeDefinition` already exist in `@weaver/config-types`. The resolution engine already handles arbitrary scope layers. The only thing that special-cases tenant is the surrounding infrastructure — manager classes, error codes, client convenience methods, and REST parameters. Removing the special case eliminates a category of code that would need to be duplicated for every new scope dimension (site, region, user, environment group).
+
+---
+
+### B.2 Namespace Auto-Prefix — Kill serviceId
+
+**Severity**: Critical
+
+**Supersedes**: ADR sections 8.1, 8.2, 9.1, 9.2, A.1
+
+**Decision**: Remove `serviceId` from all transport methods and REST paths. Replace with `namespace` — a key prefix that the client auto-applies.
+
+**Context**: `serviceId` is currently a no-op on the server — accepted as `_serviceId` (underscored, unused). The server returns ALL keys regardless of the `serviceId` passed. It should never have been a parameter on transport methods. What services actually need is key namespacing — "my keys live under `services.accounts.*`" — which is a client-side concern.
+
+**Client construction**:
+
+```typescript
+const config = createWeaverClient({
+  namespace: "services.accounts",   // just a key prefix, not a magic ID
+  transport: createHttpTransport({ baseUrl: "https://weaver.internal" }),
+});
+
+// Reads are auto-prefixed
+config.get("auth.ttl");           // → resolves "services.accounts.auth.ttl"
+
+// Absolute path breaks out (for declared cross-namespace reads)
+config.get("/platform.features.mfa");  // → resolves "platform.features.mfa"
+```
+
+**Transport interface change**: All `WeaverTransport` methods lose the `serviceId` parameter:
+
+```typescript
+interface WeaverTransport {
+  resolveAll(options?: ResolveOptions): Promise<ConfigSnapshot>;
+  get(key: string, options?: GetOptions): Promise<unknown>;
+  // ... etc
+}
+```
+
+**Access control**: The server enforces access through `ServiceAccessPolicy.allowedPaths` — the client asks for keys, the server filters by what the caller's JWT identity is allowed to read. Namespace is a client convenience, not a security boundary.
+
+**Rationale**: Removing a parameter that is universally ignored on the server eliminates a false contract. Namespace-as-prefix is how Consul, etcd, and Azure App Configuration handle multi-service key spaces — the key space is flat, and services use prefixes by convention, not by API parameter.
+
+---
+
+### B.3 World-Class REST API
+
+**Severity**: Critical
+
+**Supersedes**: ADR section 8.2
+
+**Decision**: Redesign the REST API following industry best practices from Consul KV, etcd v3, Azure App Configuration, LaunchDarkly, and Zanzibar-family systems.
+
+**Context**: The original REST API had path asymmetry (reads by `serviceId`, writes by layer/environment), no API versioning, and no standard concurrency control. The redesign uses a flat key space with query parameters, consistent response envelopes, and ETags.
+
+**Endpoint design**:
+
+```
+# ── Config reads ──────────────────────────────────────────
+GET /v1/config                                    → all config (admin only)
+GET /v1/config?prefix=services.accounts           → filter by prefix
+GET /v1/config?prefix=services.accounts&scope=tenant:stenaline,site:oslo
+GET /v1/config/{key}                              → single key value
+GET /v1/config/{key}?scope=tenant:stenaline       → scoped value
+GET /v1/config/{key}?inspect                      → layer provenance
+GET /v1/config/{key}?layer=platform               → value at specific layer
+
+# ── Config writes ─────────────────────────────────────────
+PUT    /v1/config/{key}                           → set (default write layer)
+PUT    /v1/config/{key}?layer=tenant:stenaline    → explicit layer
+PUT    /v1/config/{key}?env=staging               → explicit environment
+DELETE /v1/config/{key}                           → remove (default layer)
+DELETE /v1/config/{key}?layer=platform            → explicit layer
+
+# ── Change streaming (SSE) ────────────────────────────────
+GET /v1/events                                    → all changes
+GET /v1/events?prefix=services.accounts           → filtered
+GET /v1/events?prefix=services.accounts&scope=tenant:stenaline
+GET /v1/events?since=rev-42                       → resume from revision
+
+# ── Scopes ────────────────────────────────────────────────
+GET /v1/scopes                                    → list scope definitions
+GET /v1/scopes/{scopeId}                          → list values for a scope
+GET /v1/scopes/{scopeId}?parent=tenant:stenaline  → filtered by parent
+
+# ── Admin ─────────────────────────────────────────────────
+POST   /v1/admin/promote                          → promote across environments
+POST   /v1/admin/rollback                         → revert to revision
+POST   /v1/admin/schemas                          → register service schema
+GET    /v1/admin/schemas/{namespace}              → get schema
+POST   /v1/admin/scopes/{scopeId}                 → provision scope value
+DELETE /v1/admin/scopes/{scopeId}/{value}          → deprovision
+
+# ── Sessions (emergency overrides) ────────────────────────
+POST   /v1/admin/sessions                         → activate override session
+GET    /v1/admin/sessions/active                   → current session
+DELETE /v1/admin/sessions/active                   → deactivate
+```
+
+**Response envelope** (consistent across all endpoints):
+
+```json
+{
+  "data": { ... },
+  "meta": { "revision": "rev-42", "timestamp": "2026-05-03T..." }
+}
+```
+
+**Headers**:
+- `ETag: "rev-42"` on every response
+- `If-Match: "rev-42"` for CAS on writes → `409 Conflict` on mismatch
+- `Cache-Control: no-cache`
+
+**Default write layer** inferred from caller identity:
+- Service identity → `platform` layer
+- User identity → `user` layer
+- Admin identity → `platform` layer (overridable via `?layer=`)
+- Can be overridden in `ServiceAccessPolicy`
+
+Same for environment — defaults to server's `WEAVER_ENVIRONMENT`, overridable via `?env=`.
+
+**Design principles adopted**:
+
+| Principle | Source | Applied As |
+|---|---|---|
+| Flat key space, prefix queries | Consul, etcd, Azure | `/v1/config/{key}` + `?prefix=` |
+| ETags on every response | Azure App Configuration | `ETag: "rev-42"` header |
+| CAS via If-Match | Azure, Consul | `If-Match` on writes |
+| SSE with snapshot/patch/checkpoint events | LaunchDarkly | `event: snapshot`, `event: change`, `event: checkpoint` |
+| Resumable watch via cursor | SpiceDB, etcd | `?since=rev-42` on SSE |
+| Consistent response envelope | Universal | `{ data, meta: { revision, timestamp } }` |
+| API versioning in path | Azure | `/v1/` prefix |
+| Scope enumeration via reflection | SpiceDB, OpenFGA | `/v1/scopes/{scopeId}` |
+| Default write target from identity | AWS AppConfig | Server infers layer from JWT role |
+
+**Rationale**: The original API's path-based `serviceId` routing conflated client identity with key namespacing. Industry consensus is flat key space + prefix filtering + identity-based access control. The `/v1/` prefix enables non-breaking API evolution. The response envelope and ETag pattern are table stakes for production configuration APIs.
+
+---
+
+### B.4 WeaverTransport Write Operations
+
+**Severity**: Critical
+
+**Supersedes**: ADR section 9.1
+
+**Decision**: Add `set()` and `remove()` to `WeaverTransport`. The original ADR defined `WeaverTransport` as read-only. This blocks config-sync consolidation (B.6) and WeaverClient write capabilities (B.5).
+
+**Revised interface**:
+
+```typescript
+interface WeaverTransport {
+  // ── Reads (unchanged) ──
+  resolveAll(options?: ResolveOptions): Promise<ConfigSnapshot>;
+  get(key: string, options?: GetOptions): Promise<unknown>;
+  getNamespace(prefix: string, options?: GetOptions): Promise<Record<string, unknown>>;
+  inspect(key: string): Promise<ConfigurationInspection>;
+  subscribe(handler: (delta: ConfigDelta) => void, options?: SubscribeOptions): Unsubscribe;
+
+  // ── Writes (NEW) ──
+  set(key: string, value: unknown, options?: WriteOptions): Promise<WriteResult>;
+  remove(key: string, options?: WriteOptions): Promise<WriteResult>;
+
+  // ── Scopes (NEW) ──
+  listScopes(): Promise<ScopeDefinition[]>;
+  listScopeValues(scopeId: string, parentScope?: ScopeInstance[]): Promise<string[]>;
+
+  // ── Admin (unchanged) ──
+  registerSchema(declaration: ServiceConfigurationDeclaration, environment: string): Promise<void>;
+
+  // ── Lifecycle ──
+  close(): Promise<void>;
+}
+
+interface WriteOptions {
+  layer?: string;         // default: inferred from identity on server
+  environment?: string;   // default: server's current environment
+  ifRevision?: string;    // optimistic concurrency (CAS)
+}
+
+interface WriteResult {
+  success: boolean;
+  revision?: string;      // new revision after write
+  error?: WeaverError;
+}
+```
+
+All three transport implementations (`ScompWeaverTransport`, `HttpWeaverTransport`, `LocalTransport`) implement the full interface. `LocalTransport` delegates writes to the in-process `ConfigurationService`.
+
+Note: `serviceId` is removed from all method signatures per B.2.
+
+**Rationale**: A read-only transport forces config-sync to maintain a parallel write path, and prevents WeaverClient from offering write operations for admin UIs. Adding writes to the transport unifies the data path.
+
+---
+
+### B.5 Revised WeaverClient Interface
+
+**Severity**: Critical
+
+**Supersedes**: ADR sections 9.2, 9.3, 9.4
+
+**Decision**: Redesign WeaverClient to use `@weaver/config-types` (not parallel types), add write operations, scope-aware reads, admin capabilities, and generics.
+
+**Context**: The existing WeaverClient defines its own `ConfigDelta`, `ConfigSnapshot`, `GetOptions` in a local `types.ts`. These duplicate types from `@weaver/config-types` and will drift. Client-specific concerns (persistence options, transport selection) stay local; shared domain types must be imported.
+
+**Revised interface**:
+
+```typescript
+interface WeaverClient {
+  // ── Reads (sync, from local state) ──
+  get<T>(key: string): T | undefined;
+  get<T>(key: string, scopePath: ScopeInstance[]): T | undefined;
+  getWithDefault<T>(key: string, defaultValue: T): T;
+  getWithDefault<T>(key: string, defaultValue: T, scopePath: ScopeInstance[]): T;
+  getAtLayer<T>(layer: string, key: string): T | undefined;
+  getNamespace(prefix: string): Record<string, unknown>;
+  getNamespace(prefix: string, scopePath: ScopeInstance[]): Record<string, unknown>;
+  getForScope<T>(key: string, scopePath: ScopeInstance[]): T | undefined;
+
+  // ── Inspection (async, server round-trip) ──
+  inspect<T>(key: string): Promise<ConfigurationInspection<T>>;
+
+  // ── Writes (async, goes to server) ──
+  set(key: string, value: unknown, options?: WriteOptions): Promise<WriteResult>;
+  remove(key: string, options?: WriteOptions): Promise<WriteResult>;
+
+  // ── Scopes ──
+  listScopes(): Promise<ScopeDefinition[]>;
+  listScopeValues(scopeId: string, parentScope?: ScopeInstance[]): Promise<string[]>;
+  preloadScope(scopePath: ScopeInstance[]): Promise<void>;
+
+  // ── Change tracking ──
+  onChange(pattern: string, handler: (changes: ConfigDelta[]) => void): Unsubscribe;
+  onRestartRequired(handler: () => void): Unsubscribe;
+  readonly pendingRestart: boolean;
+
+  // ── Health ──
+  readonly revision: string;
+  readonly connected: boolean;
+  readonly lastSyncedAt: Date | null;
+  readonly staleSince: Date | null;
+
+  // ── Lifecycle ──
+  close(): Promise<void>;
+}
+```
+
+**Key changes from original ADR**:
+
+- No `serviceId` parameter — namespace auto-prefix handles this (B.2)
+- `warmTenant()` → `preloadScope(scopePath)` (B.1)
+- `tenantMode` → `scopeLoading` (B.1)
+- Generics `<T>` on all read methods (aligns with `ConfigurationService`)
+- `getWithDefault<T>()`, `getForScope<T>()`, `getAtLayer<T>()` added (from `ConfigurationService`)
+- `set()` and `remove()` for write operations (enables admin UI)
+- `listScopes()`, `listScopeValues()` for scope enumeration (B.7)
+- `inspect<T>()` for admin/debugging (layer provenance)
+- Health properties: `connected`, `lastSyncedAt`, `staleSince` (was deferred to v2 in original ADR, now v1)
+- All types imported from `@weaver/config-types` — no parallel type definitions
+
+**One client, not separate SDKs**: Admin operations (`getAtLayer`, `set`, `remove`, session ops) are gated by JWT role on the server, not by separate client classes. A regular service calling `set()` gets `FORBIDDEN` if its policy doesn't allow writes.
+
+**Rationale**: The original client interface was designed before the transport had write capabilities and before the scope model was generalized. The revised interface aligns with `ConfigurationService`'s method signatures (generics, `getWithDefault`, `getAtLayer`) and eliminates the type duplication problem identified in A.1.
+
+---
+
+### B.6 config-sync Over WeaverTransport
+
+**Severity**: Important
+
+**Supersedes**: ADR A.1 (re: config-sync composition)
+
+**Decision**: config-sync should use `WeaverTransport` as its backing transport, not a separate `ConfigSyncTransport` interface. A thin adapter bridges the interface gap.
+
+**Context**: config-sync currently defines `ConfigSyncTransport` with `pull({cursor})`, `push({mutations[]})`, and `ack({requestId})`. With write operations now on `WeaverTransport` (B.4), these map cleanly:
+
+| config-sync needs | WeaverTransport provides | Adapter strategy |
+|---|---|---|
+| `pull({cursor})` → delta changes | `resolveAll()` → full snapshot | Snapshot diff against local state |
+| `push({mutations[]})` → per-mutation accept/reject | `set()` / `remove()` (B.4) | Loop over mutations |
+| `ack({requestId})` → confirm receipt | Nothing needed | No-op (server has no transaction to release) |
+
+**Adapter implementation**:
+
+```typescript
+function createWeaverSyncTransport(transport: WeaverTransport): ConfigSyncTransport {
+  return {
+    async pull(cursor) {
+      const snapshot = await transport.resolveAll();
+      return diffAgainstLocal(snapshot, cursor);
+    },
+    async push(mutations) {
+      const results = [];
+      for (const mutation of mutations) {
+        if (mutation.action === "set") {
+          results.push(await transport.set(mutation.key, mutation.value));
+        } else {
+          results.push(await transport.remove(mutation.key));
+        }
+      }
+      return results;
+    },
+    async ack() { /* no-op */ },
+  };
+}
+```
+
+**Trade-off on conflict detection**: config-sync has per-key `baseRevision` conflict detection. The server tracks a global revision, not per-key revisions. `WriteResult` returns `{ success, revision }` with a global revision.
+
+**Decision**: Use global revision for optimistic concurrency. This is sufficient because config writes are low-frequency. Per-key revision tracking (like Azure App Configuration / etcd) can be added later when multi-writer admin tools require it.
+
+**Rationale**: Maintaining two parallel transport abstractions (`WeaverTransport` and `ConfigSyncTransport`) that talk to the same server creates unnecessary indirection and duplicated connection management. The adapter pattern lets config-sync consume WeaverTransport without changing config-sync's internal architecture.
+
+---
+
+### B.7 Scope Enumeration API
+
+**Severity**: Important
+
+**Not in original ADR** — this is net-new capability.
+
+**Decision**: Add scope enumeration to both server and client. Clients need to discover available scope values (e.g., "which tenants exist?", "which sites does this tenant have?").
+
+**Server API**:
+
+```
+GET /v1/scopes                                → { definitions: ScopeDefinition[] }
+GET /v1/scopes/tenant                         → { values: ["stenaline", "dfds", "viking"] }
+GET /v1/scopes/site?parent=tenant:stenaline   → { values: ["gothenburg", "oslo"] }
+```
+
+**scomp operations**:
+
+| Operation | Type | Purpose |
+|---|---|---|
+| `listScopes` | request | List scope definitions (what dimensions exist) |
+| `listScopeValues` | request | List values for a scope (optionally filtered by parent) |
+
+**WeaverClient methods**:
+
+```typescript
+client.listScopes(): Promise<ScopeDefinition[]>;
+client.listScopeValues(scopeId: string, parentScope?: ScopeInstance[]): Promise<string[]>;
+```
+
+**Server implementation** — `ScopeManager` (replaces `TenantManager`):
+
+```typescript
+function listScopeValues(scopeId: string): string[] {
+  return providers
+    .filter(p => p.layer.startsWith(`${scopeId}:`))
+    .map(p => p.layer.slice(scopeId.length + 1));
+}
+```
+
+The data already exists implicitly — scope values are derivable from provider layer names. `ScopeDefinition.parentScopeId` enables hierarchical filtering (e.g., `site` values under a specific `tenant`).
+
+**Rationale**: Inspired by SpiceDB's `LookupResources` and OpenFGA's `ListObjects` — answer "what's available?" through schema reflection, not data queries. Admin UIs and onboarding flows need to enumerate scopes without hardcoding known values.
+
+---
+
+### B.8 SSE Event Model
+
+**Severity**: Important
+
+**Supersedes**: ADR section 8.3
+
+**Decision**: Adopt the LaunchDarkly/SpiceDB Watch pattern for SSE streaming with three event types and resumable cursors.
+
+**Context**: The original SSE design was a simple delta stream with no reconnection protocol. Clients had to call `resolveAll()` on reconnect to re-establish state, creating a thundering-herd risk on server restarts.
+
+**Endpoint**:
+
+```
+GET /v1/events?prefix=services.accounts&scope=tenant:stenaline&since=rev-42
+```
+
+**Event types**:
+
+```
+event: snapshot
+data: {"entries":{"auth.ttl":3600,"db.host":"prod.internal"},"revision":"rev-45"}
+
+event: change
+data: {"key":"auth.ttl","value":7200,"action":"set","revision":"rev-46","layer":"platform","environment":"production","timestamp":"2026-05-03T12:00:00Z"}
+
+event: checkpoint
+data: {"revision":"rev-46"}
+```
+
+- **`snapshot`** — full state on first connect or when client is too far behind to catch up via deltas
+- **`change`** — individual key change with full provenance (same shape as `ConfigDelta`)
+- **`checkpoint`** — periodic keepalive with current revision (keeps connection alive, gives client a resumption point)
+
+**Resumable streaming**: `?since=rev-42` enables reconnection without full re-fetch. On reconnect, the client sends its last known revision. If the server can provide deltas from that point, it sends `change` events. If not (revision too old, or server restart), it sends a full `snapshot` event first.
+
+This replaces the original "client must call `resolveAll` on reconnect" model. Clients still CAN call `resolveAll` explicitly, but the SSE endpoint handles reconnection gracefully on its own.
+
+**Rationale**: LaunchDarkly's streaming SDK and SpiceDB's `Watch` API both use this three-event pattern. It eliminates the thundering-herd problem on reconnect, provides natural keepalive via checkpoints, and gives clients a single connection that handles both initial state and ongoing updates.
+
+---
+
+### B.9 ETag/CAS Pattern
+
+**Severity**: Important
+
+**Not in original ADR** — this is net-new capability.
+
+**Decision**: Adopt the Azure App Configuration / Consul pattern of ETag-based optimistic concurrency on all endpoints.
+
+**Every response includes**:
+
+```
+ETag: "rev-42"
+```
+
+**Write operations accept**:
+
+```
+If-Match: "rev-42"     → CAS: only write if current revision matches
+If-None-Match: "*"     → only write if key doesn't exist (create-only)
+```
+
+**On mismatch**: `409 Conflict` with body:
+
+```json
+{
+  "data": null,
+  "meta": { "revision": "rev-43", "timestamp": "..." },
+  "error": { "code": "REVISION_CONFLICT", "message": "Expected revision rev-42, current is rev-43" }
+}
+```
+
+New error code `REVISION_CONFLICT` added to `WeaverErrorCode`.
+
+**Revision model**: This uses **global revision** (not per-key). The revision is a Git commit hash (for Git-backed layers) or an auto-incrementing counter (for MongoDB layers). This is sufficient for v1 where config writes are low-frequency and typically single-writer.
+
+Per-key revision tracking (like Azure App Configuration's per-key ETags) is a future enhancement for multi-writer scenarios.
+
+**Rationale**: Optimistic concurrency control is table stakes for any configuration API that supports writes. Without it, concurrent admin operations silently overwrite each other. The ETag/If-Match pattern is an HTTP standard (RFC 7232) and is used by Azure App Configuration, Consul, and etcd's revision-based watches. Global revision is the simplest correct implementation and matches the existing `ConfigSnapshot.revision` field.
+
 ## Consequences
 
 - New `@weaver/weaver-server` package: central config server with Git + MongoDB storage, scomp/REST/SSE transports, JWT auth, promotion engine, rollback API, pluggable audit
@@ -1591,3 +2079,4 @@ old clients simply don't call the new operations.
 - All existing packages (`config-engine`, `config-providers`, `config-secrets`, `config-policy`) remain unchanged — weaver-server builds on top of them
 - Addendum A.1–A.20: 20 gap analysis deltas addressing package composition, write operations, Git concurrency, error handling, validation, shutdown, lifecycle management, security, and developer experience
 - Existing packages (`config-server`, `config-sync`, `config-sessions`, `config-auth`) are composed into weaver-server/weaver-client, not superseded — see addendum A.1
+- Addendum B.1–B.9: 9 architectural redesign deltas addressing scope model generalization, namespace auto-prefix, REST API redesign, transport write operations, WeaverClient interface revision, config-sync consolidation, scope enumeration, SSE event model, and ETag/CAS concurrency control
