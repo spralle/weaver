@@ -6,6 +6,8 @@ export type {
   PackageJsonInput,
 } from "./contract-derivation.js";
 export { deriveContractFromPackageJson } from "./contract-derivation.js";
+// deep.ts — Deep object path utilities
+export { deepGet, deepRemove, deepSet } from "./deep.js";
 // json-schema-generator.ts — JSON Schema generation
 export type {
   JsonSchemaDocument,
@@ -15,7 +17,6 @@ export {
   generateJsonSchema,
   generateSinglePropertySchema,
 } from "./json-schema-generator.js";
-
 // layers.ts — Layer resolution engine
 export type { ResolvedConfiguration } from "./layers.js";
 export {
@@ -23,8 +24,6 @@ export {
   resolveConfiguration,
   resolveConfigurationWithCeiling,
 } from "./layers.js";
-// deep.ts — Deep object path utilities
-export { deepGet, deepSet, deepRemove } from "./deep.js";
 // merge.ts — Deep merge utility
 export { deepMerge } from "./merge.js";
 // namespace.ts — Namespace utilities

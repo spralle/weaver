@@ -76,9 +76,7 @@ export function validateKeyFormat(key: string): {
   }
 
   for (const segment of segments) {
-    const subSegments = segment.includes(".")
-      ? segment.split(".")
-      : [segment];
+    const subSegments = segment.includes(".") ? segment.split(".") : [segment];
     for (const sub of subSegments) {
       if (sub.length === 0) {
         return {

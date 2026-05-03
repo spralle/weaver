@@ -1,9 +1,9 @@
 // OverrideSession provider — session lifecycle management with expiration and audit
 
 import {
-  createWeaverError,
   type ConfigurationLayerData,
   type ConfigurationStorageProvider,
+  createWeaverError,
   type OverrideSession,
   type SessionActivationRequest,
   type SessionDeactivationResult,

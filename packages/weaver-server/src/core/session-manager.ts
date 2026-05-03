@@ -29,7 +29,12 @@ export interface SessionManager {
   activate(request: OverrideSessionRequest): Promise<OverrideSessionInfo>;
   deactivate(sessionId: string, actor: string): Promise<void>;
   getSession(sessionId: string): OverrideSessionInfo | undefined;
-  setOverride(sessionId: string, key: string, value: unknown, actor: string): Promise<void>;
+  setOverride(
+    sessionId: string,
+    key: string,
+    value: unknown,
+    actor: string,
+  ): Promise<void>;
   listActiveSessions(): OverrideSessionInfo[];
   dispose(): void;
 }
@@ -45,7 +50,9 @@ function isExpired(session: OverrideSessionInfo): boolean {
 /**
  * @alpha Not yet wired into startWeaverServer — planned for ephemeral override sessions.
  */
-export function createSessionManager(options: SessionManagerOptions): SessionManager {
+export function createSessionManager(
+  options: SessionManagerOptions,
+): SessionManager {
   const { auditService } = options;
   const sessions = new Map<string, OverrideSessionInfo>();
   const sweepIntervalMs = options.sweepIntervalMs ?? 60_000;
@@ -68,7 +75,9 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
   }
 
   return {
-    async activate(request: OverrideSessionRequest): Promise<OverrideSessionInfo> {
+    async activate(
+      request: OverrideSessionRequest,
+    ): Promise<OverrideSessionInfo> {
       const now = new Date();
       const durationMs = (request.duration ?? 60) * 60_000;
       const session: OverrideSessionInfo = {
@@ -78,7 +87,9 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
         activatedAt: now.toISOString(),
         expiresAt: new Date(now.getTime() + durationMs).toISOString(),
         overrides: {},
-        followUpDeadline: new Date(now.getTime() + 24 * 60 * 60_000).toISOString(),
+        followUpDeadline: new Date(
+          now.getTime() + 24 * 60 * 60_000,
+        ).toISOString(),
       };
       sessions.set(session.id, session);
 
@@ -125,7 +136,12 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       return session;
     },
 
-    async setOverride(sessionId: string, key: string, value: unknown, actor: string): Promise<void> {
+    async setOverride(
+      sessionId: string,
+      key: string,
+      value: unknown,
+      actor: string,
+    ): Promise<void> {
       const session = sessions.get(sessionId);
       if (!session || isExpired(session)) {
         throw new Error(`Session ${sessionId} not found or expired`);

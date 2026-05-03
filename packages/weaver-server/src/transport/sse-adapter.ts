@@ -1,8 +1,8 @@
 // SSE transport adapter — three-event model (snapshot/change/checkpoint)
 import type { WeaverConfigService } from "../core/config-service.js";
-import type { ConfigDelta } from "../types/index.js";
 import { parseScopeQuery } from "../core/scope-utils.js";
-import { type SSEMessage, formatSSEMessage } from "./sse-events.js";
+import type { ConfigDelta } from "../types/index.js";
+import { formatSSEMessage, type SSEMessage } from "./sse-events.js";
 
 /** Default max messages retained per client to prevent unbounded memory growth */
 const DEFAULT_MAX_BUFFER_SIZE = 1000;
@@ -55,7 +55,10 @@ function filterEntriesByPrefix(
   return filtered;
 }
 
-function matchesScopeFilter(delta: ConfigDelta, scope: string | undefined): boolean {
+function matchesScopeFilter(
+  delta: ConfigDelta,
+  scope: string | undefined,
+): boolean {
   if (!scope) return true;
   // scope filter format: "scopeId:value" — match against delta.layer
   return delta.layer === scope || delta.layer.startsWith(scope + "/");
@@ -67,7 +70,9 @@ export function createSSEAdapter(options: SSEAdapterOptions): SSEAdapter {
   let clientIdCounter = 0;
   let checkpointTimer: ReturnType<typeof setInterval> | null = null;
 
-  async function createClient(clientOptions?: SSEClientOptions): Promise<SSEClient> {
+  async function createClient(
+    clientOptions?: SSEClientOptions,
+  ): Promise<SSEClient> {
     const opts: SSEClientOptions = clientOptions ?? {};
     const messages: string[] = [];
     let closed = false;
@@ -120,7 +125,10 @@ export function createSSEAdapter(options: SSEAdapterOptions): SSEAdapter {
     const snapshot = await configService.resolveAll(
       scopePath ? { scopePath } : undefined,
     );
-    const filteredEntries = filterEntriesByPrefix(snapshot.entries, opts.prefix);
+    const filteredEntries = filterEntriesByPrefix(
+      snapshot.entries,
+      opts.prefix,
+    );
 
     if (!closed) {
       client.send({

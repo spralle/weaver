@@ -33,7 +33,11 @@ export class WeaverErrorInstance extends Error {
   readonly code: WeaverErrorCode;
   readonly details?: Record<string, unknown>;
 
-  constructor(code: WeaverErrorCode, message: string, details?: Record<string, unknown>) {
+  constructor(
+    code: WeaverErrorCode,
+    message: string,
+    details?: Record<string, unknown>,
+  ) {
     super(message);
     this.name = "WeaverError";
     this.code = code;

@@ -80,7 +80,14 @@ export function inspectKey<T>(
  */
 export function resolveConfigurationWithCeiling(
   stack: ConfigurationLayerStack,
-  schemaMap: Map<string, { "x-weaver"?: { maxOverrideLayer?: ConfigurationLayer | undefined } | undefined }>,
+  schemaMap: Map<
+    string,
+    {
+      "x-weaver"?:
+        | { maxOverrideLayer?: ConfigurationLayer | undefined }
+        | undefined;
+    }
+  >,
   isEmergencyOverride: boolean,
   getRank: (layer: string) => number,
 ): ResolvedConfiguration {

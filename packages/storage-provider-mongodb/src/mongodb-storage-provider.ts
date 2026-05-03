@@ -1,6 +1,5 @@
 // MongoDBStorageProvider — native MongoDB driver for user/device config layers
-import type { Collection, ChangeStream } from "mongodb";
-import { z } from "zod";
+
 import type {
   ConfigurationChange,
   ConfigurationLayerData,
@@ -8,10 +7,12 @@ import type {
   WriteResult,
 } from "@weaver/config-types";
 import {
+  consoleLogger,
   extractErrorMessage,
   type WeaverLogger,
-  consoleLogger,
 } from "@weaver/storage-provider-core";
+import type { ChangeStream, Collection } from "mongodb";
+import { z } from "zod";
 
 const MAX_BACKOFF_MS = 30_000;
 const BASE_BACKOFF_MS = 1_000;
@@ -65,7 +66,7 @@ class MongoDBStorageProvider implements ConfigurationStorageProvider {
   }
 
   async load(): Promise<ConfigurationLayerData> {
-    let rawDocs;
+    let rawDocs: Awaited<ReturnType<ReturnType<Collection["find"]>["toArray"]>>;
     try {
       rawDocs = await this.collection
         .find({ layer: this.layer, environment: this.environment })
@@ -104,7 +105,10 @@ class MongoDBStorageProvider implements ConfigurationStorageProvider {
       );
     } catch (err) {
       const message = extractErrorMessage(err);
-      return { success: false, error: `MongoDB write failed for key "${key}": ${message}` };
+      return {
+        success: false,
+        error: `MongoDB write failed for key "${key}": ${message}`,
+      };
     }
     return { success: true };
   }
@@ -115,14 +119,20 @@ class MongoDBStorageProvider implements ConfigurationStorageProvider {
     }
 
     try {
-      await this.collection.deleteOne({
-        layer: this.layer,
-        environment: this.environment,
-        key,
-      }, { maxTimeMS: this.timeoutMs });
+      await this.collection.deleteOne(
+        {
+          layer: this.layer,
+          environment: this.environment,
+          key,
+        },
+        { maxTimeMS: this.timeoutMs },
+      );
     } catch (err) {
       const message = extractErrorMessage(err);
-      return { success: false, error: `MongoDB remove failed for key "${key}": ${message}` };
+      return {
+        success: false,
+        error: `MongoDB remove failed for key "${key}": ${message}`,
+      };
     }
     return { success: true };
   }
@@ -147,7 +157,9 @@ class MongoDBStorageProvider implements ConfigurationStorageProvider {
         backoffMs = BASE_BACKOFF_MS;
         const doc = (change as { fullDocument?: ConfigDocument }).fullDocument;
         if (doc) {
-          listener([{ key: doc.key, oldValue: undefined, newValue: doc.value }]);
+          listener([
+            { key: doc.key, oldValue: undefined, newValue: doc.value },
+          ]);
         }
       });
 

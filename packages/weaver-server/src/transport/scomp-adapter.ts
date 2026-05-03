@@ -1,15 +1,18 @@
 // Scomp adapter — maps contract operations to WeaverConfigService
-import type { WeaverConfigService, WriteContext } from "../core/config-service.js";
+import type {
+  WeaverConfigService,
+  WriteContext,
+} from "../core/config-service.js";
+import { parseScopeQuery } from "../core/scope-utils.js";
 import type { ConfigDelta } from "../types/index.js";
 import { createWeaverError } from "../types/index.js";
-import { parseScopeQuery } from "../core/scope-utils.js";
 import {
-  resolveAllPayloadSchema,
-  getPayloadSchema,
   getNamespacePayloadSchema,
+  getPayloadSchema,
   inspectPayloadSchema,
-  setPayloadSchema,
   removePayloadSchema,
+  resolveAllPayloadSchema,
+  setPayloadSchema,
 } from "./scomp-schemas.js";
 
 type Unsubscribe = () => void;
@@ -20,9 +23,7 @@ export interface ScompAdapterOptions {
 
 export interface ScompAdapter {
   handleRequest(operation: string, payload: unknown): Promise<unknown>;
-  addSubscriber(
-    handler: (delta: ConfigDelta) => void,
-  ): Unsubscribe;
+  addSubscriber(handler: (delta: ConfigDelta) => void): Unsubscribe;
 }
 
 function validationError(message: string): { success: false; error: string } {
@@ -35,7 +36,9 @@ export function createScompAdapter(options: ScompAdapterOptions): ScompAdapter {
   async function handleResolveAll(payload: unknown): Promise<unknown> {
     const parsed = resolveAllPayloadSchema.safeParse(payload);
     if (!parsed.success) return validationError(parsed.error.message);
-    const scopePath = parsed.data.scope ? parseScopeQuery(parsed.data.scope) : undefined;
+    const scopePath = parsed.data.scope
+      ? parseScopeQuery(parsed.data.scope)
+      : undefined;
     const scopeOpts = scopePath ? { scopePath } : {};
     return await configService.resolveAll(scopeOpts);
   }
@@ -43,7 +46,9 @@ export function createScompAdapter(options: ScompAdapterOptions): ScompAdapter {
   async function handleGet(payload: unknown): Promise<unknown> {
     const parsed = getPayloadSchema.safeParse(payload);
     if (!parsed.success) return validationError(parsed.error.message);
-    const scopePath = parsed.data.scope ? parseScopeQuery(parsed.data.scope) : undefined;
+    const scopePath = parsed.data.scope
+      ? parseScopeQuery(parsed.data.scope)
+      : undefined;
     const scopeOpts = scopePath ? { scopePath } : {};
     const value = await configService.get(parsed.data.key, scopeOpts);
     return { value };
@@ -52,9 +57,14 @@ export function createScompAdapter(options: ScompAdapterOptions): ScompAdapter {
   async function handleGetNamespace(payload: unknown): Promise<unknown> {
     const parsed = getNamespacePayloadSchema.safeParse(payload);
     if (!parsed.success) return validationError(parsed.error.message);
-    const scopePath = parsed.data.scope ? parseScopeQuery(parsed.data.scope) : undefined;
+    const scopePath = parsed.data.scope
+      ? parseScopeQuery(parsed.data.scope)
+      : undefined;
     const scopeOpts = scopePath ? { scopePath } : {};
-    const entries = await configService.getNamespace(parsed.data.prefix, scopeOpts);
+    const entries = await configService.getNamespace(
+      parsed.data.prefix,
+      scopeOpts,
+    );
     return { entries };
   }
 
@@ -109,7 +119,10 @@ export function createScompAdapter(options: ScompAdapterOptions): ScompAdapter {
         case "promote":
         case "rollback":
         case "registerSchema":
-          return { success: false, error: `Operation "${operation}" not yet implemented` };
+          return {
+            success: false,
+            error: `Operation "${operation}" not yet implemented`,
+          };
         default:
           return createWeaverError(
             "VALIDATION_ERROR",
@@ -122,9 +135,7 @@ export function createScompAdapter(options: ScompAdapterOptions): ScompAdapter {
     }
   }
 
-  function addSubscriber(
-    handler: (delta: ConfigDelta) => void,
-  ): Unsubscribe {
+  function addSubscriber(handler: (delta: ConfigDelta) => void): Unsubscribe {
     return configService.onDelta((delta) => {
       handler(delta);
     });

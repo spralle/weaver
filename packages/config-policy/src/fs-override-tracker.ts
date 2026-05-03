@@ -2,8 +2,8 @@
 
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
-import { emergencyOverrideRecordSchema } from "@weaver/config-types";
 import type { EmergencyOverrideRecord } from "@weaver/config-types";
+import { emergencyOverrideRecordSchema } from "@weaver/config-types";
 import type {
   OverrideTracker,
   OverrideTrackerOptions,

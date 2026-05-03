@@ -1,6 +1,6 @@
 import type { ScopeInstance } from "@weaver/config-types";
-import type { ConfigDelta, ConfigSnapshot } from "./types.js";
 import type { WeaverTransport } from "./transport.js";
+import type { ConfigDelta, ConfigSnapshot } from "./types.js";
 
 export type ScopeLoadingMode = "lazy" | "eager" | "hot";
 
@@ -11,14 +11,16 @@ export interface ScopeLoaderOptions {
 }
 
 export interface ScopeLoader {
-  getScopeState(scopePath: ScopeInstance[]): Record<string, unknown> | undefined;
+  getScopeState(
+    scopePath: ScopeInstance[],
+  ): Record<string, unknown> | undefined;
   preloadScope(scopePath: ScopeInstance[]): Promise<void>;
   applyDelta(delta: ConfigDelta, scopePath?: ScopeInstance[]): void;
   loadedScopes(): string[];
 }
 
 function buildScopeKey(scopePath: ScopeInstance[]): string {
-  return scopePath.map(s => `${s.scopeId}:${s.value}`).join("/");
+  return scopePath.map((s) => `${s.scopeId}:${s.value}`).join("/");
 }
 
 export function createScopeLoader(options: ScopeLoaderOptions): ScopeLoader {
@@ -34,7 +36,9 @@ export function createScopeLoader(options: ScopeLoaderOptions): ScopeLoader {
   }
 
   return {
-    getScopeState(scopePath: ScopeInstance[]): Record<string, unknown> | undefined {
+    getScopeState(
+      scopePath: ScopeInstance[],
+    ): Record<string, unknown> | undefined {
       const key = buildScopeKey(scopePath);
       return scopeStates.get(key);
     },

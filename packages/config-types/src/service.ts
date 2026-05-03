@@ -59,7 +59,11 @@ export interface ViewConfigurationService {
   get<T>(key: string): T | undefined;
   getWithDefault<T>(key: string, defaultValue: T): T;
   getForInstance<T>(instanceId: string, key: string): T | undefined;
-  setForInstance(instanceId: string, key: string, value: unknown): Promise<void>;
+  setForInstance(
+    instanceId: string,
+    key: string,
+    value: unknown,
+  ): Promise<void>;
   resetInstance(instanceId: string): void;
 }
 

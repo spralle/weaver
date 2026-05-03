@@ -144,6 +144,10 @@ class LocalStorageProvider implements ConfigurationStorageProvider {
 /** Creates a localStorage-backed storage provider instance. */
 export function createLocalStorageProvider(
   options: LocalStorageProviderOptions,
-): ConfigurationStorageProvider & { onExternalChange: (listener: (changes: ConfigurationChange[]) => void) => () => void } {
+): ConfigurationStorageProvider & {
+  onExternalChange: (
+    listener: (changes: ConfigurationChange[]) => void,
+  ) => () => void;
+} {
   return new LocalStorageProvider(options);
 }

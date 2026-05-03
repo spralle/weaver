@@ -1,7 +1,10 @@
+import type {
+  SecretDomainAuditEntry,
+  SecretReference,
+} from "@weaver/config-types";
 import { isSecretReference } from "@weaver/config-types";
-import type { SecretReference, SecretDomainAuditEntry } from "@weaver/config-types";
-import { createSecretCache } from "./secret-cache.js";
 import type { SecretCache } from "./secret-cache.js";
+import { createSecretCache } from "./secret-cache.js";
 import type { SecretProvider, SecretStoreResult } from "./secret-provider.js";
 
 export interface SecretAuditLog {
@@ -33,8 +36,12 @@ export class SecretResolutionService {
 
   constructor(options: SecretResolutionServiceOptions = {}) {
     this.cache = createSecretCache({
-      ...(options.cacheTtlMs !== undefined && { defaultTtlMs: options.cacheTtlMs }),
-      ...(options.maxCacheEntries !== undefined && { maxEntries: options.maxCacheEntries }),
+      ...(options.cacheTtlMs !== undefined && {
+        defaultTtlMs: options.cacheTtlMs,
+      }),
+      ...(options.maxCacheEntries !== undefined && {
+        maxEntries: options.maxCacheEntries,
+      }),
     });
     this.auditLog = options.auditLog;
   }

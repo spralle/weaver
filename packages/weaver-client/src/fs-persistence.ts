@@ -1,14 +1,22 @@
-import { existsSync, mkdirSync, renameSync, writeFileSync, readFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  renameSync,
+  writeFileSync,
+} from "node:fs";
 import { join } from "node:path";
 import { configSnapshotSchema } from "@weaver/config-types";
-import type { ConfigSnapshot } from "./types.js";
 import type { WeaverClientPersistence } from "./persistence.js";
+import type { ConfigSnapshot } from "./types.js";
 
 export interface FileSystemPersistenceOptions {
   directory: string;
 }
 
-export function createFileSystemPersistence(options: FileSystemPersistenceOptions): WeaverClientPersistence {
+export function createFileSystemPersistence(
+  options: FileSystemPersistenceOptions,
+): WeaverClientPersistence {
   const { directory } = options;
 
   return {

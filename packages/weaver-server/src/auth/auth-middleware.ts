@@ -23,7 +23,9 @@ export interface AuthMiddleware {
   extractToken(headers: Record<string, string>): string | undefined;
 }
 
-export function createAuthMiddleware(options: AuthMiddlewareOptions): AuthMiddleware {
+export function createAuthMiddleware(
+  options: AuthMiddlewareOptions,
+): AuthMiddleware {
   const adminRoles = new Set(options.adminRoles ?? ["admin"]);
 
   return {

@@ -58,7 +58,11 @@ export function createViewConfigurationService(
       return this.get<T>(key);
     },
 
-    async setForInstance(instanceIdVal: string, key: string, value: unknown): Promise<void> {
+    async setForInstance(
+      instanceIdVal: string,
+      key: string,
+      value: unknown,
+    ): Promise<void> {
       const instKey = instanceKey(namespace, viewId, instanceIdVal, key);
       await root.set(instKey, value);
     },

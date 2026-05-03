@@ -1,10 +1,11 @@
 // Git repository clone/pull management
-import type { SimpleGit } from "simple-git";
+
 import {
+  consoleLogger,
   extractErrorMessage,
   type WeaverLogger,
-  consoleLogger,
 } from "@weaver/storage-provider-core";
+import type { SimpleGit } from "simple-git";
 
 export type GitOperationResult<T = void> =
   | { success: true; data: T }
@@ -22,7 +23,10 @@ export interface GitManager {
   ensureClone(): Promise<GitOperationResult>;
   refresh(): Promise<GitOperationResult>;
   commitAndPush(message: string, files: string[]): Promise<GitOperationResult>;
-  revert(toRevision: string, actor: string): Promise<GitOperationResult<{ revertedCommits: number }>>;
+  revert(
+    toRevision: string,
+    actor: string,
+  ): Promise<GitOperationResult<{ revertedCommits: number }>>;
   readonly localPath: string;
 }
 
@@ -37,7 +41,11 @@ function isTransientError(err: unknown): boolean {
   return /timeout|ECONNREFUSED|ENOTFOUND|network|fetch/.test(message);
 }
 
-function toFailure(err: unknown): { success: false; error: string; retryable: boolean } {
+function toFailure(err: unknown): {
+  success: false;
+  error: string;
+  retryable: boolean;
+} {
   const message = extractErrorMessage(err);
   consoleLogger.error(`[weaver] Git operation failed: ${message}`);
   return { success: false, error: message, retryable: isTransientError(err) };
@@ -98,7 +106,10 @@ export function createGitManager(options: GitManagerOptions): GitManager {
       }
     },
 
-    async commitAndPush(message: string, files: string[]): Promise<GitOperationResult> {
+    async commitAndPush(
+      message: string,
+      files: string[],
+    ): Promise<GitOperationResult> {
       if (files.length === 0) return { success: true, data: undefined };
       try {
         return await serialize(async () => {
@@ -131,7 +142,10 @@ export function createGitManager(options: GitManagerOptions): GitManager {
           await git.raw(["revert", "--no-commit", `${toRevision}..HEAD`]);
           await git.commit(`rollback: revert to ${toRevision} by ${actor}`);
           await git.push();
-          return { success: true as const, data: { revertedCommits: commitCount } };
+          return {
+            success: true as const,
+            data: { revertedCommits: commitCount },
+          };
         });
       } catch (err) {
         return toFailure(err);

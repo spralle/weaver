@@ -1,5 +1,5 @@
-import { z } from "zod";
 import { configDeltaSchema } from "@weaver/config-types";
+import { z } from "zod";
 
 export const sseSnapshotEventSchema = z.object({
   entries: z.record(z.string(), z.unknown()),

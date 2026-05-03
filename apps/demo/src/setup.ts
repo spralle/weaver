@@ -1,9 +1,9 @@
 import { createConfigurationService } from "@weaver/config-runtime";
-import { createInMemoryStorageProvider } from "@weaver/storage-provider-memory";
-import { createLocalStorageProvider } from "@weaver/storage-provider-local-storage";
-import { createStaticJsonStorageProvider } from "@weaver/storage-provider-static-json";
 import { createOverrideSessionProvider } from "@weaver/config-sessions";
 import { defineWeaver, Layers } from "@weaver/config-types";
+import { createLocalStorageProvider } from "@weaver/storage-provider-local-storage";
+import { createInMemoryStorageProvider } from "@weaver/storage-provider-memory";
+import { createStaticJsonStorageProvider } from "@weaver/storage-provider-static-json";
 import {
   APP_DEFAULTS,
   CORE_DEFAULTS,

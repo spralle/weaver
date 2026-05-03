@@ -10,7 +10,9 @@ export interface MongoAuditSinkOptions {
   collection: MongoCollection;
 }
 
-export function createMongoAuditSink(options: MongoAuditSinkOptions): ConfigAuditSink {
+export function createMongoAuditSink(
+  options: MongoAuditSinkOptions,
+): ConfigAuditSink {
   const { collection } = options;
 
   return {
@@ -19,7 +21,9 @@ export function createMongoAuditSink(options: MongoAuditSinkOptions): ConfigAudi
         await collection.insertOne(entry as unknown as Record<string, unknown>);
       } catch (err: unknown) {
         const message = extractErrorMessage(err);
-        console.error(`[weaver] Audit record failed (non-blocking): ${message}`);
+        console.error(
+          `[weaver] Audit record failed (non-blocking): ${message}`,
+        );
       }
     },
   };

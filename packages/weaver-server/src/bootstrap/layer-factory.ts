@@ -1,10 +1,11 @@
 // Layer factory — creates storage providers from validated bootstrap config
-import type { Collection } from "mongodb";
+
 import type { ConfigurationStorageProvider } from "@weaver/config-types";
-import { createInMemoryStorageProvider } from "@weaver/storage-provider-memory";
-import { createGitStorageProvider } from "@weaver/storage-provider-git";
 import type { GitManager } from "@weaver/storage-provider-git";
+import { createGitStorageProvider } from "@weaver/storage-provider-git";
+import { createInMemoryStorageProvider } from "@weaver/storage-provider-memory";
 import { createMongoDBStorageProvider } from "@weaver/storage-provider-mongodb";
+import type { Collection } from "mongodb";
 import type { BootstrapLayer } from "../types/bootstrap.js";
 
 export interface LayerFactoryDeps {
@@ -27,7 +28,10 @@ export function registerProviderFactory(
   providerRegistry.set(type, factory);
 }
 
-function createGitProvider(layer: BootstrapLayer, deps: LayerFactoryDeps): ConfigurationStorageProvider {
+function createGitProvider(
+  layer: BootstrapLayer,
+  deps: LayerFactoryDeps,
+): ConfigurationStorageProvider {
   return createGitStorageProvider({
     id: layer.id,
     layer: layer.id,
@@ -36,7 +40,10 @@ function createGitProvider(layer: BootstrapLayer, deps: LayerFactoryDeps): Confi
   });
 }
 
-function createMongoProvider(layer: BootstrapLayer, deps: LayerFactoryDeps): ConfigurationStorageProvider {
+function createMongoProvider(
+  layer: BootstrapLayer,
+  deps: LayerFactoryDeps,
+): ConfigurationStorageProvider {
   if (!deps.mongoCollection) {
     throw new Error(`MongoDB collection required for layer "${layer.id}"`);
   }
@@ -48,7 +55,9 @@ function createMongoProvider(layer: BootstrapLayer, deps: LayerFactoryDeps): Con
   });
 }
 
-function createMemoryProvider(layer: BootstrapLayer): ConfigurationStorageProvider {
+function createMemoryProvider(
+  layer: BootstrapLayer,
+): ConfigurationStorageProvider {
   return createInMemoryStorageProvider({
     id: layer.id,
     layer: layer.id,
@@ -58,7 +67,9 @@ function createMemoryProvider(layer: BootstrapLayer): ConfigurationStorageProvid
 // Register built-in providers
 registerProviderFactory("git", createGitProvider);
 registerProviderFactory("mongodb", createMongoProvider);
-registerProviderFactory("memory", (layer, _deps) => createMemoryProvider(layer));
+registerProviderFactory("memory", (layer, _deps) =>
+  createMemoryProvider(layer),
+);
 
 export function createProviders(
   config: { layers: BootstrapLayer[] },
@@ -67,7 +78,9 @@ export function createProviders(
   return config.layers.map((layer) => {
     const factory = providerRegistry.get(layer.provider);
     if (!factory) {
-      throw new Error(`Unknown provider type "${layer.provider}" for layer "${layer.id}"`);
+      throw new Error(
+        `Unknown provider type "${layer.provider}" for layer "${layer.id}"`,
+      );
     }
     return factory(layer, deps);
   });

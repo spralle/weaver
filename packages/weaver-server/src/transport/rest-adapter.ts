@@ -1,27 +1,32 @@
 // REST transport adapter — maps HTTP routes to WeaverConfigService
-import type { WeaverConfigService, WriteContext } from "../core/config-service.js";
-import type { ScopeManager } from "../core/scope-manager.js";
-import { createWeaverError, httpStatusForError } from "../types/index.js";
-import type { WeaverErrorCode, WeaverError } from "../types/index.js";
-import { parseScopeQuery } from "../core/scope-utils.js";
+
 import { buildPath } from "@weaver/config-engine";
-import { ZodError } from "zod";
-import {
-  configWriteBodySchema,
-  configBatchBodySchema,
-  scopeProvisionBodySchema,
-} from "./rest-schemas.js";
-import type { AuthContext } from "../auth/auth-middleware.js";
 import type { ConfigurationPropertySchema } from "@weaver/config-types";
+import { ZodError } from "zod";
+import type { AuthContext } from "../auth/auth-middleware.js";
+import type {
+  WeaverConfigService,
+  WriteContext,
+} from "../core/config-service.js";
+import type { ScopeManager } from "../core/scope-manager.js";
+import { parseScopeQuery } from "../core/scope-utils.js";
+import type { WeaverError, WeaverErrorCode } from "../types/index.js";
+import { createWeaverError, httpStatusForError } from "../types/index.js";
 import type { AuthGate } from "./auth-gate.js";
 import {
-  matchPath,
   corsHeaders,
   envelope,
   errorEnvelope,
+  matchPath,
   v1Headers,
 } from "./rest-helpers.js";
-export type { ApiResponse, ApiErrorResponse } from "./rest-helpers.js";
+import {
+  configBatchBodySchema,
+  configWriteBodySchema,
+  scopeProvisionBodySchema,
+} from "./rest-schemas.js";
+
+export type { ApiErrorResponse, ApiResponse } from "./rest-helpers.js";
 
 export interface RestRoute {
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -71,12 +76,18 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
   function param(params: Record<string, string>, name: string): string {
     const value = params[name];
     if (!value) {
-      throw createWeaverError("VALIDATION_ERROR", `Missing required route parameter: ${name}`);
+      throw createWeaverError(
+        "VALIDATION_ERROR",
+        `Missing required route parameter: ${name}`,
+      );
     }
     return value;
   }
 
-  function queryOpt(query: Record<string, string>, name: string): string | undefined {
+  function queryOpt(
+    query: Record<string, string>,
+    name: string,
+  ): string | undefined {
     const v = query[name];
     return v === undefined ? undefined : v;
   }
@@ -102,13 +113,22 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
     return ifMatch.replace(/^"|"$/g, "");
   }
 
-  function writeErrorResponse(result: { error?: string | undefined }, fallback: string): RestResponse {
+  function writeErrorResponse(
+    result: { error?: string | undefined },
+    fallback: string,
+  ): RestResponse {
     const msg = result.error ?? fallback;
     const isConflict = msg.includes("Revision conflict");
-    const code: WeaverErrorCode = isConflict ? "REVISION_CONFLICT" : "VALIDATION_ERROR";
+    const code: WeaverErrorCode = isConflict
+      ? "REVISION_CONFLICT"
+      : "VALIDATION_ERROR";
     const status = isConflict ? 409 : httpStatusForError(code);
     const rev = configService.revision;
-    return { status, body: errorEnvelope(createWeaverError(code, msg), rev), headers: v1Headers(rev) };
+    return {
+      status,
+      body: errorEnvelope(createWeaverError(code, msg), rev),
+      headers: v1Headers(rev),
+    };
   }
 
   const routes: RestRoute[] = [
@@ -121,7 +141,11 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
         const snapshot = await configService.resolveAll(opts);
         if (authGate && req.authContext) {
           const accessCtx = authGate.toAccessContext(req.authContext);
-          const filtered = authGate.filterVisible(accessCtx, snapshot, req.schemaMap ?? new Map());
+          const filtered = authGate.filterVisible(
+            accessCtx,
+            snapshot,
+            req.schemaMap ?? new Map(),
+          );
           return v1Response(200, filtered);
         }
         return v1Response(200, snapshot);
@@ -138,7 +162,11 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
         const opts = scopePath ? { scopePath } : {};
         if (authGate && req.authContext) {
           const accessCtx = authGate.toAccessContext(req.authContext);
-          const denied = authGate.gateRead(accessCtx, key, req.schemaMap?.get(key));
+          const denied = authGate.gateRead(
+            accessCtx,
+            key,
+            req.schemaMap?.get(key),
+          );
           if (denied) return denied;
         }
         if ("inspect" in req.query) {
@@ -160,7 +188,12 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
         const environment = queryOpt(req.query, "env");
         if (authGate && req.authContext) {
           const accessCtx = authGate.toAccessContext(req.authContext);
-          const denied = authGate.gateWrite(accessCtx, layer, key, req.schemaMap?.get(key));
+          const denied = authGate.gateWrite(
+            accessCtx,
+            layer,
+            key,
+            req.schemaMap?.get(key),
+          );
           if (denied) return denied;
         }
         const body = configWriteBodySchema.parse(req.body);
@@ -168,7 +201,12 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
         const writeCtx: WriteContext = {};
         if (expectedRevision) writeCtx.expectedRevision = expectedRevision;
         if (environment) writeCtx.environment = environment;
-        const result = await configService.set(layer, key, body.value, writeCtx);
+        const result = await configService.set(
+          layer,
+          key,
+          body.value,
+          writeCtx,
+        );
         if (!result.success) return writeErrorResponse(result, "Write failed");
         return v1Response(200, result);
       },
@@ -184,7 +222,12 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
         const environment = queryOpt(req.query, "env");
         if (authGate && req.authContext) {
           const accessCtx = authGate.toAccessContext(req.authContext);
-          const denied = authGate.gateWrite(accessCtx, layer, key, req.schemaMap?.get(key));
+          const denied = authGate.gateWrite(
+            accessCtx,
+            layer,
+            key,
+            req.schemaMap?.get(key),
+          );
           if (denied) return denied;
         }
         const expectedRevision = extractExpectedRevision(req);
@@ -207,7 +250,12 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
         if (authGate && req.authContext) {
           const accessCtx = authGate.toAccessContext(req.authContext);
           for (const key of Object.keys(entries)) {
-            const denied = authGate.gateWrite(accessCtx, layer, key, req.schemaMap?.get(key));
+            const denied = authGate.gateWrite(
+              accessCtx,
+              layer,
+              key,
+              req.schemaMap?.get(key),
+            );
             if (denied) return denied;
           }
         }
@@ -216,8 +264,12 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
         if (expectedRevision) writeCtx.expectedRevision = expectedRevision;
         if (environment) writeCtx.environment = environment;
         const result = await configService.setMany(layer, entries, writeCtx);
-        if (!result.success) return writeErrorResponse(result, "Batch write failed");
-        return v1Response(200, { ...result, written: Object.keys(entries).length });
+        if (!result.success)
+          return writeErrorResponse(result, "Batch write failed");
+        return v1Response(200, {
+          ...result,
+          written: Object.keys(entries).length,
+        });
       },
     },
     {
@@ -262,7 +314,10 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
           actor: "api",
         });
         if (!result.success) {
-          return v1Error("VALIDATION_ERROR", result.error?.message ?? "Provision failed");
+          return v1Error(
+            "VALIDATION_ERROR",
+            result.error?.message ?? "Provision failed",
+          );
         }
         return v1Response(201, result);
       },
@@ -282,12 +337,14 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
           actor: "api",
         });
         if (!result.success) {
-          return v1Error("SCOPE_NOT_FOUND", result.error?.message ?? "Scope not found");
+          return v1Error(
+            "SCOPE_NOT_FOUND",
+            result.error?.message ?? "Scope not found",
+          );
         }
         return v1Response(200, result);
       },
     },
-
   ];
 
   function findRoute(method: string, path: string): RouteMatch | null {
@@ -309,12 +366,18 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
       const rev = configService.revision;
       return {
         status: 404,
-        body: errorEnvelope(createWeaverError("NOT_FOUND", `No route: ${method} ${path}`), rev),
+        body: errorEnvelope(
+          createWeaverError("NOT_FOUND", `No route: ${method} ${path}`),
+          rev,
+        ),
         headers: v1Headers(rev),
       };
     }
 
-    const fullReq: RestRequest = { ...req, params: { ...req.params, ...match.params } };
+    const fullReq: RestRequest = {
+      ...req,
+      params: { ...req.params, ...match.params },
+    };
 
     try {
       const response = await match.route.handler(fullReq);
@@ -328,7 +391,9 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
         return {
           status: 400,
           body: errorEnvelope(
-            createWeaverError("VALIDATION_ERROR", "Request validation failed", { issues: err.issues }),
+            createWeaverError("VALIDATION_ERROR", "Request validation failed", {
+              issues: err.issues,
+            }),
             rev,
           ),
           headers: v1Headers(rev),

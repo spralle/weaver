@@ -2,9 +2,9 @@
 
 import { deepMerge } from "@weaver/config-engine";
 import type {
-  ConfigValueSource,
   ConfigurationLayerData,
   ConfigurationStorageProvider,
+  ConfigValueSource,
   EnvironmentAwareStorageProvider,
   EnvironmentName,
   MergedLayerResult,
@@ -12,7 +12,8 @@ import type {
 
 export interface EnvironmentOverlayOptions {
   /** The base provider to wrap */
-  readonly provider: ConfigurationStorageProvider & EnvironmentAwareStorageProvider;
+  readonly provider: ConfigurationStorageProvider &
+    EnvironmentAwareStorageProvider;
   /** The target environment to apply as overlay */
   readonly environment: EnvironmentName;
 }
@@ -78,8 +79,7 @@ export async function mergeWithEnvironment(
 
   // Build source map
   const sources = new Map<string, ConfigValueSource>();
-  const layer =
-    typeof provider.layer === "string" ? provider.layer : "unknown";
+  const layer = typeof provider.layer === "string" ? provider.layer : "unknown";
 
   for (const key of Object.keys(baseEntries)) {
     sources.set(key, {

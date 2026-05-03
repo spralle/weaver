@@ -1,13 +1,18 @@
-import type { WeaverConfigService } from "./config-service.js";
 import type { ConfigurationStorageProvider } from "@weaver/config-types";
 import type { WeaverError } from "../types/errors.js";
 import { createWeaverError } from "../types/errors.js";
+import type { WeaverConfigService } from "./config-service.js";
 
 export interface RevertableProvider extends ConfigurationStorageProvider {
-  revert(toRevision: string, actor: string): Promise<{ revertedCommits: number }>;
+  revert(
+    toRevision: string,
+    actor: string,
+  ): Promise<{ revertedCommits: number }>;
 }
 
-function isRevertable(provider: ConfigurationStorageProvider): provider is RevertableProvider {
+function isRevertable(
+  provider: ConfigurationStorageProvider,
+): provider is RevertableProvider {
   return "revert" in provider && typeof provider.revert === "function";
 }
 
@@ -55,9 +60,7 @@ export function createRollbackService(
         };
       }
 
-      const provider = configService.providers.find(
-        (p) => p.layer === layer,
-      );
+      const provider = configService.providers.find((p) => p.layer === layer);
 
       if (!provider) {
         return {

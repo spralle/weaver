@@ -14,7 +14,9 @@ export interface ShutdownManager {
   readonly isShuttingDown: boolean;
 }
 
-export function createShutdownManager(options?: ShutdownManagerOptions): ShutdownManager {
+export function createShutdownManager(
+  options?: ShutdownManagerOptions,
+): ShutdownManager {
   const drainTimeoutMs = options?.drainTimeoutMs ?? 10_000;
   const logger = options?.logger ?? consoleLogger;
   const handlers: Array<() => Promise<void>> = [];

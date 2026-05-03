@@ -1,11 +1,10 @@
+export { MemoryDurableConfigCacheAdapter } from "./durable-cache-memory.js";
 export { createConfigSyncOrchestrator } from "./orchestrator.js";
-
 export {
   createSyncableStorageProviderAdapter,
   SyncableStorageProviderAdapter,
   type SyncableStorageProviderAdapterOptions,
 } from "./provider.js";
-
 export type {
   ConfigSyncOrchestrator,
   ConfigSyncOrchestratorOptions,
@@ -13,5 +12,3 @@ export type {
   SyncDiagnostics,
   SyncRetryPolicy,
 } from "./types.js";
-
-export { MemoryDurableConfigCacheAdapter } from "./durable-cache-memory.js";

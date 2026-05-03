@@ -1,9 +1,9 @@
-import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { createWeaverSyncTransport } from "./sync-transport-adapter.js";
-import { createLocalTransport } from "./local-transport.js";
-import type { ConfigSnapshot } from "./types.js";
+import { describe, it } from "node:test";
 import type { SyncMutationMetadata } from "@weaver/config-types";
+import { createLocalTransport } from "./local-transport.js";
+import { createWeaverSyncTransport } from "./sync-transport-adapter.js";
+import type { ConfigSnapshot } from "./types.js";
 
 const testMeta: SyncMutationMetadata = {
   queuedAt: Date.now(),
@@ -16,7 +16,9 @@ function makeSnapshot(entries: Record<string, unknown>): ConfigSnapshot {
 }
 
 function setup(entries?: Record<string, unknown>) {
-  const snapshot = makeSnapshot(entries ?? { app: { name: "test", port: 3000 } });
+  const snapshot = makeSnapshot(
+    entries ?? { app: { name: "test", port: 3000 } },
+  );
   const transport = createLocalTransport({ snapshot });
   const syncTransport = createWeaverSyncTransport(transport);
   return { transport, syncTransport, snapshot };
@@ -28,8 +30,8 @@ describe("createWeaverSyncTransport", () => {
       const { syncTransport } = setup();
       const result = await syncTransport.pull({});
       assert.equal(result.changes.length, 1);
-      assert.ok(result.changes.every(c => c.operation === "set"));
-      const keys = result.changes.map(c => c.key).sort();
+      assert.ok(result.changes.every((c) => c.operation === "set"));
+      const keys = result.changes.map((c) => c.key).sort();
       assert.deepEqual(keys, ["app"]);
     });
 
@@ -37,7 +39,10 @@ describe("createWeaverSyncTransport", () => {
       const { syncTransport, snapshot } = setup();
       await syncTransport.pull({});
 
-      (snapshot.entries as Record<string, unknown>).app = { name: "updated", port: 3000 };
+      (snapshot.entries as Record<string, unknown>).app = {
+        name: "updated",
+        port: 3000,
+      };
       const result = await syncTransport.pull({});
       assert.equal(result.changes.length, 1);
       const change = result.changes[0]!;
@@ -76,42 +81,54 @@ describe("createWeaverSyncTransport", () => {
       const { syncTransport, snapshot } = setup({});
       await syncTransport.push({
         requestId: "req-1",
-        mutations: [{
-          mutationId: "m-1",
-          key: "new.key",
-          operation: "set",
-          value: "hello",
-          metadata: testMeta,
-        }],
+        mutations: [
+          {
+            mutationId: "m-1",
+            key: "new.key",
+            operation: "set",
+            value: "hello",
+            metadata: testMeta,
+          },
+        ],
       });
-      assert.equal((snapshot.entries as Record<string, Record<string, unknown>>).new?.key, "hello");
+      assert.equal(
+        (snapshot.entries as Record<string, Record<string, unknown>>).new?.key,
+        "hello",
+      );
     });
 
     it("delegates remove mutation to transport.remove()", async () => {
       const { syncTransport, snapshot } = setup({ del: { key: "bye" } });
       await syncTransport.push({
         requestId: "req-2",
-        mutations: [{
-          mutationId: "m-2",
-          key: "del.key",
-          operation: "remove",
-          metadata: testMeta,
-        }],
+        mutations: [
+          {
+            mutationId: "m-2",
+            key: "del.key",
+            operation: "remove",
+            metadata: testMeta,
+          },
+        ],
       });
-      assert.equal((snapshot.entries as Record<string, Record<string, unknown>>).del?.key, undefined);
+      assert.equal(
+        (snapshot.entries as Record<string, Record<string, unknown>>).del?.key,
+        undefined,
+      );
     });
 
     it("returns accepted=true on success", async () => {
       const { syncTransport } = setup();
       const result = await syncTransport.push({
         requestId: "req-3",
-        mutations: [{
-          mutationId: "m-3",
-          key: "app.name",
-          operation: "set",
-          value: "new",
-          metadata: testMeta,
-        }],
+        mutations: [
+          {
+            mutationId: "m-3",
+            key: "app.name",
+            operation: "set",
+            value: "new",
+            metadata: testMeta,
+          },
+        ],
       });
       const r = result.results[0]!;
       assert.equal(r.accepted, true);
@@ -123,13 +140,15 @@ describe("createWeaverSyncTransport", () => {
       const { syncTransport } = setup();
       const result = await syncTransport.push({
         requestId: "req-4",
-        mutations: [{
-          mutationId: "m-4",
-          key: "x",
-          operation: "set",
-          value: 1,
-          metadata: testMeta,
-        }],
+        mutations: [
+          {
+            mutationId: "m-4",
+            key: "x",
+            operation: "set",
+            value: 1,
+            metadata: testMeta,
+          },
+        ],
       });
       assert.equal(result.requestId, "req-4");
       assert.ok(result.serverRevision);

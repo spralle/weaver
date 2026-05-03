@@ -18,9 +18,12 @@ import {
   resolveMountedNamespace,
   resolveMountedValue,
 } from "./mount-resolver.js";
-import type { SecretIntegrationHandle, SecretIntegrationOptions } from "./secret-integration.js";
-import { createSecretIntegration } from "./secret-integration.js";
 import { buildScopedLayerStack } from "./scope-helpers.js";
+import type {
+  SecretIntegrationHandle,
+  SecretIntegrationOptions,
+} from "./secret-integration.js";
+import { createSecretIntegration } from "./secret-integration.js";
 import { createStateContainer } from "./state-container.js";
 
 export interface ConfigurationServiceOptions {
@@ -118,9 +121,9 @@ export async function createConfigurationService(
       options.secrets,
     );
     container.onAnyChange(() => {
-      secretHandle?.refresh(container.snapshot()).catch(
-        options.secrets?.onRefreshError ?? (() => {}),
-      );
+      secretHandle
+        ?.refresh(container.snapshot())
+        .catch(options.secrets?.onRefreshError ?? (() => {}));
     });
   }
 
@@ -160,13 +163,12 @@ export async function createConfigurationService(
         return container.get(key) as T | undefined;
       }
       try {
-        const resolution = resolveMountedValue(
-          key,
-          mountMap,
-          (k) => container.get(k),
+        const resolution = resolveMountedValue(key, mountMap, (k) =>
+          container.get(k),
         );
         if (secretHandle !== undefined && resolution.isMounted) {
-          const targetKey = resolution.chain[resolution.chain.length - 1] ?? key;
+          const targetKey =
+            resolution.chain[resolution.chain.length - 1] ?? key;
           if (secretHandle.hasSecret(targetKey)) {
             return secretHandle.getResolved(targetKey) as T | undefined;
           }
@@ -187,13 +189,12 @@ export async function createConfigurationService(
         return value !== undefined ? value : defaultValue;
       }
       try {
-        const resolution = resolveMountedValue(
-          key,
-          mountMap,
-          (k) => container.get(k),
+        const resolution = resolveMountedValue(key, mountMap, (k) =>
+          container.get(k),
         );
         if (secretHandle !== undefined && resolution.isMounted) {
-          const targetKey = resolution.chain[resolution.chain.length - 1] ?? key;
+          const targetKey =
+            resolution.chain[resolution.chain.length - 1] ?? key;
           if (secretHandle.hasSecret(targetKey)) {
             const resolved = secretHandle.getResolved(targetKey);
             return resolved !== undefined ? (resolved as T) : defaultValue;
@@ -221,14 +222,22 @@ export async function createConfigurationService(
         const cached = cache.get(cacheKey);
         if (cached !== undefined) return cached[key] as T | undefined;
         const stack = buildScopedLayerStack(
-          scopePath, sortedProviders, container, weaverConfig, getRank,
+          scopePath,
+          sortedProviders,
+          container,
+          weaverConfig,
+          getRank,
         );
         const resolved = resolveConfiguration(stack);
         cache.set(cacheKey, resolved.entries);
         return resolved.entries[key] as T | undefined;
       }
       const stack = buildScopedLayerStack(
-        scopePath, sortedProviders, container, weaverConfig, getRank,
+        scopePath,
+        sortedProviders,
+        container,
+        weaverConfig,
+        getRank,
       );
       const resolved = resolveConfiguration(stack);
       return resolved.entries[key] as T | undefined;
@@ -240,10 +249,8 @@ export async function createConfigurationService(
 
       if (mountMap.has(key)) {
         try {
-          const resolution = resolveMountedValue(
-            key,
-            mountMap,
-            (k) => container.get(k),
+          const resolution = resolveMountedValue(key, mountMap, (k) =>
+            container.get(k),
           );
           if (resolution.isMounted) {
             inspection.mountChain = resolution.chain;
@@ -265,7 +272,11 @@ export async function createConfigurationService(
       return inspection;
     },
 
-    async set(key: string, value: unknown, layer?: ConfigurationLayer): Promise<void> {
+    async set(
+      key: string,
+      value: unknown,
+      layer?: ConfigurationLayer,
+    ): Promise<void> {
       let provider: ConfigurationStorageProvider | undefined;
 
       if (layer !== undefined) {
@@ -297,7 +308,10 @@ export async function createConfigurationService(
       const provider = findProviderForLayer(layer);
 
       if (provider === undefined || !provider.writable) {
-        throw createWeaverError("NOT_FOUND", `No writable provider for layer "${layer}"`);
+        throw createWeaverError(
+          "NOT_FOUND",
+          `No writable provider for layer "${layer}"`,
+        );
       }
 
       provider.remove(key).catch((error: unknown) => {

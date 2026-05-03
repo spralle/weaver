@@ -21,11 +21,17 @@ export function parsePath(path: string): readonly string[] {
 
     if (inBracket) {
       if (ch === "[") {
-        throw createWeaverError("VALIDATION_ERROR", `Nested brackets at position ${String(i)} in "${path}"`);
+        throw createWeaverError(
+          "VALIDATION_ERROR",
+          `Nested brackets at position ${String(i)} in "${path}"`,
+        );
       }
       if (ch === "]") {
         if (current.length === 0) {
-          throw createWeaverError("VALIDATION_ERROR", `Empty brackets in "${path}"`);
+          throw createWeaverError(
+            "VALIDATION_ERROR",
+            `Empty brackets in "${path}"`,
+          );
         }
         segments.push(current);
         current = "";
@@ -36,7 +42,10 @@ export function parsePath(path: string): readonly string[] {
           if (path[i] === ".") {
             i++;
             if (i >= path.length) {
-              throw createWeaverError("VALIDATION_ERROR", `Trailing dot in "${path}"`);
+              throw createWeaverError(
+                "VALIDATION_ERROR",
+                `Trailing dot in "${path}"`,
+              );
             }
           } else if (path[i] !== "[") {
             throw createWeaverError(
@@ -51,7 +60,10 @@ export function parsePath(path: string): readonly string[] {
       i++;
     } else {
       if (ch === "]") {
-        throw createWeaverError("VALIDATION_ERROR", `Unmatched ']' at position ${String(i)} in "${path}"`);
+        throw createWeaverError(
+          "VALIDATION_ERROR",
+          `Unmatched ']' at position ${String(i)} in "${path}"`,
+        );
       }
       if (ch === "[") {
         if (current.length > 0) {
@@ -61,7 +73,10 @@ export function parsePath(path: string): readonly string[] {
         inBracket = true;
         i++;
         if (i < path.length && path[i] === "[") {
-          throw createWeaverError("VALIDATION_ERROR", `Nested brackets at position ${String(i)} in "${path}"`);
+          throw createWeaverError(
+            "VALIDATION_ERROR",
+            `Nested brackets at position ${String(i)} in "${path}"`,
+          );
         }
         continue;
       }
@@ -76,7 +91,10 @@ export function parsePath(path: string): readonly string[] {
         current = "";
         i++;
         if (i >= path.length) {
-          throw createWeaverError("VALIDATION_ERROR", `Trailing dot in "${path}"`);
+          throw createWeaverError(
+            "VALIDATION_ERROR",
+            `Trailing dot in "${path}"`,
+          );
         }
         continue;
       }

@@ -1,6 +1,9 @@
 // Auth gate — bridges weaver-server AuthContext to config-auth RBAC functions
 import type { AuthFunctions } from "@weaver/config-auth";
-import type { ConfigurationAccessContext, ConfigurationPropertySchema } from "@weaver/config-types";
+import type {
+  ConfigurationAccessContext,
+  ConfigurationPropertySchema,
+} from "@weaver/config-types";
 import type { AuthContext } from "../auth/auth-middleware.js";
 import type { RestResponse } from "./rest-adapter.js";
 
@@ -67,7 +70,9 @@ export function createAuthGate(options: AuthGateOptions): AuthGate {
     schema?: ConfigurationPropertySchema,
   ): RestResponse | null {
     if (!authFunctions.canWrite(accessCtx, layer, key, schema ?? undefined)) {
-      return forbidden(`Write access denied for key: ${key} on layer: ${layer}`);
+      return forbidden(
+        `Write access denied for key: ${key} on layer: ${layer}`,
+      );
     }
     return null;
   }

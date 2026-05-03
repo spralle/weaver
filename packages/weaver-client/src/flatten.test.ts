@@ -1,5 +1,5 @@
-import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 import { flattenObject } from "./flatten.js";
 
 describe("flattenObject", () => {
@@ -40,7 +40,9 @@ describe("flattenObject", () => {
     const result = flattenObject({
       plugins: { "ghost.settings.panel": { retentionDays: 30 } },
     });
-    assert.deepEqual(result, { "plugins[ghost.settings.panel].retentionDays": 30 });
+    assert.deepEqual(result, {
+      "plugins[ghost.settings.panel].retentionDays": 30,
+    });
   });
 
   it("handles mixed nesting depths", () => {

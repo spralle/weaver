@@ -1,4 +1,4 @@
-import { describe, test, expect } from "bun:test";
+import { describe, expect, test } from "bun:test";
 import { createJwtValidator } from "../../src/auth/jwt-validator.js";
 
 const SECRET = "test-secret-key-for-hmac-256";
@@ -24,7 +24,9 @@ async function createTestJwt(
     false,
     ["sign"],
   );
-  const sig = new Uint8Array(await crypto.subtle.sign("HMAC", key, encoder.encode(signingInput)));
+  const sig = new Uint8Array(
+    await crypto.subtle.sign("HMAC", key, encoder.encode(signingInput)),
+  );
   return `${header}.${body}.${base64Url(sig)}`;
 }
 
@@ -77,7 +79,10 @@ describe("JwtValidator", () => {
   });
 
   test("invalid issuer throws UNAUTHORIZED", async () => {
-    const v = createJwtValidator({ publicKeyOrSecret: SECRET, issuer: "expected-issuer" });
+    const v = createJwtValidator({
+      publicKeyOrSecret: SECRET,
+      issuer: "expected-issuer",
+    });
     const token = await createTestJwt({
       sub: "user-1",
       iss: "wrong-issuer",
@@ -90,8 +95,10 @@ describe("JwtValidator", () => {
   });
 
   test("malformed token throws UNAUTHORIZED", async () => {
-    await expect(validator.validate("not.a.valid-token")).rejects.toMatchObject({
-      code: "UNAUTHORIZED",
-    });
+    await expect(validator.validate("not.a.valid-token")).rejects.toMatchObject(
+      {
+        code: "UNAUTHORIZED",
+      },
+    );
   });
 });

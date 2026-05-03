@@ -45,9 +45,7 @@ export async function createSecretIntegration(
   async function resolveAll(
     entries: Readonly<Record<string, unknown>>,
   ): Promise<void> {
-    const result = await service.resolveAll(
-      entries as Record<string, unknown>,
-    );
+    const result = await service.resolveAll(entries as Record<string, unknown>);
     resolvedSecrets.clear();
     secretKeys.clear();
     for (const [key, value] of result.resolved) {
@@ -72,9 +70,12 @@ export async function createSecretIntegration(
     options.refreshIntervalMs > 0
   ) {
     refreshTimer = setInterval(() => {
-      resolveAll(latestEntries).catch(options.onRefreshError ?? ((err) => {
-        console.warn("[weaver] secret refresh failed:", err);
-      }));
+      resolveAll(latestEntries).catch(
+        options.onRefreshError ??
+          ((err) => {
+            console.warn("[weaver] secret refresh failed:", err);
+          }),
+      );
     }, options.refreshIntervalMs);
   }
 
@@ -96,9 +97,7 @@ export async function createSecretIntegration(
       return { _weaver: "secret-ref", provider, uri } as const;
     },
 
-    async refresh(
-      entries: Readonly<Record<string, unknown>>,
-    ): Promise<void> {
+    async refresh(entries: Readonly<Record<string, unknown>>): Promise<void> {
       latestEntries = entries;
       await resolveAll(entries);
     },

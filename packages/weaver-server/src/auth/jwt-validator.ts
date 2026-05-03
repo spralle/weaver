@@ -106,10 +106,14 @@ function extractIdentity(payload: Record<string, unknown>): JwtIdentity {
     identity.userId = userId;
   }
   if (Array.isArray(payload.roles)) {
-    identity.roles = payload.roles.filter((r): r is string => typeof r === "string");
+    identity.roles = payload.roles.filter(
+      (r): r is string => typeof r === "string",
+    );
   }
   if (Array.isArray(payload.scopes)) {
-    identity.scopes = payload.scopes.filter((s): s is string => typeof s === "string");
+    identity.scopes = payload.scopes.filter(
+      (s): s is string => typeof s === "string",
+    );
   }
 
   return identity;
@@ -157,7 +161,10 @@ export function createJwtValidator(options: JwtValidatorOptions): JwtValidator {
       }
 
       // Check expiration
-      if (typeof payload.exp === "number" && payload.exp < Math.floor(Date.now() / 1000)) {
+      if (
+        typeof payload.exp === "number" &&
+        payload.exp < Math.floor(Date.now() / 1000)
+      ) {
         throw createWeaverError("UNAUTHORIZED", "Token expired");
       }
 

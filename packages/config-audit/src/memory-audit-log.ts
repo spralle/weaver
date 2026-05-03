@@ -26,7 +26,9 @@ export function createInMemoryAuditLog(): ConfigAuditLog {
         .sort((a, b) => b.timestamp.localeCompare(a.timestamp));
     },
 
-    async getRecent(limit?: number | undefined): Promise<ConfigDomainAuditEntry[]> {
+    async getRecent(
+      limit?: number | undefined,
+    ): Promise<ConfigDomainAuditEntry[]> {
       const sorted = [...entries].sort((a, b) =>
         b.timestamp.localeCompare(a.timestamp),
       );

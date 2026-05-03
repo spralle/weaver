@@ -1,6 +1,10 @@
 import type { ScopeInstance } from "@weaver/config-types";
 
-export type { ConfigDelta, ConfigSnapshot, ConfigurationInspection } from "@weaver/config-types";
+export type {
+  ConfigDelta,
+  ConfigSnapshot,
+  ConfigurationInspection,
+} from "@weaver/config-types";
 
 export interface ResolveOptions {
   scopePath?: ScopeInstance[];

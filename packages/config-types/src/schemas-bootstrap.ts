@@ -22,10 +22,16 @@ export const bootstrapConfigSchema = z
       .optional(),
   })
   .check(
-    z.refine((data) => {
-      const needsMongo = data.layers.some((l) => l.provider === "mongodb");
-      return !needsMongo || data.mongodb !== undefined;
-    }, { message: "mongodb config is required when any layer uses 'mongodb' provider" }),
+    z.refine(
+      (data) => {
+        const needsMongo = data.layers.some((l) => l.provider === "mongodb");
+        return !needsMongo || data.mongodb !== undefined;
+      },
+      {
+        message:
+          "mongodb config is required when any layer uses 'mongodb' provider",
+      },
+    ),
   );
 
 export type BootstrapConfig = z.infer<typeof bootstrapConfigSchema>;

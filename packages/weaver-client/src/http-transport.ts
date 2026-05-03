@@ -1,6 +1,16 @@
 import type { ScopeDefinition, ScopeInstance } from "@weaver/config-types";
-import type { ConfigDelta, ConfigSnapshot, GetOptions, ResolveOptions, Unsubscribe } from "./types.js";
-import type { WeaverTransport, WriteOptions, WriteResult } from "./transport.js";
+import type {
+  WeaverTransport,
+  WriteOptions,
+  WriteResult,
+} from "./transport.js";
+import type {
+  ConfigDelta,
+  ConfigSnapshot,
+  GetOptions,
+  ResolveOptions,
+  Unsubscribe,
+} from "./types.js";
 
 export interface HttpTransportOptions {
   /** Base URL of the weaver-server (e.g. "http://localhost:3399") */
@@ -23,7 +33,9 @@ interface SSEState {
   lastCheckpoint: number;
 }
 
-export function createHttpTransport(options: HttpTransportOptions): WeaverTransport & { lastCheckpoint: number } {
+export function createHttpTransport(
+  options: HttpTransportOptions,
+): WeaverTransport & { lastCheckpoint: number } {
   const { baseUrl, token, headers: extraHeaders } = options;
   const fetchFn = options.fetch ?? globalThis.fetch;
   const maxReconnectAttempts = options.maxReconnectAttempts ?? Infinity;
@@ -60,10 +72,19 @@ export function createHttpTransport(options: HttpTransportOptions): WeaverTransp
       (pair): pair is [string, string] => pair[1] !== undefined,
     );
     if (entries.length === 0) return "";
-    return "?" + entries.map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`).join("&");
+    return (
+      "?" +
+      entries
+        .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(v)}`)
+        .join("&")
+    );
   }
 
-  async function request<T>(method: string, path: string, body?: unknown): Promise<T> {
+  async function request<T>(
+    method: string,
+    path: string,
+    body?: unknown,
+  ): Promise<T> {
     const res = await fetchFn(`${baseUrl}${path}`, {
       method,
       headers: buildHeaders(),
@@ -106,14 +127,18 @@ export function createHttpTransport(options: HttpTransportOptions): WeaverTransp
         for (const handler of deltaHandlers) {
           handler(delta);
         }
-      } catch { /* skip invalid JSON */ }
+      } catch {
+        /* skip invalid JSON */
+      }
     } else if (eventType === "snapshot" && data) {
       try {
         const snapshot = JSON.parse(data) as ConfigSnapshot;
         for (const handler of snapshotHandlers) {
           handler(snapshot);
         }
-      } catch { /* skip invalid JSON */ }
+      } catch {
+        /* skip invalid JSON */
+      }
     } else if (eventType === "checkpoint") {
       sse.lastCheckpoint = Date.now();
     }
@@ -160,19 +185,22 @@ export function createHttpTransport(options: HttpTransportOptions): WeaverTransp
         let buffer = "";
 
         function read(): void {
-          reader.read().then(({ done, value }) => {
-            if (done) {
+          reader
+            .read()
+            .then(({ done, value }) => {
+              if (done) {
+                sse.abortController = null;
+                scheduleReconnect();
+                return;
+              }
+              buffer += decoder.decode(value, { stream: true });
+              buffer = processBuffer(buffer);
+              read();
+            })
+            .catch(() => {
               sse.abortController = null;
               scheduleReconnect();
-              return;
-            }
-            buffer += decoder.decode(value, { stream: true });
-            buffer = processBuffer(buffer);
-            read();
-          }).catch(() => {
-            sse.abortController = null;
-            scheduleReconnect();
-          });
+            });
         }
 
         read();
@@ -210,16 +238,29 @@ export function createHttpTransport(options: HttpTransportOptions): WeaverTransp
       const scope = buildScopeQuery(opts?.scopePath);
       const keyPath = key.replace(/\./g, "/");
       const qs = queryString({ scope: scope || undefined });
-      const result = await request<{ key: string; value: unknown }>("GET", `/v1/config/${keyPath}${qs}`);
+      const result = await request<{ key: string; value: unknown }>(
+        "GET",
+        `/v1/config/${keyPath}${qs}`,
+      );
       return result.value;
     },
 
-    async getNamespace(prefix: string, opts?: GetOptions): Promise<Record<string, unknown>> {
+    async getNamespace(
+      prefix: string,
+      opts?: GetOptions,
+    ): Promise<Record<string, unknown>> {
       const scope = buildScopeQuery(opts?.scopePath);
       const keyPath = prefix.replace(/\./g, "/");
       const qs = queryString({ scope: scope || undefined });
-      const result = await request<{ key: string; value: unknown }>("GET", `/v1/config/${keyPath}${qs}`);
-      if (result.value && typeof result.value === "object" && !Array.isArray(result.value)) {
+      const result = await request<{ key: string; value: unknown }>(
+        "GET",
+        `/v1/config/${keyPath}${qs}`,
+      );
+      if (
+        result.value &&
+        typeof result.value === "object" &&
+        !Array.isArray(result.value)
+      ) {
         return result.value as Record<string, unknown>;
       }
       return {};
@@ -245,7 +286,11 @@ export function createHttpTransport(options: HttpTransportOptions): WeaverTransp
       };
     },
 
-    async set(key: string, value: unknown, opts?: WriteOptions): Promise<WriteResult> {
+    async set(
+      key: string,
+      value: unknown,
+      opts?: WriteOptions,
+    ): Promise<WriteResult> {
       const keyPath = key.replace(/\./g, "/");
       const qs = queryString({ layer: opts?.layer, env: opts?.environment });
       const headers = buildHeaders();
@@ -259,7 +304,11 @@ export function createHttpTransport(options: HttpTransportOptions): WeaverTransp
       });
       const json = (await res.json()) as {
         data: WriteResult;
-        error?: { code: string; message: string; details?: Record<string, unknown> };
+        error?: {
+          code: string;
+          message: string;
+          details?: Record<string, unknown>;
+        };
       };
       if (!res.ok && json.error) {
         return { success: false, error: json.error };
@@ -267,7 +316,10 @@ export function createHttpTransport(options: HttpTransportOptions): WeaverTransp
       return json.data;
     },
 
-    async setMany(entries: Record<string, unknown>, opts?: WriteOptions): Promise<WriteResult> {
+    async setMany(
+      entries: Record<string, unknown>,
+      opts?: WriteOptions,
+    ): Promise<WriteResult> {
       const qs = queryString({ layer: opts?.layer, env: opts?.environment });
       const headers = buildHeaders();
       if (opts?.ifRevision) {
@@ -280,7 +332,11 @@ export function createHttpTransport(options: HttpTransportOptions): WeaverTransp
       });
       const json = (await res.json()) as {
         data: WriteResult;
-        error?: { code: string; message: string; details?: Record<string, unknown> };
+        error?: {
+          code: string;
+          message: string;
+          details?: Record<string, unknown>;
+        };
       };
       if (!res.ok && json.error) {
         return { success: false, error: json.error };
@@ -301,7 +357,11 @@ export function createHttpTransport(options: HttpTransportOptions): WeaverTransp
       });
       const json = (await res.json()) as {
         data: WriteResult;
-        error?: { code: string; message: string; details?: Record<string, unknown> };
+        error?: {
+          code: string;
+          message: string;
+          details?: Record<string, unknown>;
+        };
       };
       if (!res.ok && json.error) {
         return { success: false, error: json.error };
@@ -310,12 +370,18 @@ export function createHttpTransport(options: HttpTransportOptions): WeaverTransp
     },
 
     async listScopes(): Promise<ScopeDefinition[]> {
-      const result = await request<{ definitions: ScopeDefinition[] }>("GET", "/v1/scopes");
+      const result = await request<{ definitions: ScopeDefinition[] }>(
+        "GET",
+        "/v1/scopes",
+      );
       return result.definitions;
     },
 
     async listScopeValues(scopeId: string): Promise<string[]> {
-      const result = await request<{ values: string[] }>("GET", `/v1/scopes/${encodeURIComponent(scopeId)}`);
+      const result = await request<{ values: string[] }>(
+        "GET",
+        `/v1/scopes/${encodeURIComponent(scopeId)}`,
+      );
       return result.values;
     },
 

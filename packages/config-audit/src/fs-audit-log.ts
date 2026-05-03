@@ -2,8 +2,8 @@
 
 import { appendFile, mkdir, readFile } from "node:fs/promises";
 import { dirname } from "node:path";
-import { configDomainAuditEntrySchema } from "@weaver/config-types";
 import type { ConfigDomainAuditEntry } from "@weaver/config-types";
+import { configDomainAuditEntrySchema } from "@weaver/config-types";
 import { isNodeError } from "@weaver/storage-provider-core";
 import type { ConfigAuditLog } from "./types.js";
 
@@ -21,7 +21,9 @@ function parseLines(content: string): ConfigDomainAuditEntry[] {
   return entries;
 }
 
-async function readAllEntries(filePath: string): Promise<ConfigDomainAuditEntry[]> {
+async function readAllEntries(
+  filePath: string,
+): Promise<ConfigDomainAuditEntry[]> {
   try {
     const content = await readFile(filePath, "utf-8");
     return parseLines(content);
@@ -68,7 +70,9 @@ export function createFileSystemAuditLog(filePath: string): ConfigAuditLog {
         .sort((a, b) => b.timestamp.localeCompare(a.timestamp));
     },
 
-    async getRecent(limit?: number | undefined): Promise<ConfigDomainAuditEntry[]> {
+    async getRecent(
+      limit?: number | undefined,
+    ): Promise<ConfigDomainAuditEntry[]> {
       const entries = await readAllEntries(filePath);
       const sorted = entries.sort((a, b) =>
         b.timestamp.localeCompare(a.timestamp),

@@ -1,15 +1,16 @@
 // WeaverConfigService — server-side config service wrapping storage providers
+
+import { deepGet, deepMerge, deepRemove, deepSet } from "@weaver/config-engine";
 import type {
   ConfigurationInspection,
   ConfigurationStorageProvider,
   ScopeInstance,
   WriteResult,
 } from "@weaver/config-types";
-import type { ConfigSnapshot, ConfigDelta } from "../types/index.js";
 import type { WeaverLogger } from "@weaver/storage-provider-core";
 import { consoleLogger } from "@weaver/storage-provider-core";
-import { isScopedLayer, buildScopePathString } from "./scope-utils.js";
-import { deepGet, deepSet, deepRemove, deepMerge } from "@weaver/config-engine";
+import type { ConfigDelta, ConfigSnapshot } from "../types/index.js";
+import { buildScopePathString, isScopedLayer } from "./scope-utils.js";
 
 export interface WriteContext {
   environment?: string;
@@ -28,20 +29,15 @@ export interface WeaverConfigServiceOptions {
 type Unsubscribe = () => void;
 
 export interface WeaverConfigService {
-  resolveAll(
-    options?: { scopePath?: ScopeInstance[] },
-  ): Promise<ConfigSnapshot>;
-  get(
-    key: string,
-    options?: { scopePath?: ScopeInstance[] },
-  ): Promise<unknown>;
+  resolveAll(options?: {
+    scopePath?: ScopeInstance[];
+  }): Promise<ConfigSnapshot>;
+  get(key: string, options?: { scopePath?: ScopeInstance[] }): Promise<unknown>;
   getNamespace(
     prefix: string,
     options?: { scopePath?: ScopeInstance[] },
   ): Promise<Record<string, unknown>>;
-  inspect(
-    key: string,
-  ): Promise<ConfigurationInspection<unknown>>;
+  inspect(key: string): Promise<ConfigurationInspection<unknown>>;
   readonly providers: ReadonlyArray<ConfigurationStorageProvider>;
   readonly degradedProviders: ReadonlyArray<string>;
   readonly revision: string;
@@ -52,12 +48,20 @@ export interface WeaverConfigService {
     value: unknown,
     options?: WriteContext,
   ): Promise<WriteResult>;
-  remove(layer: string, key: string, options?: WriteContext): Promise<WriteResult>;
+  remove(
+    layer: string,
+    key: string,
+    options?: WriteContext,
+  ): Promise<WriteResult>;
   onDelta(handler: (delta: ConfigDelta) => void): Unsubscribe;
   /** Group multiple writes into one commit. Auto-flushes at the end. */
   batch<T>(fn: () => Promise<T>): Promise<T>;
   /** Write multiple key-value pairs in a single batch. */
-  setMany(layer: string, entries: Record<string, unknown>, options?: WriteContext): Promise<WriteResult>;
+  setMany(
+    layer: string,
+    entries: Record<string, unknown>,
+    options?: WriteContext,
+  ): Promise<WriteResult>;
   /** Flush all dirty providers. Rarely needed — set/remove auto-flush. */
   flush(): Promise<void>;
   /** Refresh all providers from remote sources, then reload state. */
@@ -102,14 +106,21 @@ export async function createWeaverConfigService(
     if (debounceTimer !== null) clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
       debounceTimer = null;
-      flushAllDirty().catch((err) => logger.error("[config] flush failed:", err));
+      flushAllDirty().catch((err) =>
+        logger.error("[config] flush failed:", err),
+      );
     }, flushDebounceMs);
   }
 
-  function checkRevision(expectedRevision: string | undefined): WriteResult | null {
+  function checkRevision(
+    expectedRevision: string | undefined,
+  ): WriteResult | null {
     if (expectedRevision === undefined) return null;
     if (expectedRevision !== revision) {
-      return { success: false, error: `Revision conflict: expected ${expectedRevision}, current is ${revision}` };
+      return {
+        success: false,
+        error: `Revision conflict: expected ${expectedRevision}, current is ${revision}`,
+      };
     }
     return null;
   }
@@ -122,7 +133,9 @@ export async function createWeaverConfigService(
       activeProviders.push(provider);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      logger.error(`[weaver] Provider "${provider.id}" failed to load: ${message}`);
+      logger.error(
+        `[weaver] Provider "${provider.id}" failed to load: ${message}`,
+      );
       degradedProviders.push(provider.id);
     }
   }
@@ -158,12 +171,17 @@ export async function createWeaverConfigService(
     for (const provider of providers) {
       if (!isScopedLayer(provider.layer)) continue;
       const entries = layerData.get(provider.id) ?? {};
-      scopes[provider.layer] = { ...(scopes[provider.layer] ?? {}), ...entries };
+      scopes[provider.layer] = {
+        ...(scopes[provider.layer] ?? {}),
+        ...entries,
+      };
     }
     return scopes;
   }
 
-  function getMergedState(scopePath?: ScopeInstance[]): Record<string, unknown> {
+  function getMergedState(
+    scopePath?: ScopeInstance[],
+  ): Record<string, unknown> {
     const base = getBaseEntries();
     if (!scopePath?.length) return base;
     return deepMerge(base, getScopeState(scopePath));
@@ -194,12 +212,16 @@ export async function createWeaverConfigService(
       return revision;
     },
 
-    async resolveAll(
-      opts?: { scopePath?: ScopeInstance[] },
-    ): Promise<ConfigSnapshot> {
+    async resolveAll(opts?: {
+      scopePath?: ScopeInstance[];
+    }): Promise<ConfigSnapshot> {
       const entries = getBaseEntries();
       const scopes = opts?.scopePath?.length
-        ? { [buildScopePathString(opts.scopePath)]: getScopeState(opts.scopePath) }
+        ? {
+            [buildScopePathString(opts.scopePath)]: getScopeState(
+              opts.scopePath,
+            ),
+          }
         : getAllScopes();
 
       return {
@@ -224,18 +246,20 @@ export async function createWeaverConfigService(
     ): Promise<Record<string, unknown>> {
       const state = getMergedState(opts?.scopePath);
       const value = deepGet(state, prefix);
-      if (value !== null && typeof value === "object" && !Array.isArray(value)) {
+      if (
+        value !== null &&
+        typeof value === "object" &&
+        !Array.isArray(value)
+      ) {
         return value as Record<string, unknown>;
       }
       return {};
     },
 
-    async inspect(
-      key: string,
-    ): Promise<ConfigurationInspection<unknown>> {
+    async inspect(key: string): Promise<ConfigurationInspection<unknown>> {
       const layerValues: Record<string, unknown> = {};
-      let effectiveValue: unknown = undefined;
-      let effectiveLayer: string | undefined = undefined;
+      let effectiveValue: unknown;
+      let effectiveLayer: string | undefined;
 
       for (const provider of providers) {
         const entries = layerData.get(provider.id) ?? {};
@@ -272,7 +296,10 @@ export async function createWeaverConfigService(
         return { success: false, error: `No provider for layer "${layer}"` };
       }
       if (!provider.writable) {
-        return { success: false, error: `Provider for layer "${layer}" is read-only` };
+        return {
+          success: false,
+          error: `Provider for layer "${layer}" is read-only`,
+        };
       }
 
       if (typeof value === "string" && value.length > SIZE_WARNING) {
@@ -316,7 +343,10 @@ export async function createWeaverConfigService(
         return { success: false, error: `No provider for layer "${layer}"` };
       }
       if (!provider.writable) {
-        return { success: false, error: `Provider for layer "${layer}" is read-only` };
+        return {
+          success: false,
+          error: `Provider for layer "${layer}" is read-only`,
+        };
       }
 
       const result = await provider.remove(key);

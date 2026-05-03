@@ -78,9 +78,7 @@ export function buildScopedLayerStack(
       return entries !== undefined ? { layer: layerId, entries } : undefined;
     })
     .filter(
-      (
-        layer,
-      ): layer is { layer: string; entries: Record<string, unknown> } => {
+      (layer): layer is { layer: string; entries: Record<string, unknown> } => {
         return layer !== undefined;
       },
     );

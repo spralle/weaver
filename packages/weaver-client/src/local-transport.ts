@@ -1,7 +1,17 @@
+import { deepGet, deepRemove, deepSet } from "@weaver/config-engine";
 import type { ScopeDefinition, ScopeInstance } from "@weaver/config-types";
-import type { ConfigDelta, ConfigSnapshot, GetOptions, ResolveOptions, Unsubscribe } from "./types.js";
-import type { WeaverTransport, WriteOptions, WriteResult } from "./transport.js";
-import { deepGet, deepSet, deepRemove } from "@weaver/config-engine";
+import type {
+  WeaverTransport,
+  WriteOptions,
+  WriteResult,
+} from "./transport.js";
+import type {
+  ConfigDelta,
+  ConfigSnapshot,
+  GetOptions,
+  ResolveOptions,
+  Unsubscribe,
+} from "./types.js";
 
 export interface LocalTransportOptions {
   snapshot: ConfigSnapshot;
@@ -13,10 +23,12 @@ export interface LocalTransport extends WeaverTransport {
 }
 
 function buildScopeKey(scopePath: ScopeInstance[]): string {
-  return scopePath.map(s => `${s.scopeId}:${s.value}`).join("/");
+  return scopePath.map((s) => `${s.scopeId}:${s.value}`).join("/");
 }
 
-export function createLocalTransport(options: LocalTransportOptions): LocalTransport {
+export function createLocalTransport(
+  options: LocalTransportOptions,
+): LocalTransport {
   const { snapshot, latencyMs } = options;
   const subscribers = new Set<(delta: ConfigDelta) => void>();
 
@@ -34,17 +46,24 @@ export function createLocalTransport(options: LocalTransportOptions): LocalTrans
 
     async get(key: string, opts?: GetOptions): Promise<unknown> {
       const source = opts?.scopePath?.length
-        ? snapshot.scopes[buildScopeKey(opts.scopePath)] ?? {}
+        ? (snapshot.scopes[buildScopeKey(opts.scopePath)] ?? {})
         : snapshot.entries;
       return withLatency(deepGet(source as Record<string, unknown>, key));
     },
 
-    async getNamespace(prefix: string, opts?: GetOptions): Promise<Record<string, unknown>> {
+    async getNamespace(
+      prefix: string,
+      opts?: GetOptions,
+    ): Promise<Record<string, unknown>> {
       const source = opts?.scopePath?.length
-        ? snapshot.scopes[buildScopeKey(opts.scopePath)] ?? {}
+        ? (snapshot.scopes[buildScopeKey(opts.scopePath)] ?? {})
         : snapshot.entries;
       const value = deepGet(source as Record<string, unknown>, prefix);
-      if (value !== null && typeof value === "object" && !Array.isArray(value)) {
+      if (
+        value !== null &&
+        typeof value === "object" &&
+        !Array.isArray(value)
+      ) {
         return withLatency(value as Record<string, unknown>);
       }
       return withLatency({});
@@ -62,7 +81,11 @@ export function createLocalTransport(options: LocalTransportOptions): LocalTrans
       return withLatency({ key, value, source: "local" });
     },
 
-    async set(key: string, value: unknown, _options?: WriteOptions): Promise<WriteResult> {
+    async set(
+      key: string,
+      value: unknown,
+      _options?: WriteOptions,
+    ): Promise<WriteResult> {
       deepSet(snapshot.entries as Record<string, unknown>, key, value);
       return withLatency({ success: true, revision: `local-${Date.now()}` });
     },
@@ -72,7 +95,10 @@ export function createLocalTransport(options: LocalTransportOptions): LocalTrans
       return withLatency({ success: true, revision: `local-${Date.now()}` });
     },
 
-    async setMany(entries: Record<string, unknown>, _options?: WriteOptions): Promise<WriteResult> {
+    async setMany(
+      entries: Record<string, unknown>,
+      _options?: WriteOptions,
+    ): Promise<WriteResult> {
       for (const [key, value] of Object.entries(entries)) {
         deepSet(snapshot.entries as Record<string, unknown>, key, value);
       }
@@ -88,10 +114,13 @@ export function createLocalTransport(options: LocalTransportOptions): LocalTrans
           if (colonIdx !== -1) scopeIds.add(part.slice(0, colonIdx));
         }
       }
-      return withLatency([...scopeIds].map(id => ({ id, label: id })));
+      return withLatency([...scopeIds].map((id) => ({ id, label: id })));
     },
 
-    async listScopeValues(scopeId: string, _parentScope?: ScopeInstance[]): Promise<string[]> {
+    async listScopeValues(
+      scopeId: string,
+      _parentScope?: ScopeInstance[],
+    ): Promise<string[]> {
       const values = new Set<string>();
       for (const scopePathStr of Object.keys(snapshot.scopes ?? {})) {
         const parts = scopePathStr.split("/");

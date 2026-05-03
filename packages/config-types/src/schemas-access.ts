@@ -1,11 +1,10 @@
 // schemas-access.ts — Zod schemas for access context and write policy types
 
 import { z } from "zod";
-
-import { configurationRoleSchema } from "./schemas-policy.js";
 import { scopeInstanceSchema } from "./schemas-layers.js";
-import { sessionTypeSchema } from "./schemas-session.js";
+import { configurationRoleSchema } from "./schemas-policy.js";
 import { configurationPropertySchemaSchema } from "./schemas-property.js";
+import { sessionTypeSchema } from "./schemas-session.js";
 
 export const configurationAccessContextSchema = z.strictObject({
   userId: z.string(),
@@ -42,10 +41,12 @@ export const serviceConfigurationDeclarationSchema = z.strictObject({
   configuration: configurationPropertySchemaSchema,
   reads: z.array(z.string()).readonly().optional(),
   fragments: z.record(z.string(), configurationSchemaFragmentSchema).optional(),
-  instanceConfig: z.strictObject({
-    instanceKey: z.string(),
-    maxInstances: z.number().int().positive().optional(),
-  }).optional(),
+  instanceConfig: z
+    .strictObject({
+      instanceKey: z.string(),
+      maxInstances: z.number().int().positive().optional(),
+    })
+    .optional(),
 });
 
 export const serviceAccessPolicySchema = z.strictObject({

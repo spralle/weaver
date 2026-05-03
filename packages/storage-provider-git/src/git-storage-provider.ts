@@ -4,7 +4,10 @@ import type {
   ConfigurationStorageProvider,
   WriteResult,
 } from "@weaver/config-types";
-import { createFileSystemStorageProvider, type FileSystemStorageProvider } from "@weaver/storage-provider-fs";
+import {
+  createFileSystemStorageProvider,
+  type FileSystemStorageProvider,
+} from "@weaver/storage-provider-fs";
 import type { GitManager } from "./git-manager.js";
 
 export interface GitStorageProviderOptions {
@@ -36,7 +39,10 @@ class GitStorageProvider implements ConfigurationStorageProvider {
     this.filePath = options.filePath;
 
     const { join } = require("node:path") as typeof import("node:path");
-    const absoluteFilePath = join(options.gitManager.localPath, options.filePath);
+    const absoluteFilePath = join(
+      options.gitManager.localPath,
+      options.filePath,
+    );
     const envOverlay = options.environmentOverlayPath
       ? join(options.gitManager.localPath, options.environmentOverlayPath)
       : undefined;
@@ -90,13 +96,18 @@ class GitStorageProvider implements ConfigurationStorageProvider {
         : `config: ${this.dirtyKeys.length} changes in ${this.layer}`;
     this.dirtyKeys.length = 0;
     this.isDirty = false;
-    const result = await this.gitManager.commitAndPush(summary, [this.filePath]);
+    const result = await this.gitManager.commitAndPush(summary, [
+      this.filePath,
+    ]);
     if (!result.success) {
       throw new Error(`Git flush failed: ${result.error}`);
     }
   }
 
-  async revert(toRevision: string, actor: string): Promise<{ revertedCommits: number }> {
+  async revert(
+    toRevision: string,
+    actor: string,
+  ): Promise<{ revertedCommits: number }> {
     const result = await this.gitManager.revert(toRevision, actor);
     if (!result.success) {
       throw new Error(`Git revert failed: ${result.error}`);
@@ -115,6 +126,14 @@ class GitStorageProvider implements ConfigurationStorageProvider {
 /** Creates a Git-backed storage provider instance. */
 export function createGitStorageProvider(
   options: GitStorageProviderOptions,
-): ConfigurationStorageProvider & { dirty: boolean; flush(): Promise<void>; revert(toRevision: string, actor: string): Promise<{ revertedCommits: number }>; refresh(): Promise<void> } {
+): ConfigurationStorageProvider & {
+  dirty: boolean;
+  flush(): Promise<void>;
+  revert(
+    toRevision: string,
+    actor: string,
+  ): Promise<{ revertedCommits: number }>;
+  refresh(): Promise<void>;
+} {
   return new GitStorageProvider(options);
 }

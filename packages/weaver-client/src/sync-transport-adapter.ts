@@ -1,22 +1,26 @@
-import type { WeaverTransport, WriteResult } from "./transport.js";
 import type {
-  ConfigSyncTransport,
+  ConfigSyncAckRequest,
+  ConfigSyncAckResponse,
   ConfigSyncPullRequest,
   ConfigSyncPullResponse,
   ConfigSyncPushRequest,
   ConfigSyncPushResponse,
-  ConfigSyncAckRequest,
-  ConfigSyncAckResponse,
-  SyncRemoteChange,
-  SyncCursor,
   ConfigSyncPushResult,
+  ConfigSyncTransport,
+  SyncCursor,
+  SyncRemoteChange,
 } from "@weaver/config-types";
+import type { WeaverTransport, WriteResult } from "./transport.js";
 
-export function createWeaverSyncTransport(transport: WeaverTransport): ConfigSyncTransport {
+export function createWeaverSyncTransport(
+  transport: WeaverTransport,
+): ConfigSyncTransport {
   let lastKnownEntries: Record<string, unknown> = {};
 
   return {
-    async pull(request: ConfigSyncPullRequest): Promise<ConfigSyncPullResponse> {
+    async pull(
+      request: ConfigSyncPullRequest,
+    ): Promise<ConfigSyncPullResponse> {
       const snapshot = await transport.resolveAll();
       const now = Date.now();
       const cursor: SyncCursor = {
@@ -57,20 +61,25 @@ export function createWeaverSyncTransport(transport: WeaverTransport): ConfigSyn
       return { cursor, serverTime: now, changes: limited };
     },
 
-    async push(request: ConfigSyncPushRequest): Promise<ConfigSyncPushResponse> {
+    async push(
+      request: ConfigSyncPushRequest,
+    ): Promise<ConfigSyncPushResponse> {
       const results: ConfigSyncPushResult[] = [];
       let latestRevision = "";
 
       for (const mutation of request.mutations) {
-        const writeResult: WriteResult = mutation.operation === "set"
-          ? await transport.set(mutation.key, mutation.value)
-          : await transport.remove(mutation.key);
+        const writeResult: WriteResult =
+          mutation.operation === "set"
+            ? await transport.set(mutation.key, mutation.value)
+            : await transport.remove(mutation.key);
 
         if (writeResult.revision) {
           latestRevision = writeResult.revision;
         }
 
-        results.push(buildPushResult(mutation.mutationId, mutation, writeResult));
+        results.push(
+          buildPushResult(mutation.mutationId, mutation, writeResult),
+        );
       }
 
       return {

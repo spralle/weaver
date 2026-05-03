@@ -52,7 +52,10 @@ export function envelope<T>(data: T, revision: string): ApiResponse<T> {
   return { data, meta: { revision, timestamp: new Date().toISOString() } };
 }
 
-export function errorEnvelope(error: WeaverError, revision: string): ApiErrorResponse {
+export function errorEnvelope(
+  error: WeaverError,
+  revision: string,
+): ApiErrorResponse {
   const details = error.details ? { details: error.details } : {};
   return {
     data: null,
@@ -61,10 +64,13 @@ export function errorEnvelope(error: WeaverError, revision: string): ApiErrorRes
   };
 }
 
-export function v1Headers(revision: string, extra?: Record<string, string>): Record<string, string> {
+export function v1Headers(
+  revision: string,
+  extra?: Record<string, string>,
+): Record<string, string> {
   return {
     "Content-Type": "application/json",
-    "ETag": `"${revision}"`,
+    ETag: `"${revision}"`,
     "Cache-Control": "no-cache",
     ...extra,
   };

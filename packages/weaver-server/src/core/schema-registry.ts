@@ -1,7 +1,7 @@
 import { z } from "zod";
-import type { WeaverConfigService } from "./config-service.js";
 import type { WeaverError } from "../types/errors.js";
 import { createWeaverError } from "../types/errors.js";
+import type { WeaverConfigService } from "./config-service.js";
 
 const SchemaDeclaration = z.record(z.string(), z.unknown());
 type SchemaDeclaration = z.infer<typeof SchemaDeclaration>;
@@ -65,7 +65,9 @@ function detectBreakingChanges(
       const existingType = getPropertyType(existingObj, prop);
       const incomingType = getPropertyType(incomingObj, prop);
       if (existingType && incomingType && existingType !== incomingType) {
-        changes.push(`Type changed for "${prop}": ${existingType} → ${incomingType}`);
+        changes.push(
+          `Type changed for "${prop}": ${existingType} → ${incomingType}`,
+        );
       }
     }
   }
@@ -74,8 +76,8 @@ function detectBreakingChanges(
 }
 
 function getProperties(obj: Record<string, unknown>): Set<string> {
-  const properties =
-    (obj as { properties?: Record<string, unknown> }).properties;
+  const properties = (obj as { properties?: Record<string, unknown> })
+    .properties;
   if (typeof properties === "object" && properties !== null) {
     return new Set(Object.keys(properties));
   }
@@ -86,8 +88,8 @@ function getPropertyType(
   obj: Record<string, unknown>,
   prop: string,
 ): string | undefined {
-  const properties =
-    (obj as { properties?: Record<string, unknown> }).properties;
+  const properties = (obj as { properties?: Record<string, unknown> })
+    .properties;
   if (typeof properties === "object" && properties !== null) {
     const propDef = properties[prop] as Record<string, unknown> | undefined;
     if (typeof propDef?.type === "string") {

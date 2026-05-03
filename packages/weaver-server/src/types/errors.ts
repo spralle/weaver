@@ -1,11 +1,12 @@
 // Re-export shared error taxonomy from @weaver/config-types
+
+export type { WeaverError, WeaverErrorCode } from "@weaver/config-types";
 export {
-  weaverErrorCodes,
-  weaverErrorCodeSchema,
-  weaverErrorSchema,
   createWeaverError,
+  weaverErrorCodeSchema,
+  weaverErrorCodes,
+  weaverErrorSchema,
 } from "@weaver/config-types";
-export type { WeaverErrorCode, WeaverError } from "@weaver/config-types";
 
 // Server-specific HTTP status mapping (not shared to config-types)
 import type { WeaverErrorCode } from "@weaver/config-types";

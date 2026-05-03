@@ -9,7 +9,10 @@ export const serverEnvSchema = z.object({
   WEAVER_CONFIG_REPO: z.string().optional(),
   WEAVER_ENVIRONMENT: z.string().optional(),
   WEAVER_GIT_TOKEN: z.string().optional(),
-  WEAVER_MONGO_URI: z.string().url("WEAVER_MONGO_URI must be a valid URL").optional(),
+  WEAVER_MONGO_URI: z
+    .string()
+    .url("WEAVER_MONGO_URI must be a valid URL")
+    .optional(),
   WEAVER_JWT_SECRET: z.string().optional(),
 });
 

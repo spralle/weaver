@@ -1,16 +1,16 @@
 import { mkdir, readFile, rename, stat, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
-import { deepMerge, deepSet, deepRemove } from "@weaver/config-engine";
-import {
-  isNodeError,
-  safeParseConfigEntries,
-} from "@weaver/storage-provider-core";
+import { deepMerge, deepRemove, deepSet } from "@weaver/config-engine";
 import type {
   ConfigurationLayer,
   ConfigurationLayerData,
   ConfigurationStorageProvider,
   WriteResult,
 } from "@weaver/config-types";
+import {
+  isNodeError,
+  safeParseConfigEntries,
+} from "@weaver/storage-provider-core";
 
 export interface FileSystemProviderOptions {
   id: string;

@@ -28,7 +28,9 @@ class StaticJsonStorageProvider implements ConfigurationStorageProvider {
   }
 
   async load(): Promise<ConfigurationLayerData> {
-    return { entries: JSON.parse(JSON.stringify(this.data)) as Record<string, unknown> };
+    return {
+      entries: JSON.parse(JSON.stringify(this.data)) as Record<string, unknown>,
+    };
   }
 
   async write(_key: string, _value: unknown): Promise<WriteResult> {
