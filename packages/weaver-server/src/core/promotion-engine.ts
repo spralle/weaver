@@ -90,8 +90,6 @@ export function createPromotionEngine(
         };
       }
 
-      await configService.flush();
-
       const provider = configService.providers.find(
         (p) => p.layer === layer,
       );

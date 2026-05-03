@@ -11,7 +11,7 @@ export interface GitManagerOptions {
 
 export interface GitManager {
   ensureClone(): Promise<void>;
-  pull(): Promise<void>;
+  refresh(): Promise<void>;
   commitAndPush(message: string, files: string[]): Promise<void>;
   readonly localPath: string;
 }
@@ -60,7 +60,7 @@ export function createGitManager(options: GitManagerOptions): GitManager {
       }
     },
 
-    async pull(): Promise<void> {
+    async refresh(): Promise<void> {
       return serialize(async () => {
         await git.cwd(localPath);
         await git.pull(["--rebase"]);

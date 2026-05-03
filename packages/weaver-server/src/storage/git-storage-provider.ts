@@ -93,6 +93,6 @@ export class GitStorageProvider implements ConfigurationStorageProvider {
   }
 
   async refresh(): Promise<void> {
-    await this.gitManager.pull();
+    await this.gitManager.refresh();
   }
 }

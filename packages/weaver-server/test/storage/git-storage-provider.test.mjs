@@ -12,6 +12,7 @@ function createMockGitManager(localPath) {
     localPath,
     async ensureClone() { calls.push(["ensureClone"]); },
     async pull() { calls.push(["pull"]); },
+    async refresh() { calls.push(["refresh"]); },
     async commitAndPush(message, files) { calls.push(["commitAndPush", message, files]); },
   };
 }
@@ -163,7 +164,7 @@ test("refresh() calls gitManager.pull()", async () => {
 
   await provider.refresh();
   assert.equal(gitManager.calls.length, 1);
-  assert.deepEqual(gitManager.calls[0], ["pull"]);
+  assert.deepEqual(gitManager.calls[0], ["refresh"]);
 });
 
 test("read-only provider rejects writes", async () => {

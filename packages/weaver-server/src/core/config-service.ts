@@ -51,7 +51,10 @@ export interface WeaverConfigService {
   remove(layer: string, key: string, options?: WriteContext): Promise<WriteResult>;
   onDelta(handler: (delta: ConfigDelta) => void): Unsubscribe;
 
-  /** Flush all dirty providers (commit+push pending changes). */
+  /** Group multiple writes into one commit. Auto-flushes at the end. */
+  batch<T>(fn: () => Promise<T>): Promise<T>;
+
+  /** Flush all dirty providers. Rarely needed — set/remove auto-flush. */
   flush(): Promise<void>;
 
   /** Refresh all providers from remote sources, then reload state. */
@@ -78,6 +81,17 @@ export async function createWeaverConfigService(
   const layerData = new Map<string, Record<string, unknown>>();
   let revision = "";
   const deltaHandlers = new Set<(delta: ConfigDelta) => void>();
+  let batchDepth = 0;
+
+  async function autoFlush(): Promise<void> {
+    if (batchDepth === 0) {
+      for (const provider of providers) {
+        if (provider.flush && provider.dirty) {
+          await provider.flush();
+        }
+      }
+    }
+  }
 
   for (const provider of providers) {
     const data = await provider.load();
@@ -249,6 +263,7 @@ export async function createWeaverConfigService(
       };
       fireDelta(delta);
 
+      await autoFlush();
       return result;
     },
 
@@ -283,6 +298,7 @@ export async function createWeaverConfigService(
       };
       fireDelta(delta);
 
+      await autoFlush();
       return result;
     },
 
@@ -291,6 +307,23 @@ export async function createWeaverConfigService(
       return () => {
         deltaHandlers.delete(handler);
       };
+    },
+
+    async batch<T>(fn: () => Promise<T>): Promise<T> {
+      batchDepth++;
+      try {
+        const result = await fn();
+        return result;
+      } finally {
+        batchDepth--;
+        if (batchDepth === 0) {
+          for (const provider of providers) {
+            if (provider.flush && provider.dirty) {
+              await provider.flush();
+            }
+          }
+        }
+      }
     },
 
     async flush(): Promise<void> {
