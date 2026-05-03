@@ -28,7 +28,8 @@
   "dependencies": {
     "@weaver/config-engine": "workspace:*",
     "@weaver/config-types": "workspace:*",
-    "@weaver/storage-provider-core": "workspace:*"
+    "@weaver/storage-provider-core": "workspace:*",
+    "zod": "^4.0.0"
   },
   "devDependencies": {
     "@weaver/config-secrets": "workspace:*",

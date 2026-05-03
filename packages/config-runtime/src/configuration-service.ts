@@ -1,4 +1,5 @@
 // Configuration service factory — composes providers, state container, and engine
+import type { ZodType } from "zod";
 import { inspectKey, resolveConfiguration } from "@weaver/config-engine";
 import type { OverrideSessionController } from "@weaver/config-sessions";
 import type {
@@ -155,28 +156,37 @@ export async function createConfigurationService(
     options.session !== undefined ? options.session : undefined;
 
   return {
-    get<T>(key: string): T | undefined {
+    get<T>(key: string, schema?: ZodType<T>): T | undefined {
+      let value: unknown;
       if (secretHandle?.hasSecret(key) === true) {
-        return secretHandle.getResolved(key) as T | undefined;
-      }
-      if (!mountMap.has(key)) {
-        return container.get(key) as T | undefined;
-      }
-      try {
-        const resolution = resolveMountedValue(key, mountMap, (k) =>
-          container.get(k),
-        );
-        if (secretHandle !== undefined && resolution.isMounted) {
-          const targetKey =
-            resolution.chain[resolution.chain.length - 1] ?? key;
-          if (secretHandle.hasSecret(targetKey)) {
-            return secretHandle.getResolved(targetKey) as T | undefined;
+        value = secretHandle.getResolved(key);
+      } else if (!mountMap.has(key)) {
+        value = container.get(key);
+      } else {
+        try {
+          const resolution = resolveMountedValue(key, mountMap, (k) =>
+            container.get(k),
+          );
+          if (secretHandle !== undefined && resolution.isMounted) {
+            const targetKey =
+              resolution.chain[resolution.chain.length - 1] ?? key;
+            if (secretHandle.hasSecret(targetKey)) {
+              value = secretHandle.getResolved(targetKey);
+            } else {
+              value = resolution.value;
+            }
+          } else {
+            value = resolution.value;
           }
+        } catch {
+          return undefined;
         }
-        return resolution.value as T | undefined;
-      } catch {
-        return undefined;
       }
+      if (schema !== undefined) {
+        const result = schema.safeParse(value);
+        return result.success ? result.data : undefined;
+      }
+      return value as T | undefined;
     },
 
     getWithDefault<T>(key: string, defaultValue: T): T {

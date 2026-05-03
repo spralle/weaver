@@ -5,10 +5,10 @@ import {
 } from "../dist/configuration-service.js";
 import {
   StaticJsonStorageProvider,
-} from "../../config-providers/dist/static-json-provider.js";
+} from "../../storage-provider-static-json/dist/static-json-provider.js";
 import {
   InMemoryStorageProvider,
-} from "../../config-providers/dist/in-memory-provider.js";
+} from "../../storage-provider-memory/dist/in-memory-provider.js";
 import { defineWeaver, Layers } from "@weaver/config-types";
 
 const testConfig = defineWeaver([
@@ -435,4 +435,38 @@ test("mount map rebuilds on layer change", async () => {
   // Remove the mount by overwriting with a plain value
   svc.set("k", "direct-value");
   assert.equal(svc.get("k"), "direct-value");
+});
+
+test("get with Zod schema returns validated value", async () => {
+  const { z } = await import("zod");
+  const core = new StaticJsonStorageProvider({
+    id: "core",
+    layer: "core",
+    data: { "app.port": 3000 },
+  });
+  const svc = await createConfigurationService({ providers: [core], weaverConfig: testConfig });
+  const result = svc.get("app.port", z.number());
+  assert.equal(result, 3000);
+});
+
+test("get with Zod schema returns undefined for invalid value", async () => {
+  const { z } = await import("zod");
+  const core = new StaticJsonStorageProvider({
+    id: "core",
+    layer: "core",
+    data: { "app.port": "not-a-number" },
+  });
+  const svc = await createConfigurationService({ providers: [core], weaverConfig: testConfig });
+  const result = svc.get("app.port", z.number());
+  assert.equal(result, undefined);
+});
+
+test("get without schema still works (backward compat)", async () => {
+  const core = new StaticJsonStorageProvider({
+    id: "core",
+    layer: "core",
+    data: { "app.name": "weaver" },
+  });
+  const svc = await createConfigurationService({ providers: [core], weaverConfig: testConfig });
+  assert.equal(svc.get("app.name"), "weaver");
 });
