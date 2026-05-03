@@ -1,1 +1,2 @@
-// @weaver/storage-provider-mongodb — MongoDB storage provider for Weaver
+export { createMongoDBStorageProvider } from "./mongodb-storage-provider.js";
+export type { MongoDBStorageProviderOptions } from "./mongodb-storage-provider.js";

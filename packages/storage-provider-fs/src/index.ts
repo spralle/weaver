@@ -1,1 +1,5 @@
-// @weaver/storage-provider-fs — Filesystem storage provider for Weaver
+export {
+  createFileSystemStorageProvider,
+  FileSystemStorageProvider,
+} from "./fs-provider.js";
+export type { FileSystemProviderOptions } from "./fs-provider.js";

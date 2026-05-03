@@ -1,1 +1,2 @@
-// @weaver/storage-provider-memory — In-memory storage provider for Weaver
+export { createInMemoryStorageProvider } from "./in-memory-provider.js";
+export type { InMemoryProviderOptions } from "./in-memory-provider.js";

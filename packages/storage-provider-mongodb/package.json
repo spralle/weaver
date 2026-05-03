@@ -22,7 +22,7 @@
   "scripts": {
     "build": "tsc -b",
     "typecheck": "tsc --noEmit",
-    "test": "bun test",
+    "test": "node --test test/**/*.test.mjs",
     "lint": "biome check ."
   },
   "dependencies": {
@@ -39,6 +39,8 @@
     }
   },
   "devDependencies": {
+    "@types/node": "^22.15.3",
+    "mongodb": "^6.0.0",
     "typescript": "^5.8.3"
   }
 }

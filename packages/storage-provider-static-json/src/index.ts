@@ -1,1 +1,2 @@
-// @weaver/storage-provider-static-json — Read-only static JSON storage provider for Weaver
+export { createStaticJsonStorageProvider } from "./static-json-provider.js";
+export type { StaticJsonProviderOptions } from "./static-json-provider.js";

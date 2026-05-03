@@ -1,1 +1,5 @@
-// @weaver/storage-provider-env-overlay — Environment variable overlay storage provider for Weaver
+export {
+  withEnvironmentOverlay,
+  mergeWithEnvironment,
+} from "./environment-overlay.js";
+export type { EnvironmentOverlayOptions } from "./environment-overlay.js";
