@@ -24,8 +24,8 @@ export function createServiceConfigurationService(
   if (schemaMap) {
     for (const [key, schema] of schemaMap) {
       if (
-        schema.reloadBehavior === "restart-required" ||
-        schema.reloadBehavior === "rolling-restart"
+        schema["x-weaver"]?.reloadBehavior === "restart-required" ||
+        schema["x-weaver"]?.reloadBehavior === "rolling-restart"
       ) {
         const qualifiedKey = qualifyKey(namespace, key);
         configService.onChange(qualifiedKey, () => {
