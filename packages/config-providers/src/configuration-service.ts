@@ -328,7 +328,7 @@ export async function createConfigurationService(
       return inspection;
     },
 
-    set(key: string, value: unknown, layer?: ConfigurationLayer): void {
+    async set(key: string, value: unknown, layer?: ConfigurationLayer): Promise<void> {
       let provider: ConfigurationStorageProvider | undefined;
 
       if (layer !== undefined) {
@@ -345,14 +345,7 @@ export async function createConfigurationService(
         );
       }
 
-      // Fire-and-forget the async write; update container synchronously
-      provider.write(key, value).catch((error: unknown) => {
-        options.onWriteError?.(error, {
-          key,
-          layer: provider.layer,
-          operation: "write",
-        });
-      });
+      await provider.write(key, value);
 
       const updated = {
         ...container.getLayerEntries(provider.layer),

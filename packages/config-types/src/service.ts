@@ -34,7 +34,7 @@ export interface ConfigurationService {
   getAtLayer<T>(layer: ConfigurationLayer | string, key: string): T | undefined;
   getForScope<T>(key: string, scopePath: ScopeInstance[]): T | undefined;
   inspect<T>(key: string): ConfigurationInspection<T>;
-  set(key: string, value: unknown, layer?: ConfigurationLayer): void;
+  set(key: string, value: unknown, layer?: ConfigurationLayer): Promise<void>;
   remove(key: string, layer: ConfigurationLayer): void;
   onChange(key: string, listener: (value: unknown) => void): () => void;
   getNamespace(prefix: string): Record<string, unknown>;
@@ -59,7 +59,7 @@ export interface ViewConfigurationService {
   get<T>(key: string): T | undefined;
   getWithDefault<T>(key: string, defaultValue: T): T;
   getForInstance<T>(instanceId: string, key: string): T | undefined;
-  setForInstance(instanceId: string, key: string, value: unknown): void;
+  setForInstance(instanceId: string, key: string, value: unknown): Promise<void>;
   resetInstance(instanceId: string): void;
 }
 
