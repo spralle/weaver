@@ -4,15 +4,13 @@ import { createProviders } from "../../src/bootstrap/layer-factory.ts";
 import { GitStorageProvider } from "../../src/storage/git-storage-provider.ts";
 import { MongoDBStorageProvider } from "../../src/storage/mongodb-storage-provider.ts";
 import { InMemoryStorageProvider } from "@weaver/config-providers";
-import { createGitWriteQueue } from "../../src/git/write-queue.ts";
 
-function createMockGit() {
+function createMockGitManager() {
   return {
-    cwd() { return Promise.resolve(); },
-    add() { return Promise.resolve(); },
-    commit() { return Promise.resolve(); },
-    pull() { return Promise.resolve(); },
-    push() { return Promise.resolve(); },
+    localPath: "/tmp/repo",
+    async ensureClone() {},
+    async pull() {},
+    async commitAndPush() {},
   };
 }
 
@@ -28,9 +26,7 @@ test("creates GitStorageProvider for 'git' layer", () => {
   const providers = createProviders(
     { layers: [{ id: "defaults", provider: "git", path: "defaults.json" }] },
     {
-      gitManager: { localPath: "/tmp/repo", ensureClone: async () => {}, pull: async () => {} },
-      writeQueue: createGitWriteQueue(),
-      git: createMockGit(),
+      gitManager: createMockGitManager(),
       environment: "prod",
     },
   );
@@ -43,9 +39,7 @@ test("creates MongoDBStorageProvider for 'mongodb' layer", () => {
   const providers = createProviders(
     { layers: [{ id: "user", provider: "mongodb" }], mongodb: { uri: "mongodb://localhost" } },
     {
-      gitManager: { localPath: "/tmp/repo", ensureClone: async () => {}, pull: async () => {} },
-      writeQueue: createGitWriteQueue(),
-      git: createMockGit(),
+      gitManager: createMockGitManager(),
       mongoCollection: createMockCollection(),
       environment: "prod",
     },
@@ -59,9 +53,7 @@ test("creates InMemoryStorageProvider for 'memory' layer", () => {
   const providers = createProviders(
     { layers: [{ id: "session", provider: "memory" }] },
     {
-      gitManager: { localPath: "/tmp/repo", ensureClone: async () => {}, pull: async () => {} },
-      writeQueue: createGitWriteQueue(),
-      git: createMockGit(),
+      gitManager: createMockGitManager(),
       environment: "prod",
     },
   );
@@ -75,9 +67,7 @@ test("throws when mongodb layer has no collection", () => {
     () => createProviders(
       { layers: [{ id: "user", provider: "mongodb" }], mongodb: { uri: "x" } },
       {
-        gitManager: { localPath: "/tmp/repo", ensureClone: async () => {}, pull: async () => {} },
-        writeQueue: createGitWriteQueue(),
-        git: createMockGit(),
+        gitManager: createMockGitManager(),
         environment: "prod",
       },
     ),

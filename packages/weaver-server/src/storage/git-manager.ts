@@ -12,6 +12,7 @@ export interface GitManagerOptions {
 export interface GitManager {
   ensureClone(): Promise<void>;
   pull(): Promise<void>;
+  commitAndPush(message: string, files: string[]): Promise<void>;
   readonly localPath: string;
 }
 
@@ -29,6 +30,17 @@ export function createGitManager(options: GitManagerOptions): GitManager {
   }
 
   const authUrl = token ? injectToken(repoUrl, token) : repoUrl;
+
+  let mutexChain: Promise<void> = Promise.resolve();
+
+  function serialize<T>(fn: () => Promise<T>): Promise<T> {
+    const result = mutexChain.then(fn, fn);
+    mutexChain = result.then(
+      () => {},
+      () => {},
+    );
+    return result;
+  }
 
   return {
     get localPath() {
@@ -49,8 +61,23 @@ export function createGitManager(options: GitManagerOptions): GitManager {
     },
 
     async pull(): Promise<void> {
-      await git.cwd(localPath);
-      await git.pull(["--rebase"]);
+      return serialize(async () => {
+        await git.cwd(localPath);
+        await git.pull(["--rebase"]);
+      });
+    },
+
+    async commitAndPush(message: string, files: string[]): Promise<void> {
+      if (files.length === 0) return;
+      return serialize(async () => {
+        await git.cwd(localPath);
+        for (const file of files) {
+          await git.add(file);
+        }
+        await git.commit(message);
+        await git.pull(["--rebase"]);
+        await git.push();
+      });
     },
   };
 }
