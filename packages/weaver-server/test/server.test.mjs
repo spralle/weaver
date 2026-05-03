@@ -30,4 +30,38 @@ describe("WeaverServer", () => {
       await server.close();
     }
   });
+
+  it("REST adapter is wired — GET /v1/config returns 200", async () => {
+    const server = await startWeaverServer({ port: 0 });
+    try {
+      const res = await fetch(`http://localhost:${server.port}/v1/config`);
+      assert.equal(res.status, 200);
+      const body = await res.json();
+      assert.ok(body.data !== undefined);
+      assert.ok(body.meta !== undefined);
+    } finally {
+      await server.close();
+    }
+  });
+
+  it("SSE adapter is wired — GET /v1/events returns event-stream", async () => {
+    const server = await startWeaverServer({ port: 0 });
+    try {
+      const res = await fetch(`http://localhost:${server.port}/v1/events`);
+      assert.equal(res.status, 200);
+      assert.equal(res.headers.get("content-type"), "text/event-stream");
+    } finally {
+      await server.close();
+    }
+  });
+
+  it("unknown routes return 404", async () => {
+    const server = await startWeaverServer({ port: 0 });
+    try {
+      const res = await fetch(`http://localhost:${server.port}/unknown`);
+      assert.equal(res.status, 404);
+    } finally {
+      await server.close();
+    }
+  });
 });

@@ -43,16 +43,40 @@ export function createRollbackService(
         };
       }
 
-      // TODO: Implement actual Git revert via configService or provider
-      const revertedCommits = 1;
-
-      // Reload affected provider
       const provider = configService.providers.find(
         (p) => p.layer === layer,
       );
-      if (provider) {
-        await configService.reloadProvider(provider.id);
+
+      if (!provider) {
+        return {
+          success: false,
+          revertedCommits: 0,
+          error: createWeaverError(
+            "VALIDATION_ERROR",
+            `No provider found for layer "${layer}"`,
+          ),
+        };
       }
+
+      if (!("revert" in provider) || typeof provider.revert !== "function") {
+        return {
+          success: false,
+          revertedCommits: 0,
+          error: createWeaverError(
+            "VALIDATION_ERROR",
+            `Provider for layer "${layer}" does not support revert`,
+          ),
+        };
+      }
+
+      const revertFn = provider.revert as (
+        toRevision: string,
+        actor: string,
+      ) => Promise<{ revertedCommits: number }>;
+
+      const { revertedCommits } = await revertFn(toRevision, actor);
+
+      await configService.reloadProvider(provider.id);
 
       return { success: true, revertedCommits };
     },

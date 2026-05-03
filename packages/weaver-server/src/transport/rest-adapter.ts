@@ -5,6 +5,12 @@ import { createWeaverError, httpStatusForError } from "../types/index.js";
 import type { WeaverErrorCode, WeaverError } from "../types/index.js";
 import { parseScopeQuery } from "../core/scope-utils.js";
 import { buildPath } from "@weaver/config-engine";
+import { ZodError } from "zod";
+import {
+  configWriteBodySchema,
+  configBatchBodySchema,
+  scopeProvisionBodySchema,
+} from "./rest-schemas.js";
 
 export interface RestRoute {
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -222,9 +228,9 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
         const key = buildPath(segments);
         const layer = queryOpt(req.query, "layer") ?? "platform";
         const environment = queryOpt(req.query, "env");
-        const body = req.body as Record<string, unknown> | undefined;
+        const body = configWriteBodySchema.parse(req.body);
         const writeCtx = environment ? { environment } : {};
-        const result = await configService.set(layer, key, body?.value, writeCtx);
+        const result = await configService.set(layer, key, body.value, writeCtx);
         if (!result.success) {
           return v1Error("VALIDATION_ERROR", result.error ?? "Write failed");
         }
@@ -261,13 +267,8 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
 
         const layer = queryOpt(req.query, "layer") ?? "platform";
         const environment = queryOpt(req.query, "env");
-        const body = req.body as Record<string, unknown> | undefined;
-
-        if (!body?.entries || typeof body.entries !== "object") {
-          return v1Error("VALIDATION_ERROR", "Request body must include 'entries' object");
-        }
-
-        const entries = body.entries as Record<string, unknown>;
+        const body = configBatchBodySchema.parse(req.body);
+        const entries = body.entries;
         const writeCtx = environment ? { environment } : {};
         const result = await configService.setMany(layer, entries, writeCtx);
 
@@ -331,12 +332,9 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
           return stub501(configService.revision);
         }
         const scopeId = param(req.params, "scopeId");
-        const body = req.body as Record<string, unknown> | undefined;
-        const value = body?.value as string | undefined;
-        if (!value) {
-          return v1Error("VALIDATION_ERROR", "Missing 'value' in request body");
-        }
-        const displayName = body?.displayName as string | undefined;
+        const body = scopeProvisionBodySchema.parse(req.body);
+        const value = body.value;
+        const displayName = body.displayName;
         const result = await scopeManager.provision({
           scopeId,
           value,
@@ -410,6 +408,17 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
       }
       return response;
     } catch (err: unknown) {
+      if (err instanceof ZodError) {
+        const rev = configService.revision;
+        return {
+          status: 400,
+          body: errorEnvelope(
+            createWeaverError("VALIDATION_ERROR", "Request validation failed", { issues: err.issues }),
+            rev,
+          ),
+          headers: v1Headers(rev),
+        };
+      }
       const message = err instanceof Error ? err.message : String(err);
       const rev = configService.revision;
       return {

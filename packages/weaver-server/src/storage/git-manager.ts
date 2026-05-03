@@ -13,6 +13,7 @@ export interface GitManager {
   ensureClone(): Promise<void>;
   refresh(): Promise<void>;
   commitAndPush(message: string, files: string[]): Promise<void>;
+  revert(toRevision: string, actor: string): Promise<{ revertedCommits: number }>;
   readonly localPath: string;
 }
 
@@ -77,6 +78,21 @@ export function createGitManager(options: GitManagerOptions): GitManager {
         await git.commit(message);
         await git.pull(["--rebase"]);
         await git.push();
+      });
+    },
+
+    async revert(toRevision: string, actor: string): Promise<{ revertedCommits: number }> {
+      return serialize(async () => {
+        await git.cwd(localPath);
+        const log = await git.log({ from: toRevision, to: "HEAD" });
+        const commitCount = log.total;
+        if (commitCount === 0) {
+          return { revertedCommits: 0 };
+        }
+        await git.raw(["revert", "--no-commit", `${toRevision}..HEAD`]);
+        await git.commit(`rollback: revert to ${toRevision} by ${actor}`);
+        await git.push();
+        return { revertedCommits: commitCount };
       });
     },
   };

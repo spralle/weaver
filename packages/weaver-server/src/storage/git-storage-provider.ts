@@ -92,6 +92,10 @@ export class GitStorageProvider implements ConfigurationStorageProvider {
     await this.gitManager.commitAndPush(summary, [this.filePath]);
   }
 
+  async revert(toRevision: string, actor: string): Promise<{ revertedCommits: number }> {
+    return this.gitManager.revert(toRevision, actor);
+  }
+
   async refresh(): Promise<void> {
     await this.gitManager.refresh();
   }
