@@ -3,8 +3,10 @@
 // access.ts — Permission types and default policies
 export type {
   ConfigurationAccessContext,
+  ConfigurationSchemaFragment,
   LayerWriteConstraint,
   LayerWritePolicy,
+  ServiceAccessPolicy,
   ServiceConfigurationDeclaration,
 } from "./access.js";
 // cache.ts — Scope resolution cache interface
@@ -46,6 +48,7 @@ export type {
   ConfigurationPropertySchema,
   ConfigurationRole,
   ConfigurationVisibility,
+  WeaverPropertyExtensions,
 } from "./property-schema.js";
 // providers.ts — Storage provider interfaces
 export type {
@@ -78,6 +81,7 @@ export type {
 } from "./providers.js";
 // schemas-core.ts — Zod schemas for core types
 export {
+  configurationSchemaFragmentSchema,
   configChangePolicySchema,
   configReloadBehaviorSchema,
   configurationAccessContextSchema,
@@ -97,6 +101,7 @@ export {
   propertySessionModeSchema,
   scopeDefinitionSchema,
   scopeInstanceSchema,
+  serviceAccessPolicySchema,
   serviceConfigurationDeclarationSchema,
   sessionActivationRequestSchema,
   sessionDeactivationResultSchema,
@@ -104,6 +109,7 @@ export {
   sessionModeSchema,
   sessionTypeSchema,
   tenantScopeHierarchySchema,
+  weaverPropertyExtensionsSchema,
 } from "./schemas-core.js";
 // schemas-promotion.ts — Zod schemas for promotion types
 export {
@@ -171,3 +177,20 @@ export { defineViewConfig } from "./view-config-declaration.js";
 // weaver.ts — defineWeaver() builder
 export type { ExtractLayerNames, WeaverConfig } from "./weaver.js";
 export { defineWeaver } from "./weaver.js";
+// environment.ts — Environment-aware provider types and provenance tracking
+export type {
+  ConfigValueSource,
+  EnvironmentAwareStorageProvider,
+  EnvironmentName,
+  LayerValueDetail,
+  MergedLayerResult,
+} from "./environment.js";
+// markers.ts — _weaver marker types and type guards
+export type { ConfigMount, SecretReference, WeaverMarker } from "./markers.js";
+export { isConfigMount, isSecretReference, isWeaverMarker } from "./markers.js";
+// schemas-markers.ts — Zod schemas for marker types
+export {
+  configMountSchema,
+  secretReferenceSchema,
+  weaverMarkerSchema,
+} from "./schemas-markers.js";

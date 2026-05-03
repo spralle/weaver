@@ -90,7 +90,7 @@ export function withAuth(config: AuthConfig): AuthFunctions {
     }
 
     const visibility: ConfigurationVisibility =
-      propertySchema.visibility ?? "public";
+      propertySchema["x-weaver"]?.visibility ?? "public";
 
     switch (visibility) {
       case "public":
@@ -123,12 +123,12 @@ export function withAuth(config: AuthConfig): AuthFunctions {
     schema: ConfigurationPropertySchema,
   ): boolean {
     if (
-      schema.writeRestriction === undefined ||
-      schema.writeRestriction.length === 0
+      schema["x-weaver"]?.writeRestriction === undefined ||
+      schema["x-weaver"].writeRestriction.length === 0
     ) {
       return true;
     }
-    return roles.some((r) => schema.writeRestriction?.includes(r));
+    return roles.some((r) => schema["x-weaver"]?.writeRestriction?.includes(r));
   }
 
   /** Checks maxOverrideLayer ceiling — denies if target layer exceeds ceiling (unless emergency). */
@@ -137,10 +137,10 @@ export function withAuth(config: AuthConfig): AuthFunctions {
     schema: ConfigurationPropertySchema,
     sessionMode: string | undefined,
   ): boolean {
-    if (schema.maxOverrideLayer === undefined) {
+    if (schema["x-weaver"]?.maxOverrideLayer === undefined) {
       return true;
     }
-    const ceilingRank = getRank(schema.maxOverrideLayer);
+    const ceilingRank = getRank(schema["x-weaver"].maxOverrideLayer);
     const targetRank = getRank(layer);
     if (ceilingRank >= 0 && targetRank >= 0 && targetRank > ceilingRank) {
       return sessionMode === "emergency-override";
@@ -157,7 +157,7 @@ export function withAuth(config: AuthConfig): AuthFunctions {
     if (sessionLayer === undefined || layer !== sessionLayer) {
       return true;
     }
-    const propertySessionMode = schema.sessionMode ?? "allowed";
+    const propertySessionMode = schema["x-weaver"]?.sessionMode ?? "allowed";
     if (propertySessionMode === "blocked") {
       return false;
     }

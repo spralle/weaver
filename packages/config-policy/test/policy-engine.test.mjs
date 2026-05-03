@@ -48,8 +48,8 @@ function makeContext(overrides = {}) {
   };
 }
 
-function makeSchema(overrides = {}) {
-  return { type: "string", ...overrides };
+function makeSchema(xWeaver = {}) {
+  return { type: "string", "x-weaver": xWeaver };
 }
 
 // --- Tests ---

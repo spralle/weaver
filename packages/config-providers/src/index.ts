@@ -8,11 +8,25 @@ export {
   type InMemoryProviderOptions,
   InMemoryStorageProvider,
 } from "./in-memory-provider.js";
+export type { MountResolution } from "./mount-resolver.js";
+export {
+  buildMountMap,
+  resolveMountedNamespace,
+  resolveMountedValue,
+} from "./mount-resolver.js";
+
+export type { SecretIntegrationHandle, SecretIntegrationOptions } from "./secret-integration.js";
+export { createSecretIntegration } from "./secret-integration.js";
 
 export {
   LocalStorageProvider,
   type LocalStorageProviderOptions,
 } from "./local-storage-provider.js";
+export {
+  mergeWithEnvironment,
+  withEnvironmentOverlay,
+} from "./environment-overlay.js";
+export type { EnvironmentOverlayOptions } from "./environment-overlay.js";
 export { createScopeResolutionCache } from "./scope-resolution-cache.js";
 export { createScopedConfigurationService } from "./scoped-service.js";
 export {

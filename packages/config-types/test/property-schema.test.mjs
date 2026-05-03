@@ -27,9 +27,11 @@ test("configurationPropertySchemaSchema accepts recursive nested JSON schema", (
       },
     },
     additionalProperties: false,
-    changePolicy: "full-pipeline",
-    visibility: "admin",
-    reloadBehavior: "hot",
+    "x-weaver": {
+      changePolicy: "full-pipeline",
+      visibility: "admin",
+      reloadBehavior: "hot",
+    },
   };
 
   const result = configurationPropertySchemaSchema.safeParse(schema);

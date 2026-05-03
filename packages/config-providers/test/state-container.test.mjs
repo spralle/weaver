@@ -165,3 +165,16 @@ test("layer ordering: session overrides user", () => {
   assert.equal(container.get("ghost.app.theme"), "green");
   assert.equal(container.getProvenance("ghost.app.theme"), "session");
 });
+
+test("getNamespace: returns bracket-notation keys under prefix", () => {
+  const container = createStateContainer(getRank);
+  container.applyLayerData("core", {
+    "lynx.plugins.simple": "yes",
+    "lynx.plugins[ghost.settings.panel].retentionDays": 30,
+    "lynx.other.key": "no",
+  });
+  const ns = container.getNamespace("lynx.plugins");
+  assert.equal(ns["lynx.plugins.simple"], "yes");
+  assert.equal(ns["lynx.plugins[ghost.settings.panel].retentionDays"], 30);
+  assert.equal(ns["lynx.other.key"], undefined);
+});
