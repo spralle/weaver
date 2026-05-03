@@ -31,7 +31,7 @@ async function setup() {
 describe("SSEAdapter", () => {
   test("createClient creates SSE client", async () => {
     const { adapter } = await setup();
-    const client = adapter.createClient();
+    const client = await adapter.createClient();
     assert.ok(client.id);
     assert.equal(adapter.clientCount, 1);
     client.close();
@@ -39,7 +39,7 @@ describe("SSEAdapter", () => {
 
   test("client receives deltas", async () => {
     const { svc, adapter } = await setup();
-    const client = adapter.createClient();
+    const client = await adapter.createClient();
     await svc.set("platform", "app.name", "updated");
     assert.equal(adapter.clientCount, 1);
     client.close();
@@ -47,7 +47,7 @@ describe("SSEAdapter", () => {
 
   test("key pattern filtering", async () => {
     const { svc, adapter } = await setup();
-    const client = adapter.createClient(["db.*"]);
+    const client = await adapter.createClient({ prefix: "db" });
     await svc.set("platform", "db.host", "newhost");
     await svc.set("platform", "app.name", "ignored");
     assert.equal(adapter.clientCount, 1);
@@ -56,7 +56,7 @@ describe("SSEAdapter", () => {
 
   test("removeClient stops delta delivery", async () => {
     const { adapter } = await setup();
-    const client = adapter.createClient();
+    const client = await adapter.createClient();
     assert.equal(adapter.clientCount, 1);
     adapter.removeClient(client);
     assert.equal(adapter.clientCount, 0);
@@ -64,8 +64,8 @@ describe("SSEAdapter", () => {
 
   test("closeAll removes all clients", async () => {
     const { adapter } = await setup();
-    adapter.createClient();
-    adapter.createClient();
+    await adapter.createClient();
+    await adapter.createClient();
     assert.equal(adapter.clientCount, 2);
     adapter.closeAll();
     assert.equal(adapter.clientCount, 0);
@@ -74,9 +74,9 @@ describe("SSEAdapter", () => {
   test("clientCount tracks active connections", async () => {
     const { adapter } = await setup();
     assert.equal(adapter.clientCount, 0);
-    const c1 = adapter.createClient();
+    const c1 = await adapter.createClient();
     assert.equal(adapter.clientCount, 1);
-    const c2 = adapter.createClient();
+    const c2 = await adapter.createClient();
     assert.equal(adapter.clientCount, 2);
     c1.close();
     assert.equal(adapter.clientCount, 1);
