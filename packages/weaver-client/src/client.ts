@@ -117,8 +117,10 @@ export async function createWeaverClient(
   let revision = "";
   let connected = false;
   let lastSyncedAt: Date | null = null;
-  const pendingRestart = false;
+  // pendingRestart will be set true when schema-breaking deltas arrive
+  let pendingRestart = false;
 
+  let staleSince: Date | null = null;
   let closedAt: Date | null = null;
   const stalenessMonitor: StalenessMonitor = createStalenessMonitor(
     options.staleness,
@@ -202,7 +204,9 @@ export async function createWeaverClient(
       connected = true;
     }
   } catch {
-    // Transport subscribe failed — still usable in degraded mode if we have cache
+    // Transport subscription unavailable — client operates in degraded mode
+    connected = false;
+    if (!staleSince) staleSince = new Date();
   }
 
   const client: WeaverClient = {
@@ -342,7 +346,7 @@ export async function createWeaverClient(
     },
 
     get staleSince(): Date | null {
-      return closedAt ?? stalenessMonitor.staleSince;
+      return closedAt ?? staleSince ?? stalenessMonitor.staleSince;
     },
 
     async close(): Promise<void> {

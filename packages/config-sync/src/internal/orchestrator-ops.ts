@@ -283,7 +283,7 @@ export function cloneSnapshot(
   snapshot: ConfigurationLayerData,
 ): ConfigurationLayerData {
   return {
-    entries: { ...snapshot.entries },
+    entries: JSON.parse(JSON.stringify(snapshot.entries)),
     revision: snapshot.revision,
     lastSyncedAt: snapshot.lastSyncedAt,
   };

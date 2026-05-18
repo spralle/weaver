@@ -58,6 +58,7 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
   private retryTimer: unknown = undefined;
   private retryAttempt = 0;
   private mutationCounter = 0;
+  private disposed = false;
   private readonly instanceId: string;
 
   constructor(options: ConfigSyncOrchestratorOptions) {
@@ -155,6 +156,9 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
   }
 
   sync(): Promise<SyncResult> {
+    if (this.disposed) {
+      return Promise.resolve({ pulled: 0, pushed: 0, conflicts: [] });
+    }
     if (this.syncInFlight !== undefined) {
       return this.syncInFlight;
     }
@@ -204,6 +208,11 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
 
   getPendingWrites(): ReadonlyMap<string, unknown> {
     return new Map(this.pendingWrites);
+  }
+
+  dispose(): void {
+    this.disposed = true;
+    this.clearRetryTimer();
   }
 
   private setSyncState(state: SyncStatus): void {

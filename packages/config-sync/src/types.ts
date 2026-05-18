@@ -57,6 +57,7 @@ export interface ConfigSyncOrchestrator {
     listener: (diagnostics: SyncDiagnostics) => void,
   ): () => void;
   getPendingWrites(): ReadonlyMap<string, unknown>;
+  dispose(): void;
 }
 
 export interface SyncableConfigStorageProvider

@@ -6,12 +6,14 @@ import {
   deepSet,
 } from "@weaver/config-engine";
 import { createSubscriptionManager } from "./subscriptions.js";
-import type {
-  ConfigDelta,
-  LayerEntry,
-  StateContainer,
-  StateSnapshot,
-  Unsubscribe,
+import {
+  type ConfigDelta,
+  ConfigDeltaSchema,
+  type LayerEntry,
+  type StateContainer,
+  type StateSnapshot,
+  StateSnapshotSchema,
+  type Unsubscribe,
 } from "./types.js";
 
 export function createStateContainer(options?: {
@@ -56,7 +58,7 @@ export function createStateContainer(options?: {
   }
 
   function getAll(): Record<string, unknown> {
-    return resolved;
+    return cloneValue(resolved) as Record<string, unknown>;
   }
 
   function subscribe(
@@ -73,24 +75,25 @@ export function createStateContainer(options?: {
   }
 
   function applyDelta(delta: ConfigDelta): void {
+    const parsed = ConfigDeltaSchema.parse(delta);
     const changedPaths = new Set<string>();
     const mutable = cloneValue(resolved) as Record<string, unknown>;
 
-    if (delta.set) {
-      for (const [path, value] of Object.entries(delta.set)) {
+    if (parsed.set) {
+      for (const [path, value] of Object.entries(parsed.set)) {
         deepSet(mutable, path, value);
         changedPaths.add(path);
       }
     }
-    if (delta.removed) {
-      for (const path of delta.removed) {
+    if (parsed.removed) {
+      for (const path of parsed.removed) {
         deepRemove(mutable, path);
         changedPaths.add(path);
       }
     }
 
     resolved = mutable;
-    revision = delta.revision;
+    revision = parsed.revision;
 
     if (changedPaths.size > 0) {
       subs.notify(changedPaths, (p) => deepGet(resolved, p), resolved);
@@ -106,10 +109,11 @@ export function createStateContainer(options?: {
   }
 
   function hydrate(snap: StateSnapshot): void {
+    const parsed = StateSnapshotSchema.parse(snap);
     const previous = resolved;
-    resolved = cloneValue(snap.resolved) as Record<string, unknown>;
-    provenance = { ...snap.provenance };
-    revision = snap.revision;
+    resolved = cloneValue(parsed.resolved) as Record<string, unknown>;
+    provenance = { ...parsed.provenance };
+    revision = parsed.revision;
 
     const changedPaths = diffTopLevelKeys(previous, resolved);
     if (changedPaths.size > 0) {
@@ -171,9 +175,25 @@ function diffTopLevelKeys(
   const changed = new Set<string>();
   const allKeys = new Set([...Object.keys(prev), ...Object.keys(next)]);
   for (const key of allKeys) {
-    if (JSON.stringify(prev[key]) !== JSON.stringify(next[key])) {
+    if (prev[key] !== next[key] && !deepEqual(prev[key], next[key])) {
       changed.add(key);
     }
   }
   return changed;
+}
+
+function deepEqual(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (a === null || b === null) return false;
+  if (typeof a !== "object" || typeof b !== "object") return false;
+  if (Array.isArray(a) !== Array.isArray(b)) return false;
+  const aObj = a as Record<string, unknown>;
+  const bObj = b as Record<string, unknown>;
+  const aKeys = Object.keys(aObj);
+  const bKeys = Object.keys(bObj);
+  if (aKeys.length !== bKeys.length) return false;
+  for (const key of aKeys) {
+    if (!deepEqual(aObj[key], bObj[key])) return false;
+  }
+  return true;
 }
