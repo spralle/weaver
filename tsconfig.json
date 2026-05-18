@@ -10,6 +10,7 @@
     { "path": "packages/config-secrets" },
     { "path": "packages/storage-provider-local-storage" },
     { "path": "packages/storage-provider-static-json" },
+    { "path": "packages/storage-providers" },
     { "path": "packages/weaver-server" },
     { "path": "packages/weaver-client" }
   ]

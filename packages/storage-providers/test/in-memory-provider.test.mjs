@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createInMemoryStorageProvider } from "../../src/providers/in-memory-provider.ts";
+import { createInMemoryStorageProvider } from "../src/in-memory-provider.ts";
 
 test("constructs with default empty entries", async () => {
   const provider = createInMemoryStorageProvider({

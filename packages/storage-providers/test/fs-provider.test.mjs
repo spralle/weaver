@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
 import { mkdir, writeFile, readFile, rm } from "node:fs/promises";
 import { join } from "node:path";
-import { createFileSystemStorageProvider } from "../../src/providers/fs-provider.ts";
+import { createFileSystemStorageProvider } from "../src/fs-provider.ts";
 
 function makeTempDir() {
   const dir = join(tmpdir(), `config-server-test-${randomUUID()}`);

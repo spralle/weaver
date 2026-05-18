@@ -10,6 +10,7 @@
     "packages/config-sync",
     "packages/storage-provider-local-storage",
     "packages/storage-provider-static-json",
+    "packages/storage-providers",
     "packages/weaver-server",
     "packages/weaver-client"
   ],
