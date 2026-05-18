@@ -105,6 +105,7 @@ export { createFileSystemStorageProvider } from "./providers/fs-provider.js";
 export type { InMemoryProviderOptions } from "./providers/in-memory-provider.js";
 export { createInMemoryStorageProvider } from "./providers/in-memory-provider.js";
 export type {
+  EnvironmentOverlayOptions,
   GitManager,
   GitManagerOptions,
   GitStorageProviderOptions,
@@ -112,6 +113,8 @@ export type {
 export {
   createGitManager,
   createGitStorageProvider,
+  mergeWithEnvironment,
+  withEnvironmentOverlay,
 } from "./providers/index.js";
 export type { MongoDBStorageProviderOptions } from "./providers/mongodb-storage-provider.js";
 export { createMongoDBStorageProvider } from "./providers/mongodb-storage-provider.js";
