@@ -3,6 +3,11 @@ import type { ScopeDefinition, ScopeInstance } from "@weaver/config-types";
 
 import type { WeaverClientPersistence } from "./persistence.js";
 import { createScopeLoader, type ScopeLoadingMode } from "./scope-manager.js";
+import {
+  createStalenessMonitor,
+  type StalenessConfig,
+  type StalenessMonitor,
+} from "./staleness.js";
 import type {
   WeaverTransport,
   WriteOptions,
@@ -20,6 +25,10 @@ export interface WeaverClientOptions {
   transport: WeaverTransport;
   scopeLoading?: ScopeLoadingMode;
   persistence?: WeaverClientPersistence;
+  /** If true and transport fails, boot from cache in degraded mode (default: true if persistence provided) */
+  offlineBoot?: boolean;
+  /** Staleness detection configuration */
+  staleness?: StalenessConfig;
 }
 
 export interface WeaverClient {
@@ -102,13 +111,18 @@ export async function createWeaverClient(
   options: WeaverClientOptions,
 ): Promise<WeaverClient> {
   const { namespace, transport, scopeLoading = "lazy", persistence } = options;
+  const offlineBoot = options.offlineBoot ?? !!persistence;
 
   let baseState: Record<string, unknown> = {};
   let revision = "";
   let connected = false;
   let lastSyncedAt: Date | null = null;
-  let staleSince: Date | null = null;
   const pendingRestart = false;
+
+  let closedAt: Date | null = null;
+  const stalenessMonitor: StalenessMonitor = createStalenessMonitor(
+    options.staleness,
+  );
 
   // Try loading from cache first
   if (persistence) {
@@ -120,19 +134,37 @@ export async function createWeaverClient(
   }
 
   // Fetch fresh snapshot from transport
-  const freshSnapshot = await transport.resolveAll();
-  baseState = { ...freshSnapshot.entries };
-  revision = freshSnapshot.revision;
-  lastSyncedAt = new Date();
+  let freshSnapshot: ConfigSnapshot | null = null;
+  try {
+    freshSnapshot = await transport.resolveAll();
+    baseState = { ...freshSnapshot.entries };
+    revision = freshSnapshot.revision;
+    lastSyncedAt = new Date();
+    connected = true;
+    stalenessMonitor.recordSync();
 
-  if (persistence) {
-    await persistence.save(namespace ?? "default", freshSnapshot);
+    if (persistence) {
+      await persistence.save(namespace ?? "default", freshSnapshot);
+    }
+  } catch (error) {
+    if (offlineBoot && revision) {
+      // We have cached data — degrade gracefully
+      connected = false;
+    } else {
+      stalenessMonitor.dispose();
+      throw error;
+    }
   }
 
   const scopeLoader = createScopeLoader({
     mode: scopeLoading,
     transport,
-    initialSnapshot: freshSnapshot,
+    initialSnapshot: freshSnapshot ?? {
+      entries: baseState,
+      scopes: {},
+      revision,
+      timestamp: new Date().toISOString(),
+    },
   });
 
   const changeListeners = new Map<
@@ -141,28 +173,37 @@ export async function createWeaverClient(
   >();
   const restartListeners = new Set<() => void>();
 
-  // Subscribe to deltas
-  const unsubTransport = transport.subscribe((delta: ConfigDelta) => {
-    if (!delta.layer.includes(":")) {
-      if (delta.action === "set") {
-        deepSet(baseState, delta.key, delta.value);
-      } else {
-        deepRemove(baseState, delta.key);
-      }
-    }
-
-    lastSyncedAt = new Date();
-
-    for (const [pattern, handlers] of changeListeners) {
-      if (matchGlob(pattern, delta.key)) {
-        for (const handler of handlers) {
-          handler([delta]);
+  // Subscribe to deltas (wrapped for resilience)
+  let unsubTransport: Unsubscribe = () => {};
+  try {
+    unsubTransport = transport.subscribe((delta: ConfigDelta) => {
+      if (!delta.layer.includes(":")) {
+        if (delta.action === "set") {
+          deepSet(baseState, delta.key, delta.value);
+        } else {
+          deepRemove(baseState, delta.key);
         }
       }
-    }
-  });
 
-  connected = true;
+      lastSyncedAt = new Date();
+      connected = true;
+      stalenessMonitor.recordSync();
+
+      for (const [pattern, handlers] of changeListeners) {
+        if (matchGlob(pattern, delta.key)) {
+          for (const handler of handlers) {
+            handler([delta]);
+          }
+        }
+      }
+    });
+
+    if (freshSnapshot) {
+      connected = true;
+    }
+  } catch {
+    // Transport subscribe failed — still usable in degraded mode if we have cache
+  }
 
   const client: WeaverClient = {
     get<T>(key: string, scopePath?: ScopeInstance[]): T | undefined {
@@ -301,13 +342,14 @@ export async function createWeaverClient(
     },
 
     get staleSince(): Date | null {
-      return staleSince;
+      return closedAt ?? stalenessMonitor.staleSince;
     },
 
     async close(): Promise<void> {
       unsubTransport();
       connected = false;
-      staleSince = new Date();
+      closedAt = new Date();
+      stalenessMonitor.dispose();
       await transport.close();
     },
   };

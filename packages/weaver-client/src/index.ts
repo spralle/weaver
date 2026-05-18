@@ -19,6 +19,8 @@ export type {
   ScopeLoadingMode,
 } from "./scope-manager.js";
 export { createScopeLoader } from "./scope-manager.js";
+export type { StalenessConfig, StalenessMonitor } from "./staleness.js";
+export { createStalenessMonitor } from "./staleness.js";
 export {
   createSyncRuntimeBridge,
   type SyncRuntimeBridge,
