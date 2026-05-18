@@ -27,6 +27,7 @@ interface CommonArgs {
     forcedBaseRevision?: string | undefined,
   ) => SyncQueuedMutation;
   conflictResolution: "server-authoritative" | "lww-fallback";
+  onSnapshotChange?: ((snapshot: ConfigurationLayerData) => void) | undefined;
 }
 
 export interface FlushQueueArgs extends CommonArgs {
@@ -74,6 +75,12 @@ export async function flushQueue(
       args.snapshot.revision = response.serverRevision;
       args.snapshot.lastSyncedAt = response.serverTime;
       await args.snapshotCache.saveSnapshot(cloneSnapshot(args.snapshot));
+      if (
+        batchConflicts.length > 0 &&
+        args.conflictResolution === "server-authoritative"
+      ) {
+        args.onSnapshotChange?.(cloneSnapshot(args.snapshot));
+      }
     } catch (error) {
       const syncError = classifySyncError(error);
       await args.mutationQueue.releaseRequest(requestId, syncError);
@@ -178,6 +185,9 @@ export async function pullChanges(args: CommonArgs): Promise<number> {
   args.snapshot.lastSyncedAt = response.serverTime;
   await args.snapshotCache.setCursor(response.cursor);
   await args.snapshotCache.saveSnapshot(cloneSnapshot(args.snapshot));
+  if (response.changes.length > 0) {
+    args.onSnapshotChange?.(cloneSnapshot(args.snapshot));
+  }
   return response.changes.length;
 }
 

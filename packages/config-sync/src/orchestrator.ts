@@ -49,6 +49,7 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
   private readonly revisions = new Map<string, string>();
   private readonly localContext = new Map<string, LocalMutationContext>();
   private readonly stateManager: ReturnType<typeof createSyncStateManager>;
+  private readonly options: ConfigSyncOrchestratorOptions;
 
   private snapshot: ConfigurationLayerData = { entries: {} };
   private online = true;
@@ -60,6 +61,7 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
   private readonly instanceId: string;
 
   constructor(options: ConfigSyncOrchestratorOptions) {
+    this.options = options;
     this.snapshotCache = options.snapshotCache;
     this.mutationQueue = options.mutationQueue;
     this.transport = options.transport;
@@ -251,6 +253,7 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
       revisions: this.revisions,
       localContext: this.localContext,
       conflictResolution: this.conflictResolution,
+      onSnapshotChange: this.options.onSnapshotChange,
       createMutation: (operation, key, value, forcedBaseRevision) => {
         this.mutationCounter += 1;
         return createMutation(
@@ -304,6 +307,7 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
         revisions: this.revisions,
         localContext: this.localContext,
         conflictResolution: this.conflictResolution,
+        onSnapshotChange: this.options.onSnapshotChange,
         createMutation: () => {
           throw new Error("createMutation is unused in pullChanges");
         },

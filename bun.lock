@@ -149,6 +149,8 @@
       "version": "0.0.0",
       "dependencies": {
         "@weaver/config-engine": "workspace:*",
+        "@weaver/config-runtime": "workspace:*",
+        "@weaver/config-sync": "workspace:*",
         "@weaver/config-types": "workspace:*",
       },
       "devDependencies": {

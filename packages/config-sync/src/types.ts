@@ -1,6 +1,5 @@
 import type {
   ConfigSyncTransport,
-  ConfigurationChange,
   ConfigurationConflict,
   ConfigurationLayerData,
   ConfigurationStorageProvider,
@@ -11,7 +10,6 @@ import type {
   SyncResult,
   SyncSnapshotCache,
   SyncStatus,
-  WriteResult,
 } from "@weaver/config-types";
 
 export interface SyncRetryPolicy {
@@ -29,6 +27,8 @@ export interface ConfigSyncOrchestratorOptions {
   now?: (() => number) | undefined;
   onSyncStateChange?: ((state: SyncStatus) => void) | undefined;
   onDiagnosticsChange?: ((diagnostics: SyncDiagnostics) => void) | undefined;
+  /** Called after pull applies remote changes to the snapshot */
+  onSnapshotChange?: ((snapshot: ConfigurationLayerData) => void) | undefined;
 }
 
 export interface SyncDiagnostics {
