@@ -67,6 +67,17 @@
         "typescript": "^5.8.3",
       },
     },
+    "packages/config-runtime": {
+      "name": "@weaver/config-runtime",
+      "version": "0.0.0",
+      "dependencies": {
+        "@weaver/config-engine": "workspace:*",
+        "zod": "^4.0.0",
+      },
+      "devDependencies": {
+        "typescript": "^5.8.3",
+      },
+    },
     "packages/config-secrets": {
       "name": "@weaver/config-secrets",
       "version": "0.0.0",
@@ -476,6 +487,8 @@
     "@weaver/config-engine": ["@weaver/config-engine@workspace:packages/config-engine"],
 
     "@weaver/config-policy": ["@weaver/config-policy@workspace:packages/config-policy"],
+
+    "@weaver/config-runtime": ["@weaver/config-runtime@workspace:packages/config-runtime"],
 
     "@weaver/config-secrets": ["@weaver/config-secrets@workspace:packages/config-secrets"],
 

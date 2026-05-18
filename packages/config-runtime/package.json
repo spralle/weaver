@@ -1,0 +1,29 @@
+{
+  "name": "@weaver/config-runtime",
+  "version": "0.0.0",
+  "description": "Pure state machine for Weaver configuration resolution",
+  "license": "MIT",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "lint": "biome check ."
+  },
+  "dependencies": {
+    "@weaver/config-engine": "workspace:*",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}
