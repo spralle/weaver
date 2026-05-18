@@ -182,6 +182,7 @@ function diffTopLevelKeys(
   return changed;
 }
 
+/** Recursive structural equality for JSON-serializable values (no Date/Symbol/Map support). */
 function deepEqual(a: unknown, b: unknown): boolean {
   if (a === b) return true;
   if (a === null || b === null) return false;

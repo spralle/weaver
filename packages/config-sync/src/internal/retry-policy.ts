@@ -1,5 +1,9 @@
 import type { SyncErrorMetadata } from "@weaver/config-types";
 
+export const DEFAULT_BATCH_SIZE = 50;
+export const DEFAULT_RETRY_BASE_MS = 500;
+export const DEFAULT_RETRY_MAX_MS = 30_000;
+
 export interface RetryPolicyState {
   retryAttempt: number;
   retryScheduledAt?: number | undefined;

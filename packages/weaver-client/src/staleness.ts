@@ -13,6 +13,10 @@ export interface StalenessMonitor {
   dispose(): void;
 }
 
+/**
+ * Creates an interval-based freshness monitor.
+ * Marks config as stale when time since last sync exceeds maxAge.
+ */
 export function createStalenessMonitor(
   config?: StalenessConfig,
 ): StalenessMonitor {
