@@ -1,7 +1,4 @@
-import {
-  detectBreakingChanges,
-  schemasEqual,
-} from "@weaver/config-engine";
+import { detectBreakingChanges, schemasEqual } from "@weaver/config-engine";
 import type { ConfigurationPropertySchema } from "@weaver/config-types";
 import { configurationPropertySchemaSchema } from "@weaver/config-types";
 import type { WeaverError } from "../types/errors.js";
@@ -42,7 +39,6 @@ function schemaKey(serviceId: string, environment: string): string {
   return `${serviceId}:${environment}`;
 }
 
-
 export function createSchemaRegistry(
   options: SchemaRegistryOptions,
 ): SchemaRegistry {
@@ -54,7 +50,9 @@ export function createSchemaRegistry(
     ): Promise<SchemaRegistrationResult> {
       const { serviceId, environment } = request;
 
-      const parseResult = configurationPropertySchemaSchema.safeParse(request.declaration);
+      const parseResult = configurationPropertySchemaSchema.safeParse(
+        request.declaration,
+      );
       if (!parseResult.success) {
         return {
           success: false,

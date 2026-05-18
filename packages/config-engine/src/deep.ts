@@ -34,7 +34,7 @@ export function deepSet(
   const segments = parsePath(path);
   let current: Record<string, unknown> = obj;
   for (let i = 0; i < segments.length - 1; i++) {
-    const segment = segments[i]!;
+    const segment = segments[i] as string;
     const next = current[segment];
     if (
       next === null ||
@@ -46,7 +46,8 @@ export function deepSet(
     }
     current = current[segment] as Record<string, unknown>;
   }
-  current[segments[segments.length - 1]!] = value;
+  const lastKey = segments[segments.length - 1] as string;
+  current[lastKey] = value;
 }
 
 /**
@@ -60,20 +61,21 @@ export function deepRemove(
 ): boolean {
   const segments = parsePath(path);
   if (segments.length === 1) {
-    const existed = segments[0]! in obj;
-    delete obj[segments[0]!];
+    const firstSeg = segments[0] as string;
+    const existed = firstSeg in obj;
+    delete obj[firstSeg];
     return existed;
   }
   let current: Record<string, unknown> = obj;
   for (let i = 0; i < segments.length - 1; i++) {
-    const segment = segments[i]!;
+    const segment = segments[i] as string;
     const next = current[segment];
     if (next === null || next === undefined || typeof next !== "object") {
       return false;
     }
     current = next as Record<string, unknown>;
   }
-  const lastSeg = segments[segments.length - 1]!;
+  const lastSeg = segments[segments.length - 1] as string;
   const existed = lastSeg in current;
   delete current[lastSeg];
   return existed;

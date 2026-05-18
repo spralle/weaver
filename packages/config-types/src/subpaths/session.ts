@@ -1,4 +1,14 @@
 // Sub-path barrel: @weaver/config-types/session
+
+export {
+  godModeSessionSchema,
+  overrideSessionSchema,
+  sessionActivationRequestSchema,
+  sessionDeactivationResultSchema,
+  sessionLayerMetadataSchema,
+  sessionModeSchema,
+  sessionTypeSchema,
+} from "../schemas-session.js";
 export type {
   GodModeSession,
   OverrideSession,
@@ -10,12 +20,3 @@ export type {
   SessionMode,
   SessionType,
 } from "../session.js";
-export {
-  godModeSessionSchema,
-  overrideSessionSchema,
-  sessionActivationRequestSchema,
-  sessionDeactivationResultSchema,
-  sessionLayerMetadataSchema,
-  sessionModeSchema,
-  sessionTypeSchema,
-} from "../schemas-session.js";

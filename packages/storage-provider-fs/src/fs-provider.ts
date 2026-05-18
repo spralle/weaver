@@ -1,4 +1,4 @@
-import { watch, type FSWatcher } from "node:fs";
+import { type FSWatcher, watch } from "node:fs";
 import { mkdir, readFile, rename, stat, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { deepMerge, deepRemove, deepSet } from "@weaver/config-engine";

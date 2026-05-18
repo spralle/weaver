@@ -55,5 +55,3 @@ export {
 } from "./schema-registry.js";
 // scope.ts — Scope chain builder
 export type { BuildScopeChainResult, ScopeChainEntry } from "./scope.js";
-
-

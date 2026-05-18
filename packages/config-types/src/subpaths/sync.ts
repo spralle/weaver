@@ -24,7 +24,6 @@ export type {
   SyncSnapshotCache,
   SyncStatus,
 } from "../providers.js";
-export type { ConfigDelta, ConfigSnapshot } from "../schemas-transport.js";
 export {
   configurationChangeSchema,
   configurationConflictSchema,
@@ -37,6 +36,7 @@ export {
   syncStatusSyncedSchema,
   syncStatusSyncingSchema,
 } from "../schemas-providers.js";
+export type { ConfigDelta, ConfigSnapshot } from "../schemas-transport.js";
 export {
   configDeltaSchema,
   configSnapshotSchema,

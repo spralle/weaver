@@ -91,8 +91,8 @@ export class SecretResolutionService {
     const failures: SecretResolutionFailure[] = [];
 
     for (let i = 0; i < settled.length; i++) {
-      const outcome = settled[i]!;
-      const { key, ref } = refs[i]!;
+      const outcome = settled[i] as (typeof settled)[number];
+      const { key, ref } = refs[i] as (typeof refs)[number];
       if (outcome.status === "fulfilled") {
         resolved.set(outcome.value.key, outcome.value.value);
       } else {
@@ -151,7 +151,11 @@ export class SecretResolutionService {
   private getProvider(name: string): SecretProvider {
     const provider = this.providers.get(name);
     if (!provider) {
-      throw createWeaverError("NOT_FOUND", `Secret provider "${name}" not registered`, { provider: name });
+      throw createWeaverError(
+        "NOT_FOUND",
+        `Secret provider "${name}" not registered`,
+        { provider: name },
+      );
     }
     return provider;
   }

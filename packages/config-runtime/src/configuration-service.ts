@@ -1,5 +1,5 @@
 // Configuration service factory — composes providers, state container, and engine
-import type { ZodType } from "zod";
+
 import { inspectKey, resolveConfiguration } from "@weaver/config-engine";
 import type { OverrideSessionController } from "@weaver/config-sessions";
 import type {
@@ -14,6 +14,7 @@ import type {
   WeaverConfig,
 } from "@weaver/config-types";
 import { createWeaverError, serializeScopePath } from "@weaver/config-types";
+import type { ZodType } from "zod";
 import {
   buildMountMap,
   resolveMountedNamespace,

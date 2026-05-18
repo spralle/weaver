@@ -17,7 +17,7 @@ export function isWeaverMarker(value: unknown): value is WeaverMarker {
     typeof value === "object" &&
     value !== null &&
     "_weaver" in value &&
-    typeof (value as Record<string, unknown>)["_weaver"] === "string"
+    typeof (value as Record<string, unknown>)._weaver === "string"
   );
 }
 
