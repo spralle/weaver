@@ -1,3 +1,4 @@
+import { cloneValue } from "@weaver/config-engine";
 import type {
   ConfigurationLayerData,
   DurableConfigCache,
@@ -6,7 +7,6 @@ import type {
   SyncQueuedMutation,
   SyncQueueMetadata,
 } from "@weaver/config-types";
-import { cloneValue } from "@weaver/storage-provider-core";
 
 interface InFlightRequest {
   requestId: string;

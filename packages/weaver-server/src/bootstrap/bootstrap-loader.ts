@@ -2,10 +2,10 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { ConfigurationStorageProvider } from "@weaver/config-types";
-import type { GitManager } from "@weaver/storage-provider-git";
-import { createGitManager } from "@weaver/storage-provider-git";
 import type { Collection } from "mongodb";
 import type { SimpleGit } from "simple-git";
+import type { GitManager } from "../providers/index.js";
+import { createGitManager } from "../providers/index.js";
 import { bootstrapConfigSchema } from "../types/bootstrap.js";
 import { resolveEnvVars } from "./env-resolver.js";
 import { createProviders } from "./layer-factory.js";

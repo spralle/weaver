@@ -1,5 +1,5 @@
 // Override session manager — ephemeral emergency override sessions
-import type { AuditService } from "@weaver/config-audit";
+import type { AuditService } from "../audit/index.js";
 import type { WeaverConfigService } from "./config-service.js";
 
 export interface SessionManagerOptions {

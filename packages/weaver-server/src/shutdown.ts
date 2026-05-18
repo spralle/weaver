@@ -1,6 +1,6 @@
 // Graceful shutdown manager
-import type { WeaverLogger } from "@weaver/storage-provider-core";
-import { consoleLogger } from "@weaver/storage-provider-core";
+import type { WeaverLogger } from "@weaver/config-engine";
+import { consoleLogger } from "@weaver/config-engine";
 
 export interface ShutdownManagerOptions {
   drainTimeoutMs?: number; // default 10000

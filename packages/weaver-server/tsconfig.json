@@ -8,11 +8,6 @@
   "references": [
     { "path": "../config-types" },
     { "path": "../config-engine" },
-    { "path": "../config-audit" },
-    { "path": "../storage-provider-core" },
-    { "path": "../storage-provider-memory" },
-    { "path": "../storage-provider-mongodb" },
-    { "path": "../storage-provider-git" },
-    { "path": "../storage-provider-fs" }
+    { "path": "../config-auth" }
   ]
 }

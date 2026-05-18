@@ -1,5 +1,6 @@
 // localStorage-backed configuration storage provider — USER and DEVICE layers
 
+import { extractErrorMessage } from "@weaver/config-engine";
 import type {
   ConfigurationChange,
   ConfigurationLayer,
@@ -7,7 +8,6 @@ import type {
   ConfigurationStorageProvider,
   WriteResult,
 } from "@weaver/config-types";
-import { extractErrorMessage } from "@weaver/storage-provider-core";
 
 export interface LocalStorageProviderOptions {
   id: string;

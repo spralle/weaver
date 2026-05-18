@@ -1,14 +1,11 @@
 // Weaver server entry point — orchestrates all subsystems
 
-import {
-  createAuditService,
-  createStdoutAuditSink,
-} from "@weaver/config-audit";
 import type { ConfigurationStorageProvider } from "@weaver/config-types";
-import { createInMemoryStorageProvider } from "@weaver/storage-provider-memory";
+import { createAuditService, createStdoutAuditSink } from "./audit/index.js";
 import { createWeaverConfigService } from "./core/config-service.js";
 import type { HealthEndpoints } from "./health.js";
 import { createHealthEndpoints } from "./health.js";
+import { createInMemoryStorageProvider } from "./providers/index.js";
 import { parseServerEnv } from "./server-env.js";
 import { createShutdownManager } from "./shutdown.js";
 import type { RestAdapter } from "./transport/rest-adapter.js";

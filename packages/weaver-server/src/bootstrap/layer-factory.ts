@@ -1,11 +1,13 @@
 // Layer factory — creates storage providers from validated bootstrap config
 
 import type { ConfigurationStorageProvider } from "@weaver/config-types";
-import type { GitManager } from "@weaver/storage-provider-git";
-import { createGitStorageProvider } from "@weaver/storage-provider-git";
-import { createInMemoryStorageProvider } from "@weaver/storage-provider-memory";
-import { createMongoDBStorageProvider } from "@weaver/storage-provider-mongodb";
 import type { Collection } from "mongodb";
+import type { GitManager } from "../providers/index.js";
+import {
+  createGitStorageProvider,
+  createInMemoryStorageProvider,
+  createMongoDBStorageProvider,
+} from "../providers/index.js";
 import type { BootstrapLayer } from "../types/bootstrap.js";
 
 export interface LayerFactoryDeps {

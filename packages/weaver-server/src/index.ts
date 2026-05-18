@@ -1,35 +1,27 @@
 // @weaver/weaver-server — Central configuration server
 
+export type { WeaverLogger } from "@weaver/config-engine";
+export { consoleLogger } from "@weaver/config-engine";
 export type {
   AuditService,
   AuditServiceOptions,
-  ConfigAuditSink,
+} from "./audit/audit-service.js";
+export { createAuditService } from "./audit/audit-service.js";
+export { createFileSystemAuditLog } from "./audit/fs-audit-log.js";
+export { createInMemoryAuditLog } from "./audit/memory-audit-log.js";
+export type {
   MongoAuditSinkOptions,
   MongoCollection,
-  SinkDomainAuditEntry,
-} from "@weaver/config-audit";
-// audit (from config-audit)
-export {
-  createAuditService,
-  createMongoAuditSink,
-  createStdoutAuditSink,
-} from "@weaver/config-audit";
-export type { WeaverLogger } from "@weaver/storage-provider-core";
-
-// logger (from storage-provider-core)
-export { consoleLogger } from "@weaver/storage-provider-core";
+} from "./audit/mongo-sink.js";
+export { createMongoAuditSink } from "./audit/mongo-sink.js";
+export { createStdoutAuditSink } from "./audit/stdout-sink.js";
 export type {
-  GitManager,
-  GitManagerOptions,
-  GitStorageProviderOptions,
-} from "@weaver/storage-provider-git";
-// storage (from individual provider packages)
-export {
-  createGitManager,
-  createGitStorageProvider,
-} from "@weaver/storage-provider-git";
-export type { MongoDBStorageProviderOptions } from "@weaver/storage-provider-mongodb";
-export { createMongoDBStorageProvider } from "@weaver/storage-provider-mongodb";
+  ConfigAuditEntry,
+  ConfigAuditLog,
+  ConfigAuditSink,
+  ConfigDomainAuditEntry,
+  SinkDomainAuditEntry,
+} from "./audit/types.js";
 export type {
   AuthContext,
   AuthMiddleware,
@@ -104,6 +96,25 @@ export {
 export type { HealthEndpoints, HealthStatus } from "./health.js";
 // health & shutdown
 export { createHealthEndpoints } from "./health.js";
+// providers
+export type {
+  FileSystemProviderOptions,
+  FileSystemStorageProvider,
+} from "./providers/fs-provider.js";
+export { createFileSystemStorageProvider } from "./providers/fs-provider.js";
+export type { InMemoryProviderOptions } from "./providers/in-memory-provider.js";
+export { createInMemoryStorageProvider } from "./providers/in-memory-provider.js";
+export type {
+  GitManager,
+  GitManagerOptions,
+  GitStorageProviderOptions,
+} from "./providers/index.js";
+export {
+  createGitManager,
+  createGitStorageProvider,
+} from "./providers/index.js";
+export type { MongoDBStorageProviderOptions } from "./providers/mongodb-storage-provider.js";
+export { createMongoDBStorageProvider } from "./providers/mongodb-storage-provider.js";
 export type { WeaverServer, WeaverServerOptions } from "./server.js";
 // server
 export { startWeaverServer } from "./server.js";
