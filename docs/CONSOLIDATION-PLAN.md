@@ -24,7 +24,7 @@
 | LIBRARY | `@weaver/config-sessions` | Override sessions |
 | LIBRARY | `@weaver/config-server` | FileSystemStorageProvider, audit log, service config |
 | QUESTIONABLE | `@weaver/config-sync` | Offline sync (not wired into weaver-client, see issue #35) |
-| QUESTIONABLE | `@weaver/config-runtime` | Flat-key orchestration (arch-sweep only, redundant) |
+| QUESTIONABLE | `@weaver/config-runtime` | Flat-key orchestration (broken, will be deleted and rebuilt) |
 | APP | `@weaver/demo` | Interactive demo (private, GitHub Pages) |
 
 ---
@@ -82,30 +82,38 @@
 
 **Issue:** #30
 
-**Goal:** Reduce package count, clarify boundaries.
+**Goal:** Reduce package count, clarify boundaries, establish config-runtime as the shared orchestration layer.
 
 ### Steps
 
-1. **Remove `config-runtime`**
-   - Delete the package entirely
-   - It was never on main (arch-sweep only) and is redundant with server/client resolution
+1. **Delete the current `config-runtime`**
+   - The existing code is broken (stale imports, flat-key model)
+   - It will be rebuilt from scratch after Phase 2
 
 2. **Fold `config-server` INTO `weaver-server`**
    - `weaver-server` is the only consumer of `config-server`
    - Move `FileSystemStorageProvider`, audit log, and service config into `weaver-server/src/`
    - Remove `@weaver/config-server` package
 
-3. **Fold `config-providers` INTO `weaver-server`**
-   - InMemory, StaticJson, LocalStorage providers are server-side storage backends
+3. **Fold storage providers INTO `weaver-server`**
+   - InMemory, StaticJson, FS, Git, MongoDB providers are server-side storage backends
    - Move into `weaver-server/src/providers/`
-   - Remove `@weaver/config-providers` package
+   - Remove individual `@weaver/storage-provider-*` packages
 
-4. **Decide `config-sync` fate** (issue #35)
+4. **Extract shared orchestration into new `config-runtime`**
+   - State container (holds resolved config, emits changes)
+   - Layer resolution (merge layers by priority using `deepMerge`)
+   - Scope application (environment/tenant/user scoping)
+   - View service (subscribe to key paths, get typed values)
+   - Both weaver-server and weaver-client consume this
+   - weaver-client = config-runtime + HTTP/SSE transport + persistence adapters
+
+5. **Decide `config-sync` fate** (issue #35)
    - If kept: wire into weaver-client as the offline layer
    - If removed: delete package, track as future work
    - Decision deferred to issue #35
 
-**Exit criteria:** 7 publishable packages (or 8 if config-sync survives), clean dependency graph.
+**Exit criteria:** 8 publishable packages (or 9 if config-sync survives), clean dependency graph.
 
 ---
 
@@ -149,15 +157,16 @@
 
 ```
 @weaver/config-types    — Types, Zod schemas, defineWeaver
-@weaver/config-engine   — Resolution (deepGet/Set/Merge), schema registry, codegen
+@weaver/config-engine   — Primitives (deepGet/Set/Merge), schema registry, codegen
+@weaver/config-runtime  — Orchestration (state container, layer resolution, scoping, views)
 @weaver/config-auth     — withAuth() RBAC
 @weaver/config-policy   — Change policies, ratchets
 @weaver/config-sessions — Override sessions
-@weaver/weaver-server   — Server (absorbs config-server, config-providers)
-@weaver/weaver-client   — Client SDK
+@weaver/weaver-server   — Server (absorbs storage providers)
+@weaver/weaver-client   — Opinionated SDK (config-runtime + transport + persistence)
 ```
 
-**7 publishable packages** (down from 11).
+**8 publishable packages** (down from ~20 post-arch-sweep).
 
 ---
 
@@ -176,7 +185,7 @@
 │                          SERVER                              │
 │                                                             │
 │   @weaver/weaver-server                                     │
-│       ├── config-engine                                     │
+│       ├── config-runtime                                    │
 │       ├── config-auth                                       │
 │       ├── config-policy                                     │
 │       └── config-sessions                                   │
@@ -186,7 +195,7 @@
 │                          CLIENT                              │
 │                                                             │
 │   @weaver/weaver-client                                     │
-│       └── config-engine                                     │
+│       └── config-runtime                                    │
 └─────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────┐
@@ -195,6 +204,8 @@
 │   @weaver/config-auth ──────────┐                           │
 │   @weaver/config-policy ────────┼──► config-engine          │
 │   @weaver/config-sessions ──────┘                           │
+│                                                             │
+│   @weaver/config-runtime ──────────► config-engine          │
 └─────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────┐
@@ -215,7 +226,9 @@
 
 | Package | Disposition |
 |---------|-------------|
-| `@weaver/config-runtime` | Deleted — redundant with server/client resolution |
+| `@weaver/config-runtime` (current) | Deleted and rebuilt — current version uses stale flat-key model |
 | `@weaver/config-server` | Absorbed into `weaver-server` |
 | `@weaver/config-providers` | Absorbed into `weaver-server` |
+| `@weaver/storage-provider-*` (8 packages) | Absorbed into `weaver-server` |
+| `@weaver/storage-provider-core` | Absorbed into `weaver-server` |
 | `@weaver/config-sync` | TBD — decision tracked in issue #35 |
