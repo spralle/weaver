@@ -10,11 +10,10 @@ export {
   SecretResolutionError,
 } from "./azure-keyvault-provider.js";
 export type {
-  SecretCache,
   SecretCacheEntry,
   SecretCacheOptions,
 } from "./secret-cache.js";
-export { createSecretCache } from "./secret-cache.js";
+export { createSecretCache, SecretCache } from "./secret-cache.js";
 export type {
   SecretMetadata,
   SecretProvider,

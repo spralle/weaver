@@ -22,7 +22,7 @@
   "scripts": {
     "build": "tsc -b",
     "typecheck": "tsc --noEmit",
-    "test": "node --test test/*.test.mjs",
+    "test": "bun test test/get-validated.test.mjs test/mount-resolver.test.mjs test/service-configuration.test.mjs test/state-container.test.mjs",
     "lint": "biome check ."
   },
   "dependencies": {
