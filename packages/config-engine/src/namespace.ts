@@ -53,7 +53,7 @@ const SEGMENT_PATTERN = /^[a-zA-Z][a-zA-Z0-9]*$/;
 
 /**
  * Validates a fully-qualified configuration key format.
- * Must have 3-5 segments (bracket-aware), each plain segment alphanumeric.
+ * Must have at least 1 segment (bracket-aware), each plain segment alphanumeric.
  * Compound segments (from brackets) must have dot-separated sub-segments that are each valid.
  */
 export function validateKeyFormat(key: string): {
@@ -68,11 +68,8 @@ export function validateKeyFormat(key: string): {
     return { valid: false, error: message };
   }
 
-  if (segments.length < 3 || segments.length > 5) {
-    return {
-      valid: false,
-      error: `Key "${key}" must have 3-5 segments, got ${String(segments.length)}`,
-    };
+  if (segments.length === 0) {
+    return { valid: false, error: `Key "${key}" must have at least 1 segment` };
   }
 
   for (const segment of segments) {

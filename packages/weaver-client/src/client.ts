@@ -1,6 +1,6 @@
 import { deepGet, deepRemove, deepSet } from "@weaver/config-engine";
 import type { ScopeDefinition, ScopeInstance } from "@weaver/config-types";
-import { flattenObject } from "./flatten.js";
+
 import type { WeaverClientPersistence } from "./persistence.js";
 import { createScopeLoader, type ScopeLoadingMode } from "./scope-manager.js";
 import type {
@@ -246,8 +246,7 @@ export async function createWeaverClient(
       opts?: WriteOptions,
     ): Promise<WriteResult> {
       const resolvedPrefix = applyNamespace(namespace, prefix);
-      const flattened = flattenObject(values, resolvedPrefix);
-      return transport.setMany(flattened, opts);
+      return transport.setMany({ [resolvedPrefix]: values }, opts);
     },
 
     async listScopes(): Promise<ScopeDefinition[]> {

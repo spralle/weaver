@@ -143,14 +143,14 @@ test("validateKeyFormat: bracket key with 5 segments is valid", () => {
   assert.equal(result.valid, true);
 });
 
-test("validateKeyFormat: bracket key with 6 segments is invalid", () => {
+test("validateKeyFormat: bracket key with 6 segments is valid", () => {
   const result = validateKeyFormat("a.b[c.d.e].f.g.h");
-  assert.equal(result.valid, false);
+  assert.equal(result.valid, true);
 });
 
-test("validateKeyFormat: bracket key with 2 segments is invalid", () => {
+test("validateKeyFormat: bracket key with 2 segments is valid", () => {
   const result = validateKeyFormat("a[b]");
-  assert.equal(result.valid, false);
+  assert.equal(result.valid, true);
 });
 
 test("validateKeyFormat: invalid chars in compound segment", () => {
