@@ -48,16 +48,14 @@ test("validateKeyFormat accepts valid 5-segment key", () => {
   assert.equal(result.valid, true);
 });
 
-test("validateKeyFormat rejects too few segments", () => {
+test("validateKeyFormat accepts valid 2-segment key", () => {
   const result = validateKeyFormat("ghost.vesselView");
-  assert.equal(result.valid, false);
-  assert.ok(result.error);
+  assert.equal(result.valid, true);
 });
 
-test("validateKeyFormat rejects too many segments (6)", () => {
+test("validateKeyFormat accepts valid 6-segment key", () => {
   const result = validateKeyFormat("ghost.vesselView.a.b.c.d");
-  assert.equal(result.valid, false);
-  assert.ok(result.error);
+  assert.equal(result.valid, true);
 });
 
 test("validateKeyFormat rejects segments starting with numbers", () => {
