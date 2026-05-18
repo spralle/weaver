@@ -27,7 +27,7 @@
   },
   "dependencies": {
     "@weaver/config-types": "workspace:*",
-    "@weaver/storage-provider-core": "workspace:*"
+    "@weaver/config-engine": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.8.3"

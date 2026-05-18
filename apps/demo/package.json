@@ -10,12 +10,11 @@
   "dependencies": {
     "@weaver/config-types": "workspace:*",
     "@weaver/config-engine": "workspace:*",
-    "@weaver/config-runtime": "workspace:*",
-    "@weaver/storage-provider-memory": "workspace:*",
     "@weaver/storage-provider-static-json": "workspace:*",
     "@weaver/storage-provider-local-storage": "workspace:*",
     "@weaver/config-sessions": "workspace:*",
-    "@weaver/config-policy": "workspace:*"
+    "@weaver/config-policy": "workspace:*",
+    "@weaver/weaver-server": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.8.3",

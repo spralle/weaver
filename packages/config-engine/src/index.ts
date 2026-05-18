@@ -55,3 +55,10 @@ export {
 } from "./schema-registry.js";
 // scope.ts — Scope chain builder
 export type { BuildScopeChainResult, ScopeChainEntry } from "./scope.js";
+// utils — shared utilities (formerly @weaver/storage-provider-core)
+export { cloneValue } from "./utils/clone.js";
+export { extractErrorMessage, isNodeError } from "./utils/error-utils.js";
+export type { LogFields, WeaverLogger } from "./utils/logger.js";
+export { consoleLogger } from "./utils/logger.js";
+export { safeParseConfigEntries } from "./utils/validation.js";
+export { readonlyGuard } from "./utils/write-utils.js";

@@ -1,14 +1,19 @@
 // WeaverConfigService — server-side config service wrapping storage providers
 
-import { deepGet, deepMerge, deepRemove, deepSet } from "@weaver/config-engine";
+import type { WeaverLogger } from "@weaver/config-engine";
+import {
+  consoleLogger,
+  deepGet,
+  deepMerge,
+  deepRemove,
+  deepSet,
+} from "@weaver/config-engine";
 import type {
   ConfigurationInspection,
   ConfigurationStorageProvider,
   ScopeInstance,
   WriteResult,
 } from "@weaver/config-types";
-import type { WeaverLogger } from "@weaver/storage-provider-core";
-import { consoleLogger } from "@weaver/storage-provider-core";
 import type { ConfigDelta, ConfigSnapshot } from "../types/index.js";
 import { buildScopePathString, isScopedLayer } from "./scope-utils.js";
 

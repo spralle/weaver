@@ -1,8 +1,8 @@
-import { createConfigurationService } from "@weaver/config-runtime";
+// TODO: rewire with new config-runtime — createConfigurationService removed
 import { createOverrideSessionProvider } from "@weaver/config-sessions";
 import { defineWeaver, Layers } from "@weaver/config-types";
 import { createLocalStorageProvider } from "@weaver/storage-provider-local-storage";
-import { createInMemoryStorageProvider } from "@weaver/storage-provider-memory";
+import { createInMemoryStorageProvider } from "@weaver/weaver-server";
 import { createStaticJsonStorageProvider } from "@weaver/storage-provider-static-json";
 import {
   APP_DEFAULTS,
@@ -97,21 +97,18 @@ export async function initService() {
     defaultDurationMs: 5 * 60 * 1000,
   });
 
-  const service = await createConfigurationService({
-    providers: [
-      coreProvider,
-      appProvider,
-      tenantProvider,
-      countryGB,
-      countryNL,
-      locationGBDVR,
-      locationFRCQF,
-      locationNLEUR,
-      userProvider,
-    ],
-    weaverConfig,
-    session,
-  });
+  // TODO: rewire with new config-runtime
+  const providers = [
+    coreProvider,
+    appProvider,
+    tenantProvider,
+    countryGB,
+    countryNL,
+    locationGBDVR,
+    locationFRCQF,
+    locationNLEUR,
+    userProvider,
+  ];
 
-  return { service, session, weaverConfig };
+  return { providers, session, weaverConfig };
 }
