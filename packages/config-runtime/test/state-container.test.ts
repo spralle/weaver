@@ -94,4 +94,46 @@ describe("createStateContainer", () => {
     container.setLayer({ id: "b", priority: 1, entries: { y: 2 } });
     expect(container.revision).toBe(r1 + 1);
   });
+
+  test("getAll() returns cloned object — mutations don't leak", () => {
+    const container = createStateContainer({
+      layers: [
+        { id: "base", priority: 0, entries: { database: { host: "localhost" } } },
+      ],
+    });
+    const result = container.getAll();
+    (result as Record<string, unknown>).database = { host: "hacked" };
+    expect(container.get("database.host")).toBe("localhost");
+  });
+
+  test("resolve does not fire subscriptions when values are deeply equal", () => {
+    const container = createStateContainer({
+      layers: [{ id: "a", priority: 0, entries: { x: { nested: 1 } } }],
+    });
+    let callCount = 0;
+    container.subscribe("x", () => {
+      callCount++;
+    });
+    // Set same layer with identical values
+    container.setLayer({ id: "a", priority: 0, entries: { x: { nested: 1 } } });
+    expect(callCount).toBe(0);
+  });
+
+  test("hydrate rejects invalid snapshot", () => {
+    const container = createStateContainer();
+    expect(() => {
+      container.hydrate({
+        resolved: "not-an-object",
+        provenance: {},
+        revision: 1,
+      } as unknown as Parameters<typeof container.hydrate>[0]);
+    }).toThrow();
+  });
+
+  test("applyDelta rejects invalid delta", () => {
+    const container = createStateContainer();
+    expect(() => {
+      container.applyDelta({ revision: "not-a-number" } as unknown as Parameters<typeof container.applyDelta>[0]);
+    }).toThrow();
+  });
 });
