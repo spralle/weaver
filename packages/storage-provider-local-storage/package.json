@@ -1,0 +1,35 @@
+{
+  "name": "@weaver/storage-provider-local-storage",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Browser localStorage storage provider for Weaver",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/spralle/weaver.git",
+    "directory": "packages/storage-provider-local-storage"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "lint": "biome check ."
+  },
+  "dependencies": {
+    "@weaver/config-types": "workspace:*",
+    "@weaver/storage-provider-core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}

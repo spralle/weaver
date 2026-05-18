@@ -1,6 +1,6 @@
-import type { WeaverConfigService } from "./config-service.js";
 import type { WeaverError } from "../types/errors.js";
 import { createWeaverError } from "../types/errors.js";
+import type { WeaverConfigService } from "./config-service.js";
 import { isScopedLayer, parseScopeLayer } from "./scope-utils.js";
 
 export interface PromotionRequest {
@@ -30,6 +30,9 @@ function isPromotableLayer(layer: string): boolean {
   return layer === "platform" || isScopedLayer(layer);
 }
 
+/**
+ * @alpha Not yet wired into startWeaverServer — planned for cross-environment promotion.
+ */
 export function createPromotionEngine(
   options: PromotionEngineOptions,
 ): PromotionEngine {
@@ -52,7 +55,9 @@ export function createPromotionEngine(
 
       // Read value from source environment
       const parsed = parseScopeLayer(layer);
-      const scopePath = parsed ? [{ scopeId: parsed.scopeId, value: parsed.value }] : undefined;
+      const scopePath = parsed
+        ? [{ scopeId: parsed.scopeId, value: parsed.value }]
+        : undefined;
       const value = await configService.get(
         key,
         scopePath ? { scopePath } : undefined,
@@ -90,9 +95,7 @@ export function createPromotionEngine(
         };
       }
 
-      const provider = configService.providers.find(
-        (p) => p.layer === layer,
-      );
+      const provider = configService.providers.find((p) => p.layer === layer);
       if (provider) {
         await configService.reloadProvider(provider.id);
       }

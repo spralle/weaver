@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { configurationPropertySchemaSchema } from "../src/schemas-core.ts";
+import { configurationPropertySchemaSchema } from "../src/schemas-property.ts";
 
 test("configurationPropertySchemaSchema accepts recursive nested JSON schema", () => {
   const schema = {

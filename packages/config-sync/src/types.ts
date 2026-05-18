@@ -2,8 +2,8 @@ import type {
   ConfigSyncTransport,
   ConfigurationChange,
   ConfigurationConflict,
-  ConfigurationLayer,
   ConfigurationLayerData,
+  ConfigurationStorageProvider,
   SyncErrorCode,
   SyncErrorMetadata,
   SyncMutationQueue,
@@ -59,16 +59,9 @@ export interface ConfigSyncOrchestrator {
   getPendingWrites(): ReadonlyMap<string, unknown>;
 }
 
-export interface SyncableConfigStorageProvider {
-  readonly id: string;
-  readonly layer: ConfigurationLayer | string;
+export interface SyncableConfigStorageProvider
+  extends ConfigurationStorageProvider {
   readonly writable: true;
-  load(): Promise<ConfigurationLayerData>;
-  write(key: string, value: unknown): Promise<WriteResult>;
-  remove(key: string): Promise<WriteResult>;
-  onExternalChange?(
-    listener: (changes: ConfigurationChange[]) => void,
-  ): () => void;
   readonly syncState: SyncStatus;
   readonly pendingWrites: ReadonlyMap<string, unknown>;
   sync(): Promise<SyncResult>;

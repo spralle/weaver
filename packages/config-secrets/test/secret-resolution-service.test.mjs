@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { SecretResolutionService } from "../dist/index.js";
+import { createSecretResolutionService } from "../dist/index.js";
 
 function createMockProvider(name, secrets = {}) {
   return {
@@ -24,12 +24,12 @@ function createMockProvider(name, secrets = {}) {
 }
 
 test("SecretResolutionService can be instantiated", () => {
-  const svc = new SecretResolutionService();
+  const svc = createSecretResolutionService();
   assert.ok(svc);
 });
 
 test("registerProvider works", () => {
-  const svc = new SecretResolutionService();
+  const svc = createSecretResolutionService();
   const provider = createMockProvider("test");
   svc.registerProvider(provider);
   // No throw means success
@@ -37,7 +37,7 @@ test("registerProvider works", () => {
 });
 
 test("resolve with a mock provider returns the value", async () => {
-  const svc = new SecretResolutionService();
+  const svc = createSecretResolutionService();
   svc.registerProvider(createMockProvider("test", { "my-secret": "s3cr3t" }));
 
   const value = await svc.resolve({
@@ -49,7 +49,7 @@ test("resolve with a mock provider returns the value", async () => {
 });
 
 test("resolveAll scans entries and resolves secret references", async () => {
-  const svc = new SecretResolutionService();
+  const svc = createSecretResolutionService();
   svc.registerProvider(createMockProvider("test", { "db-pass": "hunter2" }));
 
   const results = await svc.resolveAll({
@@ -74,7 +74,7 @@ test("cache is used on second resolve (mock provider called once)", async () => 
     async healthCheck() { return { healthy: true, latencyMs: 0 }; },
   };
 
-  const svc = new SecretResolutionService();
+  const svc = createSecretResolutionService();
   svc.registerProvider(provider);
 
   const ref = { _weaver: "secret-ref", provider: "counting", uri: "x" };
@@ -87,7 +87,7 @@ test("cache is used on second resolve (mock provider called once)", async () => 
 // --- Provider management ---
 
 test("registerProvider() with duplicate name overwrites previous", async () => {
-  const svc = new SecretResolutionService();
+  const svc = createSecretResolutionService();
   svc.registerProvider(createMockProvider("test", { "k": "old" }));
   svc.registerProvider(createMockProvider("test", { "k": "new" }));
 
@@ -96,7 +96,7 @@ test("registerProvider() with duplicate name overwrites previous", async () => {
 });
 
 test("resolve() with unknown provider throws", async () => {
-  const svc = new SecretResolutionService();
+  const svc = createSecretResolutionService();
   await assert.rejects(
     () => svc.resolve({ _weaver: "secret-ref", provider: "nope", uri: "x" }),
     /not registered/,
@@ -104,7 +104,7 @@ test("resolve() with unknown provider throws", async () => {
 });
 
 test("resolve() with provider that throws returns error", async () => {
-  const svc = new SecretResolutionService();
+  const svc = createSecretResolutionService();
   svc.registerProvider({
     name: "failing",
     async resolve() { throw new Error("vault down"); },
@@ -121,7 +121,7 @@ test("resolve() with provider that throws returns error", async () => {
 // --- Resolution ---
 
 test("resolveAll() with mixed entries only resolves secret refs", async () => {
-  const svc = new SecretResolutionService();
+  const svc = createSecretResolutionService();
   svc.registerProvider(createMockProvider("test", { "s1": "secret1" }));
 
   const results = await svc.resolveAll({
@@ -136,7 +136,7 @@ test("resolveAll() with mixed entries only resolves secret refs", async () => {
 });
 
 test("resolveAll() with multiple providers routes correctly", async () => {
-  const svc = new SecretResolutionService();
+  const svc = createSecretResolutionService();
   svc.registerProvider(createMockProvider("aws", { "a": "aws-val" }));
   svc.registerProvider(createMockProvider("azure", { "b": "azure-val" }));
 
@@ -150,7 +150,7 @@ test("resolveAll() with multiple providers routes correctly", async () => {
 });
 
 test("resolveAll() with empty entries returns empty map", async () => {
-  const svc = new SecretResolutionService();
+  const svc = createSecretResolutionService();
   const results = await svc.resolveAll({});
   assert.equal(results.resolved.size, 0);
 });
@@ -159,7 +159,7 @@ test("resolveAll() with empty entries returns empty map", async () => {
 
 test("store() calls provider.store() with correct args", async () => {
   let storedUri, storedValue;
-  const svc = new SecretResolutionService();
+  const svc = createSecretResolutionService();
   svc.registerProvider({
     name: "test",
     async resolve() { return { value: "", version: "" }; },
@@ -176,7 +176,7 @@ test("store() calls provider.store() with correct args", async () => {
 
 test("delete() calls provider.delete() with correct args", async () => {
   let deletedUri;
-  const svc = new SecretResolutionService();
+  const svc = createSecretResolutionService();
   svc.registerProvider({
     name: "test",
     async resolve() { return { value: "", version: "" }; },
@@ -190,7 +190,7 @@ test("delete() calls provider.delete() with correct args", async () => {
 });
 
 test("store() with unknown provider throws", async () => {
-  const svc = new SecretResolutionService();
+  const svc = createSecretResolutionService();
   await assert.rejects(
     () => svc.store("nope", "k", "v"),
     /not registered/,
@@ -198,7 +198,7 @@ test("store() with unknown provider throws", async () => {
 });
 
 test("delete() with unknown provider throws", async () => {
-  const svc = new SecretResolutionService();
+  const svc = createSecretResolutionService();
   await assert.rejects(
     () => svc.delete("nope", "k"),
     /not registered/,
@@ -209,7 +209,7 @@ test("delete() with unknown provider throws", async () => {
 
 test("invalidate() removes cached value, next resolve() calls provider again", async () => {
   let callCount = 0;
-  const svc = new SecretResolutionService();
+  const svc = createSecretResolutionService();
   svc.registerProvider({
     name: "test",
     async resolve() { callCount++; return { value: "v", version: "v1" }; },
@@ -232,7 +232,7 @@ test("invalidate() removes cached value, next resolve() calls provider again", a
 test("when SecretAuditLog is provided, resolve() logs the access", async () => {
   const logs = [];
   const auditLog = { log(entry) { logs.push(entry); } };
-  const svc = new SecretResolutionService({ auditLog });
+  const svc = createSecretResolutionService({ auditLog });
   svc.registerProvider(createMockProvider("test", { "k": "v" }));
 
   await svc.resolve({ _weaver: "secret-ref", provider: "test", uri: "k" });
@@ -245,7 +245,7 @@ test("when SecretAuditLog is provided, resolve() logs the access", async () => {
 test("when SecretAuditLog is provided, store() logs the operation", async () => {
   const logs = [];
   const auditLog = { log(entry) { logs.push(entry); } };
-  const svc = new SecretResolutionService({ auditLog });
+  const svc = createSecretResolutionService({ auditLog });
   svc.registerProvider(createMockProvider("test", {}));
 
   await svc.store("test", "k", "v");
@@ -255,7 +255,7 @@ test("when SecretAuditLog is provided, store() logs the operation", async () => 
 });
 
 test("when no audit log provided, operations still work", async () => {
-  const svc = new SecretResolutionService();
+  const svc = createSecretResolutionService();
   svc.registerProvider(createMockProvider("test", { "k": "v" }));
   const val = await svc.resolve({ _weaver: "secret-ref", provider: "test", uri: "k" });
   assert.equal(val, "v");

@@ -1,5 +1,5 @@
-import { SecretClient } from "@azure/keyvault-secrets";
 import type { TokenCredential } from "@azure/identity";
+import { SecretClient } from "@azure/keyvault-secrets";
 import type { SecretReference } from "@weaver/config-types";
 import type {
   SecretProvider,
@@ -50,11 +50,16 @@ export class AzureKeyVaultProvider implements SecretProvider {
   private readonly timeoutMs: number;
   private readonly failureThreshold: number;
   private readonly cooldownMs: number;
-  private readonly breaker: CircuitBreakerState = { consecutiveFailures: 0, lastFailureTime: 0 };
+  private readonly breaker: CircuitBreakerState = {
+    consecutiveFailures: 0,
+    lastFailureTime: 0,
+  };
 
   constructor(options: AzureKeyVaultProviderOptions) {
     this.client = new SecretClient(options.vaultUrl, options.credential, {
-      ...(options.maxRetries !== undefined && { retryOptions: { maxRetries: options.maxRetries } }),
+      ...(options.maxRetries !== undefined && {
+        retryOptions: { maxRetries: options.maxRetries },
+      }),
     });
     this.prefix = options.secretPrefix;
     this.timeoutMs = options.timeoutMs ?? 10_000;
@@ -132,7 +137,9 @@ export class AzureKeyVaultProvider implements SecretProvider {
       throw new SecretResolutionError(
         this.name,
         uri,
-        new Error(`Circuit breaker open: ${this.breaker.consecutiveFailures} consecutive failures`),
+        new Error(
+          `Circuit breaker open: ${this.breaker.consecutiveFailures} consecutive failures`,
+        ),
       );
     }
     // Cooldown elapsed — allow a probe attempt (half-open)
@@ -150,10 +157,19 @@ export class AzureKeyVaultProvider implements SecretProvider {
 
   private withTimeout<T>(promise: Promise<T>): Promise<T> {
     return new Promise<T>((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error("Operation timed out")), this.timeoutMs);
+      const timer = setTimeout(
+        () => reject(new Error("Operation timed out")),
+        this.timeoutMs,
+      );
       promise.then(
-        (val) => { clearTimeout(timer); resolve(val); },
-        (err) => { clearTimeout(timer); reject(err); },
+        (val) => {
+          clearTimeout(timer);
+          resolve(val);
+        },
+        (err) => {
+          clearTimeout(timer);
+          reject(err);
+        },
       );
     });
   }
@@ -168,6 +184,13 @@ function isRestError(err: unknown): err is { statusCode: number } {
     typeof err === "object" &&
     err !== null &&
     "statusCode" in err &&
-    typeof (err as Record<string, unknown>)["statusCode"] === "number"
+    typeof (err as Record<string, unknown>).statusCode === "number"
   );
+}
+
+/** Creates an Azure Key Vault secret provider instance. */
+export function createAzureKeyVaultProvider(
+  options: AzureKeyVaultProviderOptions,
+): AzureKeyVaultProvider {
+  return new AzureKeyVaultProvider(options);
 }

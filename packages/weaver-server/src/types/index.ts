@@ -1,26 +1,22 @@
-export {
-  weaverErrorCodes,
-  weaverErrorCodeSchema,
-  weaverErrorSchema,
-  createWeaverError,
-  HTTP_STATUS_MAP,
-  httpStatusForError,
-} from "./errors.js";
-export type { WeaverErrorCode, WeaverError } from "./errors.js";
-
-export { configDeltaSchema } from "./delta.js";
-export type { ConfigDelta } from "./delta.js";
-
-export { configSnapshotSchema } from "./snapshot.js";
-export type { ConfigSnapshot } from "./snapshot.js";
-
-export {
-  layerProviderSchema,
-  bootstrapLayerSchema,
-  bootstrapConfigSchema,
-} from "./bootstrap.js";
+export type { ConfigDelta, ConfigSnapshot } from "@weaver/config-types";
+export { configDeltaSchema, configSnapshotSchema } from "@weaver/config-types";
 export type {
   BootstrapConfig,
   BootstrapLayer,
   LayerProvider,
 } from "./bootstrap.js";
+export {
+  bootstrapConfigSchema,
+  bootstrapLayerSchema,
+  builtinProviders,
+  layerProviderSchema,
+} from "./bootstrap.js";
+export type { WeaverError, WeaverErrorCode } from "./errors.js";
+export {
+  createWeaverError,
+  HTTP_STATUS_MAP,
+  httpStatusForError,
+  weaverErrorCodeSchema,
+  weaverErrorCodes,
+  weaverErrorSchema,
+} from "./errors.js";

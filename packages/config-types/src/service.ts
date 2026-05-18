@@ -1,3 +1,4 @@
+import type { ZodType } from "zod";
 import type {
   OverrideSession,
   SessionActivationRequest,
@@ -30,6 +31,7 @@ export interface ConfigurationInspection<T> {
 
 export interface ConfigurationService {
   get<T>(key: string): T | undefined;
+  get<T>(key: string, schema: ZodType<T>): T | undefined;
   getWithDefault<T>(key: string, defaultValue: T): T;
   getAtLayer<T>(layer: ConfigurationLayer | string, key: string): T | undefined;
   getForScope<T>(key: string, scopePath: ScopeInstance[]): T | undefined;
@@ -59,7 +61,11 @@ export interface ViewConfigurationService {
   get<T>(key: string): T | undefined;
   getWithDefault<T>(key: string, defaultValue: T): T;
   getForInstance<T>(instanceId: string, key: string): T | undefined;
-  setForInstance(instanceId: string, key: string, value: unknown): Promise<void>;
+  setForInstance(
+    instanceId: string,
+    key: string,
+    value: unknown,
+  ): Promise<void>;
   resetInstance(instanceId: string): void;
 }
 

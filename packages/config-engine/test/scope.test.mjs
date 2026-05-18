@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { buildScopeChain } from "../dist/index.js";
+import { buildScopeChain } from "../dist/scope.js";
 
 const hierarchy = {
   scopes: [

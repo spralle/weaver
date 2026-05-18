@@ -11,9 +11,12 @@ export interface ScopeInstance {
   value: string;
 }
 
-export interface TenantScopeHierarchy {
+export interface ScopeHierarchy {
   scopes: ScopeDefinition[];
 }
+
+/** @deprecated Use `ScopeHierarchy` instead. */
+export type TenantScopeHierarchy = ScopeHierarchy;
 
 export interface ConfigurationContext {
   scopePath: ScopeInstance[];
@@ -21,9 +24,12 @@ export interface ConfigurationContext {
   deviceId: string;
 }
 
+import type { MergeFunction } from "./merge-types.js";
+
 export interface ConfigurationLayerEntry {
   layer: ConfigurationLayer | string;
   entries: Record<string, unknown>;
+  merge?: MergeFunction | undefined;
 }
 
 export interface ConfigurationLayerStack {

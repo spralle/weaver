@@ -1,20 +1,27 @@
 // Weaver server entry point — orchestrates all subsystems
-import { createHealthEndpoints } from "./health.js";
-import { createShutdownManager } from "./shutdown.js";
-import { createAuditService } from "./audit/audit-service.js";
-import { createStdoutAuditSink } from "./audit/stdout-sink.js";
-import { createRestAdapter } from "./transport/rest-adapter.js";
-import { createSSEAdapter } from "./transport/sse-adapter.js";
-import { createWeaverConfigService } from "./core/config-service.js";
-import { InMemoryStorageProvider } from "@weaver/config-providers";
-import type { HealthEndpoints } from "./health.js";
-import type { RestAdapter } from "./transport/rest-adapter.js";
-import type { SSEAdapter, SSEClient } from "./transport/sse-adapter.js";
+
+import {
+  createAuditService,
+  createStdoutAuditSink,
+} from "@weaver/config-audit";
 import type { ConfigurationStorageProvider } from "@weaver/config-types";
+import { createInMemoryStorageProvider } from "@weaver/storage-provider-memory";
+import { createWeaverConfigService } from "./core/config-service.js";
+import type { HealthEndpoints } from "./health.js";
+import { createHealthEndpoints } from "./health.js";
+import { parseServerEnv } from "./server-env.js";
+import { createShutdownManager } from "./shutdown.js";
+import type { RestAdapter } from "./transport/rest-adapter.js";
+import { createRestAdapter } from "./transport/rest-adapter.js";
+import type { SSEAdapter, SSEClient } from "./transport/sse-adapter.js";
+import { createSSEAdapter } from "./transport/sse-adapter.js";
 import type { SSEMessage } from "./transport/sse-events.js";
 
 declare const Bun: {
-  serve(options: { port: number; fetch: (req: Request) => Response | Promise<Response> }): {
+  serve(options: {
+    port: number;
+    fetch: (req: Request) => Response | Promise<Response>;
+  }): {
     port: number;
     stop(): void;
   };
@@ -39,13 +46,15 @@ export interface WeaverServer {
 }
 
 function resolveOptions(options?: WeaverServerOptions) {
+  const env = parseServerEnv(process.env);
   return {
-    port: options?.port ?? (Number(process.env["WEAVER_PORT"]) || 3399),
-    repoUrl: options?.repoUrl ?? process.env["WEAVER_CONFIG_REPO"] ?? "",
-    environment: options?.environment ?? process.env["WEAVER_ENVIRONMENT"] ?? "development",
-    gitToken: options?.gitToken ?? process.env["WEAVER_GIT_TOKEN"],
-    mongoUri: options?.mongoUri ?? process.env["WEAVER_MONGO_URI"],
-    jwtSecret: options?.jwtSecret ?? process.env["WEAVER_JWT_SECRET"],
+    port: options?.port ?? env.WEAVER_PORT ?? 3399,
+    repoUrl: options?.repoUrl ?? env.WEAVER_CONFIG_REPO ?? "",
+    environment:
+      options?.environment ?? env.WEAVER_ENVIRONMENT ?? "development",
+    gitToken: options?.gitToken ?? env.WEAVER_GIT_TOKEN,
+    mongoUri: options?.mongoUri ?? env.WEAVER_MONGO_URI,
+    jwtSecret: options?.jwtSecret ?? env.WEAVER_JWT_SECRET,
     adminRoles: options?.adminRoles ?? ["admin"],
     corsOrigins: options?.corsOrigins,
     providers: options?.providers,
@@ -99,7 +108,9 @@ async function handleRest(
   restAdapter: RestAdapter,
 ): Promise<Response> {
   const query: Record<string, string> = {};
-  url.searchParams.forEach((value, key) => { query[key] = value; });
+  url.searchParams.forEach((value, key) => {
+    query[key] = value;
+  });
 
   let body: unknown;
   if (method !== "GET" && method !== "HEAD") {
@@ -111,7 +122,9 @@ async function handleRest(
   }
 
   const headers: Record<string, string> = {};
-  req.headers.forEach((value, key) => { headers[key] = value; });
+  req.headers.forEach((value, key) => {
+    headers[key] = value;
+  });
 
   const restResponse = await restAdapter.handleRequest(method, url.pathname, {
     params: {},
@@ -170,12 +183,14 @@ async function handleSSE(url: URL, sseAdapter: SSEAdapter): Promise<Response> {
     headers: {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
-      "Connection": "keep-alive",
+      Connection: "keep-alive",
     },
   });
 }
 
-export async function startWeaverServer(options?: WeaverServerOptions): Promise<WeaverServer> {
+export async function startWeaverServer(
+  options?: WeaverServerOptions,
+): Promise<WeaverServer> {
   const config = resolveOptions(options);
 
   const health = createHealthEndpoints();
@@ -185,16 +200,19 @@ export async function startWeaverServer(options?: WeaverServerOptions): Promise<
     sinks: [createStdoutAuditSink()],
   });
 
-  const providers = config.providers ?? [
-    new InMemoryStorageProvider({ id: "default", layer: "platform" }),
+  const inputProviders = config.providers ?? [
+    createInMemoryStorageProvider({ id: "default", layer: "platform" }),
   ];
 
   const configService = await createWeaverConfigService({
-    providers,
+    providers: inputProviders,
     environment: config.environment,
   });
 
-  const restAdapterOptions: { configService: typeof configService; corsOrigins?: string[] } = {
+  const restAdapterOptions: {
+    configService: typeof configService;
+    corsOrigins?: string[];
+  } = {
     configService,
   };
   if (config.corsOrigins) {
@@ -213,10 +231,15 @@ export async function startWeaverServer(options?: WeaverServerOptions): Promise<
     fetch: handleRequest,
   });
 
+  health.setDegradedInfo({
+    degradedProviders: configService.degradedProviders,
+    totalProviders: inputProviders.length,
+  });
   health.setReady(true);
 
   shutdownManager.onShutdown(async () => {
     health.setReady(false);
+    await configService.flush();
     sseAdapter.stopCheckpointTimer();
     sseAdapter.closeAll();
     server.stop();

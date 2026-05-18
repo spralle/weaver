@@ -1,6 +1,9 @@
-import type { WeaverConfigService } from "./config-service.js";
+import { detectBreakingChanges, schemasEqual } from "@weaver/config-engine";
+import type { ConfigurationPropertySchema } from "@weaver/config-types";
+import { configurationPropertySchemaSchema } from "@weaver/config-types";
 import type { WeaverError } from "../types/errors.js";
 import { createWeaverError } from "../types/errors.js";
+import type { WeaverConfigService } from "./config-service.js";
 
 export interface SchemaRegistrationRequest {
   serviceId: string;
@@ -28,77 +31,12 @@ export interface SchemaRegistry {
 }
 
 interface SchemaEntry {
-  declaration: unknown;
+  declaration: ConfigurationPropertySchema;
   environment: string;
 }
 
 function schemaKey(serviceId: string, environment: string): string {
   return `${serviceId}:${environment}`;
-}
-
-function detectBreakingChanges(
-  existing: unknown,
-  incoming: unknown,
-): string[] {
-  const changes: string[] = [];
-  if (
-    typeof existing !== "object" || existing === null ||
-    typeof incoming !== "object" || incoming === null
-  ) {
-    return changes;
-  }
-
-  const existingObj = existing as Record<string, unknown>;
-  const incomingObj = incoming as Record<string, unknown>;
-
-  // Check for removed properties
-  const existingProps = getProperties(existingObj);
-  const incomingProps = getProperties(incomingObj);
-
-  for (const prop of existingProps) {
-    if (!incomingProps.has(prop)) {
-      changes.push(`Removed property: ${prop}`);
-    }
-  }
-
-  // Check for type changes on existing properties
-  for (const prop of existingProps) {
-    if (incomingProps.has(prop)) {
-      const existingType = getPropertyType(existingObj, prop);
-      const incomingType = getPropertyType(incomingObj, prop);
-      if (existingType && incomingType && existingType !== incomingType) {
-        changes.push(`Type changed for "${prop}": ${existingType} → ${incomingType}`);
-      }
-    }
-  }
-
-  return changes;
-}
-
-function getProperties(obj: Record<string, unknown>): Set<string> {
-  const properties =
-    (obj as { properties?: Record<string, unknown> }).properties;
-  if (typeof properties === "object" && properties !== null) {
-    return new Set(Object.keys(properties));
-  }
-  return new Set(Object.keys(obj));
-}
-
-function getPropertyType(
-  obj: Record<string, unknown>,
-  prop: string,
-): string | undefined {
-  const properties =
-    (obj as { properties?: Record<string, unknown> }).properties;
-  if (typeof properties === "object" && properties !== null) {
-    const propDef = (properties as Record<string, Record<string, unknown>>)[prop];
-    return propDef?.type as string | undefined;
-  }
-  return typeof (obj as Record<string, unknown>)[prop] as string;
-}
-
-function schemasEqual(a: unknown, b: unknown): boolean {
-  return JSON.stringify(a) === JSON.stringify(b);
 }
 
 export function createSchemaRegistry(
@@ -110,7 +48,24 @@ export function createSchemaRegistry(
     async register(
       request: SchemaRegistrationRequest,
     ): Promise<SchemaRegistrationResult> {
-      const { serviceId, declaration, environment } = request;
+      const { serviceId, environment } = request;
+
+      const parseResult = configurationPropertySchemaSchema.safeParse(
+        request.declaration,
+      );
+      if (!parseResult.success) {
+        return {
+          success: false,
+          isNewSchema: false,
+          hasBreakingChanges: false,
+          error: createWeaverError(
+            "VALIDATION_ERROR",
+            `Invalid schema declaration: ${parseResult.error.message}`,
+          ),
+        };
+      }
+      const declaration = parseResult.data;
+
       const key = schemaKey(serviceId, environment);
       const existing = schemas.get(key);
 
@@ -148,7 +103,7 @@ export function createSchemaRegistry(
         hasBreakingChanges: breakingChanges.length > 0,
       };
       if (breakingChanges.length > 0) {
-        result.breakingChanges = breakingChanges;
+        result.breakingChanges = breakingChanges.map((c) => c.message);
       }
       return result;
     },

@@ -1,7 +1,10 @@
 // Scomp contract type definition for weaver config (ADR-0002 A.20)
-import type { ConfigSnapshot, ConfigDelta } from "../types/index.js";
-import type { ConfigurationInspection } from "@weaver/config-types";
-import type { WriteResult } from "@weaver/config-types";
+
+import type {
+  ConfigurationInspection,
+  WriteResult,
+} from "@weaver/config-types";
+import type { ConfigDelta, ConfigSnapshot } from "../types/index.js";
 
 export interface WeaverConfigContract {
   resolveAll: {

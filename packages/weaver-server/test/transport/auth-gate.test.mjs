@@ -1,0 +1,87 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { createAuthGate } from "../../dist/transport/auth-gate.js";
+
+const mockAuthFunctions = {
+  canRead(accessCtx, _key, schema) {
+    if (!schema) return true;
+    const visibility = schema["x-weaver"]?.visibility ?? "public";
+    if (visibility === "internal") return false;
+    if (visibility === "admin") return accessCtx.roles.includes("admin");
+    return true;
+  },
+  canWrite(accessCtx, _layer, _key, _schema) {
+    return accessCtx.roles.includes("admin");
+  },
+  filterVisibleKeys(accessCtx, entries, schemaMap) {
+    const result = {};
+    for (const key of Object.keys(entries)) {
+      const schema = schemaMap.get(key);
+      if (mockAuthFunctions.canRead(accessCtx, key, schema)) {
+        result[key] = entries[key];
+      }
+    }
+    return result;
+  },
+};
+
+const mapContext = (authCtx) => ({
+  userId: authCtx.identity?.userId ?? "anonymous",
+  roles: authCtx.identity?.roles ?? [],
+  sessionMode: undefined,
+});
+
+test("toAccessContext maps AuthContext correctly", () => {
+  const gate = createAuthGate({ authFunctions: mockAuthFunctions, mapContext });
+  const authCtx = {
+    identity: { userId: "user-1", roles: ["admin", "viewer"] },
+    isAdmin: true,
+    isService: false,
+    isUser: true,
+  };
+  const accessCtx = gate.toAccessContext(authCtx);
+  assert.equal(accessCtx.userId, "user-1");
+  assert.deepEqual(accessCtx.roles, ["admin", "viewer"]);
+});
+
+test("gateRead returns null when access is allowed", () => {
+  const gate = createAuthGate({ authFunctions: mockAuthFunctions, mapContext });
+  const accessCtx = { userId: "u1", roles: ["admin"], sessionMode: undefined };
+  const result = gate.gateRead(accessCtx, "some.key", undefined);
+  assert.equal(result, null);
+});
+
+test("gateRead returns 403 when access is denied", () => {
+  const gate = createAuthGate({ authFunctions: mockAuthFunctions, mapContext });
+  const accessCtx = { userId: "u1", roles: ["viewer"], sessionMode: undefined };
+  const schema = { "x-weaver": { visibility: "internal" } };
+  const result = gate.gateRead(accessCtx, "secret.key", schema);
+  assert.notEqual(result, null);
+  assert.equal(result.status, 403);
+});
+
+test("gateWrite returns null when write is allowed", () => {
+  const gate = createAuthGate({ authFunctions: mockAuthFunctions, mapContext });
+  const accessCtx = { userId: "u1", roles: ["admin"], sessionMode: undefined };
+  const result = gate.gateWrite(accessCtx, "platform", "some.key", undefined);
+  assert.equal(result, null);
+});
+
+test("gateWrite returns 403 when write is denied", () => {
+  const gate = createAuthGate({ authFunctions: mockAuthFunctions, mapContext });
+  const accessCtx = { userId: "u1", roles: ["viewer"], sessionMode: undefined };
+  const result = gate.gateWrite(accessCtx, "platform", "some.key", undefined);
+  assert.notEqual(result, null);
+  assert.equal(result.status, 403);
+});
+
+test("filterVisible removes non-visible keys", () => {
+  const gate = createAuthGate({ authFunctions: mockAuthFunctions, mapContext });
+  const accessCtx = { userId: "u1", roles: ["viewer"], sessionMode: undefined };
+  const entries = { "public.key": "val1", "secret.key": "val2" };
+  const schemaMap = new Map();
+  schemaMap.set("secret.key", { "x-weaver": { visibility: "internal" } });
+  const result = gate.filterVisible(accessCtx, entries, schemaMap);
+  assert.equal(result["public.key"], "val1");
+  assert.equal(result["secret.key"], undefined);
+});

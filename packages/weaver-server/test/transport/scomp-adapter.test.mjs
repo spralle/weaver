@@ -1,4 +1,4 @@
-import { test, describe } from "bun:test";
+import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import { createWeaverConfigService } from "../../src/core/config-service.ts";
 import { createScompAdapter } from "../../src/transport/scomp-adapter.ts";

@@ -8,6 +8,7 @@ import {
 
 test("configAuditEntrySchema validates a valid entry", () => {
   const entry = {
+    domain: "config",
     timestamp: "2026-04-13T12:00:00Z",
     actor: "user-1",
     action: "set",
@@ -34,6 +35,7 @@ test("configAuditEntrySchema validates plugin-management action types", () => {
 
   for (const action of pluginActions) {
     const entry = {
+      domain: "config",
       timestamp: "2026-04-13T12:00:00Z",
       actor: "user-1",
       action,
@@ -49,6 +51,7 @@ test("configAuditEntrySchema validates plugin-management action types", () => {
 
 test("configAuditEntrySchema rejects entry missing required field", () => {
   const entry = {
+    domain: "config",
     timestamp: "2026-04-13T12:00:00Z",
     actor: "user-1",
     action: "set",
@@ -62,6 +65,7 @@ test("configAuditEntrySchema rejects entry missing required field", () => {
 
 test("configAuditEntrySchema rejects unknown action values", () => {
   const entry = {
+    domain: "config",
     timestamp: "2026-04-13T12:00:00Z",
     actor: "user-1",
     action: "unknown-action",

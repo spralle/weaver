@@ -1,12 +1,12 @@
 // Bootstrap loader — reads config from Git, resolves env vars, creates providers
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { SimpleGit } from "simple-git";
-import type { Collection } from "mongodb";
 import type { ConfigurationStorageProvider } from "@weaver/config-types";
+import type { GitManager } from "@weaver/storage-provider-git";
+import { createGitManager } from "@weaver/storage-provider-git";
+import type { Collection } from "mongodb";
+import type { SimpleGit } from "simple-git";
 import { bootstrapConfigSchema } from "../types/bootstrap.js";
-import { createGitManager } from "../storage/git-manager.js";
-import type { GitManager } from "../storage/git-manager.js";
 import { resolveEnvVars } from "./env-resolver.js";
 import { createProviders } from "./layer-factory.js";
 
@@ -31,11 +31,7 @@ export async function bootstrap(
 ): Promise<BootstrapResult> {
   const { repoUrl, branch, gitToken, environment, git } = options;
 
-  const localPath = join(
-    process.cwd(),
-    ".weaver-config",
-    environment,
-  );
+  const localPath = join(process.cwd(), ".weaver-config", environment);
 
   const gitManager = createGitManager({
     repoUrl,

@@ -1,20 +1,15 @@
 // OverrideSession provider — session lifecycle management with expiration and audit
 
-import type {
-  ConfigurationLayerData,
-  ConfigurationStorageProvider,
-  OverrideSession,
-  SessionActivationRequest,
-  SessionDeactivationResult,
-  WriteResult,
+import {
+  type ConfigurationLayerData,
+  type ConfigurationStorageProvider,
+  createWeaverError,
+  type OverrideSession,
+  type SessionActivationRequest,
+  type SessionDeactivationResult,
+  type SessionDomainAuditEntry,
+  type WriteResult,
 } from "@weaver/config-types";
-
-export interface AuditEntry {
-  action: string;
-  sessionId: string;
-  timestamp: string;
-  details?: Record<string, unknown> | undefined;
-}
 
 export interface OverrideSessionProviderOptions {
   /** Layer name for this session provider (default: "session") */
@@ -22,7 +17,7 @@ export interface OverrideSessionProviderOptions {
   /** Provider ID (default: "override-session") */
   id?: string | undefined;
   defaultDurationMs?: number | undefined;
-  onAudit?: ((entry: AuditEntry) => void) | undefined;
+  onAudit?: ((entry: SessionDomainAuditEntry) => void) | undefined;
   timer?:
     | {
         setTimeout: (fn: () => void, ms: number) => unknown;
@@ -69,11 +64,18 @@ export function createOverrideSessionProvider(
   const entries: Record<string, unknown> = {};
 
   function emitAudit(
-    action: string,
+    action: "activate" | "deactivate" | "extend" | "expire",
     details?: Record<string, unknown> | undefined,
   ): void {
     if (onAudit === undefined || session === null) return;
-    onAudit({ action, sessionId: session.id, timestamp: nowIso(), details });
+    onAudit({
+      domain: "session",
+      action,
+      actor: session.activatedBy,
+      sessionId: session.id,
+      timestamp: nowIso(),
+      details,
+    });
   }
 
   function clearTimer(): void {
@@ -94,11 +96,14 @@ export function createOverrideSessionProvider(
   function performDeactivation(action: "deactivate" | "expire"): void {
     if (session === null) return;
     const sessionId = session.id;
+    const actor = session.activatedBy;
     const overridesCleared = clearAllEntries();
 
     if (onAudit !== undefined) {
       onAudit({
+        domain: "session",
         action,
+        actor,
         sessionId,
         timestamp: nowIso(),
         details: { overridesCleared },
@@ -118,7 +123,7 @@ export function createOverrideSessionProvider(
 
   function snapshotSession(): OverrideSession {
     if (session === null) {
-      throw new Error("No active session");
+      throw createWeaverError("SESSION_REQUIRED", "No active session");
     }
     return { ...session, overrides: { ...entries } };
   }
@@ -156,7 +161,7 @@ export function createOverrideSessionProvider(
   return {
     activate(request: SessionActivationRequest): OverrideSession {
       if (session !== null) {
-        throw new Error("Session already active");
+        throw createWeaverError("SESSION_BLOCKED", "Session already active");
       }
 
       const id = generateSessionId();
@@ -183,7 +188,7 @@ export function createOverrideSessionProvider(
 
     deactivate(): SessionDeactivationResult {
       if (session === null) {
-        throw new Error("No active session");
+        throw createWeaverError("SESSION_REQUIRED", "No active session");
       }
 
       clearTimer();
@@ -205,7 +210,7 @@ export function createOverrideSessionProvider(
 
     extend(durationMs?: number | undefined): OverrideSession {
       if (session === null) {
-        throw new Error("No active session");
+        throw createWeaverError("SESSION_REQUIRED", "No active session");
       }
 
       const newDurationMs = durationMs ?? currentDurationMs;

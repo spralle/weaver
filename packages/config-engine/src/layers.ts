@@ -30,7 +30,8 @@ export function resolveConfiguration(
       continue;
     }
 
-    entries = deepMerge(entries, layerEntry.entries);
+    const mergeFn = layerEntry.merge ?? deepMerge;
+    entries = mergeFn(entries, layerEntry.entries) as Record<string, unknown>;
 
     for (const key of layerKeys) {
       if (layerEntry.entries[key] !== undefined) {
@@ -79,7 +80,14 @@ export function inspectKey<T>(
  */
 export function resolveConfigurationWithCeiling(
   stack: ConfigurationLayerStack,
-  schemaMap: Map<string, { "x-weaver"?: { maxOverrideLayer?: ConfigurationLayer | undefined } | undefined }>,
+  schemaMap: Map<
+    string,
+    {
+      "x-weaver"?:
+        | { maxOverrideLayer?: ConfigurationLayer | undefined }
+        | undefined;
+    }
+  >,
   isEmergencyOverride: boolean,
   getRank: (layer: string) => number,
 ): ResolvedConfiguration {

@@ -1,10 +1,19 @@
+import { deepGet, deepRemove, deepSet } from "@weaver/config-engine";
 import type { ScopeDefinition, ScopeInstance } from "@weaver/config-types";
-import type { ConfigDelta, ConfigSnapshot, ConfigurationInspection, Unsubscribe } from "./types.js";
-import type { WeaverTransport, WriteOptions, WriteResult } from "./transport.js";
+import { flattenObject } from "./flatten.js";
 import type { WeaverClientPersistence } from "./persistence.js";
 import { createScopeLoader, type ScopeLoadingMode } from "./scope-manager.js";
-import { deepGet, deepSet, deepRemove } from "@weaver/config-engine";
-import { flattenObject } from "./flatten.js";
+import type {
+  WeaverTransport,
+  WriteOptions,
+  WriteResult,
+} from "./transport.js";
+import type {
+  ConfigDelta,
+  ConfigSnapshot,
+  ConfigurationInspection,
+  Unsubscribe,
+} from "./types.js";
 
 export interface WeaverClientOptions {
   namespace?: string;
@@ -18,27 +27,51 @@ export interface WeaverClient {
   get<T>(key: string): T | undefined;
   get<T>(key: string, scopePath: ScopeInstance[]): T | undefined;
   getWithDefault<T>(key: string, defaultValue: T): T;
-  getWithDefault<T>(key: string, defaultValue: T, scopePath: ScopeInstance[]): T;
+  getWithDefault<T>(
+    key: string,
+    defaultValue: T,
+    scopePath: ScopeInstance[],
+  ): T;
   getNamespace(prefix: string): Record<string, unknown>;
-  getNamespace(prefix: string, scopePath: ScopeInstance[]): Record<string, unknown>;
+  getNamespace(
+    prefix: string,
+    scopePath: ScopeInstance[],
+  ): Record<string, unknown>;
   getForScope<T>(key: string, scopePath: ScopeInstance[]): T | undefined;
 
   // ── Inspection (async, server round-trip) ──
   inspect<T>(key: string): Promise<ConfigurationInspection<T>>;
 
   // ── Writes (async, goes to server) ──
-  set(key: string, value: unknown, options?: WriteOptions): Promise<WriteResult>;
-  setMany(entries: Record<string, unknown>, options?: WriteOptions): Promise<WriteResult>;
-  setNamespace(prefix: string, values: Record<string, unknown>, options?: WriteOptions): Promise<WriteResult>;
+  set(
+    key: string,
+    value: unknown,
+    options?: WriteOptions,
+  ): Promise<WriteResult>;
+  setMany(
+    entries: Record<string, unknown>,
+    options?: WriteOptions,
+  ): Promise<WriteResult>;
+  setNamespace(
+    prefix: string,
+    values: Record<string, unknown>,
+    options?: WriteOptions,
+  ): Promise<WriteResult>;
   remove(key: string, options?: WriteOptions): Promise<WriteResult>;
 
   // ── Scopes ──
   listScopes(): Promise<ScopeDefinition[]>;
-  listScopeValues(scopeId: string, parentScope?: ScopeInstance[]): Promise<string[]>;
+  listScopeValues(
+    scopeId: string,
+    parentScope?: ScopeInstance[],
+  ): Promise<string[]>;
   preloadScope(scopePath: ScopeInstance[]): Promise<void>;
 
   // ── Change tracking ──
-  onChange(pattern: string, handler: (changes: ConfigDelta[]) => void): Unsubscribe;
+  onChange(
+    pattern: string,
+    handler: (changes: ConfigDelta[]) => void,
+  ): Unsubscribe;
   onRestartRequired(handler: () => void): Unsubscribe;
   readonly pendingRestart: boolean;
 
@@ -65,7 +98,9 @@ function applyNamespace(namespace: string | undefined, key: string): string {
   return `${namespace}.${key}`;
 }
 
-export async function createWeaverClient(options: WeaverClientOptions): Promise<WeaverClient> {
+export async function createWeaverClient(
+  options: WeaverClientOptions,
+): Promise<WeaverClient> {
   const { namespace, transport, scopeLoading = "lazy", persistence } = options;
 
   let baseState: Record<string, unknown> = {};
@@ -73,7 +108,7 @@ export async function createWeaverClient(options: WeaverClientOptions): Promise<
   let connected = false;
   let lastSyncedAt: Date | null = null;
   let staleSince: Date | null = null;
-  let pendingRestart = false;
+  const pendingRestart = false;
 
   // Try loading from cache first
   if (persistence) {
@@ -100,7 +135,10 @@ export async function createWeaverClient(options: WeaverClientOptions): Promise<
     initialSnapshot: freshSnapshot,
   });
 
-  const changeListeners = new Map<string, Set<(changes: ConfigDelta[]) => void>>();
+  const changeListeners = new Map<
+    string,
+    Set<(changes: ConfigDelta[]) => void>
+  >();
   const restartListeners = new Set<() => void>();
 
   // Subscribe to deltas
@@ -132,12 +170,18 @@ export async function createWeaverClient(options: WeaverClientOptions): Promise<
       if (scopePath) {
         const scopeState = scopeLoader.getScopeState(scopePath);
         if (!scopeState) return undefined;
-        return deepGet(scopeState as Record<string, unknown>, resolvedKey) as T | undefined;
+        return deepGet(scopeState as Record<string, unknown>, resolvedKey) as
+          | T
+          | undefined;
       }
       return deepGet(baseState, resolvedKey) as T | undefined;
     },
 
-    getWithDefault<T>(key: string, defaultValue: T, scopePath?: ScopeInstance[]): T {
+    getWithDefault<T>(
+      key: string,
+      defaultValue: T,
+      scopePath?: ScopeInstance[],
+    ): T {
       const value = client.get<T>(key, scopePath as ScopeInstance[]);
       return value !== undefined ? value : defaultValue;
     },
@@ -146,13 +190,20 @@ export async function createWeaverClient(options: WeaverClientOptions): Promise<
       return client.get<T>(key, scopePath);
     },
 
-    getNamespace(prefix: string, scopePath?: ScopeInstance[]): Record<string, unknown> {
+    getNamespace(
+      prefix: string,
+      scopePath?: ScopeInstance[],
+    ): Record<string, unknown> {
       const resolvedPrefix = applyNamespace(namespace, prefix);
       const source = scopePath
-        ? scopeLoader.getScopeState(scopePath) ?? {}
+        ? (scopeLoader.getScopeState(scopePath) ?? {})
         : baseState;
       const value = deepGet(source as Record<string, unknown>, resolvedPrefix);
-      if (value !== null && typeof value === "object" && !Array.isArray(value)) {
+      if (
+        value !== null &&
+        typeof value === "object" &&
+        !Array.isArray(value)
+      ) {
         return value as Record<string, unknown>;
       }
       return {};
@@ -164,7 +215,11 @@ export async function createWeaverClient(options: WeaverClientOptions): Promise<
       return raw as ConfigurationInspection<T>;
     },
 
-    async set(key: string, value: unknown, opts?: WriteOptions): Promise<WriteResult> {
+    async set(
+      key: string,
+      value: unknown,
+      opts?: WriteOptions,
+    ): Promise<WriteResult> {
       const resolvedKey = applyNamespace(namespace, key);
       return transport.set(resolvedKey, value, opts);
     },
@@ -174,7 +229,10 @@ export async function createWeaverClient(options: WeaverClientOptions): Promise<
       return transport.remove(resolvedKey, opts);
     },
 
-    async setMany(entries: Record<string, unknown>, opts?: WriteOptions): Promise<WriteResult> {
+    async setMany(
+      entries: Record<string, unknown>,
+      opts?: WriteOptions,
+    ): Promise<WriteResult> {
       const prefixed: Record<string, unknown> = {};
       for (const [key, value] of Object.entries(entries)) {
         prefixed[applyNamespace(namespace, key)] = value;
@@ -182,7 +240,11 @@ export async function createWeaverClient(options: WeaverClientOptions): Promise<
       return transport.setMany(prefixed, opts);
     },
 
-    async setNamespace(prefix: string, values: Record<string, unknown>, opts?: WriteOptions): Promise<WriteResult> {
+    async setNamespace(
+      prefix: string,
+      values: Record<string, unknown>,
+      opts?: WriteOptions,
+    ): Promise<WriteResult> {
       const resolvedPrefix = applyNamespace(namespace, prefix);
       const flattened = flattenObject(values, resolvedPrefix);
       return transport.setMany(flattened, opts);
@@ -192,11 +254,17 @@ export async function createWeaverClient(options: WeaverClientOptions): Promise<
       return transport.listScopes();
     },
 
-    async listScopeValues(scopeId: string, parentScope?: ScopeInstance[]): Promise<string[]> {
+    async listScopeValues(
+      scopeId: string,
+      parentScope?: ScopeInstance[],
+    ): Promise<string[]> {
       return transport.listScopeValues(scopeId, parentScope);
     },
 
-    onChange(pattern: string, handler: (changes: ConfigDelta[]) => void): Unsubscribe {
+    onChange(
+      pattern: string,
+      handler: (changes: ConfigDelta[]) => void,
+    ): Unsubscribe {
       if (!changeListeners.has(pattern)) {
         changeListeners.set(pattern, new Set());
       }

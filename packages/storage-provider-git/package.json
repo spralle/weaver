@@ -1,0 +1,46 @@
+{
+  "name": "@weaver/storage-provider-git",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Git-backed storage provider for Weaver",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/spralle/weaver.git",
+    "directory": "packages/storage-provider-git"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "lint": "biome check ."
+  },
+  "dependencies": {
+    "@weaver/config-types": "workspace:*",
+    "@weaver/storage-provider-core": "workspace:*",
+    "@weaver/storage-provider-fs": "workspace:*"
+  },
+  "peerDependencies": {
+    "simple-git": "^3.27.0"
+  },
+  "peerDependenciesMeta": {
+    "simple-git": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.3",
+    "simple-git": "^3.27.0",
+    "typescript": "^5.8.3"
+  }
+}

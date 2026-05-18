@@ -83,5 +83,41 @@ describe("SessionManager", () => {
     const deadline = new Date(session.followUpDeadline).getTime();
 
     assert.equal(deadline - activatedAt, 24 * 60 * 60_000);
+    mgr.dispose();
+  });
+
+  it("sweep timer removes expired sessions", async () => {
+    const audit = mockAuditService();
+    const mgr = createSessionManager({
+      configService: mockConfigService(),
+      auditService: audit,
+      sweepIntervalMs: 20,
+    });
+
+    // Create session with 0 duration (already expired)
+    await mgr.activate({ reason: "test", activatedBy: "admin", duration: 0 });
+    // Create a valid session
+    const valid = await mgr.activate({ reason: "keep", activatedBy: "admin", duration: 60 });
+
+    // Wait for sweep to fire
+    await new Promise((r) => setTimeout(r, 50));
+
+    // Expired session swept, valid session remains
+    const active = mgr.listActiveSessions();
+    assert.equal(active.length, 1);
+    assert.equal(active[0].id, valid.id);
+    mgr.dispose();
+  });
+
+  it("dispose clears sweep timer", () => {
+    const audit = mockAuditService();
+    const mgr = createSessionManager({
+      configService: mockConfigService(),
+      auditService: audit,
+      sweepIntervalMs: 10,
+    });
+    // Should not throw
+    mgr.dispose();
+    mgr.dispose(); // idempotent
   });
 });

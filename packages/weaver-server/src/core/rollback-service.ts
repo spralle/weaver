@@ -1,6 +1,20 @@
-import type { WeaverConfigService } from "./config-service.js";
+import type { ConfigurationStorageProvider } from "@weaver/config-types";
 import type { WeaverError } from "../types/errors.js";
 import { createWeaverError } from "../types/errors.js";
+import type { WeaverConfigService } from "./config-service.js";
+
+export interface RevertableProvider extends ConfigurationStorageProvider {
+  revert(
+    toRevision: string,
+    actor: string,
+  ): Promise<{ revertedCommits: number }>;
+}
+
+function isRevertable(
+  provider: ConfigurationStorageProvider,
+): provider is RevertableProvider {
+  return "revert" in provider && typeof provider.revert === "function";
+}
 
 export interface RollbackRequest {
   layer: string;
@@ -23,6 +37,9 @@ export interface RollbackService {
   rollback(request: RollbackRequest): Promise<RollbackResult>;
 }
 
+/**
+ * @alpha Not yet wired into startWeaverServer — planned for revision rollback support.
+ */
 export function createRollbackService(
   options: RollbackServiceOptions,
 ): RollbackService {
@@ -43,9 +60,7 @@ export function createRollbackService(
         };
       }
 
-      const provider = configService.providers.find(
-        (p) => p.layer === layer,
-      );
+      const provider = configService.providers.find((p) => p.layer === layer);
 
       if (!provider) {
         return {
@@ -58,7 +73,7 @@ export function createRollbackService(
         };
       }
 
-      if (!("revert" in provider) || typeof provider.revert !== "function") {
+      if (!isRevertable(provider)) {
         return {
           success: false,
           revertedCommits: 0,
@@ -69,12 +84,7 @@ export function createRollbackService(
         };
       }
 
-      const revertFn = provider.revert as (
-        toRevision: string,
-        actor: string,
-      ) => Promise<{ revertedCommits: number }>;
-
-      const { revertedCommits } = await revertFn(toRevision, actor);
+      const { revertedCommits } = await provider.revert(toRevision, actor);
 
       await configService.reloadProvider(provider.id);
 

@@ -1,9 +1,9 @@
-import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert/strict";
-import { createSSEAdapter } from "./sse-adapter.js";
-import type { SSEAdapter } from "./sse-adapter.js";
+import { beforeEach, describe, it } from "node:test";
 import type { WeaverConfigService } from "../core/config-service.js";
 import type { ConfigDelta } from "../types/index.js";
+import type { SSEAdapter } from "./sse-adapter.js";
+import { createSSEAdapter } from "./sse-adapter.js";
 
 function createMockConfigService(initialEntries?: Record<string, unknown>) {
   const deltaHandlers: Array<(delta: ConfigDelta) => void> = [];
@@ -66,7 +66,9 @@ interface ParsedMessage {
   data: Record<string, any>;
 }
 
-function parseMessages(client: { messages: readonly string[] }): ParsedMessage[] {
+function parseMessages(client: {
+  messages: readonly string[];
+}): ParsedMessage[] {
   return client.messages.map((raw) => {
     const eventMatch = raw.match(/^event: (.+)$/m);
     const dataMatch = raw.match(/^data: (.+)$/m);

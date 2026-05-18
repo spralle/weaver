@@ -13,7 +13,9 @@ export function flattenObject(
     for (const [key, value] of Object.entries(current)) {
       const segment = key.includes(".") ? `[${key}]` : key;
       const fullKey = path
-        ? segment.startsWith("[") ? `${path}${segment}` : `${path}.${segment}`
+        ? segment.startsWith("[")
+          ? `${path}${segment}`
+          : `${path}.${segment}`
         : segment;
       if (
         value !== null &&

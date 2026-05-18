@@ -1,19 +1,14 @@
-import { isSecretReference } from "@weaver/config-types";
-import type { SecretReference } from "@weaver/config-types";
-import { SecretCache } from "./secret-cache.js";
+import type {
+  SecretDomainAuditEntry,
+  SecretReference,
+} from "@weaver/config-types";
+import { createWeaverError, isSecretReference } from "@weaver/config-types";
+import type { SecretCache } from "./secret-cache.js";
+import { createSecretCache } from "./secret-cache.js";
 import type { SecretProvider, SecretStoreResult } from "./secret-provider.js";
 
-export interface SecretAuditEntry {
-  readonly action: "resolve" | "store" | "delete" | "invalidate" | "cache-hit";
-  readonly provider: string;
-  readonly uri: string;
-  readonly timestamp: number;
-  readonly success: boolean;
-  readonly error?: string | undefined;
-}
-
 export interface SecretAuditLog {
-  log(entry: SecretAuditEntry): void;
+  log(entry: SecretDomainAuditEntry): void;
 }
 
 export interface SecretResolutionFailure {
@@ -40,9 +35,13 @@ export class SecretResolutionService {
   private readonly auditLog: SecretAuditLog | undefined;
 
   constructor(options: SecretResolutionServiceOptions = {}) {
-    this.cache = new SecretCache({
-      ...(options.cacheTtlMs !== undefined && { defaultTtlMs: options.cacheTtlMs }),
-      ...(options.maxCacheEntries !== undefined && { maxEntries: options.maxCacheEntries }),
+    this.cache = createSecretCache({
+      ...(options.cacheTtlMs !== undefined && {
+        defaultTtlMs: options.cacheTtlMs,
+      }),
+      ...(options.maxCacheEntries !== undefined && {
+        maxEntries: options.maxCacheEntries,
+      }),
     });
     this.auditLog = options.auditLog;
   }
@@ -92,8 +91,8 @@ export class SecretResolutionService {
     const failures: SecretResolutionFailure[] = [];
 
     for (let i = 0; i < settled.length; i++) {
-      const outcome = settled[i]!;
-      const { key, ref } = refs[i]!;
+      const outcome = settled[i] as (typeof settled)[number];
+      const { key, ref } = refs[i] as (typeof refs)[number];
       if (outcome.status === "fulfilled") {
         resolved.set(outcome.value.key, outcome.value.value);
       } else {
@@ -152,22 +151,42 @@ export class SecretResolutionService {
   private getProvider(name: string): SecretProvider {
     const provider = this.providers.get(name);
     if (!provider) {
-      throw new Error(`Secret provider "${name}" not registered`);
+      throw createWeaverError(
+        "NOT_FOUND",
+        `Secret provider "${name}" not registered`,
+        { provider: name },
+      );
     }
     return provider;
   }
 
   private audit(
-    action: SecretAuditEntry["action"],
+    action: SecretDomainAuditEntry["action"],
     provider: string,
     uri: string,
     success: boolean,
     error?: string,
   ): void {
-    this.auditLog?.log({ action, provider, uri, timestamp: Date.now(), success, error });
+    this.auditLog?.log({
+      domain: "secret",
+      action,
+      actor: "system",
+      provider,
+      uri,
+      timestamp: new Date().toISOString(),
+      success,
+      error,
+    });
   }
 }
 
 function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
+}
+
+/** Creates a secret resolution service instance. */
+export function createSecretResolutionService(
+  options?: SecretResolutionServiceOptions,
+): SecretResolutionService {
+  return new SecretResolutionService(options);
 }

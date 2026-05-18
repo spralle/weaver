@@ -25,9 +25,15 @@ export interface PromotionRequest {
   readonly reviewedAt?: string | undefined;
 }
 
-export interface ConfigAuditEntry {
+/** Base fields shared by all audit entry variants */
+export interface AuditEntryBase {
   readonly timestamp: string; // ISO
   readonly actor: string;
+}
+
+/** Config-domain audit entry (promotion pipeline, layer writes) */
+export interface ConfigDomainAuditEntry extends AuditEntryBase {
+  readonly domain: "config";
   readonly action:
     | "set"
     | "remove"
@@ -45,6 +51,54 @@ export interface ConfigAuditEntry {
   readonly isEmergencyOverride: boolean;
   readonly overrideReason?: string | undefined;
 }
+
+/** Sink-domain audit entry (dispatcher pipeline with environment context) */
+export interface SinkDomainAuditEntry extends AuditEntryBase {
+  readonly domain: "sink";
+  readonly action:
+    | "set"
+    | "remove"
+    | "promote"
+    | "rollback"
+    | "override"
+    | "provision";
+  readonly key: string;
+  readonly layer: string;
+  readonly environment: string;
+  readonly scopePath?: string | undefined;
+  readonly oldValue?: unknown | undefined;
+  readonly newValue?: unknown | undefined;
+  readonly isEmergencyOverride: boolean;
+  readonly metadata?: Record<string, unknown> | undefined;
+}
+
+/** Session-domain audit entry (override session lifecycle) */
+export interface SessionDomainAuditEntry extends AuditEntryBase {
+  readonly domain: "session";
+  readonly action: "activate" | "deactivate" | "extend" | "expire";
+  readonly sessionId: string;
+  readonly details?: Record<string, unknown> | undefined;
+}
+
+/** Secret-domain audit entry (secret resolution and caching) */
+export interface SecretDomainAuditEntry extends AuditEntryBase {
+  readonly domain: "secret";
+  readonly action: "resolve" | "store" | "delete" | "invalidate" | "cache-hit";
+  readonly provider: string;
+  readonly uri: string;
+  readonly success: boolean;
+  readonly error?: string | undefined;
+}
+
+/**
+ * Unified audit entry — discriminated union on `domain`.
+ * Single source of truth for all audit events across Weaver.
+ */
+export type ConfigAuditEntry =
+  | ConfigDomainAuditEntry
+  | SinkDomainAuditEntry
+  | SessionDomainAuditEntry
+  | SecretDomainAuditEntry;
 
 export interface EmergencyOverrideRecord {
   readonly id: string;

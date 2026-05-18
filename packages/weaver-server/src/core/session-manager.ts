@@ -1,10 +1,12 @@
 // Override session manager — ephemeral emergency override sessions
-import type { AuditService } from "../audit/audit-service.js";
+import type { AuditService } from "@weaver/config-audit";
 import type { WeaverConfigService } from "./config-service.js";
 
 export interface SessionManagerOptions {
   configService: WeaverConfigService;
   auditService: AuditService;
+  /** Sweep interval in milliseconds (default 60000). Set to 0 to disable. */
+  sweepIntervalMs?: number;
 }
 
 export interface OverrideSessionRequest {
@@ -27,8 +29,14 @@ export interface SessionManager {
   activate(request: OverrideSessionRequest): Promise<OverrideSessionInfo>;
   deactivate(sessionId: string, actor: string): Promise<void>;
   getSession(sessionId: string): OverrideSessionInfo | undefined;
-  setOverride(sessionId: string, key: string, value: unknown, actor: string): Promise<void>;
+  setOverride(
+    sessionId: string,
+    key: string,
+    value: unknown,
+    actor: string,
+  ): Promise<void>;
   listActiveSessions(): OverrideSessionInfo[];
+  dispose(): void;
 }
 
 function generateId(): string {
@@ -39,12 +47,37 @@ function isExpired(session: OverrideSessionInfo): boolean {
   return new Date(session.expiresAt).getTime() <= Date.now();
 }
 
-export function createSessionManager(options: SessionManagerOptions): SessionManager {
+/**
+ * @alpha Not yet wired into startWeaverServer — planned for ephemeral override sessions.
+ */
+export function createSessionManager(
+  options: SessionManagerOptions,
+): SessionManager {
   const { auditService } = options;
   const sessions = new Map<string, OverrideSessionInfo>();
+  const sweepIntervalMs = options.sweepIntervalMs ?? 60_000;
+
+  let sweepTimer: ReturnType<typeof setInterval> | undefined;
+  if (sweepIntervalMs > 0) {
+    sweepTimer = setInterval(() => sweepExpired(), sweepIntervalMs);
+    sweepTimer.unref();
+  }
+
+  function sweepExpired(): number {
+    let swept = 0;
+    for (const [id, session] of sessions) {
+      if (isExpired(session)) {
+        sessions.delete(id);
+        swept++;
+      }
+    }
+    return swept;
+  }
 
   return {
-    async activate(request: OverrideSessionRequest): Promise<OverrideSessionInfo> {
+    async activate(
+      request: OverrideSessionRequest,
+    ): Promise<OverrideSessionInfo> {
       const now = new Date();
       const durationMs = (request.duration ?? 60) * 60_000;
       const session: OverrideSessionInfo = {
@@ -54,11 +87,14 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
         activatedAt: now.toISOString(),
         expiresAt: new Date(now.getTime() + durationMs).toISOString(),
         overrides: {},
-        followUpDeadline: new Date(now.getTime() + 24 * 60 * 60_000).toISOString(),
+        followUpDeadline: new Date(
+          now.getTime() + 24 * 60 * 60_000,
+        ).toISOString(),
       };
       sessions.set(session.id, session);
 
       await auditService.record({
+        domain: "sink",
         timestamp: now.toISOString(),
         actor: request.activatedBy,
         action: "override",
@@ -78,6 +114,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       sessions.delete(sessionId);
 
       await auditService.record({
+        domain: "sink",
         timestamp: new Date().toISOString(),
         actor,
         action: "override",
@@ -99,7 +136,12 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       return session;
     },
 
-    async setOverride(sessionId: string, key: string, value: unknown, actor: string): Promise<void> {
+    async setOverride(
+      sessionId: string,
+      key: string,
+      value: unknown,
+      actor: string,
+    ): Promise<void> {
       const session = sessions.get(sessionId);
       if (!session || isExpired(session)) {
         throw new Error(`Session ${sessionId} not found or expired`);
@@ -107,6 +149,7 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
       session.overrides[key] = value;
 
       await auditService.record({
+        domain: "sink",
         timestamp: new Date().toISOString(),
         actor,
         action: "override",
@@ -129,6 +172,13 @@ export function createSessionManager(options: SessionManagerOptions): SessionMan
         }
       }
       return active;
+    },
+
+    dispose(): void {
+      if (sweepTimer) {
+        clearInterval(sweepTimer);
+        sweepTimer = undefined;
+      }
     },
   };
 }

@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   generateJsonSchema,
   generateSinglePropertySchema,
-} from "../dist/index.js";
+} from "../dist/json-schema-generator.js";
 
 /** @param {object} schema */
 function entry(ownerId, schema) {

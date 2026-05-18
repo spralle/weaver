@@ -1,3 +1,4 @@
+import { configDeltaSchema } from "@weaver/config-types";
 import { z } from "zod";
 
 export const sseSnapshotEventSchema = z.object({
@@ -6,14 +7,8 @@ export const sseSnapshotEventSchema = z.object({
 });
 export type SSESnapshotEvent = z.infer<typeof sseSnapshotEventSchema>;
 
-export const sseChangeEventSchema = z.object({
-  key: z.string(),
-  value: z.unknown().nullable(),
-  action: z.enum(["set", "remove"]),
+export const sseChangeEventSchema = configDeltaSchema.extend({
   revision: z.string(),
-  layer: z.string(),
-  environment: z.string(),
-  timestamp: z.string(),
 });
 export type SSEChangeEvent = z.infer<typeof sseChangeEventSchema>;
 

@@ -1,4 +1,4 @@
-import { test, describe } from "bun:test";
+import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import { createScopeManager } from "../../src/core/scope-manager.ts";
 import { createSchemaRegistry } from "../../src/core/schema-registry.ts";

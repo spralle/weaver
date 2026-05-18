@@ -12,6 +12,9 @@ export interface ChangeDetector {
   triggerCheck(): Promise<void>;
 }
 
+/**
+ * @alpha Not yet wired into startWeaverServer — planned for future webhook-triggered refresh.
+ */
 export function createChangeDetector(
   options: ChangeDetectorOptions,
 ): ChangeDetector {

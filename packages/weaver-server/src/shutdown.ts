@@ -1,6 +1,6 @@
 // Graceful shutdown manager
-import type { WeaverLogger } from "./logger.js";
-import { consoleLogger } from "./logger.js";
+import type { WeaverLogger } from "@weaver/storage-provider-core";
+import { consoleLogger } from "@weaver/storage-provider-core";
 
 export interface ShutdownManagerOptions {
   drainTimeoutMs?: number; // default 10000
@@ -14,7 +14,9 @@ export interface ShutdownManager {
   readonly isShuttingDown: boolean;
 }
 
-export function createShutdownManager(options?: ShutdownManagerOptions): ShutdownManager {
+export function createShutdownManager(
+  options?: ShutdownManagerOptions,
+): ShutdownManager {
   const drainTimeoutMs = options?.drainTimeoutMs ?? 10_000;
   const logger = options?.logger ?? consoleLogger;
   const handlers: Array<() => Promise<void>> = [];
@@ -34,7 +36,8 @@ export function createShutdownManager(options?: ShutdownManagerOptions): Shutdow
       shuttingDown = true;
 
       const timeout = new Promise<void>((resolve) => {
-        setTimeout(resolve, drainTimeoutMs);
+        const timer = setTimeout(resolve, drainTimeoutMs);
+        timer.unref?.();
       });
 
       const runHandlers = async () => {

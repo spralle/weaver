@@ -40,7 +40,10 @@ export function validateChangePolicies(
     }
 
     // Rule 2: Internal visibility with direct-allowed
-    if (entry.schema["x-weaver"]?.visibility === "internal" && policy === "direct-allowed") {
+    if (
+      entry.schema["x-weaver"]?.visibility === "internal" &&
+      policy === "direct-allowed"
+    ) {
       violations.push({
         key,
         violation: `Internal-visibility key "${key}" uses "${policy}" policy`,

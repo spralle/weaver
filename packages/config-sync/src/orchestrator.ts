@@ -4,7 +4,7 @@ import type {
   SyncStatus,
 } from "@weaver/config-types";
 import {
-  type classifySyncError,
+  classifySyncError,
   cloneSnapshot,
   createMutation,
   flushQueue,
@@ -291,21 +291,45 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
       return { pulled: 0, pushed: push.pushed, conflicts: push.conflicts };
     }
 
-    const pulled = await pullChanges({
-      snapshotCache: this.snapshotCache,
-      mutationQueue: this.mutationQueue,
-      transport: this.transport,
-      batchSize: this.batchSize,
-      now: this.now,
-      snapshot: this.snapshot,
-      pendingWrites: this.pendingWrites,
-      revisions: this.revisions,
-      localContext: this.localContext,
-      conflictResolution: this.conflictResolution,
-      createMutation: () => {
-        throw new Error("createMutation is unused in pullChanges");
-      },
-    });
+    let pulled: number;
+    try {
+      pulled = await pullChanges({
+        snapshotCache: this.snapshotCache,
+        mutationQueue: this.mutationQueue,
+        transport: this.transport,
+        batchSize: this.batchSize,
+        now: this.now,
+        snapshot: this.snapshot,
+        pendingWrites: this.pendingWrites,
+        revisions: this.revisions,
+        localContext: this.localContext,
+        conflictResolution: this.conflictResolution,
+        createMutation: () => {
+          throw new Error("createMutation is unused in pullChanges");
+        },
+      });
+    } catch (error) {
+      const syncError = classifySyncError(error);
+      const queue = await this.mutationQueue.getQueueMetadata();
+      this.setQueue(queue);
+      this.updateDiagnostics({
+        pendingCount: queue.pendingCount,
+        lastError: {
+          code: syncError.code,
+          message: syncError.message,
+          retryable: syncError.retryable,
+        },
+      });
+      if (syncError.retryable) {
+        this.scheduleRetry(syncError);
+      }
+      this.setSyncState({
+        status: "error",
+        error: syncError.message,
+        lastSyncedAt: this.snapshot.lastSyncedAt,
+      });
+      return { pulled: 0, pushed: push.pushed, conflicts: push.conflicts };
+    }
 
     const queue = await this.mutationQueue.getQueueMetadata();
     const lastSyncedAt = this.snapshot.lastSyncedAt ?? this.now();

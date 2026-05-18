@@ -23,7 +23,6 @@ function makeRecord(overrides = {}) {
     key: "ghost.app.maxConnections",
     actor: "ops-admin",
     reason: "Production incident #1234",
-    tenantId: "t-1",
     layer: "tenant",
     createdAt: "2026-04-13T12:00:00.000Z",
     ...overrides,

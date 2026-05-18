@@ -7,7 +7,7 @@ export type {
   OverrideTracker,
   OverrideTrackerOptions,
 } from "./override-tracker.js";
-export { computeDeadline } from "./override-tracker.js";
+
 // Policy engine
 export type {
   PolicyDecision,

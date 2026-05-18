@@ -9,7 +9,7 @@ import {
   configurationPropertySchemaSchema,
   sessionTypeSchema,
   sessionModeSchema,
-} from "../src/schemas-core.ts";
+} from "../src/index.ts";
 
 // --- PropertySessionMode / sessionMode on property schema ---
 

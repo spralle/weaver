@@ -1,6 +1,6 @@
-// Scope chain builder for dynamic tenant scope hierarchies
+// Scope chain builder for dynamic scope hierarchies
 
-import type { ScopeInstance, TenantScopeHierarchy } from "@weaver/config-types";
+import type { ScopeHierarchy, ScopeInstance } from "@weaver/config-types";
 
 export interface ScopeChainEntry {
   scopeId: string;
@@ -12,7 +12,7 @@ export type BuildScopeChainResult =
   | { success: false; error: string };
 
 /**
- * Validates a scope path against a tenant's scope hierarchy and returns
+ * Validates a scope path against a scope hierarchy and returns
  * an ordered scope chain.
  *
  * Rules:
@@ -23,7 +23,7 @@ export type BuildScopeChainResult =
  * - Unknown scopeId → error
  */
 export function buildScopeChain(
-  hierarchy: TenantScopeHierarchy,
+  hierarchy: ScopeHierarchy,
   scopePath: ScopeInstance[],
 ): BuildScopeChainResult {
   if (scopePath.length === 0) {

@@ -1,8 +1,8 @@
 import type { ScopeDefinition } from "@weaver/config-types";
-import type { WeaverConfigService } from "./config-service.js";
-import type { SchemaRegistry } from "./schema-registry.js";
 import type { WeaverError } from "../types/errors.js";
 import { createWeaverError } from "../types/errors.js";
+import type { WeaverConfigService } from "./config-service.js";
+import type { SchemaRegistry } from "./schema-registry.js";
 import { isScopedLayer, parseScopeLayer } from "./scope-utils.js";
 
 export interface ProvisionScopeRequest {
@@ -38,9 +38,7 @@ export interface ScopeManager {
   listScopes(): ScopeDefinition[];
 }
 
-export function createScopeManager(
-  options: ScopeManagerOptions,
-): ScopeManager {
+export function createScopeManager(options: ScopeManagerOptions): ScopeManager {
   const { configService } = options;
   const activeScopes = new Map<string, Set<string>>();
 

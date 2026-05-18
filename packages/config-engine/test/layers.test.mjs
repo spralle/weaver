@@ -4,7 +4,7 @@ import {
   resolveConfiguration,
   inspectKey,
   resolveConfigurationWithCeiling,
-} from "../dist/index.js";
+} from "../dist/layers.js";
 
 const testLayers = ["core","app","module","integrator","tenant","user","device","session"];
 const getRank = (l) => { const i = testLayers.indexOf(l); return i >= 0 ? i : testLayers.length; };
@@ -156,6 +156,19 @@ test("resolveConfigurationWithCeiling emergency override bypasses ceiling", () =
   const result = resolveConfigurationWithCeiling(stack, schemaMap, true, getRank);
   // Emergency override: user layer should NOT be ignored
   assert.equal(result.entries["ghost.app.zoom"], 10);
+});
+
+test("uses per-layer merge function when provided", () => {
+  const shallowReplace = (base, override) => ({ ...base, ...override });
+  const stack = {
+    layers: [
+      { layer: "defaults", entries: { nested: { a: 1, b: 2 } } },
+      { layer: "overrides", entries: { nested: { b: 3 } }, merge: shallowReplace },
+    ],
+  };
+  const result = resolveConfiguration(stack);
+  // shallowReplace spreads top-level keys, so nested is replaced entirely
+  assert.deepEqual(result.entries, { nested: { b: 3 } });
 });
 
 test("resolveConfigurationWithCeiling allows keys without schema", () => {

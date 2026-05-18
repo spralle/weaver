@@ -1,16 +1,26 @@
-import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 import { createWeaverClient } from "./client.js";
 import { createLocalTransport } from "./local-transport.js";
 import type { ConfigSnapshot } from "./types.js";
 
-function makeSnapshot(entries: Record<string, unknown> = {}, scopes: Record<string, Record<string, unknown>> = {}): ConfigSnapshot {
-  return { entries, scopes, revision: "rev-1", timestamp: new Date().toISOString() };
+function makeSnapshot(
+  entries: Record<string, unknown> = {},
+  scopes: Record<string, Record<string, unknown>> = {},
+): ConfigSnapshot {
+  return {
+    entries,
+    scopes,
+    revision: "rev-1",
+    timestamp: new Date().toISOString(),
+  };
 }
 
 describe("WeaverClient", () => {
   it("get<T>() returns typed value from base state", async () => {
-    const transport = createLocalTransport({ snapshot: makeSnapshot({ app: { name: "weaver" } }) });
+    const transport = createLocalTransport({
+      snapshot: makeSnapshot({ app: { name: "weaver" } }),
+    });
     const client = await createWeaverClient({ transport });
     const value = client.get<string>("app.name");
     assert.equal(value, "weaver");
@@ -20,11 +30,16 @@ describe("WeaverClient", () => {
     const transport = createLocalTransport({
       snapshot: makeSnapshot(
         { app: { name: "base" } },
-        { "tenant:acme": { app: { name: "acme-app" } } },
+        { "scope:acme": { app: { name: "acme-app" } } },
       ),
     });
-    const client = await createWeaverClient({ transport, scopeLoading: "eager" });
-    const value = client.get<string>("app.name", [{ scopeId: "tenant", value: "acme" }]);
+    const client = await createWeaverClient({
+      transport,
+      scopeLoading: "eager",
+    });
+    const value = client.get<string>("app.name", [
+      { scopeId: "scope", value: "acme" },
+    ]);
     assert.equal(value, "acme-app");
   });
 
@@ -36,7 +51,9 @@ describe("WeaverClient", () => {
   });
 
   it("getWithDefault() returns actual value when key exists", async () => {
-    const transport = createLocalTransport({ snapshot: makeSnapshot({ app: { port: 8080 } }) });
+    const transport = createLocalTransport({
+      snapshot: makeSnapshot({ app: { port: 8080 } }),
+    });
     const client = await createWeaverClient({ transport });
     const value = client.getWithDefault("app.port", 3000);
     assert.equal(value, 8080);
@@ -44,19 +61,24 @@ describe("WeaverClient", () => {
 
   it("getForScope() returns scoped value", async () => {
     const transport = createLocalTransport({
-      snapshot: makeSnapshot(
-        {},
-        { "env:prod": { app: { debug: false } } },
-      ),
+      snapshot: makeSnapshot({}, { "env:prod": { app: { debug: false } } }),
     });
-    const client = await createWeaverClient({ transport, scopeLoading: "eager" });
-    const value = client.getForScope<boolean>("app.debug", [{ scopeId: "env", value: "prod" }]);
+    const client = await createWeaverClient({
+      transport,
+      scopeLoading: "eager",
+    });
+    const value = client.getForScope<boolean>("app.debug", [
+      { scopeId: "env", value: "prod" },
+    ]);
     assert.equal(value, false);
   });
 
   it("getNamespace() returns subtree", async () => {
     const transport = createLocalTransport({
-      snapshot: makeSnapshot({ db: { host: "localhost", port: 5432 }, app: { name: "x" } }),
+      snapshot: makeSnapshot({
+        db: { host: "localhost", port: 5432 },
+        app: { name: "x" },
+      }),
     });
     const client = await createWeaverClient({ transport });
     const ns = client.getNamespace("db");
@@ -71,7 +93,9 @@ describe("WeaverClient", () => {
   });
 
   it("remove() delegates to transport with namespace prefix", async () => {
-    const transport = createLocalTransport({ snapshot: makeSnapshot({ app: { old: true } }) });
+    const transport = createLocalTransport({
+      snapshot: makeSnapshot({ app: { old: true } }),
+    });
     const client = await createWeaverClient({ transport });
     const result = await client.remove("app.old");
     assert.equal(result.success, true);
@@ -79,21 +103,21 @@ describe("WeaverClient", () => {
 
   it("listScopes() delegates to transport", async () => {
     const transport = createLocalTransport({
-      snapshot: makeSnapshot({}, { "tenant:acme": {} }),
+      snapshot: makeSnapshot({}, { "scope:acme": {} }),
     });
     const client = await createWeaverClient({ transport });
     const scopes = await client.listScopes();
     assert.ok(Array.isArray(scopes));
     assert.equal(scopes.length, 1);
-    assert.equal(scopes[0]!.id, "tenant");
+    assert.equal(scopes[0]!.id, "scope");
   });
 
   it("listScopeValues() delegates to transport", async () => {
     const transport = createLocalTransport({
-      snapshot: makeSnapshot({}, { "tenant:acme": {}, "tenant:beta": {} }),
+      snapshot: makeSnapshot({}, { "scope:acme": {}, "scope:beta": {} }),
     });
     const client = await createWeaverClient({ transport });
-    const values = await client.listScopeValues("tenant");
+    const values = await client.listScopeValues("scope");
     assert.ok(values.includes("acme"));
     assert.ok(values.includes("beta"));
   });
@@ -132,7 +156,10 @@ describe("WeaverClient", () => {
   it("setMany() delegates to transport with namespace prefix", async () => {
     const transport = createLocalTransport({ snapshot: makeSnapshot() });
     const client = await createWeaverClient({ transport, namespace: "myapp" });
-    const result = await client.setMany({ "db.host": "localhost", "db.port": 5432 });
+    const result = await client.setMany({
+      "db.host": "localhost",
+      "db.port": 5432,
+    });
     assert.equal(result.success, true);
   });
 
@@ -140,7 +167,10 @@ describe("WeaverClient", () => {
     const snapshot = makeSnapshot();
     const transport = createLocalTransport({ snapshot });
     const client = await createWeaverClient({ transport });
-    const result = await client.setNamespace("db", { host: "localhost", port: 5432 });
+    const result = await client.setNamespace("db", {
+      host: "localhost",
+      port: 5432,
+    });
     assert.equal(result.success, true);
     const dbHost = await transport.get("db.host");
     assert.equal(dbHost, "localhost");
