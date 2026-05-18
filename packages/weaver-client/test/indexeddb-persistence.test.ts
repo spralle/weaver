@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { createIndexedDbPersistence } from "./indexeddb-persistence.js";
+import { createIndexedDbPersistence } from "../src/indexeddb-persistence.js";
 
 describe("IndexedDB Persistence", () => {
   it("factory returns object with save and load methods", () => {

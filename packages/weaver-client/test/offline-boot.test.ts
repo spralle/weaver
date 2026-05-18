@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { createWeaverClient } from "./client.js";
-import type { WeaverClientPersistence } from "./persistence.js";
-import type { WeaverTransport } from "./transport.js";
-import type { ConfigDelta, ConfigSnapshot } from "./types.js";
+import { createWeaverClient } from "../src/client.js";
+import type { WeaverClientPersistence } from "../src/persistence.js";
+import type { WeaverTransport } from "../src/transport.js";
+import type { ConfigDelta, ConfigSnapshot } from "../src/types.js";
 
 function makeSnapshot(
   entries: Record<string, unknown> = {},
