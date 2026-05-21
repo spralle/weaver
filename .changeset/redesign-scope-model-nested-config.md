@@ -1,7 +1,6 @@
 ---
 "@weaver/config-types": minor
 "@weaver/config-engine": minor
-"@weaver/config-server": minor
 "@weaver/weaver-server": minor
 "@weaver/weaver-client": minor
 ---

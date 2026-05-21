@@ -1,6 +1,6 @@
 {
   "name": "@weaver/config-policy",
-  "version": "0.0.0",
+  "version": "0.1.0-pre.0",
   "description": "Change control policies, ratchet validation, and emergency override tracking for Weaver configuration",
   "license": "MIT",
   "repository": {

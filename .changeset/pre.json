@@ -1,0 +1,35 @@
+{
+  "mode": "pre",
+  "tag": "pre",
+  "initialVersions": {
+    "@weaver/config-auth": "0.0.0",
+    "@weaver/config-engine": "0.0.0",
+    "@weaver/config-policy": "0.0.0",
+    "@weaver/config-runtime": "0.0.0",
+    "@weaver/config-secrets": "0.0.0",
+    "@weaver/config-sessions": "0.0.0",
+    "@weaver/config-sync": "0.0.0",
+    "@weaver/config-types": "0.0.0",
+    "@weaver/storage-provider-local-storage": "0.0.0",
+    "@weaver/storage-provider-static-json": "0.0.0",
+    "@weaver/storage-providers": "0.0.0",
+    "@weaver/weaver-client": "0.0.0",
+    "@weaver/weaver-server": "0.0.0"
+  },
+  "changesets": [
+    "add-config-runtime",
+    "client-hardening",
+    "config-sync-snapshot-callback",
+    "extract-storage-providers",
+    "initial-release",
+    "json-schema-x-weaver-object",
+    "phase4-perf-resilience",
+    "redesign-scope-model-nested-config",
+    "result-type-error-events",
+    "scope-resolution-cache",
+    "security-phase2",
+    "server-wiring-rest-transport",
+    "unified-client",
+    "weaver-client-sync-bridge"
+  ]
+}
