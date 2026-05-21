@@ -24,6 +24,10 @@ export interface SyncRuntimeBridge {
   dispose(): void;
 }
 
+/**
+ * Bridges config-sync orchestrator lifecycle events into a config-runtime StateContainer.
+ * Uses a two-layer model: "remote" (server truth) + "optimistic" (pending local writes).
+ */
 export function createSyncRuntimeBridge(
   options: SyncRuntimeBridgeOptions,
 ): SyncRuntimeBridge {

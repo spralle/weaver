@@ -279,11 +279,12 @@ export function createRequestId(now: () => number): string {
   return `req-${now()}-${Math.random().toString(16).slice(2, 8)}`;
 }
 
+/** Deep clone a snapshot to prevent mutation leakage between sync cycles. */
 export function cloneSnapshot(
   snapshot: ConfigurationLayerData,
 ): ConfigurationLayerData {
   return {
-    entries: { ...snapshot.entries },
+    entries: JSON.parse(JSON.stringify(snapshot.entries)),
     revision: snapshot.revision,
     lastSyncedAt: snapshot.lastSyncedAt,
   };

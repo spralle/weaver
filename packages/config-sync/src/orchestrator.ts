@@ -12,6 +12,9 @@ import {
 } from "./internal/orchestrator-ops.js";
 import {
   calculateRetryDelay,
+  DEFAULT_BATCH_SIZE,
+  DEFAULT_RETRY_BASE_MS,
+  DEFAULT_RETRY_MAX_MS,
   scheduleRetryState,
 } from "./internal/retry-policy.js";
 import { createSyncStateManager } from "./internal/sync-state.js";
@@ -22,13 +25,8 @@ import type {
   SyncDiagnostics,
 } from "./types.js";
 
-// Timer helpers — avoids dependency on DOM or @types/node lib for setTimeout/clearTimeout
 declare function setTimeout(callback: () => void, ms: number): unknown;
 declare function clearTimeout(id: unknown): void;
-
-const DEFAULT_BATCH_SIZE = 50;
-const DEFAULT_RETRY_BASE_MS = 500;
-const DEFAULT_RETRY_MAX_MS = 30_000;
 
 export function createConfigSyncOrchestrator(
   options: ConfigSyncOrchestratorOptions,
@@ -50,7 +48,6 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
   private readonly localContext = new Map<string, LocalMutationContext>();
   private readonly stateManager: ReturnType<typeof createSyncStateManager>;
   private readonly options: ConfigSyncOrchestratorOptions;
-
   private snapshot: ConfigurationLayerData = { entries: {} };
   private online = true;
   private loaded = false;
@@ -58,6 +55,7 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
   private retryTimer: unknown = undefined;
   private retryAttempt = 0;
   private mutationCounter = 0;
+  private disposed = false;
   private readonly instanceId: string;
 
   constructor(options: ConfigSyncOrchestratorOptions) {
@@ -155,6 +153,9 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
   }
 
   sync(): Promise<SyncResult> {
+    if (this.disposed) {
+      return Promise.resolve({ pulled: 0, pushed: 0, conflicts: [] });
+    }
     if (this.syncInFlight !== undefined) {
       return this.syncInFlight;
     }
@@ -164,11 +165,9 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
     this.syncInFlight = run;
     return run;
   }
-
   triggerSync(): void {
     void this.sync();
   }
-
   setOnline(isOnline: boolean): void {
     this.online = isOnline;
     if (!isOnline) {
@@ -187,40 +186,37 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
   getSyncState(): SyncStatus {
     return this.stateManager.getSyncState();
   }
-
   onSyncStateChange(listener: (state: SyncStatus) => void): () => void {
     return this.stateManager.onSyncStateChange(listener);
   }
-
   getDiagnostics(): SyncDiagnostics {
     return this.stateManager.getDiagnostics();
   }
-
   onDiagnosticsChange(
     listener: (diagnostics: SyncDiagnostics) => void,
   ): () => void {
     return this.stateManager.onDiagnosticsChange(listener);
   }
-
   getPendingWrites(): ReadonlyMap<string, unknown> {
     return new Map(this.pendingWrites);
+  }
+  dispose(): void {
+    this.disposed = true;
+    this.clearRetryTimer();
   }
 
   private setSyncState(state: SyncStatus): void {
     this.stateManager.setSyncState(state);
   }
-
   private updateDiagnostics(partial: Partial<SyncDiagnostics>): void {
     this.stateManager.updateDiagnostics(partial);
   }
-
   private setQueue(queue: {
     pendingCount: number;
     inFlightCount: number;
   }): void {
     this.stateManager.setQueue(queue);
   }
-
   private getPendingWriteCount(): number {
     return this.stateManager.getPendingWriteCount();
   }
@@ -238,7 +234,6 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
       });
       return { pulled: 0, pushed: 0, conflicts: [] };
     }
-
     this.clearRetryTimer();
     this.setSyncState({ status: "syncing" });
 
@@ -289,11 +284,9 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
         });
       },
     });
-
     if (push.shouldStop) {
       return { pulled: 0, pushed: push.pushed, conflicts: push.conflicts };
     }
-
     let pulled: number;
     try {
       pulled = await pullChanges({
@@ -334,7 +327,6 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
       });
       return { pulled: 0, pushed: push.pushed, conflicts: push.conflicts };
     }
-
     const queue = await this.mutationQueue.getQueueMetadata();
     const lastSyncedAt = this.snapshot.lastSyncedAt ?? this.now();
     this.setQueue(queue);
@@ -344,7 +336,6 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
       lastError: undefined,
     });
     this.retryAttempt = 0;
-
     if (push.conflicts.length > 0) {
       this.setSyncState({ status: "conflict", conflicts: push.conflicts });
     } else if (this.getPendingWriteCount() > 0) {
@@ -352,7 +343,6 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
     } else {
       this.setSyncState({ status: "synced", lastSyncedAt });
     }
-
     return { pulled, pushed: push.pushed, conflicts: push.conflicts };
   }
 
@@ -391,20 +381,17 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
     }
     this.triggerSync();
   }
-
   private async refreshQueueDiagnostics(): Promise<void> {
     const queue = await this.mutationQueue.getQueueMetadata();
     this.setQueue(queue);
     this.updateDiagnostics({ pendingCount: queue.pendingCount });
   }
-
   private clearRetryTimer(): void {
     if (this.retryTimer !== undefined) {
       clearTimeout(this.retryTimer);
       this.retryTimer = undefined;
     }
   }
-
   private async ensureLoaded(): Promise<void> {
     if (!this.loaded) {
       await this.load();
