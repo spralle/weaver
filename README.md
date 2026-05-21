@@ -1,69 +1,45 @@
 # 🧶 Weaver
 
-> Layered configuration for TypeScript — declare your layers, compose providers, resolve with confidence.
+> Layered configuration management for TypeScript — nested JSON, typed namespaces, hierarchical scopes.
 
 ## Features
 
-- **Declarative layer stacks** — define your layers with `defineWeaver()`, no hardcoded names
-- **Deep merge with provenance tracking** — objects recurse, arrays replace, `null` clears
-- **Schema-driven governance** — ceiling enforcement, change policies, visibility controls
-- **Multiple storage backends** — in-memory, localStorage, static JSON, file system
-- **Override sessions with auto-expiry** — time-limited emergency overrides
-- **Role-based access control** — visibility filtering, write restrictions, ceiling enforcement
+- **Typed namespaces** — `defineNamespace()` with Zod schemas for compile-time and runtime safety
+- **Nested JSON storage model** — canonical nested objects, resolved via `deepGet`/`deepSet`/`deepMerge`
+- **Hierarchical scopes** — region → tenant → user resolution via scope stacks
+- **Schema governance** — ceiling enforcement, change policies, one-way ratchets
 - **Offline-first sync** — conflict resolution with LWW fallback and queue management
-- **Full TypeScript** — zero runtime dependencies in core
+- **Multiple transports** — HTTP/SSE or SCOMP (multiplexed RPC)
+- **Layered storage backends** — file system, Git, MongoDB, in-memory, env-overlay
+- **Secret management** — provider abstraction with caching (e.g. Azure Key Vault)
 
 ## Quick Start
 
 ```ts
-import { defineWeaver, Layers } from "@weaver/config-types";
-import {
-  StaticJsonStorageProvider,
-  InMemoryStorageProvider,
-  createConfigurationService,
-} from "@weaver/config-providers";
-import { resolveConfiguration, inspectKey } from "@weaver/config-engine";
+import { createWeaverClient, createHttpTransport, defineNamespace } from "@weaver/weaver-client";
+import { z } from "zod";
 
-// 1. Declare your layer stack
-const weaver = defineWeaver([
-  Layers.Static("defaults"),
-  Layers.Dynamic("tenant"),
-  Layers.Personal("user"),
-] as const);
-
-// 2. Wire up storage providers
-const defaults = new StaticJsonStorageProvider({
-  id: "defaults",
-  layer: "defaults",
-  data: {
-    "ui.theme.mode": "light",
-    "ui.theme.density": "comfortable",
-    "feature.beta.enabled": false,
-  },
-});
-const tenant = new InMemoryStorageProvider({ id: "tenant", layer: "tenant" });
-const user = new InMemoryStorageProvider({ id: "user", layer: "user" });
-
-// 3. Create the configuration service
-const service = await createConfigurationService({
-  weaverConfig: weaver,
-  providers: [defaults, tenant, user],
+// Define a typed namespace
+const uiConfig = defineNamespace("ui", {
+  theme: z.enum(["light", "dark"]),
+  density: z.enum(["comfortable", "compact"]),
+  sidebarOpen: z.boolean(),
 });
 
-// 4. Read resolved values (deep-merged across layers)
-const mode = service.get("ui.theme.mode"); // "light"
+// Create client with HTTP transport
+const client = await createWeaverClient({
+  transport: createHttpTransport({ baseUrl: "http://localhost:3000/config" }),
+});
 
-// 5. Write to a specific layer
-service.set("tenant", "feature.beta.enabled", true);
-
-// 6. Inspect where a value comes from
-const info = inspectKey(weaver, [defaults, tenant, user], "feature.beta.enabled");
-// → { resolved: true, source: "tenant", value: true }
+// Get a typed namespace client
+const ui = client.namespace(uiConfig);
+const theme = ui.get("theme"); // type: "light" | "dark" | undefined
+await ui.set("theme", "dark"); // type-checked!
 ```
 
 ## Architecture
 
-Weaver resolves configuration by merging layers bottom-to-top. Each layer has a type that determines its role in the stack:
+Weaver resolves configuration by merging layers bottom-to-top across hierarchical scopes:
 
 ```
   session  ← Ephemeral  (override sessions, auto-expiry)
@@ -76,20 +52,22 @@ Weaver resolves configuration by merging layers bottom-to-top. Each layer has a 
   Deep merge: objects recurse, arrays replace, null clears.
 ```
 
-Keys are flat dot-delimited strings with 3–5 segments (e.g. `ui.theme.mode`). Schema metadata on each key controls governance: which layer can override it, what change policies apply, and who can see it.
+Configuration is stored as **nested JSON objects** (not flat dot-paths). The resolution engine uses `deepGet`/`deepSet`/`deepMerge` to compose values across layers and scopes. Clients access config through typed namespaces with Zod validation.
 
 ## Packages
 
 | Package | Description |
 | --- | --- |
 | [`@weaver/config-types`](./packages/config-types) | Core types, `defineWeaver()` builder, `Layers.*` factories, Zod schemas |
-| [`@weaver/config-engine`](./packages/config-engine) | Resolution engine: `resolveConfiguration()`, `inspectKey()`, ceiling resolution, schema registry, deep merge, namespace utilities, JSON Schema & Zod codegen |
-| [`@weaver/config-providers`](./packages/config-providers) | Storage providers (`StaticJson`, `InMemory`, `LocalStorage`), `createConfigurationService()`, scoped & view services |
-| [`@weaver/config-sessions`](./packages/config-sessions) | `createOverrideSessionProvider()` for time-limited emergency override sessions |
-| [`@weaver/config-auth`](./packages/config-auth) | `withAuth()` for role-based access control — visibility filtering, write restrictions, ceiling enforcement |
-| [`@weaver/config-policy`](./packages/config-policy) | Change policy evaluation, policy validation, one-way ratchet rules, override tracking |
-| [`@weaver/config-server`](./packages/config-server) | Node.js server-side: `FileSystemStorageProvider`, file-based audit log, plugin config with restart detection |
-| [`@weaver/config-sync`](./packages/config-sync) | Offline-first sync orchestrator with conflict resolution (LWW fallback, queue management) |
+| [`@weaver/config-engine`](./packages/config-engine) | Resolution engine: `deepGet`, `deepSet`, `deepMerge`, ceiling enforcement |
+| [`@weaver/config-runtime`](./packages/config-runtime) | Pure state container: in-memory state machine, snapshot management |
+| [`@weaver/config-sync`](./packages/config-sync) | Offline-first sync orchestrator with conflict resolution (LWW fallback) |
+| [`@weaver/config-secrets`](./packages/config-secrets) | SecretProvider, SecretCache, SecretResolutionService |
+| [`@weaver/config-policy`](./packages/config-policy) | Change policy evaluation, validation, one-way ratchet rules |
+| [`@weaver/config-sessions`](./packages/config-sessions) | Override session provider for time-limited emergency overrides |
+| [`@weaver/storage-providers`](./packages/storage-providers) | Storage provider abstractions + implementations (FS, Git, MongoDB, memory, env-overlay) |
+| [`@weaver/weaver-client`](./packages/weaver-client) | Unified client SDK: `defineNamespace`, schema validation, offline boot |
+| [`@weaver/weaver-server`](./packages/weaver-server) | Server: REST adapter, SSE streaming, SCOMP transport, schema registry |
 
 ## Key Concepts
 
@@ -104,22 +82,20 @@ Keys are flat dot-delimited strings with 3–5 segments (e.g. `ui.theme.mode`). 
 
 ### Resolution & Deep Merge
 
-`resolveConfiguration()` walks the layer stack top-to-bottom and deep-merges values. Objects recurse into nested keys, arrays replace wholesale, and setting a key to `null` clears it (removing the override so lower layers show through).
-
-`inspectKey()` returns the resolved value along with its source layer — useful for debugging and provenance UIs.
+The engine walks the layer stack top-to-bottom and deep-merges values. Objects recurse into nested keys, arrays replace wholesale, and `null` clears a key (removing the override so lower layers show through).
 
 ### Schema Governance
 
-Each configuration key can declare schema metadata:
+Each configuration property can declare schema metadata:
 
-- **`maxOverrideLayer`** — ceiling that prevents higher layers from overriding a value (e.g. lock a key at the tenant layer so users can't change it)
-- **`changePolicy`** — rules like one-way ratchets that constrain how values evolve over time
+- **`maxOverrideLayer`** — ceiling that prevents higher layers from overriding
+- **`changePolicy`** — rules like one-way ratchets constraining value evolution
 - **`visibility`** — controls which roles or contexts can read a key
 - **`sessionMode`** — whether a key participates in override sessions
 
-### Override Sessions
+### Typed Namespaces
 
-`createOverrideSessionProvider()` creates an ephemeral layer for emergency changes. Sessions have a defined duration and automatically expire, reverting to the normal resolution stack. Useful for incident response where you need temporary overrides without permanent configuration changes.
+`defineNamespace()` creates a typed accessor bound to a Zod shape. The client validates reads and writes at runtime while providing full TypeScript inference for keys and value types.
 
 ## Development
 
@@ -128,10 +104,6 @@ bun install
 bun run build
 bun run test
 ```
-
-## Origin
-
-Config-related packages extracted from [armada](https://github.com/spralle/armada).
 
 ## License
 
