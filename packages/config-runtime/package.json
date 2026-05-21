@@ -1,13 +1,8 @@
 {
-  "name": "@weaver/weaver-client",
+  "name": "@weaver/config-runtime",
   "version": "0.0.0",
-  "description": "Configuration client SDK for Weaver",
+  "description": "Pure state machine for Weaver configuration resolution",
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/spralle/weaver.git",
-    "directory": "packages/weaver-client"
-  },
   "type": "module",
   "exports": {
     ".": {
@@ -26,12 +21,9 @@
   },
   "dependencies": {
     "@weaver/config-engine": "workspace:*",
-    "@weaver/config-runtime": "workspace:*",
-    "@weaver/config-sync": "workspace:*",
-    "@weaver/config-types": "workspace:*"
+    "zod": "^4.0.0"
   },
   "devDependencies": {
-    "@types/node": "25.6.0",
     "typescript": "^5.8.3"
   }
 }

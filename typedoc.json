@@ -4,6 +4,7 @@
   "entryPoints": [
     "packages/config-types",
     "packages/config-engine",
+    "packages/config-runtime",
     "packages/config-sessions",
     "packages/config-auth",
     "packages/config-policy",

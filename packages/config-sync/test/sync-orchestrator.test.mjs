@@ -657,3 +657,33 @@ test("pullChanges non-retryable error sets error state without scheduling retry"
   const diag = orchestrator.getDiagnostics();
   assert.deepEqual(diag.lastError, { code: "unknown", message: "fatal parse error", retryable: false });
 });
+
+test("onSnapshotChange fires after successful pull with changes", async () => {
+  const cache = new MemoryDurableConfigCacheAdapter();
+  const harness = createTransportHarness();
+  const snapshots = [];
+
+  harness.pullQueue.push({
+    cursor: { serverRevision: "rev-2", serverTime: 200 },
+    serverTime: 200,
+    changes: [
+      { key: "theme", value: "dark", operation: "set", revision: "rev-2" },
+    ],
+  });
+
+  const orchestrator = createConfigSyncOrchestrator({
+    snapshotCache: cache,
+    mutationQueue: cache,
+    transport: harness.transport,
+    onSnapshotChange: (snapshot) => { snapshots.push(snapshot); },
+  });
+
+  orchestrator.setOnline(false);
+  await orchestrator.load();
+  orchestrator.setOnline(true);
+  await orchestrator.sync();
+
+  assert.equal(snapshots.length, 1);
+  assert.equal(snapshots[0].entries["theme"], "dark");
+  assert.equal(snapshots[0].revision, "rev-2");
+});

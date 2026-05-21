@@ -19,6 +19,11 @@ export type {
   ScopeLoadingMode,
 } from "./scope-manager.js";
 export { createScopeLoader } from "./scope-manager.js";
+export {
+  createSyncRuntimeBridge,
+  type SyncRuntimeBridge,
+  type SyncRuntimeBridgeOptions,
+} from "./sync-runtime-bridge.js";
 export { createWeaverSyncTransport } from "./sync-transport-adapter.js";
 export type {
   WeaverTransport,
