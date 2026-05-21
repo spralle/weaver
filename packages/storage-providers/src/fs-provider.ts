@@ -1,6 +1,6 @@
 import { type FSWatcher, watch } from "node:fs";
 import { mkdir, readFile, rename, stat, writeFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { dirname, resolve, sep } from "node:path";
 import {
   deepMerge,
   deepRemove,
@@ -24,6 +24,28 @@ export interface FileSystemProviderOptions {
   environmentOverlayPath?: string | undefined;
   /** Debounce interval in ms for file-system watch events (default: 100). */
   watchDebounceMs?: number | undefined;
+}
+
+/**
+ * Validates that a key does not escape the root directory via path traversal.
+ * Rejects null bytes, control characters, and `..` segments.
+ */
+export function validateStorageKey(key: string): void {
+  if (/[\x00-\x1f]/.test(key)) {
+    throw new Error("Invalid key: contains control characters");
+  }
+  if (key.includes("..")) {
+    throw new Error(`Path traversal rejected: ${key}`);
+  }
+}
+
+function resolveAndGuard(root: string, key: string): string {
+  validateStorageKey(key);
+  const resolved = resolve(root, key);
+  if (resolved !== root && !resolved.startsWith(root + sep)) {
+    throw new Error(`Path traversal rejected: ${key}`);
+  }
+  return resolved;
 }
 
 /** @see {@link createFileSystemStorageProvider} — prefer the factory function for consistency */
@@ -72,6 +94,7 @@ export class FileSystemStorageProvider implements ConfigurationStorageProvider {
     if (!this.writable) {
       return { success: false, error: "Provider is read-only" };
     }
+    validateStorageKey(key);
 
     const entries = await this.readJsonFile(this.filePath);
     deepSet(entries, key, value);
@@ -87,6 +110,7 @@ export class FileSystemStorageProvider implements ConfigurationStorageProvider {
     if (!this.writable) {
       return { success: false, error: "Provider is read-only" };
     }
+    validateStorageKey(key);
 
     const entries = await this.readJsonFile(this.filePath);
     deepRemove(entries, key);
