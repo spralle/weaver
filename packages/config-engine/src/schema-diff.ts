@@ -1,6 +1,7 @@
 // schema-diff.ts — Pure utility functions for schema comparison and conflict detection
 
 import type { ConfigurationPropertySchema } from "@weaver/config-types";
+import { deepEqual } from "./deep-equal.js";
 
 /**
  * Extracts property names from a schema object.
@@ -37,10 +38,10 @@ export function getSchemaPropertyType(
 }
 
 /**
- * Compares two schemas for structural equality using JSON serialization.
+ * Compares two schemas for structural equality.
  */
 export function schemasEqual(a: unknown, b: unknown): boolean {
-  return JSON.stringify(a) === JSON.stringify(b);
+  return deepEqual(a, b);
 }
 
 export interface BreakingChange {

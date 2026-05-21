@@ -1,3 +1,4 @@
+import { deepEqual } from "@weaver/config-engine";
 import type { StateContainer } from "@weaver/config-runtime";
 import type { ConfigSyncOrchestrator } from "@weaver/config-sync";
 import type { ConfigurationLayerData } from "@weaver/config-types";
@@ -48,8 +49,7 @@ export function createSyncRuntimeBridge(
     for (const key of [...pendingKeys]) {
       if (
         key in snapshot.entries &&
-        JSON.stringify(snapshot.entries[key]) ===
-          JSON.stringify(optimisticEntries[key])
+        deepEqual(snapshot.entries[key], optimisticEntries[key])
       ) {
         pendingKeys.delete(key);
         delete optimisticEntries[key];
