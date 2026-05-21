@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createMongoDBStorageProvider } from "../../src/providers/mongodb-storage-provider.ts";
+import { createMongoDBStorageProvider } from "../src/mongodb-storage-provider.ts";
 
 function createMockCollection() {
   const docs = [];

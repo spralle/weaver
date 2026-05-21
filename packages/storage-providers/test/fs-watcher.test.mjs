@@ -5,7 +5,7 @@ import { randomUUID } from "node:crypto";
 import { mkdir, writeFile, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { setTimeout as sleep } from "node:timers/promises";
-import { createFileSystemStorageProvider } from "../../src/providers/fs-provider.ts";
+import { createFileSystemStorageProvider } from "../src/fs-provider.ts";
 
 function makeTempDir() {
   return join(tmpdir(), `fs-watch-test-${randomUUID()}`);

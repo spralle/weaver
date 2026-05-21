@@ -8,6 +8,7 @@
   "references": [
     { "path": "../config-types" },
     { "path": "../config-engine" },
-    { "path": "../config-auth" }
+    { "path": "../config-auth" },
+    { "path": "../storage-providers" }
   ]
 }

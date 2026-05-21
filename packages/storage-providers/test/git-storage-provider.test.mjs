@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { mkdtemp, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { createGitStorageProvider } from "../../src/providers/git-storage-provider.ts";
+import { createGitStorageProvider } from "../src/git-storage-provider.ts";
 
 function createMockGitManager(localPath) {
   const calls = [];

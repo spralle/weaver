@@ -98,26 +98,24 @@ export type { HealthEndpoints, HealthStatus } from "./health.js";
 export { createHealthEndpoints } from "./health.js";
 // providers
 export type {
+  EnvironmentOverlayOptions,
   FileSystemProviderOptions,
   FileSystemStorageProvider,
-} from "./providers/fs-provider.js";
-export { createFileSystemStorageProvider } from "./providers/fs-provider.js";
-export type { InMemoryProviderOptions } from "./providers/in-memory-provider.js";
-export { createInMemoryStorageProvider } from "./providers/in-memory-provider.js";
-export type {
-  EnvironmentOverlayOptions,
   GitManager,
   GitManagerOptions,
   GitStorageProviderOptions,
+  InMemoryProviderOptions,
+  MongoDBStorageProviderOptions,
 } from "./providers/index.js";
 export {
+  createFileSystemStorageProvider,
   createGitManager,
   createGitStorageProvider,
+  createInMemoryStorageProvider,
+  createMongoDBStorageProvider,
   mergeWithEnvironment,
   withEnvironmentOverlay,
 } from "./providers/index.js";
-export type { MongoDBStorageProviderOptions } from "./providers/mongodb-storage-provider.js";
-export { createMongoDBStorageProvider } from "./providers/mongodb-storage-provider.js";
 export type { WeaverServer, WeaverServerOptions } from "./server.js";
 // server
 export { startWeaverServer } from "./server.js";

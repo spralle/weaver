@@ -1,13 +1,8 @@
 {
-  "name": "@weaver/weaver-server",
+  "name": "@weaver/storage-providers",
   "version": "0.0.0",
-  "description": "Central configuration server for Weaver",
+  "description": "Storage provider adapters for Weaver configuration",
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/spralle/weaver.git",
-    "directory": "packages/weaver-server"
-  },
   "type": "module",
   "exports": {
     ".": {
@@ -25,10 +20,8 @@
     "lint": "biome check ."
   },
   "dependencies": {
-    "@weaver/config-types": "workspace:*",
     "@weaver/config-engine": "workspace:*",
-    "@weaver/config-auth": "workspace:*",
-    "@weaver/storage-providers": "workspace:*",
+    "@weaver/config-types": "workspace:*",
     "zod": "^4.0.0"
   },
   "peerDependencies": {
