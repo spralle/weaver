@@ -241,8 +241,8 @@ function deepEqual(a: unknown, b: unknown): boolean {
     return a.every((val, i) => deepEqual(val, b[i]));
   }
 
-  const aObj = a as Record<string, unknown>;
-  const bObj = b as Record<string, unknown>;
+  const aObj = a as Record<string, unknown>; // SAFETY: confirmed non-null, non-array objects above
+  const bObj = b as Record<string, unknown>; // SAFETY: confirmed non-null, non-array objects above
   const aKeys = Object.keys(aObj);
   const bKeys = Object.keys(bObj);
 

@@ -48,7 +48,8 @@ export function createLocalTransport(
       const source = opts?.scopePath?.length
         ? (snapshot.scopes[buildScopeKey(opts.scopePath)] ?? {})
         : snapshot.entries;
-      return withLatency(deepGet(source as Record<string, unknown>, key));
+      // SAFETY: source is Record<string, unknown> from snapshot structure
+      return withLatency(deepGet(source, key));
     },
 
     async getNamespace(
@@ -58,13 +59,14 @@ export function createLocalTransport(
       const source = opts?.scopePath?.length
         ? (snapshot.scopes[buildScopeKey(opts.scopePath)] ?? {})
         : snapshot.entries;
-      const value = deepGet(source as Record<string, unknown>, prefix);
+      // SAFETY: source is Record<string, unknown> from snapshot structure
+      const value = deepGet(source, prefix);
       if (
         value !== null &&
         typeof value === "object" &&
         !Array.isArray(value)
       ) {
-        return withLatency(value as Record<string, unknown>);
+        return withLatency(value as Record<string, unknown>); // SAFETY: guarded by typeof/null/array checks
       }
       return withLatency({});
     },
@@ -77,7 +79,8 @@ export function createLocalTransport(
     },
 
     async inspect(key: string): Promise<unknown> {
-      const value = deepGet(snapshot.entries as Record<string, unknown>, key);
+      // SAFETY: snapshot.entries is Record<string, unknown>
+      const value = deepGet(snapshot.entries, key);
       return withLatency({ key, value, source: "local" });
     },
 
@@ -86,12 +89,13 @@ export function createLocalTransport(
       value: unknown,
       _options?: WriteOptions,
     ): Promise<WriteResult> {
-      deepSet(snapshot.entries as Record<string, unknown>, key, value);
+      deepSet(snapshot.entries, key, value);
       return withLatency({ success: true, revision: `local-${Date.now()}` });
     },
 
     async remove(key: string, _options?: WriteOptions): Promise<WriteResult> {
-      deepRemove(snapshot.entries as Record<string, unknown>, key);
+      // SAFETY: snapshot.entries is Record<string, unknown>
+      deepRemove(snapshot.entries, key);
       return withLatency({ success: true, revision: `local-${Date.now()}` });
     },
 
@@ -100,7 +104,8 @@ export function createLocalTransport(
       _options?: WriteOptions,
     ): Promise<WriteResult> {
       for (const [key, value] of Object.entries(entries)) {
-        deepSet(snapshot.entries as Record<string, unknown>, key, value);
+        // SAFETY: snapshot.entries is Record<string, unknown>
+        deepSet(snapshot.entries, key, value);
       }
       return withLatency({ success: true, revision: `local-${Date.now()}` });
     },

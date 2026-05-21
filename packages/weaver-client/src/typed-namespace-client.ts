@@ -44,7 +44,7 @@ export function createTypedNamespaceClient<TShape extends ZodRawShape>(
   const client: TypedNamespaceClient<TShape> = {
     get(key) {
       const state = deps.getState(scopePath);
-      return getValidated(key, state) as ReturnType<TypedNamespaceClient<TShape>["get"]>;
+      return getValidated(key, state) as ReturnType<TypedNamespaceClient<TShape>["get"]>; // SAFETY: getValidated returns Zod-parsed value matching the schema type
     },
 
     getOrDefault(key, defaultValue) {
@@ -56,23 +56,24 @@ export function createTypedNamespaceClient<TShape extends ZodRawShape>(
       const state = deps.getState(scopePath);
       const nsValue = deepGet(state, prefix);
       if (!nsValue || typeof nsValue !== "object") {
-        return {} as ReturnType<TypedNamespaceClient<TShape>["getAll"]>;
+        return {} as ReturnType<TypedNamespaceClient<TShape>["getAll"]>; // SAFETY: empty object satisfies partial shape
       }
       const result: Record<string, unknown> = {};
       for (const key of Object.keys(schema.shape)) {
         const fieldSchema = schema.shape[key];
-        const raw = (nsValue as Record<string, unknown>)[key];
+        const nsRecord = nsValue as Record<string, unknown>; // SAFETY: guarded by typeof check above
+        const raw = nsRecord[key];
         if (raw !== undefined && fieldSchema) {
           const parsed = z.safeParse(fieldSchema, raw);
           if (parsed.success) result[key] = parsed.data;
         }
       }
-      return result as ReturnType<TypedNamespaceClient<TShape>["getAll"]>;
+      return result as ReturnType<TypedNamespaceClient<TShape>["getAll"]>; // SAFETY: built from Zod-validated fields
     },
 
     async set(key, value, opts) {
-      const fullKey = resolveKey(key as string);
-      const fieldSchema = schema.shape[key as string];
+      const fullKey = resolveKey(key as string); // SAFETY: key is keyof TShape & string
+      const fieldSchema = schema.shape[key as string]; // SAFETY: key is keyof TShape & string
       if (fieldSchema) {
         const parsed = z.safeParse(fieldSchema, value);
         if (!parsed.success) {
@@ -87,10 +88,11 @@ export function createTypedNamespaceClient<TShape extends ZodRawShape>(
 
     onChange(keyOrHandler: unknown, handler?: unknown): Unsubscribe {
       if (typeof keyOrHandler === "function") {
+        // SAFETY: caller passes (deltas: ConfigDelta[]) => void per the overload signature
         return deps.onChange(`${prefix}.*`, keyOrHandler as (deltas: ConfigDelta[]) => void);
       }
-      const fullKey = resolveKey(keyOrHandler as string);
-      const typedHandler = handler as (value: unknown) => void;
+      const fullKey = resolveKey(keyOrHandler as string); // SAFETY: non-function overload passes string
+      const typedHandler = handler as (value: unknown) => void; // SAFETY: second overload passes value handler
       return deps.onChange(fullKey, (deltas) => {
         for (const delta of deltas) {
           if (delta.action === "set") typedHandler(delta.value);
@@ -148,7 +150,7 @@ function createTypedInstanceClient<TShape extends ZodRawShape>(
   return {
     get(key) {
       const state = deps.getState(scopePath);
-      return getInstanceValue(key, state) as ReturnType<TypedInstanceClient<TShape>["get"]>;
+      return getInstanceValue(key, state) as ReturnType<TypedInstanceClient<TShape>["get"]>; // SAFETY: getInstanceValue returns Zod-parsed value
     },
 
     getOrDefault(key, defaultValue) {
@@ -157,8 +159,8 @@ function createTypedInstanceClient<TShape extends ZodRawShape>(
     },
 
     async set(key, value) {
-      const fullKey = `${instancePrefix}.${key as string}`;
-      const fieldSchema = schema.shape[key as string];
+      const fullKey = `${instancePrefix}.${key as string}`; // SAFETY: key is keyof TShape & string
+      const fieldSchema = schema.shape[key as string]; // SAFETY: key is keyof TShape & string
       if (fieldSchema) {
         const parsed = z.safeParse(fieldSchema, value);
         if (!parsed.success) {
@@ -176,10 +178,10 @@ function createTypedInstanceClient<TShape extends ZodRawShape>(
     },
 
     onChange(key, handler) {
-      const fullKey = `${instancePrefix}.${key as string}`;
+      const fullKey = `${instancePrefix}.${key as string}`; // SAFETY: key is keyof TShape & string
       return deps.onChange(fullKey, (deltas) => {
         for (const delta of deltas) {
-          if (delta.action === "set") (handler as (v: unknown) => void)(delta.value);
+          if (delta.action === "set") (handler as (v: unknown) => void)(delta.value); // SAFETY: handler accepts the field value type
         }
       });
     },

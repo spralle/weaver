@@ -53,7 +53,7 @@ export function defineWeaver<const T extends readonly LayerDefinition[]>(
 
   return {
     layers,
-    layerNames: names as unknown as ReadonlyArray<ExtractLayerNames<T>>,
+    layerNames: names as unknown as ReadonlyArray<ExtractLayerNames<T>>, // SAFETY: names are extracted from the same LayerDefinition tuple
     rankMap,
     getRank(layer: string): number {
       return rankMap.get(layer) ?? -1;

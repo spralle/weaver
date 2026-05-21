@@ -95,7 +95,7 @@ function checkType(
   const types = Array.isArray(schema.type) ? schema.type : [schema.type];
   const actual = getJsonType(value);
   if (actual === "integer" && types.includes("number")) return true;
-  if (!types.includes(actual as (typeof types)[number])) {
+  if (!types.includes(actual as (typeof types)[number])) { // SAFETY: checking membership validates the narrowing
     errors.push({ path, message: `Expected ${types.join("|")}, got ${actual}` });
     return false;
   }

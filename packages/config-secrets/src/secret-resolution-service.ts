@@ -91,8 +91,8 @@ export class SecretResolutionService {
     const failures: SecretResolutionFailure[] = [];
 
     for (let i = 0; i < settled.length; i++) {
-      const outcome = settled[i] as (typeof settled)[number];
-      const { key, ref } = refs[i] as (typeof refs)[number];
+      const outcome = settled[i]!; // index within bounds
+      const { key, ref } = refs[i]!; // index within bounds
       if (outcome.status === "fulfilled") {
         resolved.set(outcome.value.key, outcome.value.value);
       } else {

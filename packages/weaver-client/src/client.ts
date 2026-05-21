@@ -116,12 +116,15 @@ export async function createWeaverClient(
       if (scopePath) {
         const scopeState = scopeLoader.getScopeState(scopePath);
         if (!scopeState) return undefined;
-        value = deepGet(scopeState as Record<string, unknown>, resolvedKey) as
+        // SAFETY: deepGet returns the stored value which was set with correct type
+        value = deepGet(scopeState, resolvedKey) as
           | T
           | undefined;
       } else {
+        // SAFETY: deepGet returns the stored value which was set with correct type
         value = deepGet(baseState, resolvedKey) as T | undefined;
       }
+      // SAFETY: validateOnRead preserves the type or returns undefined
       return validateOnRead(resolvedKey, value, registry, validationOptions) as T | undefined;
     },
 
@@ -130,7 +133,7 @@ export async function createWeaverClient(
       defaultValue: T,
       scopePath?: ScopeInstance[],
     ): T {
-      const value = client.get<T>(key, scopePath as ScopeInstance[]);
+      const value = scopePath ? client.get<T>(key, scopePath) : client.get<T>(key);
       return value !== undefined ? value : defaultValue;
     },
 
@@ -146,13 +149,13 @@ export async function createWeaverClient(
       const source = scopePath
         ? (scopeLoader.getScopeState(scopePath) ?? {})
         : baseState;
-      const value = deepGet(source as Record<string, unknown>, resolvedPrefix);
+      const value = deepGet(source, resolvedPrefix);
       if (
         value !== null &&
         typeof value === "object" &&
         !Array.isArray(value)
       ) {
-        return value as Record<string, unknown>;
+        return value as Record<string, unknown>; // SAFETY: guarded by typeof/null/array checks
       }
       return {};
     },
@@ -160,6 +163,7 @@ export async function createWeaverClient(
     async inspect<T>(key: string): Promise<import("./types.js").ConfigurationInspection<T>> {
       const resolvedKey = applyNamespace(namespace, key);
       const raw = await transport.inspect(resolvedKey);
+      // SAFETY: transport.inspect returns the inspection structure matching ConfigurationInspection<T>
       return raw as import("./types.js").ConfigurationInspection<T>;
     },
 
@@ -302,6 +306,7 @@ export async function createWeaverClient(
           onChange: (pattern, handler) => client.onChange(pattern, handler),
         });
       }
+      // SAFETY: defOrPrefix is NamespaceDefinition which extends NamespaceDefinition<string, ZodRawShape>
       return createTypedNamespaceClient(defOrPrefix as NamespaceDefinition<string, ZodRawShape>, {
         getState: (sp) => sp ? (scopeLoader.getScopeState(sp) ?? {}) : baseState,
         set: (key, value, opts) => transport.set(key, value, opts),

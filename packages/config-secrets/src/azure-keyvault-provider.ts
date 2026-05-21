@@ -184,7 +184,7 @@ function isRestError(err: unknown): err is { statusCode: number } {
     typeof err === "object" &&
     err !== null &&
     "statusCode" in err &&
-    typeof (err as Record<string, unknown>).statusCode === "number"
+    typeof (err as Record<string, unknown>).statusCode === "number" // SAFETY: duck-typing error for status code check
   );
 }
 

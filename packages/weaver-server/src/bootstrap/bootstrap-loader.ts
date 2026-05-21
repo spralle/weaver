@@ -45,7 +45,7 @@ export async function bootstrap(
 
   const configPath = join(gitManager.localPath, "bootstrap", "server.json");
   const rawContent = await readFile(configPath, "utf-8");
-  const rawConfig = JSON.parse(rawContent) as unknown;
+  const rawConfig: unknown = JSON.parse(rawContent);
 
   const env: Record<string, string | undefined> = {
     ...process.env,

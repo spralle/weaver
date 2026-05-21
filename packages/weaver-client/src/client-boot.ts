@@ -55,7 +55,9 @@ export async function bootClient(options: {
     // Load schemas if registry enabled and transport supports it
     if (registry && "fetchSchemas" in transport) {
       try {
+        // SAFETY: duck-typing transport for optional fetchSchemas capability
         const fetch = (transport as { fetchSchemas: () => Promise<Record<string, unknown>> }).fetchSchemas;
+        // SAFETY: fetchSchemas returns schema registry structure
         registry.load(await fetch() as Record<string, ConfigurationPropertySchema>);
       } catch { /* Schema loading is optional */ }
     }

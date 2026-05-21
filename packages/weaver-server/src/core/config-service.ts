@@ -162,7 +162,7 @@ export async function createWeaverConfigService(
     },
 
     get degradedProviders() {
-      return degradedProviders as ReadonlyArray<string>;
+      return degradedProviders as ReadonlyArray<string>; // SAFETY: string[] is assignable to ReadonlyArray<string>
     },
 
     get revision() {
@@ -208,7 +208,7 @@ export async function createWeaverConfigService(
         typeof value === "object" &&
         !Array.isArray(value)
       ) {
-        return value as Record<string, unknown>;
+        return value as Record<string, unknown>; // SAFETY: guarded by typeof/null/array checks
       }
       return {};
     },

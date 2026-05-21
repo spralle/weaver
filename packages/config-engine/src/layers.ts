@@ -31,7 +31,7 @@ export function resolveConfiguration(
     }
 
     const mergeFn = layerEntry.merge ?? deepMerge;
-    entries = mergeFn(entries, layerEntry.entries) as Record<string, unknown>;
+    entries = mergeFn(entries, layerEntry.entries) as Record<string, unknown>; // SAFETY: mergeFn returns Record for Record inputs
 
     for (const key of layerKeys) {
       if (layerEntry.entries[key] !== undefined) {
@@ -64,7 +64,7 @@ export function inspectKey<T>(
       continue;
     }
 
-    const value = layerEntry.entries[key] as T;
+    const value = layerEntry.entries[key] as T; // SAFETY: caller asserts type via generic parameter
     inspection.effectiveValue = value;
     inspection.effectiveLayer = layerEntry.layer;
     inspection.layerValues[layerEntry.layer] = value;

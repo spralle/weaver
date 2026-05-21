@@ -18,7 +18,7 @@ export function createMongoAuditSink(
   return {
     async record(entry: SinkDomainAuditEntry): Promise<void> {
       try {
-        await collection.insertOne(entry as unknown as Record<string, unknown>);
+        await collection.insertOne(entry as unknown as Record<string, unknown>); // SAFETY: AuditEntry is a plain object compatible with MongoDB document
       } catch (err: unknown) {
         const message = extractErrorMessage(err);
         console.error(

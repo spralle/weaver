@@ -58,7 +58,7 @@ export function createStateContainer(options?: {
   }
 
   function getAll(): Record<string, unknown> {
-    return cloneValue(resolved) as Record<string, unknown>;
+    return cloneValue(resolved) as Record<string, unknown>; // SAFETY: resolved is always Record<string, unknown>
   }
 
   function subscribe(
@@ -77,7 +77,7 @@ export function createStateContainer(options?: {
   function applyDelta(delta: ConfigDelta): void {
     const parsed = ConfigDeltaSchema.parse(delta);
     const changedPaths = new Set<string>();
-    const mutable = cloneValue(resolved) as Record<string, unknown>;
+    const mutable = cloneValue(resolved) as Record<string, unknown>; // SAFETY: resolved is always Record<string, unknown>
 
     if (parsed.set) {
       for (const [path, value] of Object.entries(parsed.set)) {
@@ -102,7 +102,7 @@ export function createStateContainer(options?: {
 
   function snapshot(): StateSnapshot {
     return {
-      resolved: cloneValue(resolved) as Record<string, unknown>,
+      resolved: cloneValue(resolved) as Record<string, unknown>, // SAFETY: resolved is always Record<string, unknown>
       provenance: { ...provenance },
       revision,
     };
@@ -111,7 +111,7 @@ export function createStateContainer(options?: {
   function hydrate(snap: StateSnapshot): void {
     const parsed = StateSnapshotSchema.parse(snap);
     const previous = resolved;
-    resolved = cloneValue(parsed.resolved) as Record<string, unknown>;
+    resolved = cloneValue(parsed.resolved) as Record<string, unknown>; // SAFETY: parsed.resolved is Record<string, unknown>
     provenance = { ...parsed.provenance };
     revision = parsed.revision;
 
@@ -188,8 +188,8 @@ function deepEqual(a: unknown, b: unknown): boolean {
   if (a === null || b === null) return false;
   if (typeof a !== "object" || typeof b !== "object") return false;
   if (Array.isArray(a) !== Array.isArray(b)) return false;
-  const aObj = a as Record<string, unknown>;
-  const bObj = b as Record<string, unknown>;
+  const aObj = a as Record<string, unknown>; // SAFETY: both confirmed non-null objects above
+  const bObj = b as Record<string, unknown>; // SAFETY: both confirmed non-null objects above
   const aKeys = Object.keys(aObj);
   const bKeys = Object.keys(bObj);
   if (aKeys.length !== bKeys.length) return false;
