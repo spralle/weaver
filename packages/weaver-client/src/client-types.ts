@@ -21,6 +21,7 @@ import type {
 } from "./namespace.js";
 import type { SchemaRegistrationResult } from "./registration.js";
 
+/** Configuration options for creating a WeaverClient instance. */
 export interface WeaverClientOptions {
   namespace?: string;
   transport: WeaverTransport;
@@ -34,6 +35,10 @@ export interface WeaverClientOptions {
   schemas?: boolean | SchemaOptions;
 }
 
+/**
+ * Main client interface for reading, writing, and subscribing to Weaver configuration.
+ * All reads are synchronous (from local state); writes are async via the transport.
+ */
 export interface WeaverClient {
   // ── Reads (sync, from local state) ──
   get<T>(key: string): T | undefined;

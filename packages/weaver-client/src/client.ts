@@ -29,6 +29,20 @@ import type { ValidationResult } from "./schema-registry.js";
 
 export type { WeaverClient, WeaverClientOptions } from "./client-types.js";
 
+/**
+ * Creates a Weaver client with the specified transport and options.
+ *
+ * @param options - Client configuration including transport, persistence, and schema settings
+ * @returns A connected WeaverClient instance ready for reads, writes, and subscriptions
+ *
+ * @example
+ * ```ts
+ * const client = await createWeaverClient({
+ *   transport: createHttpTransport({ baseUrl: "http://localhost:3399" }),
+ * });
+ * const value = client.get("theme.mode");
+ * ```
+ */
 export async function createWeaverClient(
   options: WeaverClientOptions,
 ): Promise<WeaverClient> {

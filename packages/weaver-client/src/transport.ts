@@ -12,12 +12,14 @@ import type {
   Unsubscribe,
 } from "./types.js";
 
+/** Options for write operations — target layer, environment, and optimistic concurrency. */
 export interface WriteOptions {
   layer?: string;
   environment?: string;
   ifRevision?: string;
 }
 
+/** Result of a write operation — includes success status, new revision, or error details. */
 export interface WriteResult {
   success: boolean;
   revision?: string;
@@ -28,6 +30,10 @@ export interface WriteResult {
   };
 }
 
+/**
+ * Transport interface for communicating with a Weaver configuration backend.
+ * Implementations handle reads, writes, subscriptions, scopes, and schema operations.
+ */
 export interface WeaverTransport {
   // Reads
   resolveAll(options?: ResolveOptions): Promise<ConfigSnapshot>;

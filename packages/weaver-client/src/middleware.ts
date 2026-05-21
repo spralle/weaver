@@ -1,6 +1,10 @@
 import type { WeaverTransport, WriteOptions, WriteResult } from "./transport.js";
 import type { ConfigDelta, Unsubscribe } from "./types.js";
 
+/**
+ * Lifecycle hooks for intercepting transport operations.
+ * Use with `withMiddleware()` to add logging, metrics, or custom behavior.
+ */
 export interface TransportMiddleware {
   onBeforeGet?(key: string): void;
   onAfterGet?(key: string, value: unknown): void;
@@ -10,6 +14,20 @@ export interface TransportMiddleware {
   onDelta?(delta: ConfigDelta): void;
 }
 
+/**
+ * Wraps a transport with one or more middleware hooks for observability and control.
+ *
+ * @param transport - The base transport to wrap
+ * @param middlewares - Middleware instances whose hooks are called in order
+ * @returns A new transport that delegates to the original with middleware applied
+ *
+ * @example
+ * ```ts
+ * const logged = withMiddleware(transport, {
+ *   onBeforeGet(key) { console.log("reading", key); },
+ * });
+ * ```
+ */
 export function withMiddleware(
   transport: WeaverTransport,
   ...middlewares: TransportMiddleware[]

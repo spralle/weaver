@@ -47,6 +47,13 @@ interface SSEState {
   lastCheckpoint: number;
 }
 
+/**
+ * Creates an HTTP/SSE transport that connects to a weaver-server instance.
+ * Supports authentication, retry logic, and real-time delta streaming via Server-Sent Events.
+ *
+ * @param options - Connection settings including base URL, auth token, and retry configuration
+ * @returns A WeaverTransport with SSE-based subscription support
+ */
 export function createHttpTransport(
   options: HttpTransportOptions,
 ): WeaverTransport & { lastCheckpoint: number } {

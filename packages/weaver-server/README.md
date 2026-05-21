@@ -1,0 +1,53 @@
+# @weaver/weaver-server
+
+> Central configuration server for Weaver — layer resolution, auth, audit, schema registry, and storage orchestration.
+
+## Installation
+
+```bash
+bun add @weaver/weaver-server
+```
+
+## Usage
+
+```typescript
+import { bootstrap } from "@weaver/weaver-server";
+
+const server = await bootstrap({
+  layers: ["core", "app", "tenant", "user"],
+  storage: { type: "filesystem", basePath: "./config" },
+  auth: { jwtSecret: process.env.JWT_SECRET },
+});
+```
+
+## API
+
+### Bootstrap
+
+- `bootstrap(options)` — Initializes the server with storage, auth, and layer configuration
+- `createProviders(options)` — Creates storage provider instances from configuration
+
+### Core Services
+
+- `WeaverConfigService` — Central service for reads, writes, and resolution
+- `SchemaRegistry` — Namespace schema registration and validation
+- `ScopeManager` — Scope provisioning and hierarchy management
+- `SessionManager` — Override session lifecycle (create, expire, audit)
+- `PromotionEngine` — Promotes values between layers with approval workflows
+- `RollbackService` — Reverts configuration to previous revisions
+
+### Auth
+
+- `createAuthMiddleware(options)` — JWT-based request authentication
+- `createJwtValidator(options)` — Token validation and identity extraction
+
+### Audit
+
+- `createAuditService(options)` — Pluggable audit logging with multiple sinks
+- `createFileSystemAuditLog()` — File-based audit sink
+- `createMongoAuditSink(options)` — MongoDB audit sink
+- `createStdoutAuditSink()` — Console audit sink for development
+
+## License
+
+MIT

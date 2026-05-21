@@ -26,6 +26,13 @@ function buildScopeKey(scopePath: ScopeInstance[]): string {
   return scopePath.map((s) => `${s.scopeId}:${s.value}`).join("/");
 }
 
+/**
+ * Creates an in-memory transport backed by a static snapshot.
+ * Useful for testing, offline-first scenarios, and local development.
+ *
+ * @param options - Snapshot data and optional simulated latency
+ * @returns A LocalTransport that can also push synthetic deltas
+ */
 export function createLocalTransport(
   options: LocalTransportOptions,
 ): LocalTransport {
