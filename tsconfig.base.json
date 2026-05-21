@@ -14,7 +14,7 @@
     "outDir": "dist",
     "rootDir": "src",
     "esModuleInterop": true,
-    "skipLibCheck": true,
+    "skipLibCheck": true /* Required: NodeJS namespace in emitted .d.ts files causes errors across package boundaries */,
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": true
