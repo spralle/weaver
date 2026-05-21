@@ -22,4 +22,7 @@ jobs:
 
       - run: bun run build --filter='!@weaver/demo'
 
+      - name: Typecheck
+        run: bun run typecheck --filter='!@weaver/demo'
+
       - run: bun run test --filter='!@weaver/demo'
