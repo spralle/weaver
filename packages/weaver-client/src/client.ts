@@ -1,6 +1,9 @@
 import { deepGet, deepRemove, deepSet } from "@weaver/config-engine";
 import type { ScopeDefinition, ScopeInstance } from "@weaver/config-types";
+import type { ZodRawShape } from "zod";
 
+import { createInstanceClient } from "./instance-client.js";
+import type { InstanceClient } from "./namespace.js";
 import type { WeaverClientPersistence } from "./persistence.js";
 import { createScopeLoader, type ScopeLoadingMode } from "./scope-manager.js";
 import {
@@ -18,8 +21,26 @@ import type {
   ConfigDelta,
   ConfigSnapshot,
   ConfigurationInspection,
+  SchemaOptions,
   Unsubscribe,
 } from "./types.js";
+import type { ValidationResult } from "./schema-registry.js";
+import {
+  createClientSchemaRegistry,
+  type ClientSchemaRegistry,
+} from "./schema-registry.js";
+import {
+  validateOnRead,
+  validateOnWrite,
+  type ValidationOptions,
+} from "./validation.js";
+import { applyNamespace, matchGlob } from "./client-helpers.js";
+import type {
+  NamespaceDefinition,
+  TypedNamespaceClient,
+  UntypedNamespaceClient,
+} from "./namespace.js";
+import { createTypedNamespaceClient } from "./typed-namespace-client.js";
 
 export interface WeaverClientOptions {
   namespace?: string;
@@ -30,6 +51,8 @@ export interface WeaverClientOptions {
   offlineBoot?: boolean;
   /** Staleness detection configuration */
   staleness?: StalenessConfig;
+  /** Enable server-schema validation on get/set */
+  schemas?: boolean | SchemaOptions;
 }
 
 export interface WeaverClient {
@@ -92,21 +115,15 @@ export interface WeaverClient {
   readonly lastSyncedAt: Date | null;
   readonly staleSince: Date | null;
 
+  // ── Validation ──
+  validate(key: string, value: unknown): ValidationResult;
+  isSensitive(key: string): boolean;
+
+  // ── Instances ──
+  instance(basePath: string, instanceId: string): InstanceClient;
+
   // ── Lifecycle ──
   close(): Promise<void>;
-}
-
-function matchGlob(pattern: string, key: string): boolean {
-  const regex = new RegExp(
-    "^" + pattern.replace(/\./g, "\\.").replace(/\*/g, "[^.]*") + "$",
-  );
-  return regex.test(key);
-}
-
-function applyNamespace(namespace: string | undefined, key: string): string {
-  if (!namespace) return key;
-  if (key.startsWith("/")) return key.slice(1);
-  return `${namespace}.${key}`;
 }
 
 export async function createWeaverClient(
@@ -114,6 +131,16 @@ export async function createWeaverClient(
 ): Promise<WeaverClient> {
   const { namespace, transport, scopeLoading = "lazy", persistence } = options;
   const offlineBoot = options.offlineBoot ?? !!persistence;
+
+  // Schema validation setup
+  const schemaOpts: SchemaOptions | undefined =
+    options.schemas === true ? {} : options.schemas || undefined;
+  const registry: ClientSchemaRegistry | undefined = schemaOpts
+    ? createClientSchemaRegistry()
+    : undefined;
+  const validationOptions: ValidationOptions = {
+    warnOnMismatch: schemaOpts?.warnOnMismatch ?? true,
+  };
 
   let baseState: Record<string, unknown> = {};
   let revision = "";
@@ -149,6 +176,14 @@ export async function createWeaverClient(
 
     if (persistence) {
       await persistence.save(namespace ?? "default", freshSnapshot);
+    }
+
+    // Load schemas if registry enabled and transport supports it
+    if (registry && "fetchSchemas" in transport) {
+      try {
+        const fetch = (transport as { fetchSchemas: () => Promise<Record<string, unknown>> }).fetchSchemas;
+        registry.load(await fetch() as Record<string, import("@weaver/config-types").ConfigurationPropertySchema>);
+      } catch { /* Schema loading is optional */ }
     }
   } catch (error) {
     if (offlineBoot && revision) {
@@ -214,14 +249,17 @@ export async function createWeaverClient(
   const client: WeaverClient = {
     get<T>(key: string, scopePath?: ScopeInstance[]): T | undefined {
       const resolvedKey = applyNamespace(namespace, key);
+      let value: T | undefined;
       if (scopePath) {
         const scopeState = scopeLoader.getScopeState(scopePath);
         if (!scopeState) return undefined;
-        return deepGet(scopeState as Record<string, unknown>, resolvedKey) as
+        value = deepGet(scopeState as Record<string, unknown>, resolvedKey) as
           | T
           | undefined;
+      } else {
+        value = deepGet(baseState, resolvedKey) as T | undefined;
       }
-      return deepGet(baseState, resolvedKey) as T | undefined;
+      return validateOnRead(resolvedKey, value, registry, validationOptions) as T | undefined;
     },
 
     getWithDefault<T>(
@@ -268,6 +306,11 @@ export async function createWeaverClient(
       opts?: WriteOptions,
     ): Promise<WriteResult> {
       const resolvedKey = applyNamespace(namespace, key);
+      const result = validateOnWrite(resolvedKey, value, registry);
+      if (!result.valid) {
+        const message = result.errors?.map((e) => e.message).join(", ") ?? "Validation failed";
+        return { success: false, error: { code: "VALIDATION_ERROR", message, details: { errors: result.errors } } };
+      }
       return transport.set(resolvedKey, value, opts);
     },
 
@@ -357,12 +400,34 @@ export async function createWeaverClient(
       return closedAt ?? staleSince ?? stalenessMonitor.staleSince;
     },
 
+    validate(key: string, value: unknown): ValidationResult {
+      const resolvedKey = applyNamespace(namespace, key);
+      if (!registry) return { valid: true };
+      return registry.validate(resolvedKey, value);
+    },
+
+    isSensitive(key: string): boolean {
+      const resolvedKey = applyNamespace(namespace, key);
+      if (!registry) return false;
+      return registry.isSensitive(resolvedKey);
+    },
+
     async close(): Promise<void> {
       unsubTransport();
       connected = false;
       closedAt = new Date();
       stalenessMonitor.dispose();
       await transport.close();
+    },
+
+    instance(basePath: string, instanceId: string): InstanceClient {
+      const resolvedBase = applyNamespace(namespace, basePath);
+      return createInstanceClient(resolvedBase, instanceId, {
+        getState: () => baseState,
+        set: (key, value, opts) => transport.set(key, value, opts),
+        remove: (key, opts) => transport.remove(key, opts),
+        onChange: (pattern, handler) => client.onChange(pattern, handler),
+      });
     },
   };
 
