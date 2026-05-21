@@ -60,6 +60,10 @@ export interface WeaverTransport {
 
   // Schemas
   fetchSchemas?(): Promise<Record<string, ConfigurationPropertySchema>>;
+  registerSchema?(
+    namespace: string,
+    schema: Record<string, unknown>,
+  ): Promise<void>;
 
   // Lifecycle
   close(): Promise<void>;

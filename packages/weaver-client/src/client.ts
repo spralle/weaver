@@ -41,6 +41,11 @@ import type {
   UntypedNamespaceClient,
 } from "./namespace.js";
 import { createTypedNamespaceClient } from "./typed-namespace-client.js";
+import { createUntypedNamespaceClient } from "./untyped-namespace-client.js";
+import {
+  registerNamespaces,
+  type SchemaRegistrationResult,
+} from "./registration.js";
 
 export interface WeaverClientOptions {
   namespace?: string;
@@ -118,6 +123,17 @@ export interface WeaverClient {
   // ── Validation ──
   validate(key: string, value: unknown): ValidationResult;
   isSensitive(key: string): boolean;
+
+  // ── Namespaces ──
+  namespace<TShape extends ZodRawShape>(
+    definition: NamespaceDefinition<string, TShape>,
+  ): TypedNamespaceClient<TShape>;
+  namespace(prefix: string): UntypedNamespaceClient;
+
+  // ── Registration ──
+  registerNamespaces(
+    definitions: ReadonlyArray<NamespaceDefinition>,
+  ): Promise<SchemaRegistrationResult>;
 
   // ── Instances ──
   instance(basePath: string, instanceId: string): InstanceClient;
@@ -227,6 +243,17 @@ export async function createWeaverClient(
       lastSyncedAt = new Date();
       connected = true;
       stalenessMonitor.recordSync();
+
+      // Check if this delta requires a restart
+      if (registry && !pendingRestart) {
+        const restartKeys = registry.getRestartRequiredKeys();
+        if (restartKeys.includes(delta.key)) {
+          pendingRestart = true;
+          for (const listener of restartListeners) {
+            listener();
+          }
+        }
+      }
 
       for (const [pattern, handlers] of changeListeners) {
         if (matchGlob(pattern, delta.key)) {
@@ -428,6 +455,32 @@ export async function createWeaverClient(
         remove: (key, opts) => transport.remove(key, opts),
         onChange: (pattern, handler) => client.onChange(pattern, handler),
       });
+    },
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    namespace(defOrPrefix: NamespaceDefinition | string): any {
+      if (typeof defOrPrefix === "string") {
+        const resolvedPrefix = applyNamespace(namespace, defOrPrefix);
+        return createUntypedNamespaceClient(resolvedPrefix, {
+          getState: (sp) => sp ? (scopeLoader.getScopeState(sp) ?? {}) : baseState,
+          set: (key, value, opts) => transport.set(key, value, opts),
+          setMany: (entries, opts) => transport.setMany(entries, opts),
+          remove: (key, opts) => transport.remove(key, opts),
+          onChange: (pattern, handler) => client.onChange(pattern, handler),
+        });
+      }
+      return createTypedNamespaceClient(defOrPrefix as NamespaceDefinition<string, ZodRawShape>, {
+        getState: (sp) => sp ? (scopeLoader.getScopeState(sp) ?? {}) : baseState,
+        set: (key, value, opts) => transport.set(key, value, opts),
+        remove: (key, opts) => transport.remove(key, opts),
+        onChange: (pattern, handler) => client.onChange(pattern, handler),
+      });
+    },
+
+    async registerNamespaces(
+      definitions: ReadonlyArray<NamespaceDefinition>,
+    ): Promise<SchemaRegistrationResult> {
+      return registerNamespaces(definitions, transport);
     },
   };
 

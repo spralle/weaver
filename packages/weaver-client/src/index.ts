@@ -59,3 +59,7 @@ export type { InstanceClientDeps } from "./instance-client.js";
 export { createInstanceClient } from "./instance-client.js";
 export type { NamespaceClientDeps } from "./typed-namespace-client.js";
 export { createTypedNamespaceClient } from "./typed-namespace-client.js";
+export type { SchemaRegistrationResult } from "./registration.js";
+export { registerNamespaces, zodShapeToJsonSchema } from "./registration.js";
+export type { UntypedNamespaceClientDeps } from "./untyped-namespace-client.js";
+export { createUntypedNamespaceClient } from "./untyped-namespace-client.js";
