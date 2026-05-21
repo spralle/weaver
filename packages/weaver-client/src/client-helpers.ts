@@ -1,5 +1,7 @@
+import { getCachedRegex } from "@weaver/config-engine";
+
 export function matchGlob(pattern: string, key: string): boolean {
-  const regex = new RegExp(
+  const regex = getCachedRegex(
     "^" + pattern.replace(/\./g, "\\.").replace(/\*/g, "[^.]*") + "$",
   );
   return regex.test(key);

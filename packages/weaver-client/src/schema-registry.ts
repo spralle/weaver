@@ -1,3 +1,4 @@
+import { getCachedRegex, isSafePattern } from "@weaver/config-engine";
 import type {
   ConfigReloadBehavior,
   ConfigurationPropertySchema,
@@ -145,8 +146,12 @@ function checkString(
   if (schema.maxLength !== undefined && value.length > schema.maxLength) {
     errors.push({ path, message: `String length ${value.length} > maxLength ${schema.maxLength}` });
   }
-  if (schema.pattern !== undefined && !new RegExp(schema.pattern).test(value)) {
-    errors.push({ path, message: `String does not match pattern ${schema.pattern}` });
+  if (schema.pattern !== undefined) {
+    if (!isSafePattern(schema.pattern)) {
+      errors.push({ path, message: `Pattern rejected as potentially unsafe: ${schema.pattern}` });
+    } else if (!getCachedRegex(schema.pattern).test(value)) {
+      errors.push({ path, message: `String does not match pattern ${schema.pattern}` });
+    }
   }
 }
 
