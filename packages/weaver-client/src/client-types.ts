@@ -1,0 +1,117 @@
+import type { ScopeDefinition, ScopeInstance } from "@weaver/config-types";
+import type { ZodRawShape } from "zod";
+
+import type { InstanceClient } from "./namespace.js";
+import type { WeaverClientPersistence } from "./persistence.js";
+import type { ScopeLoadingMode } from "./scope-manager.js";
+import type { StalenessConfig } from "./staleness.js";
+import type { WeaverTransport, WriteOptions, WriteResult } from "./transport.js";
+import type {
+  ClientMode,
+  ConfigDelta,
+  ConfigurationInspection,
+  SchemaOptions,
+  Unsubscribe,
+} from "./types.js";
+import type { ValidationResult } from "./schema-registry.js";
+import type {
+  NamespaceDefinition,
+  TypedNamespaceClient,
+  UntypedNamespaceClient,
+} from "./namespace.js";
+import type { SchemaRegistrationResult } from "./registration.js";
+
+export interface WeaverClientOptions {
+  namespace?: string;
+  transport: WeaverTransport;
+  scopeLoading?: ScopeLoadingMode;
+  persistence?: WeaverClientPersistence;
+  /** If true and transport fails, boot from cache in degraded mode (default: true if persistence provided) */
+  offlineBoot?: boolean;
+  /** Staleness detection configuration */
+  staleness?: StalenessConfig;
+  /** Enable server-schema validation on get/set */
+  schemas?: boolean | SchemaOptions;
+}
+
+export interface WeaverClient {
+  // ── Reads (sync, from local state) ──
+  get<T>(key: string): T | undefined;
+  get<T>(key: string, scopePath: ScopeInstance[]): T | undefined;
+  getWithDefault<T>(key: string, defaultValue: T): T;
+  getWithDefault<T>(
+    key: string,
+    defaultValue: T,
+    scopePath: ScopeInstance[],
+  ): T;
+  getNamespace(prefix: string): Record<string, unknown>;
+  getNamespace(
+    prefix: string,
+    scopePath: ScopeInstance[],
+  ): Record<string, unknown>;
+  getForScope<T>(key: string, scopePath: ScopeInstance[]): T | undefined;
+
+  // ── Inspection (async, server round-trip) ──
+  inspect<T>(key: string): Promise<ConfigurationInspection<T>>;
+
+  // ── Writes (async, goes to server) ──
+  set(
+    key: string,
+    value: unknown,
+    options?: WriteOptions,
+  ): Promise<WriteResult>;
+  setMany(
+    entries: Record<string, unknown>,
+    options?: WriteOptions,
+  ): Promise<WriteResult>;
+  setNamespace(
+    prefix: string,
+    values: Record<string, unknown>,
+    options?: WriteOptions,
+  ): Promise<WriteResult>;
+  remove(key: string, options?: WriteOptions): Promise<WriteResult>;
+
+  // ── Scopes ──
+  listScopes(): Promise<ScopeDefinition[]>;
+  listScopeValues(
+    scopeId: string,
+    parentScope?: ScopeInstance[],
+  ): Promise<string[]>;
+  preloadScope(scopePath: ScopeInstance[]): Promise<void>;
+
+  // ── Change tracking ──
+  onChange(
+    pattern: string,
+    handler: (changes: ConfigDelta[]) => void,
+  ): Unsubscribe;
+  onRestartRequired(handler: () => void): Unsubscribe;
+  readonly pendingRestart: boolean;
+
+  // ── Health ──
+  readonly mode: ClientMode;
+  readonly revision: string;
+  readonly connected: boolean;
+  readonly lastSyncedAt: Date | null;
+  readonly staleSince: Date | null;
+
+  // ── Validation ──
+  validate(key: string, value: unknown): ValidationResult;
+  isSensitive(key: string): boolean;
+
+  // ── Namespaces ──
+  namespace<TShape extends ZodRawShape>(
+    definition: NamespaceDefinition<string, TShape>,
+  ): TypedNamespaceClient<TShape>;
+  namespace(prefix: string): UntypedNamespaceClient;
+
+  // ── Registration ──
+  registerNamespaces(
+    definitions: ReadonlyArray<NamespaceDefinition>,
+  ): Promise<SchemaRegistrationResult>;
+
+  // ── Instances ──
+  instance(basePath: string, instanceId: string): InstanceClient;
+
+  // ── Lifecycle ──
+  close(): Promise<void>;
+}

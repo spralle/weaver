@@ -1,0 +1,67 @@
+import { deepSet, deepRemove } from "@weaver/config-engine";
+
+import type { ClientSchemaRegistry } from "./schema-registry.js";
+import type { StalenessMonitor } from "./staleness.js";
+import type { WeaverTransport } from "./transport.js";
+import type { ConfigDelta, Unsubscribe } from "./types.js";
+import { matchGlob } from "./client-helpers.js";
+
+export interface SubscriptionDeps {
+  baseState: Record<string, unknown>;
+  transport: WeaverTransport;
+  registry: ClientSchemaRegistry | undefined;
+  changeListeners: Map<string, Set<(changes: ConfigDelta[]) => void>>;
+  restartListeners: Set<() => void>;
+  stalenessMonitor: StalenessMonitor;
+  onSync: (date: Date) => void;
+  onRestartRequired: () => void;
+}
+
+export function setupDeltaSubscription(deps: SubscriptionDeps): Unsubscribe {
+  const {
+    baseState,
+    transport,
+    registry,
+    changeListeners,
+    restartListeners,
+    stalenessMonitor,
+    onSync,
+    onRestartRequired,
+  } = deps;
+
+  let pendingRestart = false;
+
+  return transport.subscribe((delta: ConfigDelta) => {
+    if (!delta.layer.includes(":")) {
+      if (delta.action === "set") {
+        deepSet(baseState, delta.key, delta.value);
+      } else {
+        deepRemove(baseState, delta.key);
+      }
+    }
+
+    const now = new Date();
+    onSync(now);
+    stalenessMonitor.recordSync();
+
+    // Check if this delta requires a restart
+    if (registry && !pendingRestart) {
+      const restartKeys = registry.getRestartRequiredKeys();
+      if (restartKeys.includes(delta.key)) {
+        pendingRestart = true;
+        onRestartRequired();
+        for (const listener of restartListeners) {
+          listener();
+        }
+      }
+    }
+
+    for (const [pattern, handlers] of changeListeners) {
+      if (matchGlob(pattern, delta.key)) {
+        for (const handler of handlers) {
+          handler([delta]);
+        }
+      }
+    }
+  });
+}
