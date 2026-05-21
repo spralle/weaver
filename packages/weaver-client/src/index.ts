@@ -34,6 +34,7 @@ export type {
 } from "./transport.js";
 export type {
   ClientLayerInspection,
+  ClientMode,
   ConfigDelta,
   ConfigSnapshot,
   ConfigurationInspection,
@@ -41,3 +42,13 @@ export type {
   ResolveOptions,
   Unsubscribe,
 } from "./types.js";
+export type { ClientSchemaRegistry, ValidationResult } from "./schema-registry.js";
+export { createClientSchemaRegistry } from "./schema-registry.js";
+export type {
+  InstanceClient,
+  NamespaceDefinition,
+  TypedInstanceClient,
+  TypedNamespaceClient,
+  UntypedNamespaceClient,
+} from "./namespace.js";
+export { defineNamespace } from "./namespace.js";

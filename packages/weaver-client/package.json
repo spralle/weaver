@@ -30,8 +30,12 @@
     "@weaver/config-sync": "workspace:*",
     "@weaver/config-types": "workspace:*"
   },
+  "peerDependencies": {
+    "zod": "^4.0.0"
+  },
   "devDependencies": {
     "@types/node": "25.6.0",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "zod": "^4.0.0"
   }
 }

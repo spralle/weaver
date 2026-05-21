@@ -14,6 +14,7 @@ import type {
   WriteResult,
 } from "./transport.js";
 import type {
+  ClientMode,
   ConfigDelta,
   ConfigSnapshot,
   ConfigurationInspection,
@@ -85,6 +86,7 @@ export interface WeaverClient {
   readonly pendingRestart: boolean;
 
   // ── Health ──
+  readonly mode: ClientMode;
   readonly revision: string;
   readonly connected: boolean;
   readonly lastSyncedAt: Date | null;
@@ -331,6 +333,12 @@ export async function createWeaverClient(
 
     get pendingRestart(): boolean {
       return pendingRestart;
+    },
+
+    get mode(): ClientMode {
+      if (connected) return "live";
+      if (revision) return "cached";
+      return "degraded";
     },
 
     get revision(): string {

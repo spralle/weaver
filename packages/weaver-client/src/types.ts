@@ -27,4 +27,6 @@ export interface ClientLayerInspection<T> {
   layers: Array<{ layer: string; value: T | undefined; environment?: string }>;
 }
 
+export type ClientMode = "live" | "cached" | "degraded";
+
 export type Unsubscribe = () => void;
