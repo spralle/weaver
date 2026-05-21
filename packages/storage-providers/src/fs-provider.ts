@@ -13,8 +13,10 @@ import type {
   ConfigurationLayer,
   ConfigurationLayerData,
   ConfigurationStorageProvider,
+  Result,
   WriteResult,
 } from "@weaver/config-types";
+import { err, ok } from "@weaver/config-types";
 
 export interface FileSystemProviderOptions {
   id: string;
@@ -187,18 +189,29 @@ export class FileSystemStorageProvider implements ConfigurationStorageProvider {
   }
 
   private async readJsonFile(path: string): Promise<Record<string, unknown>> {
+    const result = await this.readJsonFileResult(path);
+    if (!result.ok) {
+      // Preserve legacy behavior: log and return empty for parse errors
+      console.warn(result.error.message);
+      return {};
+    }
+    return result.value;
+  }
+
+  private async readJsonFileResult(
+    path: string,
+  ): Promise<Result<Record<string, unknown>, Error>> {
     try {
       const content = await readFile(path, "utf-8");
-      return safeParseConfigEntries(JSON.parse(content));
-    } catch (err: unknown) {
-      if (err instanceof SyntaxError) {
-        console.warn(`Invalid JSON in config file: ${path}`);
-        return {};
+      return ok(safeParseConfigEntries(JSON.parse(content)));
+    } catch (e: unknown) {
+      if (e instanceof SyntaxError) {
+        return err(new Error(`Invalid JSON in config file: ${path}`));
       }
-      if (isNodeError(err) && err.code === "ENOENT") {
-        return {};
+      if (isNodeError(e) && e.code === "ENOENT") {
+        return ok({});
       }
-      throw err;
+      return err(e instanceof Error ? e : new Error(String(e)));
     }
   }
 
