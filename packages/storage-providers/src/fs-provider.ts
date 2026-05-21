@@ -18,6 +18,7 @@ import type {
 } from "@weaver/config-types";
 import { err, ok } from "@weaver/config-types";
 
+/** Options for creating a file-system storage provider. */
 export interface FileSystemProviderOptions {
   id: string;
   layer: ConfigurationLayer | string;

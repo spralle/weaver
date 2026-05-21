@@ -7,10 +7,12 @@ import {
 } from "@weaver/config-engine";
 import type { SimpleGit } from "simple-git";
 
+/** Result of a git operation — success with data or failure with error details. */
 export type GitOperationResult<T = void> =
   | { success: true; data: T }
   | { success: false; error: string; retryable: boolean };
 
+/** Options for creating a git manager (repo URL, local path, branch, auth). */
 export interface GitManagerOptions {
   repoUrl: string;
   localPath: string;
@@ -19,6 +21,7 @@ export interface GitManagerOptions {
   git?: SimpleGit | undefined;
 }
 
+/** Manages a local git clone — handles clone, pull, commit+push, and revert operations. */
 export interface GitManager {
   ensureClone(): Promise<GitOperationResult>;
   refresh(): Promise<GitOperationResult>;

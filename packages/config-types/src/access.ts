@@ -5,6 +5,7 @@ import type {
 import type { SessionType } from "./session.js";
 import type { ConfigurationLayer, ScopeInstance } from "./types.js";
 
+/** Identity and role context for evaluating configuration access permissions. */
 export interface ConfigurationAccessContext {
   userId: string;
   roles: ReadonlyArray<ConfigurationRole>;
@@ -12,16 +13,19 @@ export interface ConfigurationAccessContext {
   sessionMode?: "emergency-override" | SessionType | undefined;
 }
 
+/** Constraint applied to a layer write policy (e.g., scope or user restriction). */
 export interface LayerWriteConstraint {
   scopeRestriction?: "own-scope" | "own-user" | undefined;
 }
 
+/** Defines which roles may write to a specific layer, with optional constraints. */
 export interface LayerWritePolicy {
   layer: ConfigurationLayer | string;
   allowedRoles: ReadonlyArray<ConfigurationRole>;
   constraints?: ReadonlyArray<LayerWriteConstraint> | undefined;
 }
 
+/** A fragment of configuration schema owned by a specific team or service. */
 export interface ConfigurationSchemaFragment {
   readonly description: string;
   readonly schemaVersion: number;
@@ -29,6 +33,7 @@ export interface ConfigurationSchemaFragment {
   readonly configuration: ConfigurationPropertySchema;
 }
 
+/** Full declaration of a service's configuration needs — schema, namespaces, and access. */
 export interface ServiceConfigurationDeclaration {
   readonly serviceId: string;
   readonly description: string;
@@ -48,6 +53,7 @@ export interface ServiceConfigurationDeclaration {
     | undefined;
 }
 
+/** Access policy granting a service permission to specific namespaces and scopes. */
 export interface ServiceAccessPolicy {
   readonly serviceId: string;
   readonly allowedNamespaces: ReadonlyArray<string>;

@@ -11,6 +11,7 @@ import {
   type WriteResult,
 } from "@weaver/config-types";
 
+/** Options for configuring the override session provider. */
 export interface OverrideSessionProviderOptions {
   /** Layer name for this session provider (default: "session") */
   layer?: string | undefined;
@@ -26,6 +27,7 @@ export interface OverrideSessionProviderOptions {
     | undefined;
 }
 
+/** Controller for managing override session lifecycle (activate, extend, deactivate). */
 export interface OverrideSessionController {
   activate(request: SessionActivationRequest): OverrideSession;
   deactivate(): SessionDeactivationResult;
@@ -46,6 +48,12 @@ function nowIso(): string {
   return new Date().toISOString();
 }
 
+/**
+ * Creates an override session provider with time-limited activation and audit logging.
+ *
+ * @param options - Session configuration (duration, audit callback, timer)
+ * @returns Controller for activating, extending, and deactivating override sessions
+ */
 export function createOverrideSessionProvider(
   options?: OverrideSessionProviderOptions | undefined,
 ): OverrideSessionController {

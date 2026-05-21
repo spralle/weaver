@@ -18,6 +18,7 @@ export interface ConfigurationSessionHandle {
   isActive(): boolean;
 }
 
+/** Resolved value with provenance — shows where a key's value came from in the layer stack. */
 export interface ConfigurationInspection<T> {
   key: string;
   effectiveValue: T | undefined;
@@ -29,6 +30,7 @@ export interface ConfigurationInspection<T> {
   secretResolved?: boolean | undefined;
 }
 
+/** Core configuration service — reads, writes, inspects, and subscribes to config values. */
 export interface ConfigurationService {
   get<T>(key: string): T | undefined;
   get<T>(key: string, schema: ZodType<T>): T | undefined;
@@ -43,6 +45,7 @@ export interface ConfigurationService {
   readonly session?: ConfigurationSessionHandle | undefined;
 }
 
+/** Namespace-scoped configuration service with relative key access. */
 export interface ScopedConfigurationService {
   get<T>(relativeKey: string): T | undefined;
   getWithDefault<T>(relativeKey: string, defaultValue: T): T;
@@ -57,6 +60,7 @@ export interface ScopedConfigurationService {
   readonly root: ConfigurationService;
 }
 
+/** View-level configuration service supporting per-instance overrides. */
 export interface ViewConfigurationService {
   get<T>(key: string): T | undefined;
   getWithDefault<T>(key: string, defaultValue: T): T;
@@ -69,6 +73,7 @@ export interface ViewConfigurationService {
   resetInstance(instanceId: string): void;
 }
 
+/** Server-side service configuration with namespace reads and restart tracking. */
 export interface ServiceConfigurationService {
   get<T>(key: string): T | undefined;
   getWithDefault<T>(key: string, defaultValue: T): T;

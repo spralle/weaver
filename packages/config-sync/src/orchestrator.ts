@@ -28,6 +28,12 @@ import type {
 declare function setTimeout(callback: () => void, ms: number): unknown;
 declare function clearTimeout(id: unknown): void;
 
+/**
+ * Creates a sync orchestrator that manages bidirectional config synchronization.
+ * Handles pull, push, conflict resolution, and offline queueing.
+ *
+ * @param options - Transport, caches, retry policy, and conflict resolution strategy
+ */
 export function createConfigSyncOrchestrator(
   options: ConfigSyncOrchestratorOptions,
 ): ConfigSyncOrchestrator {

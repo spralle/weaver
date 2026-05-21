@@ -10,10 +10,17 @@ import { configSnapshotSchema } from "@weaver/config-types";
 import type { WeaverClientPersistence } from "./persistence.js";
 import type { ConfigSnapshot } from "./types.js";
 
+/** Options for file-system based snapshot persistence. */
 export interface FileSystemPersistenceOptions {
   directory: string;
 }
 
+/**
+ * Creates a file-system persistence adapter that stores snapshots as JSON files.
+ * Uses atomic write (temp + rename) to prevent corruption.
+ *
+ * @param options - Directory path for snapshot storage
+ */
 export function createFileSystemPersistence(
   options: FileSystemPersistenceOptions,
 ): WeaverClientPersistence {

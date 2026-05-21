@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+/** All known Weaver error codes for typed error handling across packages. */
 export const weaverErrorCodes = [
   "NOT_FOUND",
   "UNAUTHORIZED",
@@ -29,6 +30,7 @@ export const weaverErrorSchema = z.object({
 });
 export type WeaverError = z.infer<typeof weaverErrorSchema>;
 
+/** Typed Error subclass carrying a WeaverErrorCode and optional details. */
 export class WeaverErrorInstance extends Error {
   readonly code: WeaverErrorCode;
   readonly details?: Record<string, unknown>;
@@ -47,6 +49,13 @@ export class WeaverErrorInstance extends Error {
   }
 }
 
+/**
+ * Factory for creating typed Weaver errors with code, message, and optional details.
+ *
+ * @param code - Error category from the WeaverErrorCode enum
+ * @param message - Human-readable description
+ * @param details - Optional structured context for debugging
+ */
 export function createWeaverError(
   code: WeaverErrorCode,
   message: string,

@@ -16,6 +16,12 @@ import {
   type Unsubscribe,
 } from "./types.js";
 
+/**
+ * Creates a reactive state container that resolves config from prioritized layers.
+ * Supports subscriptions, delta application, and snapshot hydration.
+ *
+ * @param options - Optional initial layers to seed the container
+ */
 export function createStateContainer(options?: {
   layers?: LayerEntry[];
 }): StateContainer {

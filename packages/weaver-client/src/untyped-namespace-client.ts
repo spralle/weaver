@@ -7,6 +7,7 @@ import type { ConfigDelta, Unsubscribe } from "./types.js";
 import type { WriteOptions, WriteResult } from "./transport.js";
 import { createInstanceClient } from "./instance-client.js";
 
+/** Dependencies injected into an untyped namespace client. */
 export interface UntypedNamespaceClientDeps {
   getState: (scopePath?: ScopeInstance[]) => Record<string, unknown>;
   set: (
@@ -25,6 +26,13 @@ export interface UntypedNamespaceClientDeps {
   ) => Unsubscribe;
 }
 
+/**
+ * Creates an untyped namespace client for dynamic key access without compile-time schema.
+ *
+ * @param prefix - Namespace prefix (e.g., "editor.font")
+ * @param deps - State access and write dependencies
+ * @param scopePath - Optional scope path for scoped reads
+ */
 export function createUntypedNamespaceClient(
   prefix: string,
   deps: UntypedNamespaceClientDeps,

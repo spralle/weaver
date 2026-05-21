@@ -4,6 +4,7 @@ import type { InstanceClient } from "./namespace.js";
 import type { ConfigDelta, Unsubscribe } from "./types.js";
 import type { WriteOptions, WriteResult } from "./transport.js";
 
+/** Dependencies injected into an instance client for state access and writes. */
 export interface InstanceClientDeps {
   getState: () => Record<string, unknown>;
   set: (key: string, value: unknown, opts?: WriteOptions) => Promise<WriteResult>;

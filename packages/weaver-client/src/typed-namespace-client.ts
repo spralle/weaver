@@ -10,6 +10,7 @@ import type {
 import type { ConfigDelta, Unsubscribe } from "./types.js";
 import type { WriteOptions, WriteResult } from "./transport.js";
 
+/** Dependencies injected into a typed namespace client. */
 export interface NamespaceClientDeps {
   getState: (scopePath?: ScopeInstance[]) => Record<string, unknown>;
   set: (key: string, value: unknown, opts?: WriteOptions) => Promise<WriteResult>;
@@ -17,6 +18,13 @@ export interface NamespaceClientDeps {
   onChange: (pattern: string, handler: (deltas: ConfigDelta[]) => void) => Unsubscribe;
 }
 
+/**
+ * Creates a typed namespace client that validates reads/writes against a Zod schema.
+ *
+ * @param definition - Namespace definition with prefix and schema shape
+ * @param deps - State access and write dependencies
+ * @param scopePath - Optional scope path for scoped reads
+ */
 export function createTypedNamespaceClient<TShape extends ZodRawShape>(
   definition: NamespaceDefinition<string, TShape>,
   deps: NamespaceClientDeps,

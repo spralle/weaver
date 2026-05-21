@@ -1,12 +1,15 @@
 // One-way ratchet validator for restrictive config fields
 
+/** Classification of a value transition between layers. */
 export type RatchetTransition = "tightened" | "equal" | "loosened" | "blocked";
 
+/** Snapshot of a single layer's values for ratchet comparison. */
 export interface RatchetLayerSnapshot {
   readonly layer: string;
   readonly values: Record<string, unknown>;
 }
 
+/** Ratchet rule using a fixed ordering of allowed values (least to most restrictive). */
 export interface OrderedRatchetRule {
   readonly kind: "ordered";
   readonly field: string;
@@ -16,14 +19,17 @@ export interface OrderedRatchetRule {
   readonly order: readonly string[];
 }
 
+/** Ratchet rule with a custom comparison function for complex transitions. */
 export interface CustomRatchetRule {
   readonly kind: "custom";
   readonly field: string;
   readonly compare: (previous: unknown, current: unknown) => RatchetTransition;
 }
 
+/** Union of ratchet rule types (ordered or custom). */
 export type RatchetRule = OrderedRatchetRule | CustomRatchetRule;
 
+/** Options for configuring the ratchet validator. */
 export interface RatchetValidatorOptions {
   /**
    * Layer order from lowest priority to highest priority.
@@ -36,6 +42,7 @@ export interface RatchetValidatorOptions {
   readonly stickyBlocked?: boolean;
 }
 
+/** A single ratchet evaluation — one field transition between two layers. */
 export interface RatchetEvaluation {
   readonly field: string;
   readonly fromLayer: string;
@@ -46,6 +53,7 @@ export interface RatchetEvaluation {
   readonly reason?: string | undefined;
 }
 
+/** Full result of ratchet validation — all evaluations, violations, and blocked transitions. */
 export interface RatchetValidationResult {
   readonly evaluations: ReadonlyArray<RatchetEvaluation>;
   readonly violations: ReadonlyArray<RatchetEvaluation>;

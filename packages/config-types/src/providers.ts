@@ -1,17 +1,20 @@
 import type { ConfigurationLayer, ConfigurationLayerData } from "./types.js";
 
+/** Outcome of a write or remove operation against a storage provider. */
 export interface WriteResult {
   success: boolean;
   error?: string | undefined;
   revision?: string | undefined;
 }
 
+/** Describes a single key change detected by a storage provider. */
 export interface ConfigurationChange {
   key: string;
   oldValue: unknown;
   newValue: unknown;
 }
 
+/** Pluggable storage backend for a single configuration layer. */
 export interface ConfigurationStorageProvider {
   readonly id: string;
   readonly layer: ConfigurationLayer | string;
@@ -34,6 +37,7 @@ export interface ConfigurationStorageProvider {
   ): () => void;
 }
 
+/** Discriminated union representing the current synchronization state. */
 export type SyncStatus =
   | { status: "synced"; lastSyncedAt: number }
   | { status: "syncing" }
@@ -41,6 +45,7 @@ export type SyncStatus =
   | { status: "conflict"; conflicts: ConfigurationConflict[] }
   | { status: "error"; error: string; lastSyncedAt?: number | undefined };
 
+/** A detected conflict between local and remote values for the same key. */
 export interface ConfigurationConflict {
   key: string;
   localValue: unknown;
@@ -49,12 +54,14 @@ export interface ConfigurationConflict {
   remoteRevision: string;
 }
 
+/** Summary of a sync cycle — counts of pulled/pushed changes and any conflicts. */
 export interface SyncResult {
   pulled: number;
   pushed: number;
   conflicts: ConfigurationConflict[];
 }
 
+/** Opaque cursor for resumable sync — tracks server revision and feed position. */
 export interface SyncCursor {
   /**
    * Authoritative server revision token.
@@ -70,6 +77,7 @@ export interface SyncCursor {
   feedToken?: string | undefined;
 }
 
+/** Metadata about the current state of the mutation queue. */
 export interface SyncQueueMetadata {
   pendingCount: number;
   inFlightCount: number;
@@ -77,8 +85,10 @@ export interface SyncQueueMetadata {
   newestQueuedAt?: number | undefined;
 }
 
+/** The type of mutation: set a value or remove a key. */
 export type SyncMutationOperation = "set" | "remove";
 
+/** Tracking metadata for a queued mutation (attempt count, timestamps). */
 export interface SyncMutationMetadata {
   queuedAt: number;
   attemptCount: number;
@@ -86,6 +96,7 @@ export interface SyncMutationMetadata {
   policyAllowed: boolean;
 }
 
+/** A mutation waiting in the local queue to be pushed to the server. */
 export interface SyncQueuedMutation {
   mutationId: string;
   key: string;
@@ -95,6 +106,7 @@ export interface SyncQueuedMutation {
   metadata: SyncMutationMetadata;
 }
 
+/** A change received from the server during a pull operation. */
 export interface SyncRemoteChange {
   key: string;
   value?: unknown;
@@ -103,6 +115,7 @@ export interface SyncRemoteChange {
   serverTime: number;
 }
 
+/** Categorized error codes for sync transport failures. */
 export type SyncErrorCode =
   | "network"
   | "timeout"
@@ -114,6 +127,7 @@ export type SyncErrorCode =
   | "server"
   | "unknown";
 
+/** Structured error details from a failed sync operation. */
 export interface SyncErrorMetadata {
   code: SyncErrorCode;
   message: string;
@@ -125,6 +139,7 @@ export interface SyncErrorMetadata {
   details?: Readonly<Record<string, unknown>> | undefined;
 }
 
+/** Conflict details when a local mutation collides with a server-side change. */
 export interface SyncConflictMetadata {
   key: string;
   mutationId?: string | undefined;
@@ -135,22 +150,26 @@ export interface SyncConflictMetadata {
   serverTime: number;
 }
 
+/** Request payload for pulling remote changes since a cursor position. */
 export interface ConfigSyncPullRequest {
   cursor?: SyncCursor | undefined;
   limit?: number | undefined;
 }
 
+/** Server response containing remote changes and an updated cursor. */
 export interface ConfigSyncPullResponse {
   cursor: SyncCursor;
   serverTime: number;
   changes: ReadonlyArray<SyncRemoteChange>;
 }
 
+/** Request payload for pushing local mutations to the server. */
 export interface ConfigSyncPushRequest {
   requestId: string;
   mutations: ReadonlyArray<SyncQueuedMutation>;
 }
 
+/** Per-mutation result within a push response — accepted, conflicted, or errored. */
 export interface ConfigSyncPushResult {
   mutationId: string;
   accepted: boolean;
@@ -159,6 +178,7 @@ export interface ConfigSyncPushResult {
   error?: SyncErrorMetadata | undefined;
 }
 
+/** Server response to a push request with per-mutation results. */
 export interface ConfigSyncPushResponse {
   requestId: string;
   serverRevision: string;
@@ -166,10 +186,12 @@ export interface ConfigSyncPushResponse {
   results: ReadonlyArray<ConfigSyncPushResult>;
 }
 
+/** Request to acknowledge successful processing of a push response. */
 export interface ConfigSyncAckRequest {
   requestId: string;
 }
 
+/** Server confirmation that a push acknowledgement was received. */
 export interface ConfigSyncAckResponse {
   requestId: string;
   acked: boolean;
@@ -177,6 +199,7 @@ export interface ConfigSyncAckResponse {
   serverTime: number;
 }
 
+/** Durable cache for sync snapshots and cursor state (survives restarts). */
 export interface SyncSnapshotCache {
   loadSnapshot(): Promise<ConfigurationLayerData>;
   saveSnapshot(data: ConfigurationLayerData): Promise<void>;
@@ -184,6 +207,7 @@ export interface SyncSnapshotCache {
   setCursor(cursor: SyncCursor): Promise<void>;
 }
 
+/** Durable queue for pending mutations with in-flight tracking. */
 export interface SyncMutationQueue {
   enqueueMutation(mutation: SyncQueuedMutation): Promise<void>;
   peekQueuedMutations(
@@ -198,8 +222,10 @@ export interface SyncMutationQueue {
   getQueueMetadata(): Promise<SyncQueueMetadata>;
 }
 
+/** Combined snapshot cache and mutation queue for full offline-capable sync. */
 export type DurableConfigCache = SyncSnapshotCache & SyncMutationQueue;
 
+/** Transport abstraction for sync protocol (pull/push/ack cycle). */
 export interface ConfigSyncTransport {
   pull(request: ConfigSyncPullRequest): Promise<ConfigSyncPullResponse>;
   push(request: ConfigSyncPushRequest): Promise<ConfigSyncPushResponse>;

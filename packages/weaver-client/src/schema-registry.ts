@@ -4,11 +4,13 @@ import type {
   ConfigurationPropertySchema,
 } from "@weaver/config-types";
 
+/** Result of validating a value against its registered schema. */
 export interface ValidationResult {
   valid: boolean;
   errors?: ReadonlyArray<{ path: string; message: string }>;
 }
 
+/** Client-side schema registry for runtime validation, sensitivity checks, and reload tracking. */
 export interface ClientSchemaRegistry {
   load(schemas: Record<string, ConfigurationPropertySchema>): void;
   getSchema(key: string): ConfigurationPropertySchema | undefined;
@@ -18,6 +20,7 @@ export interface ClientSchemaRegistry {
   validate(key: string, value: unknown): ValidationResult;
 }
 
+/** Creates a client-side schema registry for validating config values against server schemas. */
 export function createClientSchemaRegistry(): ClientSchemaRegistry {
   const schemas = new Map<string, ConfigurationPropertySchema>();
 
