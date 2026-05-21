@@ -1,8 +1,14 @@
 import type {
+  Result,
   SecretDomainAuditEntry,
   SecretReference,
 } from "@weaver/config-types";
-import { createWeaverError, isSecretReference } from "@weaver/config-types";
+import {
+  createWeaverError,
+  err,
+  isSecretReference,
+  ok,
+} from "@weaver/config-types";
 import type { SecretCache } from "./secret-cache.js";
 import { createSecretCache } from "./secret-cache.js";
 import type { SecretProvider, SecretStoreResult } from "./secret-provider.js";
@@ -51,22 +57,39 @@ export class SecretResolutionService {
   }
 
   async resolve(ref: SecretReference): Promise<string> {
+    const result = await this.resolveResult(ref);
+    if (!result.ok) throw result.error;
+    return result.value;
+  }
+
+  async resolveResult(
+    ref: SecretReference,
+  ): Promise<Result<string, Error>> {
     const cacheKey = `${ref.provider}:${ref.uri}:${ref.version ?? ""}`;
     const cached = this.cache.get(cacheKey);
     if (cached) {
       this.audit("cache-hit", ref.provider, ref.uri, true);
-      return cached.value;
+      return ok(cached.value);
     }
 
-    const provider = this.getProvider(ref.provider);
+    const provider = this.providers.get(ref.provider);
+    if (!provider) {
+      return err(
+        createWeaverError("NOT_FOUND", `Secret provider "${ref.provider}" not registered`, {
+          provider: ref.provider,
+        }),
+      );
+    }
+
     try {
       const result = await provider.resolve(ref);
       this.cache.set(cacheKey, result.value, result.version);
       this.audit("resolve", ref.provider, ref.uri, true);
-      return result.value;
-    } catch (err) {
-      this.audit("resolve", ref.provider, ref.uri, false, errorMessage(err));
-      throw err;
+      return ok(result.value);
+    } catch (e) {
+      const error = e instanceof Error ? e : new Error(String(e));
+      this.audit("resolve", ref.provider, ref.uri, false, error.message);
+      return err(error);
     }
   }
 

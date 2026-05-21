@@ -12,6 +12,13 @@ import type {
   Unsubscribe,
 } from "./types.js";
 
+export interface TransportError {
+  type: "connection" | "timeout" | "parse" | "server";
+  message: string;
+  statusCode?: number;
+  retryable: boolean;
+}
+
 export interface HttpTransportOptions {
   /** Base URL of the weaver-server (e.g. "http://localhost:3399") */
   baseUrl: string;
@@ -23,6 +30,8 @@ export interface HttpTransportOptions {
   fetch?: typeof globalThis.fetch;
   /** Maximum reconnection attempts for SSE (default: Infinity) */
   maxReconnectAttempts?: number;
+  /** Error callback for transport-level errors */
+  onError?: (error: TransportError) => void;
 }
 
 interface SSEState {
@@ -39,6 +48,7 @@ export function createHttpTransport(
   const { baseUrl, token, headers: extraHeaders } = options;
   const fetchFn = options.fetch ?? globalThis.fetch;
   const maxReconnectAttempts = options.maxReconnectAttempts ?? Infinity;
+  const onError = options.onError;
 
   const deltaHandlers = new Set<(delta: ConfigDelta) => void>();
   const snapshotHandlers = new Set<(snapshot: ConfigSnapshot) => void>();
@@ -85,18 +95,43 @@ export function createHttpTransport(
     path: string,
     body?: unknown,
   ): Promise<T> {
-    const res = await fetchFn(`${baseUrl}${path}`, {
-      method,
-      headers: buildHeaders(),
-      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
-    });
+    let res: Response;
+    try {
+      res = await fetchFn(`${baseUrl}${path}`, {
+        method,
+        headers: buildHeaders(),
+        ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+      });
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      onError?.({
+        type: "connection",
+        message,
+        retryable: true,
+      });
+      throw e;
+    }
     // SAFETY: server API contract guarantees this response shape
-    const json = (await res.json()) as {
-      data: T;
-      meta: { revision: string };
-      error?: { code: string; message: string };
-    };
+    let json: { data: T; meta: { revision: string }; error?: { code: string; message: string } };
+    try {
+      json = (await res.json()) as typeof json;
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      onError?.({
+        type: "parse",
+        message: `Failed to parse response: ${message}`,
+        statusCode: res.status,
+        retryable: false,
+      });
+      throw new Error(`Failed to parse response from ${path}`);
+    }
     if (!res.ok && json.error) {
+      onError?.({
+        type: "server",
+        message: json.error.message,
+        statusCode: res.status,
+        retryable: res.status >= 500,
+      });
       throw new Error(`[${json.error.code}] ${json.error.message}`);
     }
     return json.data;
@@ -129,7 +164,11 @@ export function createHttpTransport(
           handler(delta);
         }
       } catch {
-        /* skip invalid JSON */
+        onError?.({
+          type: "parse",
+          message: "Failed to parse SSE change event",
+          retryable: false,
+        });
       }
     } else if (eventType === "snapshot" && data) {
       try {
@@ -138,7 +177,11 @@ export function createHttpTransport(
           handler(snapshot);
         }
       } catch {
-        /* skip invalid JSON */
+        onError?.({
+          type: "parse",
+          message: "Failed to parse SSE snapshot event",
+          retryable: false,
+        });
       }
     } else if (eventType === "checkpoint") {
       sse.lastCheckpoint = Date.now();
@@ -200,6 +243,11 @@ export function createHttpTransport(
             })
             .catch(() => {
               sse.abortController = null;
+              onError?.({
+                type: "connection",
+                message: "SSE stream read error",
+                retryable: true,
+              });
               scheduleReconnect();
             });
         }
@@ -208,6 +256,11 @@ export function createHttpTransport(
       })
       .catch(() => {
         sse.abortController = null;
+        onError?.({
+          type: "connection",
+          message: "SSE connection failed",
+          retryable: true,
+        });
         scheduleReconnect();
       });
   }

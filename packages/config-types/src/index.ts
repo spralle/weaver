@@ -1,5 +1,9 @@
 // @weaver/config-types — Configuration type definitions and Zod schemas
 
+// result.ts — Discriminated Result<T,E> union for fallible operations
+export type { Result } from "./result.js";
+export { ok, err, isOk, isErr } from "./result.js";
+
 // access.ts — Permission types and default policies
 export type {
   ConfigurationAccessContext,

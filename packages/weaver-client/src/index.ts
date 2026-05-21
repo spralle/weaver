@@ -3,7 +3,7 @@ export { createWeaverClient } from "./client.js";
 export { flattenObject } from "./flatten.js";
 export type { FileSystemPersistenceOptions } from "./fs-persistence.js";
 export { createFileSystemPersistence } from "./fs-persistence.js";
-export type { HttpTransportOptions } from "./http-transport.js";
+export type { HttpTransportOptions, TransportError } from "./http-transport.js";
 export { createHttpTransport } from "./http-transport.js";
 export type { IndexedDbPersistenceOptions } from "./indexeddb-persistence.js";
 export { createIndexedDbPersistence } from "./indexeddb-persistence.js";
