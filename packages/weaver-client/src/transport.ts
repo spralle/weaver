@@ -1,4 +1,5 @@
 import type {
+  ConfigurationPropertySchema,
   ScopeDefinition,
   ScopeInstance,
   WeaverErrorCode,
@@ -56,6 +57,13 @@ export interface WeaverTransport {
     scopeId: string,
     parentScope?: ScopeInstance[],
   ): Promise<string[]>;
+
+  // Schemas
+  fetchSchemas?(): Promise<Record<string, ConfigurationPropertySchema>>;
+  registerSchema?(
+    namespace: string,
+    schema: Record<string, unknown>,
+  ): Promise<void>;
 
   // Lifecycle
   close(): Promise<void>;

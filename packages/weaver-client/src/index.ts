@@ -34,10 +34,32 @@ export type {
 } from "./transport.js";
 export type {
   ClientLayerInspection,
+  ClientMode,
   ConfigDelta,
   ConfigSnapshot,
   ConfigurationInspection,
   GetOptions,
   ResolveOptions,
+  SchemaOptions,
   Unsubscribe,
 } from "./types.js";
+export type { ClientSchemaRegistry, ValidationResult } from "./schema-registry.js";
+export { createClientSchemaRegistry } from "./schema-registry.js";
+export type { ValidationOptions } from "./validation.js";
+export { validateOnRead, validateOnWrite } from "./validation.js";
+export type {
+  InstanceClient,
+  NamespaceDefinition,
+  TypedInstanceClient,
+  TypedNamespaceClient,
+  UntypedNamespaceClient,
+} from "./namespace.js";
+export { defineNamespace } from "./namespace.js";
+export type { InstanceClientDeps } from "./instance-client.js";
+export { createInstanceClient } from "./instance-client.js";
+export type { NamespaceClientDeps } from "./typed-namespace-client.js";
+export { createTypedNamespaceClient } from "./typed-namespace-client.js";
+export type { SchemaRegistrationResult } from "./registration.js";
+export { registerNamespaces, zodShapeToJsonSchema } from "./registration.js";
+export type { UntypedNamespaceClientDeps } from "./untyped-namespace-client.js";
+export { createUntypedNamespaceClient } from "./untyped-namespace-client.js";

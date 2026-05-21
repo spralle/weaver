@@ -27,4 +27,13 @@ export interface ClientLayerInspection<T> {
   layers: Array<{ layer: string; value: T | undefined; environment?: string }>;
 }
 
+export type ClientMode = "live" | "cached" | "degraded";
+
 export type Unsubscribe = () => void;
+
+export interface SchemaOptions {
+  /** Subscribe to schema changes from server (default: true) */
+  live?: boolean;
+  /** Log warnings when values don't match server schema (default: true) */
+  warnOnMismatch?: boolean;
+}
