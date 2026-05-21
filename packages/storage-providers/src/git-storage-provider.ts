@@ -38,7 +38,7 @@ class GitStorageProvider implements ConfigurationStorageProvider {
     this.gitManager = options.gitManager;
     this.filePath = options.filePath;
 
-    const { join } = require("node:path") as typeof import("node:path");
+    const { join } = require("node:path") as typeof import("node:path"); // SAFETY: require returns the same module type
     const absoluteFilePath = join(
       options.gitManager.localPath,
       options.filePath,

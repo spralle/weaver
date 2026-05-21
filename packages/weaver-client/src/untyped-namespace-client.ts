@@ -41,9 +41,9 @@ export function createUntypedNamespaceClient(
       if (raw === undefined) return undefined;
       if (schema) {
         const result = z.safeParse(schema, raw);
-        return result.success ? (result.data as T) : undefined;
+        return result.success ? (result.data as T) : undefined; // SAFETY: Zod parse returns the schema type
       }
-      return raw as T;
+      return raw as T; // SAFETY: caller asserts type via generic parameter
     },
 
     getOrDefault<T = unknown>(key: string, defaultValue: T): T {
@@ -55,7 +55,7 @@ export function createUntypedNamespaceClient(
       const state = deps.getState(scopePath);
       const nsValue = deepGet(state, prefix);
       if (nsValue && typeof nsValue === "object" && !Array.isArray(nsValue)) {
-        return { ...(nsValue as Record<string, unknown>) };
+        return { ...(nsValue as Record<string, unknown>) }; // SAFETY: guarded by typeof/null/array checks
       }
       return {};
     },

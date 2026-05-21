@@ -22,7 +22,7 @@ export function flattenObject(
         typeof value === "object" &&
         !Array.isArray(value)
       ) {
-        walk(value as Record<string, unknown>, fullKey);
+        walk(value as Record<string, unknown>, fullKey); // SAFETY: guarded by typeof/null/array checks
       } else {
         result[fullKey] = value;
       }

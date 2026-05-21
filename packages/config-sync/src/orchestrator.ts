@@ -367,7 +367,7 @@ class ConfigSyncOrchestratorImpl implements ConfigSyncOrchestrator {
         this.triggerSync();
       }
     }, delay);
-    (this.retryTimer as { unref?: () => void }).unref?.();
+    (this.retryTimer as { unref?: () => void }).unref?.(); // SAFETY: Node.js Timer has unref but type doesn't expose it
   }
 
   private updateOfflineOrSchedule(): void {

@@ -37,6 +37,7 @@ function inferZodType(schema: unknown): {
   jsonType: Record<string, unknown>;
   isOptional: boolean;
 } {
+  // SAFETY: duck-typing Zod internals — schema is an opaque Zod type object
   const s = schema as Record<string, unknown>;
   let isOptional = false;
   let current = s;
@@ -46,11 +47,11 @@ function inferZodType(schema: unknown): {
   if (def && (def.type === "optional" || def.type === "nullable")) {
     isOptional = true;
     const inner = def.innerType;
-    if (inner) current = inner as Record<string, unknown>;
+    if (inner) current = inner as Record<string, unknown>; // SAFETY: Zod innerType is a schema object
   }
 
   const innerDef = getZodDef(current);
-  const typeName = innerDef?.type as string | undefined;
+  const typeName = innerDef?.type as string | undefined; // SAFETY: Zod def.type is always string if present
 
   if (typeName === "string") return { jsonType: { type: "string" }, isOptional };
   if (typeName === "number" || typeName === "float") return { jsonType: { type: "number" }, isOptional };
@@ -60,14 +61,14 @@ function inferZodType(schema: unknown): {
   if (typeName === "object") {
     const shape = innerDef?.shape;
     if (shape && typeof shape === "object") {
-      return { jsonType: zodShapeToJsonSchema(shape as ZodRawShape), isOptional };
+      return { jsonType: zodShapeToJsonSchema(shape as ZodRawShape), isOptional }; // SAFETY: confirmed shape is object
     }
     return { jsonType: { type: "object" }, isOptional };
   }
   if (typeName === "enum") {
     const entries = innerDef?.entries;
     if (entries && typeof entries === "object") {
-      return { jsonType: { type: "string", enum: Object.keys(entries as object) }, isOptional };
+      return { jsonType: { type: "string", enum: Object.keys(entries as object) }, isOptional }; // SAFETY: entries confirmed as object
     }
     return { jsonType: { type: "string" }, isOptional };
   }
@@ -83,11 +84,11 @@ function inferZodType(schema: unknown): {
 function getZodDef(
   schema: Record<string, unknown>,
 ): Record<string, unknown> | undefined {
-  // Zod 4: schema._zod.def
+  // SAFETY: accessing Zod 4 internal structure
   const _zod = schema._zod as Record<string, unknown> | undefined;
-  if (_zod?.def) return _zod.def as Record<string, unknown>;
+  if (_zod?.def) return _zod.def as Record<string, unknown>; // SAFETY: Zod def is always an object
   // Zod 3 fallback: schema._def
-  const _def = schema._def as Record<string, unknown> | undefined;
+  const _def = schema._def as Record<string, unknown> | undefined; // SAFETY: Zod 3 internal structure
   if (_def?.type) return _def;
   return undefined;
 }

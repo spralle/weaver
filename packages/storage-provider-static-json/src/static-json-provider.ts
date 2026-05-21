@@ -29,7 +29,7 @@ class StaticJsonStorageProvider implements ConfigurationStorageProvider {
 
   async load(): Promise<ConfigurationLayerData> {
     return {
-      entries: JSON.parse(JSON.stringify(this.data)) as Record<string, unknown>,
+      entries: JSON.parse(JSON.stringify(this.data)) as Record<string, unknown>, // SAFETY: this.data is Record<string, unknown>, JSON roundtrip preserves structure
     };
   }
 

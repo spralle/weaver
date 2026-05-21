@@ -7,5 +7,5 @@ export function cloneValue<T>(value: T): T {
   if (typeof structuredClone === "function") {
     return structuredClone(value);
   }
-  return JSON.parse(JSON.stringify(value)) as T;
+  return JSON.parse(JSON.stringify(value)) as T; // SAFETY: JSON roundtrip preserves structure, caller asserts type
 }

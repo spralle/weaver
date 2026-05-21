@@ -16,7 +16,7 @@ export function deepGet(obj: Record<string, unknown>, path: string): unknown {
     ) {
       return undefined;
     }
-    current = (current as Record<string, unknown>)[segment];
+    current = (current as Record<string, unknown>)[segment]; // SAFETY: guarded by typeof check above
   }
   return current;
 }
@@ -34,7 +34,7 @@ export function deepSet(
   const segments = parsePath(path);
   let current: Record<string, unknown> = obj;
   for (let i = 0; i < segments.length - 1; i++) {
-    const segment = segments[i] as string;
+    const segment = segments[i]!; // SAFETY: index within bounds
     const next = current[segment];
     if (
       next === null ||
@@ -44,9 +44,9 @@ export function deepSet(
     ) {
       current[segment] = {};
     }
-    current = current[segment] as Record<string, unknown>;
+    current = current[segment] as Record<string, unknown>; // SAFETY: just assigned {} or confirmed object
   }
-  const lastKey = segments[segments.length - 1] as string;
+  const lastKey = segments[segments.length - 1]!; // SAFETY: segments is non-empty
   current[lastKey] = value;
 }
 
@@ -61,21 +61,21 @@ export function deepRemove(
 ): boolean {
   const segments = parsePath(path);
   if (segments.length === 1) {
-    const firstSeg = segments[0] as string;
+    const firstSeg = segments[0]!; // SAFETY: length checked
     const existed = firstSeg in obj;
     delete obj[firstSeg];
     return existed;
   }
   let current: Record<string, unknown> = obj;
   for (let i = 0; i < segments.length - 1; i++) {
-    const segment = segments[i] as string;
+    const segment = segments[i]!; // SAFETY: index within bounds
     const next = current[segment];
     if (next === null || next === undefined || typeof next !== "object") {
       return false;
     }
-    current = next as Record<string, unknown>;
+    current = next as Record<string, unknown>; // SAFETY: guarded by typeof check above
   }
-  const lastSeg = segments[segments.length - 1] as string;
+  const lastSeg = segments[segments.length - 1]!; // SAFETY: segments.length > 1
   const existed = lastSeg in current;
   delete current[lastSeg];
   return existed;

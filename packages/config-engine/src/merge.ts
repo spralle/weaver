@@ -4,7 +4,7 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
   if (value === null || typeof value !== "object") {
     return false;
   }
-  const proto = Object.getPrototypeOf(value) as unknown;
+  const proto = Object.getPrototypeOf(value) as unknown; // SAFETY: getPrototypeOf always returns unknown-compatible value
   return proto === Object.prototype || proto === null;
 }
 

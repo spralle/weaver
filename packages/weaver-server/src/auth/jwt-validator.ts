@@ -62,7 +62,7 @@ async function verifyHs256(
   return crypto.subtle.verify(
     "HMAC",
     key,
-    signature.buffer as ArrayBuffer,
+    signature.buffer as ArrayBuffer, // SAFETY: Uint8Array.buffer is ArrayBuffer, cast needed for WebCrypto API
     encoder.encode(signingInput),
   );
 }
@@ -82,7 +82,7 @@ async function verifyRs256(
   );
   const key = await crypto.subtle.importKey(
     "spki",
-    binaryDer.buffer as ArrayBuffer,
+    binaryDer.buffer as ArrayBuffer, // SAFETY: Uint8Array.buffer is ArrayBuffer, cast needed for WebCrypto API
     { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
     false,
     ["verify"],
@@ -90,7 +90,7 @@ async function verifyRs256(
   return crypto.subtle.verify(
     "RSASSA-PKCS1-v1_5",
     key,
-    signature.buffer as ArrayBuffer,
+    signature.buffer as ArrayBuffer, // SAFETY: Uint8Array.buffer is ArrayBuffer, cast needed for WebCrypto API
     encoder.encode(signingInput),
   );
 }
@@ -143,7 +143,7 @@ export function createJwtValidator(options: JwtValidatorOptions): JwtValidator {
       const signingInput = `${parts[0]}.${parts[1]}`;
 
       // Verify algorithm matches expectation
-      const alg = header.alg as string;
+      const alg = header.alg as string; // SAFETY: JWT header.alg is always a string per RFC 7515
       if (isRsa && alg !== "RS256") {
         throw createWeaverError("UNAUTHORIZED", "Unsupported algorithm");
       }

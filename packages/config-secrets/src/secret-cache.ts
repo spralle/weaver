@@ -36,7 +36,7 @@ export class SecretCache {
 
   set(key: string, value: string, version?: string, ttlMs?: number): void {
     if (this.cache.size >= this.maxEntries && !this.cache.has(key)) {
-      const firstKey = this.cache.keys().next().value as string;
+      const firstKey = this.cache.keys().next().value as string; // SAFETY: cache.size > max guarantees at least one key
       this.cache.delete(firstKey);
     }
     const now = Date.now();

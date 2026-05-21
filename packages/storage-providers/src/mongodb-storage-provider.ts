@@ -155,7 +155,7 @@ class MongoDBStorageProvider implements ConfigurationStorageProvider {
 
       stream.on("change", (change: unknown) => {
         backoffMs = BASE_BACKOFF_MS;
-        const doc = (change as { fullDocument?: ConfigDocument }).fullDocument;
+        const doc = (change as { fullDocument?: ConfigDocument }).fullDocument; // SAFETY: MongoDB change stream with fullDocument option
         if (doc) {
           listener([
             { key: doc.key, oldValue: undefined, newValue: doc.value },

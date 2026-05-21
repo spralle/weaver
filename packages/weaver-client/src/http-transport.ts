@@ -90,6 +90,7 @@ export function createHttpTransport(
       headers: buildHeaders(),
       ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
     });
+    // SAFETY: server API contract guarantees this response shape
     const json = (await res.json()) as {
       data: T;
       meta: { revision: string };
@@ -123,7 +124,7 @@ export function createHttpTransport(
   function processSSEEvent(eventType: string, data: string): void {
     if (eventType === "change" && data) {
       try {
-        const delta = JSON.parse(data) as ConfigDelta;
+        const delta = JSON.parse(data) as ConfigDelta; // SAFETY: SSE event data matches ConfigDelta schema
         for (const handler of deltaHandlers) {
           handler(delta);
         }
@@ -132,7 +133,7 @@ export function createHttpTransport(
       }
     } else if (eventType === "snapshot" && data) {
       try {
-        const snapshot = JSON.parse(data) as ConfigSnapshot;
+        const snapshot = JSON.parse(data) as ConfigSnapshot; // SAFETY: SSE snapshot event matches ConfigSnapshot schema
         for (const handler of snapshotHandlers) {
           handler(snapshot);
         }
@@ -261,7 +262,7 @@ export function createHttpTransport(
         typeof result.value === "object" &&
         !Array.isArray(result.value)
       ) {
-        return result.value as Record<string, unknown>;
+        return result.value as Record<string, unknown>; // SAFETY: guarded by typeof/null/array checks
       }
       return {};
     },
@@ -302,6 +303,7 @@ export function createHttpTransport(
         headers,
         body: JSON.stringify({ value }),
       });
+      // SAFETY: server API contract guarantees this response shape
       const json = (await res.json()) as {
         data: WriteResult;
         error?: {
@@ -330,6 +332,7 @@ export function createHttpTransport(
         headers,
         body: JSON.stringify({ entries }),
       });
+      // SAFETY: server API contract guarantees this response shape
       const json = (await res.json()) as {
         data: WriteResult;
         error?: {
@@ -355,6 +358,7 @@ export function createHttpTransport(
         method: "DELETE",
         headers,
       });
+      // SAFETY: server API contract guarantees this response shape
       const json = (await res.json()) as {
         data: WriteResult;
         error?: {

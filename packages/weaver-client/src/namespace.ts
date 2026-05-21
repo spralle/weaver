@@ -23,7 +23,7 @@ export function defineNamespace<
   TShape extends ZodRawShape,
 >(prefix: TPrefix, shape: TShape): NamespaceDefinition<TPrefix, TShape> {
   // Safe cast: z.object(shape) returns ZodObject<TShape> but TS infers a wider type
-  return { prefix, schema: z.object(shape) as ZodObject<TShape> };
+  return { prefix, schema: z.object(shape) as ZodObject<TShape> }; // SAFETY: z.object(shape) produces ZodObject<TShape> but TS can't infer it
 }
 
 // ─── TypedNamespaceClient ─────────────────────────────────

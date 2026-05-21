@@ -49,7 +49,7 @@ class LocalStorageProvider implements ConfigurationStorageProvider {
         );
         return { entries: {} };
       }
-      return { entries: parsed as Record<string, unknown> };
+      return { entries: parsed as Record<string, unknown> }; // SAFETY: guarded by typeof/null/array checks
     } catch {
       console.warn(
         `[LocalStorageProvider] Corrupt JSON in "${this.storageKey}", returning empty`,
@@ -112,9 +112,9 @@ class LocalStorageProvider implements ConfigurationStorageProvider {
       }
     };
 
-    addEventListener("storage", handler as EventListener);
+    addEventListener("storage", handler as EventListener); // SAFETY: StorageEvent handler is compatible with EventListener
     return () => {
-      removeEventListener("storage", handler as EventListener);
+      removeEventListener("storage", handler as EventListener); // SAFETY: same handler reference for cleanup
     };
   }
 
@@ -132,7 +132,7 @@ class LocalStorageProvider implements ConfigurationStorageProvider {
         parsed !== null &&
         !Array.isArray(parsed)
       ) {
-        return parsed as Record<string, unknown>;
+        return parsed as Record<string, unknown>; // SAFETY: guarded by typeof/null/array checks
       }
       return {};
     } catch {

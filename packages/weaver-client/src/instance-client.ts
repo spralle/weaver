@@ -38,12 +38,12 @@ export function createInstanceClient(
         const result = schema.safeParse(raw);
         return result.success ? result.data : undefined;
       }
-      return raw as T;
+      return raw as T; // SAFETY: caller asserts type via generic parameter
     },
 
     getOrDefault<T = unknown>(key: string, defaultValue: T): T {
       const value = getInstanceValue(key);
-      return value !== undefined ? (value as T) : defaultValue;
+      return value !== undefined ? (value as T) : defaultValue; // SAFETY: caller asserts type via generic parameter
     },
 
     async set<T = unknown>(key: string, value: T): Promise<WriteResult> {
