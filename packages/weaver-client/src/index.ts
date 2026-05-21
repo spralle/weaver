@@ -63,3 +63,8 @@ export type { SchemaRegistrationResult } from "./registration.js";
 export { registerNamespaces, zodShapeToJsonSchema } from "./registration.js";
 export type { UntypedNamespaceClientDeps } from "./untyped-namespace-client.js";
 export { createUntypedNamespaceClient } from "./untyped-namespace-client.js";
+export type { TransportMiddleware } from "./middleware.js";
+export { withMiddleware } from "./middleware.js";
+export type { WriteQueue } from "./write-queue.js";
+export { createWriteQueue } from "./write-queue.js";
+export { fetchWithRetry, type RetryOptions } from "./http-retry.js";

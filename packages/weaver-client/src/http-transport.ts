@@ -11,6 +11,7 @@ import type {
   ResolveOptions,
   Unsubscribe,
 } from "./types.js";
+import { fetchWithRetry, type RetryOptions } from "./http-retry.js";
 
 export interface TransportError {
   type: "connection" | "timeout" | "parse" | "server";
@@ -32,6 +33,10 @@ export interface HttpTransportOptions {
   maxReconnectAttempts?: number;
   /** Error callback for transport-level errors */
   onError?: (error: TransportError) => void;
+  /** Retry configuration for failed requests */
+  retry?: RetryOptions;
+  /** Request timeout in milliseconds (default: 30000) */
+  timeout?: number;
 }
 
 interface SSEState {
@@ -49,6 +54,12 @@ export function createHttpTransport(
   const fetchFn = options.fetch ?? globalThis.fetch;
   const maxReconnectAttempts = options.maxReconnectAttempts ?? Infinity;
   const onError = options.onError;
+  const retryConfig = {
+    maxAttempts: options.retry?.maxAttempts ?? 3,
+    baseDelay: options.retry?.baseDelay ?? 1000,
+    maxDelay: options.retry?.maxDelay ?? 10000,
+  };
+  const requestTimeout = options.timeout ?? 30000;
 
   const deltaHandlers = new Set<(delta: ConfigDelta) => void>();
   const snapshotHandlers = new Set<(snapshot: ConfigSnapshot) => void>();
@@ -97,17 +108,17 @@ export function createHttpTransport(
   ): Promise<T> {
     let res: Response;
     try {
-      res = await fetchFn(`${baseUrl}${path}`, {
+      res = await fetchWithRetry(`${baseUrl}${path}`, {
         method,
         headers: buildHeaders(),
         ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
-      });
+      }, { retry: retryConfig, timeout: requestTimeout, fetchFn, onError });
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
       onError?.({
         type: "connection",
         message,
-        retryable: true,
+        retryable: false,
       });
       throw e;
     }

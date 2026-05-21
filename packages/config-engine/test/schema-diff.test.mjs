@@ -50,8 +50,8 @@ describe("schema-diff", () => {
       assert.equal(schemasEqual({ a: 1 }, { a: 2 }), false);
     });
 
-    it("is order-sensitive (JSON serialization)", () => {
-      assert.equal(schemasEqual({ a: 1, b: 2 }, { b: 2, a: 1 }), false);
+    it("is order-insensitive (structural equality)", () => {
+      assert.equal(schemasEqual({ a: 1, b: 2 }, { b: 2, a: 1 }), true);
     });
   });
 

@@ -63,3 +63,4 @@ export { consoleLogger } from "./utils/logger.js";
 export { safeParseConfigEntries } from "./utils/validation.js";
 export { readonlyGuard } from "./utils/write-utils.js";
 export { getCachedRegex, isSafePattern, clearRegexCache } from "./regex-cache.js";
+export { deepEqual } from "./deep-equal.js";
