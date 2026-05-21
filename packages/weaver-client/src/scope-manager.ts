@@ -2,14 +2,17 @@ import type { ScopeInstance } from "@weaver/config-types";
 import type { WeaverTransport } from "./transport.js";
 import type { ConfigDelta, ConfigSnapshot } from "./types.js";
 
+/** How scopes are loaded: lazily on access, eagerly at boot, or hot-reloaded. */
 export type ScopeLoadingMode = "lazy" | "eager" | "hot";
 
+/** Options for creating a scope loader instance. */
 export interface ScopeLoaderOptions {
   mode: ScopeLoadingMode;
   transport: WeaverTransport;
   initialSnapshot: ConfigSnapshot;
 }
 
+/** Manages scope-specific configuration state with lazy/eager loading strategies. */
 export interface ScopeLoader {
   getScopeState(
     scopePath: ScopeInstance[],
@@ -23,6 +26,12 @@ function buildScopeKey(scopePath: ScopeInstance[]): string {
   return scopePath.map((s) => `${s.scopeId}:${s.value}`).join("/");
 }
 
+/**
+ * Creates a scope loader that manages per-scope config state.
+ *
+ * @param options - Loading mode, transport, and initial snapshot
+ * @returns A ScopeLoader for accessing and preloading scope-specific config
+ */
 export function createScopeLoader(options: ScopeLoaderOptions): ScopeLoader {
   const { mode, transport, initialSnapshot } = options;
   const scopeStates = new Map<string, Record<string, unknown>>();

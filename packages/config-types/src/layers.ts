@@ -51,19 +51,23 @@ export interface LayerDefinition<N extends string = string> {
 
 // --- Config for built-in layer types ---
 
+/** Configuration for a static (non-scoped) layer. */
 export interface StaticLayerConfig {
   readonly merge?: MergeFunction | undefined;
 }
 
+/** Configuration for a dynamic (scope-aware) layer. */
 export interface DynamicLayerConfig {
   readonly scopes?: readonly ScopeDefinition[] | undefined;
   readonly merge?: MergeFunction | undefined;
 }
 
+/** Configuration for a personal (per-user) layer. */
 export interface PersonalLayerConfig {
   readonly merge?: MergeFunction | undefined;
 }
 
+/** Configuration for an ephemeral (non-persistent, in-memory) layer. */
 export interface EphemeralLayerConfig {
   readonly merge?: MergeFunction | undefined;
 }

@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+/** A configuration layer entry with priority-based resolution ordering. */
 export interface LayerEntry {
   readonly id: string;
   readonly priority: number;
@@ -10,20 +11,24 @@ export interface LayerEntry {
   ) => Record<string, unknown>;
 }
 
+/** Immutable snapshot of resolved configuration state. */
 export interface StateSnapshot {
   readonly resolved: Record<string, unknown>;
   readonly provenance: Record<string, string>;
   readonly revision: number;
 }
 
+/** A delta describing changes to apply to the state container. */
 export interface ConfigDelta {
   readonly set?: Record<string, unknown>;
   readonly removed?: string[];
   readonly revision: number;
 }
 
+/** Function that unsubscribes a listener when called. */
 export type Unsubscribe = () => void;
 
+/** Reactive state container that resolves config from prioritized layers. */
 export interface StateContainer {
   resolve(): void;
   get(path: string): unknown;

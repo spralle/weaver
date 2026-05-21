@@ -104,6 +104,7 @@ const ephemeralType: LayerType = {
 
 // --- Factory functions ---
 
+/** Creates a static layer definition (persistent, non-scoped). */
 function Static<N extends string>(
   name: N,
   config?: StaticLayerConfig,
@@ -111,6 +112,7 @@ function Static<N extends string>(
   return { name, type: staticType, config: config ?? {} };
 }
 
+/** Creates a dynamic layer definition (persistent, scope-aware). */
 function Dynamic<N extends string>(
   name: N,
   config?: DynamicLayerConfig,
@@ -118,6 +120,7 @@ function Dynamic<N extends string>(
   return { name, type: dynamicType, config: config ?? {} };
 }
 
+/** Creates a personal layer definition (persistent, per-user). */
 function Personal<N extends string>(
   name: N,
   config?: PersonalLayerConfig,
@@ -125,6 +128,7 @@ function Personal<N extends string>(
   return { name, type: personalType, config: config ?? {} };
 }
 
+/** Creates an ephemeral layer definition (non-persistent, in-memory only). */
 function Ephemeral<N extends string>(
   name: N,
   config?: EphemeralLayerConfig,

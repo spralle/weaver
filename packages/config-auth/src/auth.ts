@@ -9,12 +9,13 @@ import type {
   WeaverConfig,
 } from "@weaver/config-types";
 
-/** Maps visibility levels to role sets that can read */
+/** Maps visibility levels to the role sets that can read at that level. */
 export interface VisibilityRoleMapping {
   admin: ReadonlySet<string>;
   platform: ReadonlySet<string>;
 }
 
+/** Full configuration for the auth system (layer policies, visibility, sessions). */
 export interface AuthConfig {
   /** WeaverConfig for layer ranking */
   weaverConfig: WeaverConfig;
@@ -30,6 +31,7 @@ export interface AuthConfig {
   elevatedSessionMode?: string | undefined;
 }
 
+/** Authorization functions returned by `withAuth()` — canRead and canWrite checks. */
 export interface AuthFunctions {
   canRead(
     accessContext: ConfigurationAccessContext,
@@ -51,6 +53,12 @@ export interface AuthFunctions {
   ): Record<string, unknown>;
 }
 
+/**
+ * Creates authorization functions from an AuthConfig.
+ * Returns canRead/canWrite checks that enforce visibility, layer policies, and session rules.
+ *
+ * @param config - Authorization configuration (layer policies, visibility roles, etc.)
+ */
 export function withAuth(config: AuthConfig): AuthFunctions {
   const {
     weaverConfig,

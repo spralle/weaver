@@ -7,6 +7,7 @@ interface QueuedWrite {
   timestamp: number;
 }
 
+/** Buffered write queue that batches mutations for deferred sending. */
 export interface WriteQueue {
   enqueue(key: string, value: unknown, options?: WriteOptions): void;
   drain(
@@ -16,6 +17,10 @@ export interface WriteQueue {
   clear(): void;
 }
 
+/**
+ * Creates a write queue that buffers mutations until explicitly drained.
+ * Useful for offline-first writes and batching.
+ */
 export function createWriteQueue(): WriteQueue {
   const queue: QueuedWrite[] = [];
 

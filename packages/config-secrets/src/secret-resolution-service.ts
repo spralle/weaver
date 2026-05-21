@@ -13,10 +13,12 @@ import type { SecretCache } from "./secret-cache.js";
 import { createSecretCache } from "./secret-cache.js";
 import type { SecretProvider, SecretStoreResult } from "./secret-provider.js";
 
+/** Audit log sink for secret access events. */
 export interface SecretAuditLog {
   log(entry: SecretDomainAuditEntry): void;
 }
 
+/** Details of a failed secret resolution attempt. */
 export interface SecretResolutionFailure {
   readonly key: string;
   readonly provider: string;
@@ -24,17 +26,23 @@ export interface SecretResolutionFailure {
   readonly error: string;
 }
 
+/** Batch resolution result — resolved values and any failures. */
 export interface SecretResolutionResult {
   readonly resolved: Map<string, string>;
   readonly failures: readonly SecretResolutionFailure[];
 }
 
+/** Options for configuring the secret resolution service (cache, audit). */
 export interface SecretResolutionServiceOptions {
   readonly cacheTtlMs?: number;
   readonly maxCacheEntries?: number;
   readonly auditLog?: SecretAuditLog | undefined;
 }
 
+/**
+ * Service that resolves SecretReference markers to plaintext values using registered providers.
+ * Includes caching, batch resolution, and audit logging.
+ */
 export class SecretResolutionService {
   private readonly providers = new Map<string, SecretProvider>();
   private readonly cache: SecretCache;

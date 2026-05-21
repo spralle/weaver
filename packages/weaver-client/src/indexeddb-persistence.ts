@@ -3,6 +3,7 @@
 import type { WeaverClientPersistence } from "./persistence.js";
 import type { ConfigSnapshot } from "./types.js";
 
+/** Options for IndexedDB-based snapshot persistence (browser environments). */
 export interface IndexedDbPersistenceOptions {
   /** Database name (default: "weaver-config") */
   dbName?: string;
@@ -10,6 +11,11 @@ export interface IndexedDbPersistenceOptions {
   storeName?: string;
 }
 
+/**
+ * Creates an IndexedDB persistence adapter for browser-based snapshot caching.
+ *
+ * @param options - Database and store name configuration
+ */
 export function createIndexedDbPersistence(
   options?: IndexedDbPersistenceOptions,
 ): WeaverClientPersistence {

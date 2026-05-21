@@ -6,11 +6,13 @@ export type {
   ConfigurationInspection,
 } from "@weaver/config-types";
 
+/** Options for resolving configuration (optional scope path and environment). */
 export interface ResolveOptions {
   scopePath?: ScopeInstance[];
   environment?: string;
 }
 
+/** Options for getting a single key (optional scope path). */
 export interface GetOptions {
   scopePath?: ScopeInstance[];
 }
@@ -27,10 +29,13 @@ export interface ClientLayerInspection<T> {
   layers: Array<{ layer: string; value: T | undefined; environment?: string }>;
 }
 
+/** Current operational mode of the client (live, cached, or degraded). */
 export type ClientMode = "live" | "cached" | "degraded";
 
+/** Function that unsubscribes a listener when called. */
 export type Unsubscribe = () => void;
 
+/** Options for enabling schema validation on the client. */
 export interface SchemaOptions {
   /** Subscribe to schema changes from server (default: true) */
   live?: boolean;

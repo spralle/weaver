@@ -12,11 +12,13 @@ import type {
   SyncStatus,
 } from "@weaver/config-types";
 
+/** Retry policy for sync operations (exponential backoff bounds). */
 export interface SyncRetryPolicy {
   baseDelayMs?: number | undefined;
   maxDelayMs?: number | undefined;
 }
 
+/** Options for creating a config sync orchestrator. */
 export interface ConfigSyncOrchestratorOptions {
   snapshotCache: SyncSnapshotCache;
   mutationQueue: SyncMutationQueue;
@@ -31,6 +33,7 @@ export interface ConfigSyncOrchestratorOptions {
   onSnapshotChange?: ((snapshot: ConfigurationLayerData) => void) | undefined;
 }
 
+/** Diagnostic state for monitoring sync health (pending count, last error). */
 export interface SyncDiagnostics {
   pendingCount: number;
   lastSyncedAt?: number | undefined;
@@ -43,6 +46,7 @@ export interface SyncDiagnostics {
     | undefined;
 }
 
+/** Orchestrator for bidirectional config sync (pull/push/conflict resolution). */
 export interface ConfigSyncOrchestrator {
   load(): Promise<ConfigurationLayerData>;
   write(key: string, value: unknown): Promise<void>;

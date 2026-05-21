@@ -6,6 +6,7 @@ import type { WriteOptions, WriteResult } from "./transport.js";
 
 // ─── Namespace Declaration ────────────────────────────────
 
+/** Definition of a typed config namespace — prefix + Zod schema shape. */
 export interface NamespaceDefinition<
   TPrefix extends string = string,
   TShape extends ZodRawShape = ZodRawShape,

@@ -1,11 +1,13 @@
 import type { TransportError } from "./http-transport.js";
 
+/** Configuration for retry behavior on failed HTTP requests. */
 export interface RetryOptions {
   maxAttempts?: number;
   baseDelay?: number;
   maxDelay?: number;
 }
 
+/** Internal options passed to fetchWithRetry including resolved defaults. */
 export interface RequestWithRetryOptions {
   retry: Required<RetryOptions>;
   timeout: number;

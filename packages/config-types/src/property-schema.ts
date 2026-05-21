@@ -1,25 +1,30 @@
 import type { PropertySessionMode } from "./session.js";
 import type { ConfigurationLayer } from "./types.js";
 
+/** Promotion pipeline stage required before a config change takes effect. */
 export type ConfigChangePolicy =
   | "full-pipeline"
   | "staging-gate"
   | "direct-allowed"
   | "emergency-override";
 
+/** Who can see a configuration property in admin UIs. */
 export type ConfigurationVisibility =
   | "public"
   | "admin"
   | "platform"
   | "internal";
 
+/** Role identifier for access control (opaque string). */
 export type ConfigurationRole = string;
 
+/** How a service must handle a configuration value change at runtime. */
 export type ConfigReloadBehavior =
   | "hot"
   | "restart-required"
   | "rolling-restart";
 
+/** JSON Schema primitive type identifiers. */
 export type ConfigurationJsonSchemaType =
   | "string"
   | "number"
@@ -29,6 +34,7 @@ export type ConfigurationJsonSchemaType =
   | "array"
   | "null";
 
+/** JSON Schema subset used to describe configuration properties with Weaver extensions. */
 export interface ConfigurationPropertySchema {
   type:
     | ConfigurationJsonSchemaType
@@ -77,6 +83,7 @@ export interface ConfigurationPropertySchema {
   "x-weaver"?: WeaverPropertyExtensions | undefined;
 }
 
+/** Weaver-specific property extensions (sensitivity, change policy, reload behavior). */
 export interface WeaverPropertyExtensions {
   sensitive?: boolean | undefined;
   visibility?: ConfigurationVisibility | undefined;

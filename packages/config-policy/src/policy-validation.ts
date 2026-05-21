@@ -2,6 +2,7 @@
 
 import type { ComposedSchemaEntry } from "@weaver/config-engine";
 
+/** A detected policy violation with severity and suggested fix. */
 export interface PolicyViolation {
   readonly key: string;
   readonly violation: string;
