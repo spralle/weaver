@@ -1,37 +1,37 @@
-export type { WeaverClient, WeaverClientOptions } from "./client.js";
-export { createWeaverClient } from "./client.js";
-export { flattenObject } from "./flatten.js";
-export type { FileSystemPersistenceOptions } from "./fs-persistence.js";
-export { createFileSystemPersistence } from "./fs-persistence.js";
-export type { HttpTransportOptions, TransportError } from "./http-transport.js";
-export { createHttpTransport } from "./http-transport.js";
-export type { IndexedDbPersistenceOptions } from "./indexeddb-persistence.js";
-export { createIndexedDbPersistence } from "./indexeddb-persistence.js";
+export type { WeaverClient, WeaverClientOptions } from "./client";
+export { createWeaverClient } from "./client";
+export { flattenObject } from "./flatten";
+export type { FileSystemPersistenceOptions } from "./fs-persistence";
+export { createFileSystemPersistence } from "./fs-persistence";
+export type { HttpTransportOptions, TransportError } from "./http-transport";
+export { createHttpTransport } from "./http-transport";
+export type { IndexedDbPersistenceOptions } from "./indexeddb-persistence";
+export { createIndexedDbPersistence } from "./indexeddb-persistence";
 export type {
   LocalTransport,
   LocalTransportOptions,
-} from "./local-transport.js";
-export { createLocalTransport } from "./local-transport.js";
-export type { WeaverClientPersistence } from "./persistence.js";
+} from "./local-transport";
+export { createLocalTransport } from "./local-transport";
+export type { WeaverClientPersistence } from "./persistence";
 export type {
   ScopeLoader,
   ScopeLoaderOptions,
   ScopeLoadingMode,
-} from "./scope-manager.js";
-export { createScopeLoader } from "./scope-manager.js";
-export type { StalenessConfig, StalenessMonitor } from "./staleness.js";
-export { createStalenessMonitor } from "./staleness.js";
+} from "./scope-manager";
+export { createScopeLoader } from "./scope-manager";
+export type { StalenessConfig, StalenessMonitor } from "./staleness";
+export { createStalenessMonitor } from "./staleness";
 export {
   createSyncRuntimeBridge,
   type SyncRuntimeBridge,
   type SyncRuntimeBridgeOptions,
-} from "./sync-runtime-bridge.js";
-export { createWeaverSyncTransport } from "./sync-transport-adapter.js";
+} from "./sync-runtime-bridge";
+export { createWeaverSyncTransport } from "./sync-transport-adapter";
 export type {
   WeaverTransport,
   WriteOptions,
   WriteResult,
-} from "./transport.js";
+} from "./transport";
 export type {
   ClientLayerInspection,
   ClientMode,
@@ -42,29 +42,29 @@ export type {
   ResolveOptions,
   SchemaOptions,
   Unsubscribe,
-} from "./types.js";
-export type { ClientSchemaRegistry, ValidationResult } from "./schema-registry.js";
-export { createClientSchemaRegistry } from "./schema-registry.js";
-export type { ValidationOptions } from "./validation.js";
-export { validateOnRead, validateOnWrite } from "./validation.js";
+} from "./types";
+export type { ClientSchemaRegistry, ValidationResult } from "./schema-registry";
+export { createClientSchemaRegistry } from "./schema-registry";
+export type { ValidationOptions } from "./validation";
+export { validateOnRead, validateOnWrite } from "./validation";
 export type {
   InstanceClient,
   NamespaceDefinition,
   TypedInstanceClient,
   TypedNamespaceClient,
   UntypedNamespaceClient,
-} from "./namespace.js";
-export { defineNamespace } from "./namespace.js";
-export type { InstanceClientDeps } from "./instance-client.js";
-export { createInstanceClient } from "./instance-client.js";
-export type { NamespaceClientDeps } from "./typed-namespace-client.js";
-export { createTypedNamespaceClient } from "./typed-namespace-client.js";
-export type { SchemaRegistrationResult } from "./registration.js";
-export { registerNamespaces, zodShapeToJsonSchema } from "./registration.js";
-export type { UntypedNamespaceClientDeps } from "./untyped-namespace-client.js";
-export { createUntypedNamespaceClient } from "./untyped-namespace-client.js";
-export type { TransportMiddleware } from "./middleware.js";
-export { withMiddleware } from "./middleware.js";
-export type { WriteQueue } from "./write-queue.js";
-export { createWriteQueue } from "./write-queue.js";
-export { fetchWithRetry, type RetryOptions } from "./http-retry.js";
+} from "./namespace";
+export { defineNamespace } from "./namespace";
+export type { InstanceClientDeps } from "./instance-client";
+export { createInstanceClient } from "./instance-client";
+export type { NamespaceClientDeps } from "./typed-namespace-client";
+export { createTypedNamespaceClient } from "./typed-namespace-client";
+export type { SchemaRegistrationResult } from "./registration";
+export { registerNamespaces, zodShapeToJsonSchema } from "./registration";
+export type { UntypedNamespaceClientDeps } from "./untyped-namespace-client";
+export { createUntypedNamespaceClient } from "./untyped-namespace-client";
+export type { TransportMiddleware } from "./middleware";
+export { withMiddleware } from "./middleware";
+export type { WriteQueue } from "./write-queue";
+export { createWriteQueue } from "./write-queue";
+export { fetchWithRetry, type RetryOptions } from "./http-retry";

@@ -1,5 +1,5 @@
 // Stdout audit sink — writes JSON-serialized entries one per line
-import type { ConfigAuditSink, SinkDomainAuditEntry } from "./types.js";
+import type { ConfigAuditSink, SinkDomainAuditEntry } from "./types";
 
 export function createStdoutAuditSink(): ConfigAuditSink {
   return {

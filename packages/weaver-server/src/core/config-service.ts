@@ -14,16 +14,16 @@ import type {
   ScopeInstance,
   WriteResult,
 } from "@weaver-conf/config-types";
-import type { ConfigDelta, ConfigSnapshot } from "../types/index.js";
+import type { ConfigDelta, ConfigSnapshot } from "../types/index";
 import type {
   WeaverConfigService,
   WeaverConfigServiceOptions,
   WriteContext,
-} from "./config-service-types.js";
-import { buildScopePathString, isScopedLayer } from "./scope-utils.js";
+} from "./config-service-types";
+import { buildScopePathString, isScopedLayer } from "./scope-utils";
 
 export type { WeaverConfigService, WeaverConfigServiceOptions, WriteContext };
-export type { Unsubscribe } from "./config-service-types.js";
+export type { Unsubscribe } from "./config-service-types";
 
 const SIZE_WARNING = 1_048_576; // 1MB
 

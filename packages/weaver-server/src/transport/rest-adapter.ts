@@ -2,21 +2,21 @@
 
 import type { ConfigurationPropertySchema } from "@weaver-conf/config-types";
 import { ZodError } from "zod";
-import type { AuthContext } from "../auth/auth-middleware.js";
-import type { WeaverConfigService } from "../core/config-service.js";
-import type { ScopeManager } from "../core/scope-manager.js";
-import type { WeaverError, WeaverErrorCode } from "../types/index.js";
-import { createWeaverError } from "../types/index.js";
-import type { AuthGate } from "./auth-gate.js";
+import type { AuthContext } from "../auth/auth-middleware";
+import type { WeaverConfigService } from "../core/config-service";
+import type { ScopeManager } from "../core/scope-manager";
+import type { WeaverError, WeaverErrorCode } from "../types/index";
+import { createWeaverError } from "../types/index";
+import type { AuthGate } from "./auth-gate";
 import {
   corsHeaders,
   errorEnvelope,
   matchPath,
   v1Headers,
-} from "./rest-helpers.js";
-import { buildRoutes } from "./rest-routes.js";
+} from "./rest-helpers";
+import { buildRoutes } from "./rest-routes";
 
-export type { ApiErrorResponse, ApiResponse } from "./rest-helpers.js";
+export type { ApiErrorResponse, ApiResponse } from "./rest-helpers";
 
 export interface RestRoute {
   method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";

@@ -1,6 +1,6 @@
 import type { ZodRawShape } from "zod";
-import type { NamespaceDefinition } from "./namespace.js";
-import type { WeaverTransport } from "./transport.js";
+import type { NamespaceDefinition } from "./namespace";
+import type { WeaverTransport } from "./transport";
 
 /** Result of registering namespace schemas with the server. */
 export interface SchemaRegistrationResult {

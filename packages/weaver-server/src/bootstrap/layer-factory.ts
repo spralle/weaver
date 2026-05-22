@@ -2,13 +2,13 @@
 
 import type { ConfigurationStorageProvider } from "@weaver-conf/config-types";
 import type { Collection } from "mongodb";
-import type { GitManager } from "../providers/index.js";
+import type { GitManager } from "../providers/index";
 import {
   createGitStorageProvider,
   createInMemoryStorageProvider,
   createMongoDBStorageProvider,
-} from "../providers/index.js";
-import type { BootstrapLayer } from "../types/bootstrap.js";
+} from "../providers/index";
+import type { BootstrapLayer } from "../types/bootstrap";
 
 export interface LayerFactoryDeps {
   gitManager: GitManager;

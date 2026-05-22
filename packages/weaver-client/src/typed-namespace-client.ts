@@ -6,9 +6,9 @@ import type {
   TypedNamespaceClient,
   TypedInstanceClient,
   NamespaceDefinition,
-} from "./namespace.js";
-import type { ConfigDelta, Unsubscribe } from "./types.js";
-import type { WriteOptions, WriteResult } from "./transport.js";
+} from "./namespace";
+import type { ConfigDelta, Unsubscribe } from "./types";
+import type { WriteOptions, WriteResult } from "./transport";
 
 /** Dependencies injected into a typed namespace client. */
 export interface NamespaceClientDeps {

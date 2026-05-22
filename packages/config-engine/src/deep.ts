@@ -1,5 +1,5 @@
 // Deep object path utilities — bracket-aware via parsePath
-import { parsePath } from "./path.js";
+import { parsePath } from "./path";
 
 /**
  * Get a value at a dot/bracket path in a nested object.

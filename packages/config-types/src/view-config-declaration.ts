@@ -1,6 +1,6 @@
 // View configuration declaration type and defineViewConfig helper
 
-import type { ConfigurationPropertySchema } from "./property-schema.js";
+import type { ConfigurationPropertySchema } from "./property-schema";
 
 /**
  * Declares configuration properties owned by a specific view.

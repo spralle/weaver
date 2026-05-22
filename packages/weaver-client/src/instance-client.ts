@@ -1,8 +1,8 @@
 import type { ZodType } from "zod";
 import { deepGet } from "@weaver-conf/config-engine";
-import type { InstanceClient } from "./namespace.js";
-import type { ConfigDelta, Unsubscribe } from "./types.js";
-import type { WriteOptions, WriteResult } from "./transport.js";
+import type { InstanceClient } from "./namespace";
+import type { ConfigDelta, Unsubscribe } from "./types";
+import type { WriteOptions, WriteResult } from "./transport";
 
 /** Dependencies injected into an instance client for state access and writes. */
 export interface InstanceClientDeps {

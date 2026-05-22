@@ -3,8 +3,8 @@ import type {
   OverrideSession,
   SessionActivationRequest,
   SessionDeactivationResult,
-} from "./session.js";
-import type { ConfigurationLayer, ScopeInstance } from "./types.js";
+} from "./session";
+import type { ConfigurationLayer, ScopeInstance } from "./types";
 
 /**
  * Minimal handle for session lifecycle — satisfied by OverrideSessionController

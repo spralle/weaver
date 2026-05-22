@@ -4,11 +4,11 @@ import { join } from "node:path";
 import type { ConfigurationStorageProvider } from "@weaver-conf/config-types";
 import type { Collection } from "mongodb";
 import type { SimpleGit } from "simple-git";
-import type { GitManager } from "../providers/index.js";
-import { createGitManager } from "../providers/index.js";
-import { bootstrapConfigSchema } from "../types/bootstrap.js";
-import { resolveEnvVars } from "./env-resolver.js";
-import { createProviders } from "./layer-factory.js";
+import type { GitManager } from "../providers/index";
+import { createGitManager } from "../providers/index";
+import { bootstrapConfigSchema } from "../types/bootstrap";
+import { resolveEnvVars } from "./env-resolver";
+import { createProviders } from "./layer-factory";
 
 export interface BootstrapResult {
   providers: ConfigurationStorageProvider[];

@@ -1,17 +1,17 @@
 export type {
   FileSystemProviderOptions,
   FileSystemStorageProvider,
-} from "./fs-provider.js";
-export { createFileSystemStorageProvider } from "./fs-provider.js";
+} from "./fs-provider";
+export { createFileSystemStorageProvider } from "./fs-provider";
 export type {
   GitManager,
   GitManagerOptions,
   GitOperationResult,
-} from "./git-manager.js";
-export { createGitManager } from "./git-manager.js";
-export type { GitStorageProviderOptions } from "./git-storage-provider.js";
-export { createGitStorageProvider } from "./git-storage-provider.js";
-export type { InMemoryProviderOptions } from "./in-memory-provider.js";
-export { createInMemoryStorageProvider } from "./in-memory-provider.js";
-export type { MongoDBStorageProviderOptions } from "./mongodb-storage-provider.js";
-export { createMongoDBStorageProvider } from "./mongodb-storage-provider.js";
+} from "./git-manager";
+export { createGitManager } from "./git-manager";
+export type { GitStorageProviderOptions } from "./git-storage-provider";
+export { createGitStorageProvider } from "./git-storage-provider";
+export type { InMemoryProviderOptions } from "./in-memory-provider";
+export { createInMemoryStorageProvider } from "./in-memory-provider";
+export type { MongoDBStorageProviderOptions } from "./mongodb-storage-provider";
+export { createMongoDBStorageProvider } from "./mongodb-storage-provider";

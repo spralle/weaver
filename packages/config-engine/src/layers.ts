@@ -6,7 +6,7 @@ import type {
   ConfigurationLayerStack,
 } from "@weaver-conf/config-types";
 
-import { deepMerge } from "./merge.js";
+import { deepMerge } from "./merge";
 
 export interface ResolvedConfiguration {
   entries: Record<string, unknown>;

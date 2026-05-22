@@ -9,9 +9,9 @@ import {
   isSecretReference,
   ok,
 } from "@weaver-conf/config-types";
-import type { SecretCache } from "./secret-cache.js";
-import { createSecretCache } from "./secret-cache.js";
-import type { SecretProvider, SecretStoreResult } from "./secret-provider.js";
+import type { SecretCache } from "./secret-cache";
+import { createSecretCache } from "./secret-cache";
+import type { SecretProvider, SecretStoreResult } from "./secret-provider";
 
 /** Audit log sink for secret access events. */
 export interface SecretAuditLog {

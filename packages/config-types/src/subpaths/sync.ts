@@ -23,7 +23,7 @@ export type {
   SyncResult,
   SyncSnapshotCache,
   SyncStatus,
-} from "../providers.js";
+} from "../providers";
 export {
   configurationChangeSchema,
   configurationConflictSchema,
@@ -35,9 +35,9 @@ export {
   syncStatusSchema,
   syncStatusSyncedSchema,
   syncStatusSyncingSchema,
-} from "../schemas-providers.js";
-export type { ConfigDelta, ConfigSnapshot } from "../schemas-transport.js";
+} from "../schemas-providers";
+export type { ConfigDelta, ConfigSnapshot } from "../schemas-transport";
 export {
   configDeltaSchema,
   configSnapshotSchema,
-} from "../schemas-transport.js";
+} from "../schemas-transport";

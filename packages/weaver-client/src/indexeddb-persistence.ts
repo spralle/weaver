@@ -1,7 +1,7 @@
 /// <reference lib="dom" />
 
-import type { WeaverClientPersistence } from "./persistence.js";
-import type { ConfigSnapshot } from "./types.js";
+import type { WeaverClientPersistence } from "./persistence";
+import type { ConfigSnapshot } from "./types";
 
 /** Options for IndexedDB-based snapshot persistence (browser environments). */
 export interface IndexedDbPersistenceOptions {

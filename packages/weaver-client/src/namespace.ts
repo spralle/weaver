@@ -1,8 +1,8 @@
 import { z } from "zod";
 import type { ZodObject, ZodRawShape, ZodType } from "zod";
 import type { ScopeInstance } from "@weaver-conf/config-types";
-import type { ConfigDelta, Unsubscribe } from "./types.js";
-import type { WriteOptions, WriteResult } from "./transport.js";
+import type { ConfigDelta, Unsubscribe } from "./types";
+import type { WriteOptions, WriteResult } from "./transport";
 
 // ─── Namespace Declaration ────────────────────────────────
 

@@ -1,5 +1,5 @@
-import { createWeaverError } from "../types/errors.js";
-import type { JwtIdentity, JwtValidator } from "./jwt-validator.js";
+import { createWeaverError } from "../types/errors";
+import type { JwtIdentity, JwtValidator } from "./jwt-validator";
 
 export interface AuthMiddlewareOptions {
   jwtValidator: JwtValidator;

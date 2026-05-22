@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { beforeEach, describe, it } from "node:test";
-import type { WeaverConfigService } from "../core/config-service.js";
-import type { ConfigDelta } from "../types/index.js";
-import type { SSEAdapter } from "./sse-adapter.js";
-import { createSSEAdapter } from "./sse-adapter.js";
+import type { WeaverConfigService } from "../core/config-service";
+import type { ConfigDelta } from "../types/index";
+import type { SSEAdapter } from "./sse-adapter";
+import { createSSEAdapter } from "./sse-adapter";
 
 function createMockConfigService(initialEntries?: Record<string, unknown>) {
   const deltaHandlers: Array<(delta: ConfigDelta) => void> = [];

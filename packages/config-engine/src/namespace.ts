@@ -1,6 +1,6 @@
 // Namespace utilities for configuration key management
 
-import { buildPath, parsePath } from "./path.js";
+import { buildPath, parsePath } from "./path";
 
 /**
  * Combines a namespace and a relative key with a dot separator.

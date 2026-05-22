@@ -3,15 +3,15 @@ import type {
   WeaverTransport,
   WriteOptions,
   WriteResult,
-} from "./transport.js";
+} from "./transport";
 import type {
   ConfigDelta,
   ConfigSnapshot,
   GetOptions,
   ResolveOptions,
   Unsubscribe,
-} from "./types.js";
-import { fetchWithRetry, type RetryOptions } from "./http-retry.js";
+} from "./types";
+import { fetchWithRetry, type RetryOptions } from "./http-retry";
 
 export interface TransportError {
   type: "connection" | "timeout" | "parse" | "server";

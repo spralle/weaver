@@ -19,8 +19,8 @@ export {
 } from "@weaver-conf/storage-providers";
 
 // Server-specific orchestration
-export type { EnvironmentOverlayOptions } from "./environment-overlay.js";
+export type { EnvironmentOverlayOptions } from "./environment-overlay";
 export {
   mergeWithEnvironment,
   withEnvironmentOverlay,
-} from "./environment-overlay.js";
+} from "./environment-overlay";

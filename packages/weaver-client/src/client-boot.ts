@@ -1,10 +1,10 @@
 import type { ConfigurationPropertySchema } from "@weaver-conf/config-types";
 
-import type { ClientSchemaRegistry } from "./schema-registry.js";
-import type { WeaverClientPersistence } from "./persistence.js";
-import type { StalenessMonitor } from "./staleness.js";
-import type { WeaverTransport } from "./transport.js";
-import type { ConfigSnapshot } from "./types.js";
+import type { ClientSchemaRegistry } from "./schema-registry";
+import type { WeaverClientPersistence } from "./persistence";
+import type { StalenessMonitor } from "./staleness";
+import type { WeaverTransport } from "./transport";
+import type { ConfigSnapshot } from "./types";
 
 export interface BootResult {
   baseState: Record<string, unknown>;

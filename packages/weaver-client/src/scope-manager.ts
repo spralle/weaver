@@ -1,6 +1,6 @@
 import type { ScopeInstance } from "@weaver-conf/config-types";
-import type { WeaverTransport } from "./transport.js";
-import type { ConfigDelta, ConfigSnapshot } from "./types.js";
+import type { WeaverTransport } from "./transport";
+import type { ConfigDelta, ConfigSnapshot } from "./types";
 
 /** How scopes are loaded: lazily on access, eagerly at boot, or hot-reloaded. */
 export type ScopeLoadingMode = "lazy" | "eager" | "hot";

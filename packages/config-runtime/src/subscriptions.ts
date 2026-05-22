@@ -1,4 +1,4 @@
-import type { Unsubscribe } from "./types.js";
+import type { Unsubscribe } from "./types";
 
 type PathCallback = (value: unknown) => void;
 type AllCallback = (resolved: Record<string, unknown>) => void;

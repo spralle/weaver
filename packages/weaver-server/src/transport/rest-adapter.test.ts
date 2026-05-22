@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import type { WeaverConfigService } from "../core/config-service.js";
-import { createRestAdapter } from "./rest-adapter.js";
+import type { WeaverConfigService } from "../core/config-service";
+import { createRestAdapter } from "./rest-adapter";
 
 function mockConfigService(): WeaverConfigService {
   return {

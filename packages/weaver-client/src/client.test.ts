@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { createWeaverClient } from "./client.js";
-import { createLocalTransport } from "./local-transport.js";
-import type { ConfigSnapshot } from "./types.js";
+import { createWeaverClient } from "./client";
+import { createLocalTransport } from "./local-transport";
+import type { ConfigSnapshot } from "./types";
 
 function makeSnapshot(
   entries: Record<string, unknown> = {},

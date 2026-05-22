@@ -4,14 +4,14 @@ import type {
   WeaverTransport,
   WriteOptions,
   WriteResult,
-} from "./transport.js";
+} from "./transport";
 import type {
   ConfigDelta,
   ConfigSnapshot,
   GetOptions,
   ResolveOptions,
   Unsubscribe,
-} from "./types.js";
+} from "./types";
 
 export interface LocalTransportOptions {
   snapshot: ConfigSnapshot;

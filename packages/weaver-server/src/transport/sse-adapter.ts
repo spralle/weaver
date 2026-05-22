@@ -1,8 +1,8 @@
 // SSE transport adapter — three-event model (snapshot/change/checkpoint)
-import type { WeaverConfigService } from "../core/config-service.js";
-import { parseScopeQuery } from "../core/scope-utils.js";
-import type { ConfigDelta } from "../types/index.js";
-import { formatSSEMessage, type SSEMessage } from "./sse-events.js";
+import type { WeaverConfigService } from "../core/config-service";
+import { parseScopeQuery } from "../core/scope-utils";
+import type { ConfigDelta } from "../types/index";
+import { formatSSEMessage, type SSEMessage } from "./sse-events";
 
 /** Default max messages retained per client to prevent unbounded memory growth */
 const DEFAULT_MAX_BUFFER_SIZE = 1000;

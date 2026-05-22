@@ -1,9 +1,9 @@
 import type { ScopeDefinition } from "@weaver-conf/config-types";
-import type { WeaverError } from "../types/errors.js";
-import { createWeaverError } from "../types/errors.js";
-import type { WeaverConfigService } from "./config-service.js";
-import type { SchemaRegistry } from "./schema-registry.js";
-import { isScopedLayer, parseScopeLayer } from "./scope-utils.js";
+import type { WeaverError } from "../types/errors";
+import { createWeaverError } from "../types/errors";
+import type { WeaverConfigService } from "./config-service";
+import type { SchemaRegistry } from "./schema-registry";
+import { isScopedLayer, parseScopeLayer } from "./scope-utils";
 
 export interface ProvisionScopeRequest {
   scopeId: string;

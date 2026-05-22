@@ -19,7 +19,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc -b",
+    "build": "tsup",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
     "lint": "biome check ."

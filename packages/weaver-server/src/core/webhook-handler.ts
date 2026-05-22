@@ -1,6 +1,6 @@
 // Webhook handler — verifies GitHub webhook signatures and triggers change detection
 import { createHmac, timingSafeEqual } from "node:crypto";
-import type { ChangeDetector } from "./change-detector.js";
+import type { ChangeDetector } from "./change-detector";
 
 export interface WebhookHandlerOptions {
   changeDetector: ChangeDetector;

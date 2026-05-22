@@ -1,6 +1,6 @@
 // Zod schema generator — produces TypeScript source strings from ComposedSchemaEntry
 
-import type { ComposedSchemaEntry } from "./schema-registry.js";
+import type { ComposedSchemaEntry } from "./schema-registry";
 
 type PropertySchema = ComposedSchemaEntry["schema"];
 

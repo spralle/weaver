@@ -1,4 +1,4 @@
-import type { WriteOptions, WriteResult } from "./transport.js";
+import type { WriteOptions, WriteResult } from "./transport";
 
 interface QueuedWrite {
   key: string;

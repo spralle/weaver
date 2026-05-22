@@ -10,7 +10,7 @@ import type {
   GetOptions,
   ResolveOptions,
   Unsubscribe,
-} from "./types.js";
+} from "./types";
 
 /** Options for write operations — target layer, environment, and optimistic concurrency. */
 export interface WriteOptions {

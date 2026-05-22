@@ -6,9 +6,9 @@ import type {
   LayerType,
   PersonalLayerConfig,
   StaticLayerConfig,
-} from "./layers.js";
-import type { MergeFunction } from "./merge-types.js";
-import type { ConfigurationStorageProvider } from "./providers.js";
+} from "./layers";
+import type { MergeFunction } from "./merge-types";
+import type { ConfigurationStorageProvider } from "./providers";
 
 // --- Default merge: deep merge ---
 // The real deepMerge lives in config-engine, but we need a default reference.

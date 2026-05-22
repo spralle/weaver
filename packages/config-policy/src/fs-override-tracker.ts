@@ -7,8 +7,8 @@ import { emergencyOverrideRecordSchema } from "@weaver-conf/config-types";
 import type {
   OverrideTracker,
   OverrideTrackerOptions,
-} from "./override-tracker.js";
-import { computeDeadline, resolveDeadlineMs } from "./override-tracker.js";
+} from "./override-tracker";
+import { computeDeadline, resolveDeadlineMs } from "./override-tracker";
 
 async function readRecords(
   filePath: string,

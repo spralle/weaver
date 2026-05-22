@@ -2,10 +2,10 @@ import { z } from "zod";
 import type { ZodType } from "zod";
 import type { ScopeInstance } from "@weaver-conf/config-types";
 import { deepGet } from "@weaver-conf/config-engine";
-import type { UntypedNamespaceClient, InstanceClient } from "./namespace.js";
-import type { ConfigDelta, Unsubscribe } from "./types.js";
-import type { WriteOptions, WriteResult } from "./transport.js";
-import { createInstanceClient } from "./instance-client.js";
+import type { UntypedNamespaceClient, InstanceClient } from "./namespace";
+import type { ConfigDelta, Unsubscribe } from "./types";
+import type { WriteOptions, WriteResult } from "./transport";
+import { createInstanceClient } from "./instance-client";
 
 /** Dependencies injected into an untyped namespace client. */
 export interface UntypedNamespaceClientDeps {

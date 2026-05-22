@@ -1,18 +1,18 @@
 // Weaver server entry point — orchestrates all subsystems
 
 import type { ConfigurationStorageProvider } from "@weaver-conf/config-types";
-import { createAuditService, createStdoutAuditSink } from "./audit/index.js";
-import { createWeaverConfigService } from "./core/config-service.js";
-import type { HealthEndpoints } from "./health.js";
-import { createHealthEndpoints } from "./health.js";
-import { createInMemoryStorageProvider } from "./providers/index.js";
-import { parseServerEnv } from "./server-env.js";
-import { createShutdownManager } from "./shutdown.js";
-import type { RestAdapter } from "./transport/rest-adapter.js";
-import { createRestAdapter } from "./transport/rest-adapter.js";
-import type { SSEAdapter, SSEClient } from "./transport/sse-adapter.js";
-import { createSSEAdapter } from "./transport/sse-adapter.js";
-import type { SSEMessage } from "./transport/sse-events.js";
+import { createAuditService, createStdoutAuditSink } from "./audit/index";
+import { createWeaverConfigService } from "./core/config-service";
+import type { HealthEndpoints } from "./health";
+import { createHealthEndpoints } from "./health";
+import { createInMemoryStorageProvider } from "./providers/index";
+import { parseServerEnv } from "./server-env";
+import { createShutdownManager } from "./shutdown";
+import type { RestAdapter } from "./transport/rest-adapter";
+import { createRestAdapter } from "./transport/rest-adapter";
+import type { SSEAdapter, SSEClient } from "./transport/sse-adapter";
+import { createSSEAdapter } from "./transport/sse-adapter";
+import type { SSEMessage } from "./transport/sse-events";
 
 declare const Bun: {
   serve(options: {

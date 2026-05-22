@@ -9,21 +9,21 @@ import {
   createMutation,
   flushQueue,
   pullChanges,
-} from "./internal/orchestrator-ops.js";
+} from "./internal/orchestrator-ops";
 import {
   calculateRetryDelay,
   DEFAULT_BATCH_SIZE,
   DEFAULT_RETRY_BASE_MS,
   DEFAULT_RETRY_MAX_MS,
   scheduleRetryState,
-} from "./internal/retry-policy.js";
-import { createSyncStateManager } from "./internal/sync-state.js";
+} from "./internal/retry-policy";
+import { createSyncStateManager } from "./internal/sync-state";
 import type {
   ConfigSyncOrchestrator,
   ConfigSyncOrchestratorOptions,
   LocalMutationContext,
   SyncDiagnostics,
-} from "./types.js";
+} from "./types";
 
 declare function setTimeout(callback: () => void, ms: number): unknown;
 declare function clearTimeout(id: unknown): void;

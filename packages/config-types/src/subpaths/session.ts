@@ -8,7 +8,7 @@ export {
   sessionLayerMetadataSchema,
   sessionModeSchema,
   sessionTypeSchema,
-} from "../schemas-session.js";
+} from "../schemas-session";
 export type {
   GodModeSession,
   OverrideSession,
@@ -19,4 +19,4 @@ export type {
   SessionLayerMetadata,
   SessionMode,
   SessionType,
-} from "../session.js";
+} from "../session";

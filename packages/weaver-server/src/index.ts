@@ -5,23 +5,23 @@ export { consoleLogger } from "@weaver-conf/config-engine";
 export type {
   AuditService,
   AuditServiceOptions,
-} from "./audit/audit-service.js";
-export { createAuditService } from "./audit/audit-service.js";
-export { createFileSystemAuditLog } from "./audit/fs-audit-log.js";
-export { createInMemoryAuditLog } from "./audit/memory-audit-log.js";
+} from "./audit/audit-service";
+export { createAuditService } from "./audit/audit-service";
+export { createFileSystemAuditLog } from "./audit/fs-audit-log";
+export { createInMemoryAuditLog } from "./audit/memory-audit-log";
 export type {
   MongoAuditSinkOptions,
   MongoCollection,
-} from "./audit/mongo-sink.js";
-export { createMongoAuditSink } from "./audit/mongo-sink.js";
-export { createStdoutAuditSink } from "./audit/stdout-sink.js";
+} from "./audit/mongo-sink";
+export { createMongoAuditSink } from "./audit/mongo-sink";
+export { createStdoutAuditSink } from "./audit/stdout-sink";
 export type {
   ConfigAuditEntry,
   ConfigAuditLog,
   ConfigAuditSink,
   ConfigDomainAuditEntry,
   SinkDomainAuditEntry,
-} from "./audit/types.js";
+} from "./audit/types";
 export type {
   AuthContext,
   AuthMiddleware,
@@ -29,25 +29,25 @@ export type {
   JwtIdentity,
   JwtValidator,
   JwtValidatorOptions,
-} from "./auth/index.js";
+} from "./auth/index";
 // auth
 export {
   createAuthMiddleware,
   createJwtValidator,
-} from "./auth/index.js";
+} from "./auth/index";
 export type {
   BootstrapOptions,
   BootstrapResult,
   LayerFactoryDeps,
   ProviderFactory,
-} from "./bootstrap/index.js";
+} from "./bootstrap/index";
 // bootstrap
 export {
   bootstrap,
   createProviders,
   registerProviderFactory,
   resolveEnvVars,
-} from "./bootstrap/index.js";
+} from "./bootstrap/index";
 export type {
   ChangeDetector,
   ChangeDetectorOptions,
@@ -77,7 +77,7 @@ export type {
   WebhookHandler,
   WebhookHandlerOptions,
   WriteContext,
-} from "./core/index.js";
+} from "./core/index";
 // core
 export {
   buildScopePathString,
@@ -92,10 +92,10 @@ export {
   isScopedLayer,
   parseScopeLayer,
   parseScopeQuery,
-} from "./core/index.js";
-export type { HealthEndpoints, HealthStatus } from "./health.js";
+} from "./core/index";
+export type { HealthEndpoints, HealthStatus } from "./health";
 // health & shutdown
-export { createHealthEndpoints } from "./health.js";
+export { createHealthEndpoints } from "./health";
 // providers
 export type {
   EnvironmentOverlayOptions,
@@ -106,7 +106,7 @@ export type {
   GitStorageProviderOptions,
   InMemoryProviderOptions,
   MongoDBStorageProviderOptions,
-} from "./providers/index.js";
+} from "./providers/index";
 export {
   createFileSystemStorageProvider,
   createGitManager,
@@ -115,14 +115,14 @@ export {
   createMongoDBStorageProvider,
   mergeWithEnvironment,
   withEnvironmentOverlay,
-} from "./providers/index.js";
-export type { WeaverServer, WeaverServerOptions } from "./server.js";
+} from "./providers/index";
+export type { WeaverServer, WeaverServerOptions } from "./server";
 // server
-export { startWeaverServer } from "./server.js";
-export type { ServerEnv } from "./server-env.js";
-export { parseServerEnv, serverEnvSchema } from "./server-env.js";
-export type { ShutdownManager, ShutdownManagerOptions } from "./shutdown.js";
-export { createShutdownManager } from "./shutdown.js";
+export { startWeaverServer } from "./server";
+export type { ServerEnv } from "./server-env";
+export { parseServerEnv, serverEnvSchema } from "./server-env";
+export type { ShutdownManager, ShutdownManagerOptions } from "./shutdown";
+export { createShutdownManager } from "./shutdown";
 export type {
   RestAdapter,
   RestAdapterOptions,
@@ -141,7 +141,7 @@ export type {
   SSEMessage,
   SSESnapshotEvent,
   WeaverConfigContract,
-} from "./transport/index.js";
+} from "./transport/index";
 // transport
 export {
   configBatchBodySchema,
@@ -156,7 +156,7 @@ export {
   sseCheckpointEventSchema,
   sseSnapshotEventSchema,
   WEAVER_CONFIG_V1,
-} from "./transport/index.js";
+} from "./transport/index";
 export type {
   BootstrapConfig,
   BootstrapLayer,
@@ -165,7 +165,7 @@ export type {
   LayerProvider,
   WeaverError,
   WeaverErrorCode,
-} from "./types/index.js";
+} from "./types/index";
 // types
 export {
   bootstrapConfigSchema,
@@ -179,4 +179,4 @@ export {
   weaverErrorCodeSchema,
   weaverErrorCodes,
   weaverErrorSchema,
-} from "./types/index.js";
+} from "./types/index";

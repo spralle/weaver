@@ -1,58 +1,58 @@
 export type {
   ChangeDetector,
   ChangeDetectorOptions,
-} from "./change-detector.js";
-export { createChangeDetector } from "./change-detector.js";
+} from "./change-detector";
+export { createChangeDetector } from "./change-detector";
 export type {
   WeaverConfigService,
   WeaverConfigServiceOptions,
   WriteContext,
-} from "./config-service.js";
-export { createWeaverConfigService } from "./config-service.js";
+} from "./config-service";
+export { createWeaverConfigService } from "./config-service";
 export type {
   PromotionEngine,
   PromotionEngineOptions,
   PromotionRequest,
   PromotionResult,
-} from "./promotion-engine.js";
-export { createPromotionEngine } from "./promotion-engine.js";
+} from "./promotion-engine";
+export { createPromotionEngine } from "./promotion-engine";
 export type {
   RollbackRequest,
   RollbackResult,
   RollbackService,
   RollbackServiceOptions,
-} from "./rollback-service.js";
-export { createRollbackService } from "./rollback-service.js";
+} from "./rollback-service";
+export { createRollbackService } from "./rollback-service";
 export type {
   SchemaRegistrationRequest,
   SchemaRegistrationResult,
   SchemaRegistry,
   SchemaRegistryOptions,
-} from "./schema-registry.js";
-export { createSchemaRegistry } from "./schema-registry.js";
+} from "./schema-registry";
+export { createSchemaRegistry } from "./schema-registry";
 export type {
   DeprovisionScopeRequest,
   ProvisionScopeRequest,
   ScopeManager,
   ScopeManagerOptions,
   ScopeProvisionResult,
-} from "./scope-manager.js";
-export { createScopeManager } from "./scope-manager.js";
+} from "./scope-manager";
+export { createScopeManager } from "./scope-manager";
 export {
   buildScopePathString,
   isScopedLayer,
   parseScopeLayer,
   parseScopeQuery,
-} from "./scope-utils.js";
+} from "./scope-utils";
 export type {
   OverrideSessionInfo,
   OverrideSessionRequest,
   SessionManager,
   SessionManagerOptions,
-} from "./session-manager.js";
-export { createSessionManager } from "./session-manager.js";
+} from "./session-manager";
+export { createSessionManager } from "./session-manager";
 export type {
   WebhookHandler,
   WebhookHandlerOptions,
-} from "./webhook-handler.js";
-export { createWebhookHandler } from "./webhook-handler.js";
+} from "./webhook-handler";
+export { createWebhookHandler } from "./webhook-handler";

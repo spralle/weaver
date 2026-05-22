@@ -2,7 +2,7 @@
 
 import type { ConfigurationPropertySchema } from "@weaver-conf/config-types";
 
-import { qualifyKey, validateKeyFormat } from "./namespace.js";
+import { qualifyKey, validateKeyFormat } from "./namespace";
 
 export interface ConfigurationSchemaDeclaration {
   ownerId: string;
