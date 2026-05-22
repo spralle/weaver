@@ -5,7 +5,7 @@ import { dirname } from "node:path";
 import { isNodeError } from "@weaver-conf/config-engine";
 import type { ConfigDomainAuditEntry } from "@weaver-conf/config-types";
 import { configDomainAuditEntrySchema } from "@weaver-conf/config-types";
-import type { ConfigAuditLog } from "./types.js";
+import type { ConfigAuditLog } from "./types";
 
 function parseLines(content: string): ConfigDomainAuditEntry[] {
   const entries: ConfigDomainAuditEntry[] = [];

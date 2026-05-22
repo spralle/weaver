@@ -1,13 +1,13 @@
-export { createStateContainer } from "./state-container.js";
+export { createStateContainer } from "./state-container";
 export type {
   ConfigDelta,
   LayerEntry,
   StateContainer,
   StateSnapshot,
   Unsubscribe,
-} from "./types.js";
+} from "./types";
 export {
   ConfigDeltaSchema,
   LayerEntrySchema,
   StateSnapshotSchema,
-} from "./types.js";
+} from "./types";

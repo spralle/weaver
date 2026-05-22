@@ -3,10 +3,10 @@ export {
   type AuthMiddleware,
   type AuthMiddlewareOptions,
   createAuthMiddleware,
-} from "./auth-middleware.js";
+} from "./auth-middleware";
 export {
   createJwtValidator,
   type JwtIdentity,
   type JwtValidator,
   type JwtValidatorOptions,
-} from "./jwt-validator.js";
+} from "./jwt-validator";

@@ -1,5 +1,5 @@
 // Change detection — polling and manual trigger for webhook integration
-import type { WeaverConfigService } from "./config-service.js";
+import type { WeaverConfigService } from "./config-service";
 
 export interface ChangeDetectorOptions {
   configService: WeaverConfigService;

@@ -1,8 +1,8 @@
 // @weaver-conf/config-types — Configuration type definitions and Zod schemas
 
 // result.ts — Discriminated Result<T,E> union for fallible operations
-export type { Result } from "./result.js";
-export { ok, err, isOk, isErr } from "./result.js";
+export type { Result } from "./result";
+export { ok, err, isOk, isErr } from "./result";
 
 // access.ts — Permission types and default policies
 export type {
@@ -12,10 +12,10 @@ export type {
   LayerWritePolicy,
   ServiceAccessPolicy,
   ServiceConfigurationDeclaration,
-} from "./access.js";
+} from "./access";
 // cache.ts — Scope resolution cache interface
-export type { ScopeResolutionCache } from "./cache.js";
-export { serializeScopePath } from "./cache.js";
+export type { ScopeResolutionCache } from "./cache";
+export { serializeScopePath } from "./cache";
 // environment.ts — Environment-aware provider types and provenance tracking
 export type {
   ConfigValueSource,
@@ -23,8 +23,8 @@ export type {
   EnvironmentName,
   LayerValueDetail,
   MergedLayerResult,
-} from "./environment.js";
-export type { WeaverError, WeaverErrorCode } from "./errors.js";
+} from "./environment";
+export type { WeaverError, WeaverErrorCode } from "./errors";
 // errors.ts — Shared error taxonomy
 export {
   createWeaverError,
@@ -32,14 +32,14 @@ export {
   weaverErrorCodeSchema,
   weaverErrorCodes,
   weaverErrorSchema,
-} from "./errors.js";
+} from "./errors";
 // expressions.ts — Expression evaluator interface
 export type {
   ExpressionEvaluatorProvider,
   ExpressionValidationResult,
-} from "./expressions.js";
+} from "./expressions";
 // layer-factories.ts — Built-in layer factories
-export { Layers, replaceOnly } from "./layer-factories.js";
+export { Layers, replaceOnly } from "./layer-factories";
 // layers.ts — Layer abstraction interfaces
 export type {
   DynamicLayerConfig,
@@ -51,12 +51,12 @@ export type {
   PersonalLayerConfig,
   ResolutionContext,
   StaticLayerConfig,
-} from "./layers.js";
+} from "./layers";
 // markers.ts — _weaver marker types and type guards
-export type { ConfigMount, SecretReference, WeaverMarker } from "./markers.js";
-export { isConfigMount, isSecretReference, isWeaverMarker } from "./markers.js";
+export type { ConfigMount, SecretReference, WeaverMarker } from "./markers";
+export { isConfigMount, isSecretReference, isWeaverMarker } from "./markers";
 // merge-types.ts — Merge function type
-export type { MergeFunction } from "./merge-types.js";
+export type { MergeFunction } from "./merge-types";
 // promotion-types.ts — Promotion pipeline, audit, and emergency override types
 export type {
   AuditEntryBase,
@@ -68,7 +68,7 @@ export type {
   SecretDomainAuditEntry,
   SessionDomainAuditEntry,
   SinkDomainAuditEntry,
-} from "./promotion-types.js";
+} from "./promotion-types";
 // property-schema.ts — Property schema and policy types
 export type {
   ConfigChangePolicy,
@@ -78,7 +78,7 @@ export type {
   ConfigurationRole,
   ConfigurationVisibility,
   WeaverPropertyExtensions,
-} from "./property-schema.js";
+} from "./property-schema";
 // providers.ts — Storage provider interfaces
 export type {
   ConfigSyncAckRequest,
@@ -107,7 +107,7 @@ export type {
   SyncSnapshotCache,
   SyncStatus,
   WriteResult,
-} from "./providers.js";
+} from "./providers";
 // schemas-access.ts — Zod schemas for access context and write policy types
 export {
   configurationAccessContextSchema,
@@ -116,21 +116,21 @@ export {
   layerWritePolicySchema,
   serviceAccessPolicySchema,
   serviceConfigurationDeclarationSchema,
-} from "./schemas-access.js";
+} from "./schemas-access";
 export type {
   BootstrapConfig,
   BootstrapLayer,
   LayerProvider,
-} from "./schemas-bootstrap.js";
+} from "./schemas-bootstrap";
 // schemas-bootstrap.ts — Zod schemas for bootstrap configuration
 export {
   bootstrapConfigSchema,
   bootstrapLayerSchema,
   builtinProviders,
   layerProviderSchema,
-} from "./schemas-bootstrap.js";
+} from "./schemas-bootstrap";
 // schemas-expression.ts — Zod schemas for expression validation types
-export { expressionValidationResultSchema } from "./schemas-expression.js";
+export { expressionValidationResultSchema } from "./schemas-expression";
 // schemas-layers.ts — Zod schemas for layer and context types
 export {
   configurationContextSchema,
@@ -142,13 +142,13 @@ export {
   scopeHierarchySchema,
   scopeInstanceSchema,
   tenantScopeHierarchySchema,
-} from "./schemas-layers.js";
+} from "./schemas-layers";
 // schemas-markers.ts — Zod schemas for marker types
 export {
   configMountSchema,
   secretReferenceSchema,
   weaverMarkerSchema,
-} from "./schemas-markers.js";
+} from "./schemas-markers";
 // schemas-policy.ts — Zod schemas for change policy, visibility, and role types
 export {
   configChangePolicySchema,
@@ -158,7 +158,7 @@ export {
   configurationVisibilitySchema,
   propertySessionModeSchema,
   weaverPropertyExtensionsSchema,
-} from "./schemas-policy.js";
+} from "./schemas-policy";
 // schemas-promotion.ts — Zod schemas for promotion types
 export {
   configAuditEntrySchema,
@@ -169,9 +169,9 @@ export {
   secretDomainAuditEntrySchema,
   sessionDomainAuditEntrySchema,
   sinkDomainAuditEntrySchema,
-} from "./schemas-promotion.js";
+} from "./schemas-promotion";
 // schemas-property.ts — Zod schemas for configuration property schema types
-export { configurationPropertySchemaSchema } from "./schemas-property.js";
+export { configurationPropertySchemaSchema } from "./schemas-property";
 // schemas-providers.ts — Zod schemas for provider types
 export {
   configurationChangeSchema,
@@ -186,7 +186,7 @@ export {
   syncStatusSyncedSchema,
   syncStatusSyncingSchema,
   writeResultSchema,
-} from "./schemas-providers.js";
+} from "./schemas-providers";
 // schemas-session.ts — Zod schemas for session types
 export {
   godModeSessionSchema,
@@ -196,13 +196,13 @@ export {
   sessionLayerMetadataSchema,
   sessionModeSchema,
   sessionTypeSchema,
-} from "./schemas-session.js";
-export type { ConfigDelta, ConfigSnapshot } from "./schemas-transport.js";
+} from "./schemas-session";
+export type { ConfigDelta, ConfigSnapshot } from "./schemas-transport";
 // schemas-transport.ts — Zod schemas for transport types (ConfigDelta, ConfigSnapshot)
 export {
   configDeltaSchema,
   configSnapshotSchema,
-} from "./schemas-transport.js";
+} from "./schemas-transport";
 // service.ts — Service interfaces
 export type {
   ConfigurationInspection,
@@ -211,7 +211,7 @@ export type {
   ScopedConfigurationService,
   ServiceConfigurationService,
   ViewConfigurationService,
-} from "./service.js";
+} from "./service";
 // session.ts — Session layer types
 export type {
   GodModeSession,
@@ -223,13 +223,13 @@ export type {
   SessionLayerMetadata,
   SessionMode,
   SessionType,
-} from "./session.js";
+} from "./session";
 // type-utils.ts — Compile-time mapped types for typesafe config access
 export type {
   ConfigKeyPath,
   ConfigValueAtPath,
   TypedConfigurationService,
-} from "./type-utils.js";
+} from "./type-utils";
 // types.ts — Layer, context, and stack types
 export type {
   ConfigurationContext,
@@ -241,10 +241,10 @@ export type {
   ScopeHierarchy,
   ScopeInstance,
   TenantScopeHierarchy,
-} from "./types.js";
+} from "./types";
 // view-config-declaration.ts — View config declaration type and factory
-export type { ViewConfigDeclaration } from "./view-config-declaration.js";
-export { defineViewConfig } from "./view-config-declaration.js";
+export type { ViewConfigDeclaration } from "./view-config-declaration";
+export { defineViewConfig } from "./view-config-declaration";
 // weaver.ts — defineWeaver() builder
-export type { ExtractLayerNames, WeaverConfig } from "./weaver.js";
-export { defineWeaver } from "./weaver.js";
+export type { ExtractLayerNames, WeaverConfig } from "./weaver";
+export { defineWeaver } from "./weaver";

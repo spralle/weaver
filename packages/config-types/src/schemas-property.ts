@@ -2,11 +2,11 @@
 
 import { z } from "zod";
 
-import type { ConfigurationPropertySchema } from "./property-schema.js";
+import type { ConfigurationPropertySchema } from "./property-schema";
 import {
   configurationJsonSchemaTypeSchema,
   weaverPropertyExtensionsSchema,
-} from "./schemas-policy.js";
+} from "./schemas-policy";
 
 export const configurationPropertySchemaSchema: z.ZodType<ConfigurationPropertySchema> =
   z.lazy(() =>

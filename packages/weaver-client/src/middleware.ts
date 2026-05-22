@@ -1,5 +1,5 @@
-import type { WeaverTransport, WriteOptions, WriteResult } from "./transport.js";
-import type { ConfigDelta, Unsubscribe } from "./types.js";
+import type { WeaverTransport, WriteOptions, WriteResult } from "./transport";
+import type { ConfigDelta, Unsubscribe } from "./types";
 
 /**
  * Lifecycle hooks for intercepting transport operations.

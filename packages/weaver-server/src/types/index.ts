@@ -4,14 +4,14 @@ export type {
   BootstrapConfig,
   BootstrapLayer,
   LayerProvider,
-} from "./bootstrap.js";
+} from "./bootstrap";
 export {
   bootstrapConfigSchema,
   bootstrapLayerSchema,
   builtinProviders,
   layerProviderSchema,
-} from "./bootstrap.js";
-export type { WeaverError, WeaverErrorCode } from "./errors.js";
+} from "./bootstrap";
+export type { WeaverError, WeaverErrorCode } from "./errors";
 export {
   createWeaverError,
   HTTP_STATUS_MAP,
@@ -19,4 +19,4 @@ export {
   weaverErrorCodeSchema,
   weaverErrorCodes,
   weaverErrorSchema,
-} from "./errors.js";
+} from "./errors";

@@ -1,4 +1,4 @@
-import type { ScopeInstance } from "./types.js";
+import type { ScopeInstance } from "./types";
 
 /**
  * Pluggable cache for resolved scope configuration entries.

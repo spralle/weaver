@@ -1,6 +1,6 @@
 // Package.json contract derivation utility
 
-import { deriveNamespace } from "./namespace.js";
+import { deriveNamespace } from "./namespace";
 
 export interface PackageJsonInput {
   name: string;

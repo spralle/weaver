@@ -6,14 +6,14 @@ export {
   layerWritePolicySchema,
   serviceAccessPolicySchema,
   serviceConfigurationDeclarationSchema,
-} from "../schemas-access.js";
+} from "../schemas-access";
 export {
   bootstrapConfigSchema,
   bootstrapLayerSchema,
   builtinProviders,
   layerProviderSchema,
-} from "../schemas-bootstrap.js";
-export { expressionValidationResultSchema } from "../schemas-expression.js";
+} from "../schemas-bootstrap";
+export { expressionValidationResultSchema } from "../schemas-expression";
 export {
   configurationContextSchema,
   configurationLayerDataSchema,
@@ -24,12 +24,12 @@ export {
   scopeHierarchySchema,
   scopeInstanceSchema,
   tenantScopeHierarchySchema,
-} from "../schemas-layers.js";
+} from "../schemas-layers";
 export {
   configMountSchema,
   secretReferenceSchema,
   weaverMarkerSchema,
-} from "../schemas-markers.js";
+} from "../schemas-markers";
 export {
   configChangePolicySchema,
   configReloadBehaviorSchema,
@@ -38,7 +38,7 @@ export {
   configurationVisibilitySchema,
   propertySessionModeSchema,
   weaverPropertyExtensionsSchema,
-} from "../schemas-policy.js";
+} from "../schemas-policy";
 export {
   configAuditEntrySchema,
   configDomainAuditEntrySchema,
@@ -48,8 +48,8 @@ export {
   secretDomainAuditEntrySchema,
   sessionDomainAuditEntrySchema,
   sinkDomainAuditEntrySchema,
-} from "../schemas-promotion.js";
-export { configurationPropertySchemaSchema } from "../schemas-property.js";
+} from "../schemas-promotion";
+export { configurationPropertySchemaSchema } from "../schemas-property";
 export {
   configurationChangeSchema,
   configurationConflictSchema,
@@ -63,7 +63,7 @@ export {
   syncStatusSyncedSchema,
   syncStatusSyncingSchema,
   writeResultSchema,
-} from "../schemas-providers.js";
+} from "../schemas-providers";
 export {
   godModeSessionSchema,
   overrideSessionSchema,
@@ -72,8 +72,8 @@ export {
   sessionLayerMetadataSchema,
   sessionModeSchema,
   sessionTypeSchema,
-} from "../schemas-session.js";
+} from "../schemas-session";
 export {
   configDeltaSchema,
   configSnapshotSchema,
-} from "../schemas-transport.js";
+} from "../schemas-transport";

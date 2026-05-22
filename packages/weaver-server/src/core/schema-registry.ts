@@ -1,9 +1,9 @@
 import { detectBreakingChanges, schemasEqual } from "@weaver-conf/config-engine";
 import type { ConfigurationPropertySchema } from "@weaver-conf/config-types";
 import { configurationPropertySchemaSchema } from "@weaver-conf/config-types";
-import type { WeaverError } from "../types/errors.js";
-import { createWeaverError } from "../types/errors.js";
-import type { WeaverConfigService } from "./config-service.js";
+import type { WeaverError } from "../types/errors";
+import { createWeaverError } from "../types/errors";
+import type { WeaverConfigService } from "./config-service";
 
 export interface SchemaRegistrationRequest {
   serviceId: string;

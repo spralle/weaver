@@ -1,6 +1,6 @@
 // JSON Schema generator — converts ComposedSchemaEntry map to JSON Schema draft-07
 
-import type { ComposedSchemaEntry } from "./schema-registry.js";
+import type { ComposedSchemaEntry } from "./schema-registry";
 
 type PropertySchema = ComposedSchemaEntry["schema"];
 

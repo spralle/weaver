@@ -2,7 +2,7 @@ import type { SyncStatus } from "@weaver-conf/config-types";
 import type {
   ConfigSyncOrchestratorOptions,
   SyncDiagnostics,
-} from "../types.js";
+} from "../types";
 
 export interface SyncStateManager {
   getSyncState(): SyncStatus;

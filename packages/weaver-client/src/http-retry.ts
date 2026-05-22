@@ -1,4 +1,4 @@
-import type { TransportError } from "./http-transport.js";
+import type { TransportError } from "./http-transport";
 
 /** Configuration for retry behavior on failed HTTP requests. */
 export interface RetryOptions {

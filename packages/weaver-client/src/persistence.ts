@@ -1,4 +1,4 @@
-import type { ConfigSnapshot } from "./types.js";
+import type { ConfigSnapshot } from "./types";
 
 /** Persistence adapter for saving/loading config snapshots across sessions. */
 export interface WeaverClientPersistence {

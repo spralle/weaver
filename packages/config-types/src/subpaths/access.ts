@@ -6,7 +6,7 @@ export type {
   LayerWritePolicy,
   ServiceAccessPolicy,
   ServiceConfigurationDeclaration,
-} from "../access.js";
+} from "../access";
 export {
   configurationAccessContextSchema,
   configurationSchemaFragmentSchema,
@@ -14,4 +14,4 @@ export {
   layerWritePolicySchema,
   serviceAccessPolicySchema,
   serviceConfigurationDeclarationSchema,
-} from "../schemas-access.js";
+} from "../schemas-access";

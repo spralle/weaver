@@ -6,13 +6,13 @@ import type {
   SyncStatus,
   WriteResult,
 } from "@weaver-conf/config-types";
-import { createConfigSyncOrchestrator } from "./orchestrator.js";
+import { createConfigSyncOrchestrator } from "./orchestrator";
 import type {
   ConfigSyncOrchestrator,
   ConfigSyncOrchestratorOptions,
   SyncableConfigStorageProvider,
   SyncDiagnostics,
-} from "./types.js";
+} from "./types";
 
 export interface SyncableStorageProviderAdapterOptions
   extends ConfigSyncOrchestratorOptions {

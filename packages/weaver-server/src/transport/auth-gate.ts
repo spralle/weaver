@@ -4,8 +4,8 @@ import type {
   ConfigurationAccessContext,
   ConfigurationPropertySchema,
 } from "@weaver-conf/config-types";
-import type { AuthContext } from "../auth/auth-middleware.js";
-import type { RestResponse } from "./rest-adapter.js";
+import type { AuthContext } from "../auth/auth-middleware";
+import type { RestResponse } from "./rest-adapter";
 
 export interface AuthGate {
   toAccessContext(authCtx: AuthContext): ConfigurationAccessContext;

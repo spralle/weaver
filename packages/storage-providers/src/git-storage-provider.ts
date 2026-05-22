@@ -7,8 +7,8 @@ import type {
 import {
   createFileSystemStorageProvider,
   type FileSystemStorageProvider,
-} from "./fs-provider.js";
-import type { GitManager } from "./git-manager.js";
+} from "./fs-provider";
+import type { GitManager } from "./git-manager";
 
 export interface GitStorageProviderOptions {
   id: string;

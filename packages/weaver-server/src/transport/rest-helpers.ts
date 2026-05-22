@@ -1,5 +1,5 @@
 // REST adapter helper utilities — extracted to keep rest-adapter.ts under 400 lines
-import type { WeaverError } from "../types/index.js";
+import type { WeaverError } from "../types/index";
 
 export interface ApiResponse<T> {
   data: T;

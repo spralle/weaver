@@ -4,7 +4,7 @@ import type {
   ConfigurationInspection,
   WriteResult,
 } from "@weaver-conf/config-types";
-import type { ConfigDelta, ConfigSnapshot } from "../types/index.js";
+import type { ConfigDelta, ConfigSnapshot } from "../types/index";
 
 export interface WeaverConfigContract {
   resolveAll: {

@@ -1,14 +1,4 @@
 {
   "extends": "../../tsconfig.base.json",
-  "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "src"
-  },
-  "include": ["src"],
-  "references": [
-    { "path": "../config-types" },
-    { "path": "../config-engine" },
-    { "path": "../config-auth" },
-    { "path": "../storage-providers" }
-  ]
+  "include": ["src"]
 }

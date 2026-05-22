@@ -1,5 +1,5 @@
-import type { PropertySessionMode } from "./session.js";
-import type { ConfigurationLayer } from "./types.js";
+import type { PropertySessionMode } from "./session";
+import type { ConfigurationLayer } from "./types";
 
 /** Promotion pipeline stage required before a config change takes effect. */
 export type ConfigChangePolicy =

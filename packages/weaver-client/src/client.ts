@@ -2,32 +2,32 @@ import { deepGet } from "@weaver-conf/config-engine";
 import type { ScopeInstance } from "@weaver-conf/config-types";
 import type { ZodRawShape } from "zod";
 
-import { bootClient } from "./client-boot.js";
-import { setupDeltaSubscription } from "./client-subscriptions.js";
-import type { WeaverClient, WeaverClientOptions } from "./client-types.js";
-import { createInstanceClient } from "./instance-client.js";
-import { createScopeLoader } from "./scope-manager.js";
-import { createStalenessMonitor } from "./staleness.js";
-import type { WriteOptions, WriteResult } from "./transport.js";
-import type { ConfigDelta, Unsubscribe } from "./types.js";
+import { bootClient } from "./client-boot";
+import { setupDeltaSubscription } from "./client-subscriptions";
+import type { WeaverClient, WeaverClientOptions } from "./client-types";
+import { createInstanceClient } from "./instance-client";
+import { createScopeLoader } from "./scope-manager";
+import { createStalenessMonitor } from "./staleness";
+import type { WriteOptions, WriteResult } from "./transport";
+import type { ConfigDelta, Unsubscribe } from "./types";
 import {
   createClientSchemaRegistry,
   type ClientSchemaRegistry,
-} from "./schema-registry.js";
+} from "./schema-registry";
 import {
   validateOnRead,
   validateOnWrite,
   type ValidationOptions,
-} from "./validation.js";
-import { applyNamespace } from "./client-helpers.js";
-import type { NamespaceDefinition } from "./namespace.js";
-import { createTypedNamespaceClient } from "./typed-namespace-client.js";
-import { createUntypedNamespaceClient } from "./untyped-namespace-client.js";
-import { registerNamespaces } from "./registration.js";
-import type { SchemaOptions } from "./types.js";
-import type { ValidationResult } from "./schema-registry.js";
+} from "./validation";
+import { applyNamespace } from "./client-helpers";
+import type { NamespaceDefinition } from "./namespace";
+import { createTypedNamespaceClient } from "./typed-namespace-client";
+import { createUntypedNamespaceClient } from "./untyped-namespace-client";
+import { registerNamespaces } from "./registration";
+import type { SchemaOptions } from "./types";
+import type { ValidationResult } from "./schema-registry";
 
-export type { WeaverClient, WeaverClientOptions } from "./client-types.js";
+export type { WeaverClient, WeaverClientOptions } from "./client-types";
 
 /**
  * Creates a Weaver client with the specified transport and options.

@@ -1,4 +1,4 @@
-import type { ScopeInstance } from "./types.js";
+import type { ScopeInstance } from "./types";
 
 // Promotion pipeline, audit, and emergency override types for Iteration 5
 

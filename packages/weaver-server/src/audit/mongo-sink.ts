@@ -1,6 +1,6 @@
 // MongoDB audit sink — inserts audit entries into a collection
 import { extractErrorMessage } from "@weaver-conf/config-engine";
-import type { ConfigAuditSink, SinkDomainAuditEntry } from "./types.js";
+import type { ConfigAuditSink, SinkDomainAuditEntry } from "./types";
 
 export interface MongoCollection {
   insertOne(doc: Record<string, unknown>): Promise<unknown>;

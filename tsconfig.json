@@ -1,18 +1,4 @@
 {
-  "files": [],
-  "references": [
-    { "path": "packages/config-types" },
-    { "path": "packages/config-engine" },
-    { "path": "packages/config-runtime" },
-    { "path": "packages/config-sync" },
-    { "path": "packages/config-auth" },
-    { "path": "packages/config-policy" },
-    { "path": "packages/config-sessions" },
-    { "path": "packages/config-secrets" },
-    { "path": "packages/storage-provider-local-storage" },
-    { "path": "packages/storage-provider-static-json" },
-    { "path": "packages/storage-providers" },
-    { "path": "packages/weaver-server" },
-    { "path": "packages/weaver-client" }
-  ]
+  "extends": "./tsconfig.base.json",
+  "include": []
 }

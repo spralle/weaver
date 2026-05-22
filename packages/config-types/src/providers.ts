@@ -1,4 +1,4 @@
-import type { ConfigurationLayer, ConfigurationLayerData } from "./types.js";
+import type { ConfigurationLayer, ConfigurationLayerData } from "./types";
 
 /** Outcome of a write or remove operation against a storage provider. */
 export interface WriteResult {

@@ -2,7 +2,7 @@
 
 import { z } from "zod";
 
-import { configurationLayerSchema } from "./schemas-layers.js";
+import { configurationLayerSchema } from "./schemas-layers";
 
 export const configChangePolicySchema = z.enum([
   "full-pipeline",

@@ -1,9 +1,9 @@
-import type { MergeFunction } from "./merge-types.js";
+import type { MergeFunction } from "./merge-types";
 import type {
   ConfigurationChange,
   ConfigurationStorageProvider,
-} from "./providers.js";
-import type { ScopeDefinition } from "./types.js";
+} from "./providers";
+import type { ScopeDefinition } from "./types";
 
 // --- Core interfaces ---
 

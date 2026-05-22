@@ -2,10 +2,10 @@
 import type {
   WeaverConfigService,
   WriteContext,
-} from "../core/config-service.js";
-import { parseScopeQuery } from "../core/scope-utils.js";
-import type { ConfigDelta } from "../types/index.js";
-import { createWeaverError } from "../types/index.js";
+} from "../core/config-service";
+import { parseScopeQuery } from "../core/scope-utils";
+import type { ConfigDelta } from "../types/index";
+import { createWeaverError } from "../types/index";
 import {
   getNamespacePayloadSchema,
   getPayloadSchema,
@@ -13,7 +13,7 @@ import {
   removePayloadSchema,
   resolveAllPayloadSchema,
   setPayloadSchema,
-} from "./scomp-schemas.js";
+} from "./scomp-schemas";
 
 type Unsubscribe = () => void;
 

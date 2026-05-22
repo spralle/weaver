@@ -1,19 +1,19 @@
 // REST route definitions for config and scope endpoints
 
 import { buildPath } from "@weaver-conf/config-engine";
-import type { WeaverConfigService, WriteContext } from "../core/config-service.js";
-import type { ScopeManager } from "../core/scope-manager.js";
-import { parseScopeQuery } from "../core/scope-utils.js";
-import type { WeaverErrorCode } from "../types/index.js";
-import { createWeaverError, httpStatusForError } from "../types/index.js";
-import type { AuthGate } from "./auth-gate.js";
-import { envelope, errorEnvelope, v1Headers } from "./rest-helpers.js";
+import type { WeaverConfigService, WriteContext } from "../core/config-service";
+import type { ScopeManager } from "../core/scope-manager";
+import { parseScopeQuery } from "../core/scope-utils";
+import type { WeaverErrorCode } from "../types/index";
+import { createWeaverError, httpStatusForError } from "../types/index";
+import type { AuthGate } from "./auth-gate";
+import { envelope, errorEnvelope, v1Headers } from "./rest-helpers";
 import {
   configBatchBodySchema,
   configWriteBodySchema,
   scopeProvisionBodySchema,
-} from "./rest-schemas.js";
-import type { RestRequest, RestResponse, RestRoute } from "./rest-adapter.js";
+} from "./rest-schemas";
+import type { RestRequest, RestResponse, RestRoute } from "./rest-adapter";
 
 export interface RouteFactoryDeps {
   configService: WeaverConfigService;

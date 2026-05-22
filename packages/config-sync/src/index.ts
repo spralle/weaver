@@ -1,14 +1,14 @@
-export { MemoryDurableConfigCacheAdapter } from "./durable-cache-memory.js";
-export { createConfigSyncOrchestrator } from "./orchestrator.js";
+export { MemoryDurableConfigCacheAdapter } from "./durable-cache-memory";
+export { createConfigSyncOrchestrator } from "./orchestrator";
 export {
   createSyncableStorageProviderAdapter,
   SyncableStorageProviderAdapter,
   type SyncableStorageProviderAdapterOptions,
-} from "./provider.js";
+} from "./provider";
 export type {
   ConfigSyncOrchestrator,
   ConfigSyncOrchestratorOptions,
   SyncableConfigStorageProvider,
   SyncDiagnostics,
   SyncRetryPolicy,
-} from "./types.js";
+} from "./types";

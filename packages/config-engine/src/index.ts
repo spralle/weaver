@@ -4,42 +4,42 @@
 export type {
   ContractMetadata,
   PackageJsonInput,
-} from "./contract-derivation.js";
+} from "./contract-derivation";
 // deep.ts — Deep object path utilities
-export { deepGet, deepRemove, deepSet } from "./deep.js";
+export { deepGet, deepRemove, deepSet } from "./deep";
 // json-schema-generator.ts — JSON Schema generation
 export type {
   JsonSchemaDocument,
   JsonSchemaProperty,
-} from "./json-schema-generator.js";
-export { generateJsonSchema } from "./json-schema-generator.js";
+} from "./json-schema-generator";
+export { generateJsonSchema } from "./json-schema-generator";
 
 // layers.ts — Layer resolution engine
-export type { ResolvedConfiguration } from "./layers.js";
+export type { ResolvedConfiguration } from "./layers";
 export {
   inspectKey,
   resolveConfiguration,
-} from "./layers.js";
+} from "./layers";
 // merge.ts — Deep merge utility
-export { deepMerge } from "./merge.js";
+export { deepMerge } from "./merge";
 // namespace.ts — Namespace utilities
 export {
   deriveNamespace,
   extractNamespace,
   qualifyKey,
   validateKeyFormat,
-} from "./namespace.js";
+} from "./namespace";
 // path.ts — Bracket-aware path parsing
-export { buildPath, isCompoundSegment, parsePath, pathDepth } from "./path.js";
+export { buildPath, isCompoundSegment, parsePath, pathDepth } from "./path";
 // schema-diff.ts — Schema comparison utilities
-export type { BreakingChange } from "./schema-diff.js";
+export type { BreakingChange } from "./schema-diff";
 export {
   detectBreakingChanges,
   diffSchemaKeys,
   getSchemaProperties,
   getSchemaPropertyType,
   schemasEqual,
-} from "./schema-diff.js";
+} from "./schema-diff";
 // schema-registry.ts — Schema aggregation
 export type {
   ComposedSchemaEntry,
@@ -49,19 +49,19 @@ export type {
   RegisterSchemaResult,
   SchemaCompositionError,
   UnregisterSchemaResult,
-} from "./schema-registry.js";
+} from "./schema-registry";
 export {
   composeConfigurationSchemas,
   createSchemaRegistry,
-} from "./schema-registry.js";
+} from "./schema-registry";
 // scope.ts — Scope chain builder
-export type { BuildScopeChainResult, ScopeChainEntry } from "./scope.js";
+export type { BuildScopeChainResult, ScopeChainEntry } from "./scope";
 // utils — shared utilities (formerly @weaver-conf/storage-provider-core)
-export { cloneValue } from "./utils/clone.js";
-export { extractErrorMessage, isNodeError } from "./utils/error-utils.js";
-export type { LogFields, WeaverLogger } from "./utils/logger.js";
-export { consoleLogger } from "./utils/logger.js";
-export { safeParseConfigEntries } from "./utils/validation.js";
-export { readonlyGuard } from "./utils/write-utils.js";
-export { getCachedRegex, isSafePattern, clearRegexCache } from "./regex-cache.js";
-export { deepEqual } from "./deep-equal.js";
+export { cloneValue } from "./utils/clone";
+export { extractErrorMessage, isNodeError } from "./utils/error-utils";
+export type { LogFields, WeaverLogger } from "./utils/logger";
+export { consoleLogger } from "./utils/logger";
+export { safeParseConfigEntries } from "./utils/validation";
+export { readonlyGuard } from "./utils/write-utils";
+export { getCachedRegex, isSafePattern, clearRegexCache } from "./regex-cache";
+export { deepEqual } from "./deep-equal";

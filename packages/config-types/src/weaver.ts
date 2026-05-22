@@ -1,4 +1,4 @@
-import type { LayerDefinition } from "./layers.js";
+import type { LayerDefinition } from "./layers";
 
 // --- Type-level utilities ---
 

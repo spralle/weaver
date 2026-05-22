@@ -1,9 +1,9 @@
 import type {
   ConfigurationPropertySchema,
   ConfigurationRole,
-} from "./property-schema.js";
-import type { SessionType } from "./session.js";
-import type { ConfigurationLayer, ScopeInstance } from "./types.js";
+} from "./property-schema";
+import type { SessionType } from "./session";
+import type { ConfigurationLayer, ScopeInstance } from "./types";
 
 /** Identity and role context for evaluating configuration access permissions. */
 export interface ConfigurationAccessContext {

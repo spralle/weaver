@@ -5,7 +5,7 @@ import {
   deepRemove,
   deepSet,
 } from "@weaver-conf/config-engine";
-import { createSubscriptionManager } from "./subscriptions.js";
+import { createSubscriptionManager } from "./subscriptions";
 import {
   type ConfigDelta,
   ConfigDeltaSchema,
@@ -14,7 +14,7 @@ import {
   type StateSnapshot,
   StateSnapshotSchema,
   type Unsubscribe,
-} from "./types.js";
+} from "./types";
 
 /**
  * Creates a reactive state container that resolves config from prioritized layers.

@@ -7,8 +7,8 @@ import {
 } from "node:fs";
 import { join } from "node:path";
 import { configSnapshotSchema } from "@weaver-conf/config-types";
-import type { WeaverClientPersistence } from "./persistence.js";
-import type { ConfigSnapshot } from "./types.js";
+import type { WeaverClientPersistence } from "./persistence";
+import type { ConfigSnapshot } from "./types";
 
 /** Options for file-system based snapshot persistence. */
 export interface FileSystemPersistenceOptions {

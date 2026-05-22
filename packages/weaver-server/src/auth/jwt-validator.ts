@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createWeaverError } from "../types/errors.js";
+import { createWeaverError } from "../types/errors";
 
 export interface JwtValidatorOptions {
   /** Public key (PEM) for RS256 or shared secret for HS256 */

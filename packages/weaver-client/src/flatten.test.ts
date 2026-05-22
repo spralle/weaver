@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { flattenObject } from "./flatten.js";
+import { flattenObject } from "./flatten";
 
 describe("flattenObject", () => {
   it("flattens a nested object to dot-delimited keys", () => {

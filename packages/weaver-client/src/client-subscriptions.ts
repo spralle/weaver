@@ -1,10 +1,10 @@
 import { deepSet, deepRemove } from "@weaver-conf/config-engine";
 
-import type { ClientSchemaRegistry } from "./schema-registry.js";
-import type { StalenessMonitor } from "./staleness.js";
-import type { WeaverTransport } from "./transport.js";
-import type { ConfigDelta, Unsubscribe } from "./types.js";
-import { matchGlob } from "./client-helpers.js";
+import type { ClientSchemaRegistry } from "./schema-registry";
+import type { StalenessMonitor } from "./staleness";
+import type { WeaverTransport } from "./transport";
+import type { ConfigDelta, Unsubscribe } from "./types";
+import { matchGlob } from "./client-helpers";
 
 export interface SubscriptionDeps {
   baseState: Record<string, unknown>;

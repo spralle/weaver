@@ -1,25 +1,25 @@
 import type { ScopeDefinition, ScopeInstance } from "@weaver-conf/config-types";
 import type { ZodRawShape } from "zod";
 
-import type { InstanceClient } from "./namespace.js";
-import type { WeaverClientPersistence } from "./persistence.js";
-import type { ScopeLoadingMode } from "./scope-manager.js";
-import type { StalenessConfig } from "./staleness.js";
-import type { WeaverTransport, WriteOptions, WriteResult } from "./transport.js";
+import type { InstanceClient } from "./namespace";
+import type { WeaverClientPersistence } from "./persistence";
+import type { ScopeLoadingMode } from "./scope-manager";
+import type { StalenessConfig } from "./staleness";
+import type { WeaverTransport, WriteOptions, WriteResult } from "./transport";
 import type {
   ClientMode,
   ConfigDelta,
   ConfigurationInspection,
   SchemaOptions,
   Unsubscribe,
-} from "./types.js";
-import type { ValidationResult } from "./schema-registry.js";
+} from "./types";
+import type { ValidationResult } from "./schema-registry";
 import type {
   NamespaceDefinition,
   TypedNamespaceClient,
   UntypedNamespaceClient,
-} from "./namespace.js";
-import type { SchemaRegistrationResult } from "./registration.js";
+} from "./namespace";
+import type { SchemaRegistrationResult } from "./registration";
 
 /** Configuration options for creating a WeaverClient instance. */
 export interface WeaverClientOptions {

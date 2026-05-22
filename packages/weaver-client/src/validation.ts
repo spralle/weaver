@@ -1,6 +1,6 @@
-import type { ClientSchemaRegistry, ValidationResult } from "./schema-registry.js";
+import type { ClientSchemaRegistry, ValidationResult } from "./schema-registry";
 
-export type { ValidationResult } from "./schema-registry.js";
+export type { ValidationResult } from "./schema-registry";
 
 export interface ValidationOptions {
   warnOnMismatch: boolean;

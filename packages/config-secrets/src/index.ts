@@ -4,28 +4,28 @@ export type {
   AzureKeyVaultProvider,
   AzureKeyVaultProviderOptions,
   CircuitBreakerOptions,
-} from "./azure-keyvault-provider.js";
+} from "./azure-keyvault-provider";
 export {
   createAzureKeyVaultProvider,
   SecretResolutionError,
-} from "./azure-keyvault-provider.js";
+} from "./azure-keyvault-provider";
 export type {
   SecretCacheEntry,
   SecretCacheOptions,
-} from "./secret-cache.js";
-export { createSecretCache, SecretCache } from "./secret-cache.js";
+} from "./secret-cache";
+export { createSecretCache, SecretCache } from "./secret-cache";
 export type {
   SecretMetadata,
   SecretProvider,
   SecretProviderHealth,
   SecretStoreResult,
   SecretValue,
-} from "./secret-provider.js";
+} from "./secret-provider";
 export type {
   SecretAuditLog,
   SecretResolutionFailure,
   SecretResolutionResult,
   SecretResolutionService,
   SecretResolutionServiceOptions,
-} from "./secret-resolution-service.js";
-export { createSecretResolutionService } from "./secret-resolution-service.js";
+} from "./secret-resolution-service";
+export { createSecretResolutionService } from "./secret-resolution-service";

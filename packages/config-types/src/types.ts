@@ -29,7 +29,7 @@ export interface ConfigurationContext {
   deviceId: string;
 }
 
-import type { MergeFunction } from "./merge-types.js";
+import type { MergeFunction } from "./merge-types";
 
 /** A single layer's entries with optional custom merge function. */
 export interface ConfigurationLayerEntry {

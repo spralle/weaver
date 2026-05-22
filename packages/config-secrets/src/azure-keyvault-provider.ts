@@ -6,7 +6,7 @@ import type {
   SecretProviderHealth,
   SecretStoreResult,
   SecretValue,
-} from "./secret-provider.js";
+} from "./secret-provider";
 
 export class SecretResolutionError extends Error {
   readonly code = "SECRET_RESOLUTION_ERROR" as const;

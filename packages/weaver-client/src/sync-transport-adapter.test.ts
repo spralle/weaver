@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { SyncMutationMetadata } from "@weaver-conf/config-types";
-import { createLocalTransport } from "./local-transport.js";
-import { createWeaverSyncTransport } from "./sync-transport-adapter.js";
-import type { ConfigSnapshot } from "./types.js";
+import { createLocalTransport } from "./local-transport";
+import { createWeaverSyncTransport } from "./sync-transport-adapter";
+import type { ConfigSnapshot } from "./types";
 
 const testMeta: SyncMutationMetadata = {
   queuedAt: Date.now(),
