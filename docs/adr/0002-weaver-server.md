@@ -1,5 +1,7 @@
 # ADR-0002: weaver-server — Central Configuration Server
 
+> **Status**: Accepted. Note: packages `config-providers` and `config-server` referenced in this ADR were consolidated into `weaver-server` in Phase 1 (May 2026).
+
 - **Status**: Proposed
 - **Date**: 2026-05-02
 - **Depends on**: ADR-0001 (Marker Architecture, Secret Management)

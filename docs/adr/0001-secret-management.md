@@ -1,5 +1,7 @@
 # ADR-0001: Weaver Marker Architecture, Secret Management, and Service Configuration
 
+> **Status**: Accepted. Note: packages `config-providers` and `config-server` referenced in this ADR were consolidated into `weaver-server` in Phase 1 (May 2026).
+
 - **Status**: Accepted
 - **Date**: 2026-05-02
 - **Epic**: weaver-edj

@@ -12,23 +12,19 @@ graph TD
     CT --> CA[config-auth]
     CT --> CSE[config-sessions]
     CT --> CSC[config-secrets]
-    CE --> CP[config-policy]
-    CT --> CP
+    CT --> CS[config-sync]
+    CE --> CS
+    CT --> CP[config-policy]
+    CE --> CP
     CE --> CR[config-runtime]
-    CE --> CS[config-sync]
-    CT --> CS
     CE --> SP[storage-providers]
     CT --> SP
-    CE --> SPLS[storage-provider-local-storage]
-    CT --> SPLS
-    CE --> SPSJ[storage-provider-static-json]
-    CT --> SPSJ
-    CE --> WC[weaver-client]
+    CT --> WC[weaver-client]
+    CE --> WC
     CR --> WC
     CS --> WC
-    CT --> WC
-    CE --> WS[weaver-server]
-    CT --> WS
+    CT --> WS[weaver-server]
+    CE --> WS
     CA --> WS
     SP --> WS
 ```
@@ -40,7 +36,7 @@ graph TD
 | **Leaf** (zero internal deps) | `config-types` |
 | **Core utilities** | `config-engine` |
 | **Domain** | `config-auth`, `config-sessions`, `config-secrets`, `config-policy`, `config-runtime`, `config-sync` |
-| **Storage** | `storage-providers`, `storage-provider-local-storage`, `storage-provider-static-json` |
+| **Storage** | `storage-providers` |
 | **Consumer** (top-level) | `weaver-client`, `weaver-server` |
 
 ## Rules

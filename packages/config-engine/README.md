@@ -53,21 +53,6 @@ inspection.effectiveLayer; // "tenant"
 inspection.layerValues;    // { core: "light", tenant: "dark" }
 ```
 
-### Ceiling enforcement
-
-```typescript
-import { resolveConfigurationWithCeiling } from "@weaver-conf/config-engine";
-
-const schemaMap = new Map([
-  ["app.security.apiKey", { maxOverrideLayer: "tenant" }],
-]);
-
-// Values above the ceiling layer are ignored (unless emergency override)
-const resolved = resolveConfigurationWithCeiling(
-  stack, schemaMap, false, weaver.getRank,
-);
-```
-
 ### Schema registry
 
 ```typescript
@@ -102,8 +87,6 @@ deriveNamespace("@weaver-conf/vessel-view-plugin"); // "weaver.vesselView"
 | `deepMerge(base, override)` | Deep merge two config objects |
 | `resolveConfiguration(stack)` | Resolve a layer stack into merged entries + provenance |
 | `inspectKey(stack, key)` | Inspect a key's value across all layers |
-| `resolveConfigurationWithCeiling(...)` | Resolve with `maxOverrideLayer` enforcement |
-| `buildScopeChain(hierarchy, scopePath)` | Validate and build an ordered scope chain |
 | `createSchemaRegistry()` | Create an incremental schema registry |
 | `composeConfigurationSchemas(declarations)` | One-shot schema composition |
 | `qualifyKey(namespace, relativeKey)` | Join namespace + key with dot separator |
@@ -111,8 +94,6 @@ deriveNamespace("@weaver-conf/vessel-view-plugin"); // "weaver.vesselView"
 | `deriveNamespace(pluginId)` | Derive namespace from package/plugin ID |
 | `extractNamespace(fqKey)` | Extract first two segments as namespace |
 | `generateJsonSchema(schemas)` | Generate a JSON Schema document from property schemas |
-| `generateZodSchemaSource(schemas)` | Generate Zod schema TypeScript source code |
-| `deriveContractFromPackageJson(pkg)` | Extract contract metadata from package.json |
 
 ## License
 
