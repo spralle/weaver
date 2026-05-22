@@ -1,12 +1,24 @@
-import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import {
-  validateOneWayRatchet,
-  DEFAULT_PLUGIN_MANAGEMENT_RATCHET_RULES,
+import { describe, it } from "node:test";
+import type {
+  RatchetLayerSnapshot,
+  RatchetRule,
 } from "../src/ratchet-validator.js";
-import type { RatchetLayerSnapshot, RatchetRule } from "../src/ratchet-validator.js";
+import {
+  DEFAULT_PLUGIN_MANAGEMENT_RATCHET_RULES,
+  validateOneWayRatchet,
+} from "../src/ratchet-validator.js";
 
-const layerOrder = ["core", "app", "module", "integrator", "scope", "user", "device", "session"];
+const layerOrder = [
+  "core",
+  "app",
+  "module",
+  "integrator",
+  "scope",
+  "user",
+  "device",
+  "session",
+];
 
 describe("validateOneWayRatchet", () => {
   it("reports no violations when values tighten across layers", () => {
@@ -14,7 +26,11 @@ describe("validateOneWayRatchet", () => {
       { layer: "core", values: { changePolicy: "direct-allowed" } },
       { layer: "app", values: { changePolicy: "staging-gate" } },
     ];
-    const result = validateOneWayRatchet(layers, DEFAULT_PLUGIN_MANAGEMENT_RATCHET_RULES, { layerOrder });
+    const result = validateOneWayRatchet(
+      layers,
+      DEFAULT_PLUGIN_MANAGEMENT_RATCHET_RULES,
+      { layerOrder },
+    );
     assert.equal(result.violations.length, 0);
     assert.equal(result.blocked.length, 0);
   });
@@ -24,9 +40,13 @@ describe("validateOneWayRatchet", () => {
       { layer: "core", values: { changePolicy: "full-pipeline" } },
       { layer: "app", values: { changePolicy: "direct-allowed" } },
     ];
-    const result = validateOneWayRatchet(layers, DEFAULT_PLUGIN_MANAGEMENT_RATCHET_RULES, { layerOrder });
+    const result = validateOneWayRatchet(
+      layers,
+      DEFAULT_PLUGIN_MANAGEMENT_RATCHET_RULES,
+      { layerOrder },
+    );
     assert.equal(result.violations.length, 1);
-    assert.equal(result.violations[0]!.transition, "loosened");
+    assert.equal(result.violations[0]?.transition, "loosened");
   });
 
   it("reports blocked for unknown values in ordered rule", () => {
@@ -34,7 +54,11 @@ describe("validateOneWayRatchet", () => {
       { layer: "core", values: { changePolicy: "unknown-policy" } },
       { layer: "app", values: { changePolicy: "direct-allowed" } },
     ];
-    const result = validateOneWayRatchet(layers, DEFAULT_PLUGIN_MANAGEMENT_RATCHET_RULES, { layerOrder });
+    const result = validateOneWayRatchet(
+      layers,
+      DEFAULT_PLUGIN_MANAGEMENT_RATCHET_RULES,
+      { layerOrder },
+    );
     assert.equal(result.blocked.length, 1);
   });
 
@@ -43,7 +67,8 @@ describe("validateOneWayRatchet", () => {
       kind: "custom",
       field: "maxRetries",
       compare: (prev, curr) => {
-        if (typeof prev !== "number" || typeof curr !== "number") return "blocked";
+        if (typeof prev !== "number" || typeof curr !== "number")
+          return "blocked";
         if (curr < prev) return "tightened";
         if (curr === prev) return "equal";
         return "loosened";
@@ -55,7 +80,7 @@ describe("validateOneWayRatchet", () => {
     ];
     const result = validateOneWayRatchet(layers, [customRule], { layerOrder });
     assert.equal(result.violations.length, 0);
-    assert.equal(result.evaluations[0]!.transition, "tightened");
+    assert.equal(result.evaluations[0]?.transition, "tightened");
   });
 
   it("sticky blocked propagates to subsequent layers", () => {
@@ -64,10 +89,14 @@ describe("validateOneWayRatchet", () => {
       { layer: "app", values: { visibility: "public" } },
       { layer: "module", values: { visibility: "admin" } },
     ];
-    const result = validateOneWayRatchet(layers, DEFAULT_PLUGIN_MANAGEMENT_RATCHET_RULES, {
-      layerOrder,
-      stickyBlocked: true,
-    });
+    const result = validateOneWayRatchet(
+      layers,
+      DEFAULT_PLUGIN_MANAGEMENT_RATCHET_RULES,
+      {
+        layerOrder,
+        stickyBlocked: true,
+      },
+    );
     assert.equal(result.blocked.length, 2);
   });
 
@@ -76,8 +105,12 @@ describe("validateOneWayRatchet", () => {
       { layer: "core", values: { visibility: "admin" } },
       { layer: "app", values: { visibility: "admin" } },
     ];
-    const result = validateOneWayRatchet(layers, DEFAULT_PLUGIN_MANAGEMENT_RATCHET_RULES, { layerOrder });
+    const result = validateOneWayRatchet(
+      layers,
+      DEFAULT_PLUGIN_MANAGEMENT_RATCHET_RULES,
+      { layerOrder },
+    );
     assert.equal(result.violations.length, 0);
-    assert.equal(result.evaluations[0]!.transition, "equal");
+    assert.equal(result.evaluations[0]?.transition, "equal");
   });
 });
