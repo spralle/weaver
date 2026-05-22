@@ -1,17 +1,17 @@
-# @weaver/storage-providers
+# @weaver-conf/storage-providers
 
 > Storage provider adapters for Weaver configuration — file system, Git, in-memory, and MongoDB backends.
 
 ## Installation
 
 ```bash
-bun add @weaver/storage-providers
+bun add @weaver-conf/storage-providers
 ```
 
 ## Usage
 
 ```typescript
-import { createFileSystemStorageProvider } from "@weaver/storage-providers";
+import { createFileSystemStorageProvider } from "@weaver-conf/storage-providers";
 
 const provider = createFileSystemStorageProvider({
   basePath: "./config",

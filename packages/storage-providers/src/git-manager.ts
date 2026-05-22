@@ -4,7 +4,7 @@ import {
   consoleLogger,
   extractErrorMessage,
   type WeaverLogger,
-} from "@weaver/config-engine";
+} from "@weaver-conf/config-engine";
 import type { SimpleGit } from "simple-git";
 
 /** Result of a git operation — success with data or failure with error details. */

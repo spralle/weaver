@@ -1,5 +1,5 @@
-import { createSchemaRegistry } from "@weaver/config-engine";
-import type { ConfigurationPropertySchema } from "@weaver/config-types";
+import { createSchemaRegistry } from "@weaver-conf/config-engine";
+import type { ConfigurationPropertySchema } from "@weaver-conf/config-types";
 
 export const schemaRegistry = createSchemaRegistry();
 

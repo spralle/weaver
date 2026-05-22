@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { evaluateChangePolicy } from "../dist/index.js";
-import { withAuth } from "@weaver/config-auth";
-import { defineWeaver, Layers } from "@weaver/config-types";
+import { withAuth } from "@weaver-conf/config-auth";
+import { defineWeaver, Layers } from "@weaver-conf/config-types";
 
 // --- Test WeaverConfig and AuthConfig for canWrite injection ---
 

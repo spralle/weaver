@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { startWeaverServer } from "@weaver/weaver-server";
+import { startWeaverServer } from "@weaver-conf/weaver-server";
 
 describe("WeaverServer", () => {
   it("starts and reports isReady", async () => {

@@ -1,8 +1,8 @@
-import { getCachedRegex, isSafePattern } from "@weaver/config-engine";
+import { getCachedRegex, isSafePattern } from "@weaver-conf/config-engine";
 import type {
   ConfigReloadBehavior,
   ConfigurationPropertySchema,
-} from "@weaver/config-types";
+} from "@weaver-conf/config-types";
 
 /** Result of validating a value against its registered schema. */
 export interface ValidationResult {

@@ -1,5 +1,5 @@
 ---
-"@weaver/config-types": minor
+"@weaver-conf/config-types": minor
 ---
 
 Add pluggable scope resolution cache for efficient batch getForScope() calls.

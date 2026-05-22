@@ -1,4 +1,4 @@
-import type { ConfigurationService, WeaverConfig } from "@weaver/config-types";
+import type { ConfigurationService, WeaverConfig } from "@weaver-conf/config-types";
 import { buildScopePath, findLocation } from "../locations.js";
 import { getSchemaForKey } from "../schemas.js";
 import { ALL_KEYS } from "../seed-data.js";

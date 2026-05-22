@@ -1,6 +1,6 @@
 // In-memory emergency override tracker for testing
 
-import type { EmergencyOverrideRecord } from "@weaver/config-types";
+import type { EmergencyOverrideRecord } from "@weaver-conf/config-types";
 import type {
   OverrideTracker,
   OverrideTrackerOptions,

@@ -1,4 +1,4 @@
-import type { ScopeInstance } from "@weaver/config-types";
+import type { ScopeInstance } from "@weaver-conf/config-types";
 
 export interface LocationDef {
   code: string;

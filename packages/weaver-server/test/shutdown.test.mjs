@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { createShutdownManager } from "@weaver/weaver-server";
+import { createShutdownManager } from "@weaver-conf/weaver-server";
 
 describe("ShutdownManager", () => {
   it("shutdown runs handlers in order", async () => {

@@ -1,4 +1,4 @@
-import type { SecretReference } from "@weaver/config-types";
+import type { SecretReference } from "@weaver-conf/config-types";
 
 /** A resolved secret value with optional version and expiration metadata. */
 export interface SecretValue {

@@ -3,7 +3,7 @@
 import type {
   ConfigurationAccessContext,
   ConfigurationPropertySchema,
-} from "@weaver/config-types";
+} from "@weaver-conf/config-types";
 
 export type PolicyDecision =
   | { readonly outcome: "allowed" }

@@ -9,14 +9,14 @@ export type {
   GitStorageProviderOptions,
   InMemoryProviderOptions,
   MongoDBStorageProviderOptions,
-} from "@weaver/storage-providers";
+} from "@weaver-conf/storage-providers";
 export {
   createFileSystemStorageProvider,
   createGitManager,
   createGitStorageProvider,
   createInMemoryStorageProvider,
   createMongoDBStorageProvider,
-} from "@weaver/storage-providers";
+} from "@weaver-conf/storage-providers";
 
 // Server-specific orchestration
 export type { EnvironmentOverlayOptions } from "./environment-overlay.js";

@@ -1,5 +1,5 @@
 {
-  "name": "@weaver/demo",
+  "name": "@weaver-conf/demo",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,13 +8,13 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@weaver/config-types": "workspace:*",
-    "@weaver/config-engine": "workspace:*",
-    "@weaver/storage-provider-static-json": "workspace:*",
-    "@weaver/storage-provider-local-storage": "workspace:*",
-    "@weaver/config-sessions": "workspace:*",
-    "@weaver/config-policy": "workspace:*",
-    "@weaver/weaver-server": "workspace:*"
+    "@weaver-conf/config-types": "workspace:*",
+    "@weaver-conf/config-engine": "workspace:*",
+    "@weaver-conf/storage-provider-static-json": "workspace:*",
+    "@weaver-conf/storage-provider-local-storage": "workspace:*",
+    "@weaver-conf/config-sessions": "workspace:*",
+    "@weaver-conf/config-policy": "workspace:*",
+    "@weaver-conf/weaver-server": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.8.3",

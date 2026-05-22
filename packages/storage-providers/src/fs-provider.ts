@@ -7,7 +7,7 @@ import {
   deepSet,
   isNodeError,
   safeParseConfigEntries,
-} from "@weaver/config-engine";
+} from "@weaver-conf/config-engine";
 import type {
   ConfigurationChange,
   ConfigurationLayer,
@@ -15,8 +15,8 @@ import type {
   ConfigurationStorageProvider,
   Result,
   WriteResult,
-} from "@weaver/config-types";
-import { err, ok } from "@weaver/config-types";
+} from "@weaver-conf/config-types";
+import { err, ok } from "@weaver-conf/config-types";
 
 /** Options for creating a file-system storage provider. */
 export interface FileSystemProviderOptions {

@@ -16,7 +16,7 @@
 ## Quick Start
 
 ```ts
-import { createWeaverClient, createHttpTransport, defineNamespace } from "@weaver/weaver-client";
+import { createWeaverClient, createHttpTransport, defineNamespace } from "@weaver-conf/weaver-client";
 import { z } from "zod";
 
 // Define a typed namespace
@@ -58,16 +58,16 @@ Configuration is stored as **nested JSON objects** (not flat dot-paths). The res
 
 | Package | Description |
 | --- | --- |
-| [`@weaver/config-types`](./packages/config-types) | Core types, `defineWeaver()` builder, `Layers.*` factories, Zod schemas |
-| [`@weaver/config-engine`](./packages/config-engine) | Resolution engine: `deepGet`, `deepSet`, `deepMerge`, ceiling enforcement |
-| [`@weaver/config-runtime`](./packages/config-runtime) | Pure state container: in-memory state machine, snapshot management |
-| [`@weaver/config-sync`](./packages/config-sync) | Offline-first sync orchestrator with conflict resolution (LWW fallback) |
-| [`@weaver/config-secrets`](./packages/config-secrets) | SecretProvider, SecretCache, SecretResolutionService |
-| [`@weaver/config-policy`](./packages/config-policy) | Change policy evaluation, validation, one-way ratchet rules |
-| [`@weaver/config-sessions`](./packages/config-sessions) | Override session provider for time-limited emergency overrides |
-| [`@weaver/storage-providers`](./packages/storage-providers) | Storage provider abstractions + implementations (FS, Git, MongoDB, memory, env-overlay) |
-| [`@weaver/weaver-client`](./packages/weaver-client) | Unified client SDK: `defineNamespace`, schema validation, offline boot |
-| [`@weaver/weaver-server`](./packages/weaver-server) | Server: REST adapter, SSE streaming, SCOMP transport, schema registry |
+| [`@weaver-conf/config-types`](./packages/config-types) | Core types, `defineWeaver()` builder, `Layers.*` factories, Zod schemas |
+| [`@weaver-conf/config-engine`](./packages/config-engine) | Resolution engine: `deepGet`, `deepSet`, `deepMerge`, ceiling enforcement |
+| [`@weaver-conf/config-runtime`](./packages/config-runtime) | Pure state container: in-memory state machine, snapshot management |
+| [`@weaver-conf/config-sync`](./packages/config-sync) | Offline-first sync orchestrator with conflict resolution (LWW fallback) |
+| [`@weaver-conf/config-secrets`](./packages/config-secrets) | SecretProvider, SecretCache, SecretResolutionService |
+| [`@weaver-conf/config-policy`](./packages/config-policy) | Change policy evaluation, validation, one-way ratchet rules |
+| [`@weaver-conf/config-sessions`](./packages/config-sessions) | Override session provider for time-limited emergency overrides |
+| [`@weaver-conf/storage-providers`](./packages/storage-providers) | Storage provider abstractions + implementations (FS, Git, MongoDB, memory, env-overlay) |
+| [`@weaver-conf/weaver-client`](./packages/weaver-client) | Unified client SDK: `defineNamespace`, schema validation, offline boot |
+| [`@weaver-conf/weaver-server`](./packages/weaver-server) | Server: REST adapter, SSE streaming, SCOMP transport, schema registry |
 
 ## Key Concepts
 

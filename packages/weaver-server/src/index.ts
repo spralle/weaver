@@ -1,7 +1,7 @@
-// @weaver/weaver-server — Central configuration server
+// @weaver-conf/weaver-server — Central configuration server
 
-export type { WeaverLogger } from "@weaver/config-engine";
-export { consoleLogger } from "@weaver/config-engine";
+export type { WeaverLogger } from "@weaver-conf/config-engine";
+export { consoleLogger } from "@weaver-conf/config-engine";
 export type {
   AuditService,
   AuditServiceOptions,

@@ -1,4 +1,4 @@
-// @weaver/config-types — Configuration type definitions and Zod schemas
+// @weaver-conf/config-types — Configuration type definitions and Zod schemas
 
 // result.ts — Discriminated Result<T,E> union for fallible operations
 export type { Result } from "./result.js";

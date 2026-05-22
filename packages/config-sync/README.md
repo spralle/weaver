@@ -1,4 +1,4 @@
-# @weaver/config-sync
+# @weaver-conf/config-sync
 
 ## Status: Deferred (Pre-built)
 

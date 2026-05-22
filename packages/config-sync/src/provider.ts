@@ -5,7 +5,7 @@ import type {
   SyncResult,
   SyncStatus,
   WriteResult,
-} from "@weaver/config-types";
+} from "@weaver-conf/config-types";
 import { createConfigSyncOrchestrator } from "./orchestrator.js";
 import type {
   ConfigSyncOrchestrator,

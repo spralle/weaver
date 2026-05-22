@@ -1,4 +1,4 @@
-// Sub-path barrel: @weaver/config-types/access
+// Sub-path barrel: @weaver-conf/config-types/access
 export type {
   ConfigurationAccessContext,
   ConfigurationSchemaFragment,

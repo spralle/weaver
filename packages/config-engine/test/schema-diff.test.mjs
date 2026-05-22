@@ -6,7 +6,7 @@ import {
   getSchemaProperties,
   getSchemaPropertyType,
   schemasEqual,
-} from "@weaver/config-engine";
+} from "@weaver-conf/config-engine";
 
 describe("schema-diff", () => {
   describe("getSchemaProperties", () => {

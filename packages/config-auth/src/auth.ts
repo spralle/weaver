@@ -7,7 +7,7 @@ import type {
   ConfigurationVisibility,
   LayerWritePolicy,
   WeaverConfig,
-} from "@weaver/config-types";
+} from "@weaver-conf/config-types";
 
 /** Maps visibility levels to the role sets that can read at that level. */
 export interface VisibilityRoleMapping {

@@ -3,7 +3,7 @@ import type {
   ConfigurationLayerData,
   ConfigurationStorageProvider,
   WriteResult,
-} from "@weaver/config-types";
+} from "@weaver-conf/config-types";
 import {
   createFileSystemStorageProvider,
   type FileSystemStorageProvider,

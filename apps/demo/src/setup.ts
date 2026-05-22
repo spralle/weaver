@@ -1,9 +1,9 @@
 // TODO: rewire with new config-runtime — createConfigurationService removed
-import { createOverrideSessionProvider } from "@weaver/config-sessions";
-import { defineWeaver, Layers } from "@weaver/config-types";
-import { createLocalStorageProvider } from "@weaver/storage-provider-local-storage";
-import { createInMemoryStorageProvider } from "@weaver/weaver-server";
-import { createStaticJsonStorageProvider } from "@weaver/storage-provider-static-json";
+import { createOverrideSessionProvider } from "@weaver-conf/config-sessions";
+import { defineWeaver, Layers } from "@weaver-conf/config-types";
+import { createLocalStorageProvider } from "@weaver-conf/storage-provider-local-storage";
+import { createInMemoryStorageProvider } from "@weaver-conf/weaver-server";
+import { createStaticJsonStorageProvider } from "@weaver-conf/storage-provider-static-json";
 import {
   APP_DEFAULTS,
   CORE_DEFAULTS,

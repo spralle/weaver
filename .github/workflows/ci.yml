@@ -25,11 +25,11 @@ jobs:
 
       - run: bun install
 
-      - run: bun run build --filter='!@weaver/demo'
+      - run: bun run build --filter='!@weaver-conf/demo'
 
       - name: Typecheck
-        run: bun run typecheck --filter='!@weaver/demo'
+        run: bun run typecheck --filter='!@weaver-conf/demo'
 
-      - run: bun run lint --filter='!@weaver/demo'
+      - run: bun run lint --filter='!@weaver-conf/demo'
 
-      - run: bun run test --filter='!@weaver/demo'
+      - run: bun run test --filter='!@weaver-conf/demo'

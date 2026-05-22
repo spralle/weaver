@@ -9,7 +9,7 @@ import type {
   ConfigSyncTransport,
   SyncCursor,
   SyncRemoteChange,
-} from "@weaver/config-types";
+} from "@weaver-conf/config-types";
 import type { WeaverTransport, WriteResult } from "./transport.js";
 
 export function createWeaverSyncTransport(

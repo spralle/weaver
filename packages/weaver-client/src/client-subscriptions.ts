@@ -1,4 +1,4 @@
-import { deepSet, deepRemove } from "@weaver/config-engine";
+import { deepSet, deepRemove } from "@weaver-conf/config-engine";
 
 import type { ClientSchemaRegistry } from "./schema-registry.js";
 import type { StalenessMonitor } from "./staleness.js";

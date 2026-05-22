@@ -2,7 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { evaluateChangePolicy } from "../src/policy-engine.js";
 import type { PolicyEvaluationContext } from "../src/policy-engine.js";
-import type { ConfigurationPropertySchema } from "@weaver/config-types";
+import type { ConfigurationPropertySchema } from "@weaver-conf/config-types";
 
 function makeSchema(changePolicy?: string): ConfigurationPropertySchema {
   return {

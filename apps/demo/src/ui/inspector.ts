@@ -1,4 +1,4 @@
-import type { ConfigurationService, WeaverConfig } from "@weaver/config-types";
+import type { ConfigurationService, WeaverConfig } from "@weaver-conf/config-types";
 import {
   buildScopePath,
   COUNTRY_CODES_WITH_PROVIDERS,

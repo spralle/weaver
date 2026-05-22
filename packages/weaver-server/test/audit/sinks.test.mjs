@@ -1,6 +1,6 @@
 import { describe, it, mock } from "node:test";
 import assert from "node:assert/strict";
-import { createStdoutAuditSink, createMongoAuditSink } from "@weaver/weaver-server";
+import { createStdoutAuditSink, createMongoAuditSink } from "@weaver-conf/weaver-server";
 
 function makeEntry() {
   return {

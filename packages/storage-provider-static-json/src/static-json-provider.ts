@@ -1,12 +1,12 @@
 // Static JSON configuration storage provider — read-only layers (CORE, APP, MODULE)
 
-import { readonlyGuard } from "@weaver/config-engine";
+import { readonlyGuard } from "@weaver-conf/config-engine";
 import type {
   ConfigurationLayer,
   ConfigurationLayerData,
   ConfigurationStorageProvider,
   WriteResult,
-} from "@weaver/config-types";
+} from "@weaver-conf/config-types";
 
 export interface StaticJsonProviderOptions {
   id: string;

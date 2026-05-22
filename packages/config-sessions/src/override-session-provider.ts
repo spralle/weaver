@@ -9,7 +9,7 @@ import {
   type SessionDeactivationResult,
   type SessionDomainAuditEntry,
   type WriteResult,
-} from "@weaver/config-types";
+} from "@weaver-conf/config-types";
 
 /** Options for configuring the override session provider. */
 export interface OverrideSessionProviderOptions {

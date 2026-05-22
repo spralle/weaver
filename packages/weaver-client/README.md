@@ -1,17 +1,17 @@
-# @weaver/weaver-client
+# @weaver-conf/weaver-client
 
 > Configuration client SDK for Weaver — typed namespaces, transports, offline persistence, and real-time sync.
 
 ## Installation
 
 ```bash
-bun add @weaver/weaver-client
+bun add @weaver-conf/weaver-client
 ```
 
 ## Usage
 
 ```typescript
-import { createWeaverClient, createHttpTransport, defineNamespace } from "@weaver/weaver-client";
+import { createWeaverClient, createHttpTransport, defineNamespace } from "@weaver-conf/weaver-client";
 import { z } from "zod";
 
 // Define a typed namespace

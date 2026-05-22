@@ -1,4 +1,4 @@
-// @weaver/config-engine — Configuration resolution engine (iteration 1)
+// @weaver-conf/config-engine — Configuration resolution engine (iteration 1)
 
 // contract-derivation.ts — Package.json contract metadata extraction
 export type {
@@ -55,7 +55,7 @@ export {
 } from "./schema-registry.js";
 // scope.ts — Scope chain builder
 export type { BuildScopeChainResult, ScopeChainEntry } from "./scope.js";
-// utils — shared utilities (formerly @weaver/storage-provider-core)
+// utils — shared utilities (formerly @weaver-conf/storage-provider-core)
 export { cloneValue } from "./utils/clone.js";
 export { extractErrorMessage, isNodeError } from "./utils/error-utils.js";
 export type { LogFields, WeaverLogger } from "./utils/logger.js";

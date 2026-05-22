@@ -1,6 +1,6 @@
 // In-memory audit log implementation for testing
 
-import type { ConfigDomainAuditEntry } from "@weaver/config-types";
+import type { ConfigDomainAuditEntry } from "@weaver-conf/config-types";
 import type { ConfigAuditLog } from "./types.js";
 
 export function createInMemoryAuditLog(): ConfigAuditLog {

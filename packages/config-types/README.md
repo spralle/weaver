@@ -1,16 +1,16 @@
-# @weaver/config-types
+# @weaver-conf/config-types
 
 > Core type definitions, Zod schemas, and the `defineWeaver()` builder for declaring layered configuration stacks.
 
 ## Installation
 
 ```bash
-bun add @weaver/config-types
+bun add @weaver-conf/config-types
 ```
 
 ## Overview
 
-`@weaver/config-types` is the foundational package in the Weaver configuration system. It defines the type-level contracts that all other `@weaver/config-*` packages depend on: layer definitions, storage provider interfaces, property schemas, session types, sync types, and access control types.
+`@weaver-conf/config-types` is the foundational package in the Weaver configuration system. It defines the type-level contracts that all other `@weaver-conf/config-*` packages depend on: layer definitions, storage provider interfaces, property schemas, session types, sync types, and access control types.
 
 The centerpiece is `defineWeaver()` — a builder that takes an `as const` tuple of layer definitions and returns a fully-typed `WeaverConfig`. Layer names, order (rank), and types are all consumer-declared. There are no hardcoded layer names or roles.
 
@@ -21,7 +21,7 @@ The package also exports `Layers.*` factories for the four built-in layer types 
 ### Declaring a layer stack with `defineWeaver`
 
 ```typescript
-import { defineWeaver, Layers, replaceOnly } from "@weaver/config-types";
+import { defineWeaver, Layers, replaceOnly } from "@weaver-conf/config-types";
 
 const weaver = defineWeaver([
   Layers.Static("core"),
@@ -46,7 +46,7 @@ weaver.layerNames; // => readonly ["core", "app", ..., "session"]
 ### Implementing a custom LayerType
 
 ```typescript
-import type { LayerType } from "@weaver/config-types";
+import type { LayerType } from "@weaver-conf/config-types";
 
 const cacheBustedType: LayerType = {
   id: "cache-busted",
@@ -64,7 +64,7 @@ const cacheBustedType: LayerType = {
 import {
   configurationLayerSchema,
   configurationPropertySchemaSchema,
-} from "@weaver/config-types";
+} from "@weaver-conf/config-types";
 
 const parsed = configurationPropertySchemaSchema.parse(untrustedInput);
 ```

@@ -1,17 +1,17 @@
-# @weaver/config-secrets
+# @weaver-conf/config-secrets
 
 > Server-side secret resolution for Weaver configuration — pluggable providers, caching, and audit logging.
 
 ## Installation
 
 ```bash
-bun add @weaver/config-secrets
+bun add @weaver-conf/config-secrets
 ```
 
 ## Usage
 
 ```typescript
-import { createSecretResolutionService, createSecretCache } from "@weaver/config-secrets";
+import { createSecretResolutionService, createSecretCache } from "@weaver-conf/config-secrets";
 
 const service = createSecretResolutionService({
   providers: [myVaultProvider],

@@ -2,7 +2,7 @@ import { test, describe } from "node:test";
 import assert from "node:assert/strict";
 import { createWeaverConfigService } from "../../src/core/config-service.ts";
 import { createRestAdapter } from "../../src/transport/rest-adapter.ts";
-import { deepSet, deepRemove } from "@weaver/config-engine";
+import { deepSet, deepRemove } from "@weaver-conf/config-engine";
 
 function createTestProvider(id, layer, entries, writable = true) {
   let data = JSON.parse(JSON.stringify(entries));

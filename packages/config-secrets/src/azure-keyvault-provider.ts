@@ -1,6 +1,6 @@
 import type { TokenCredential } from "@azure/identity";
 import { SecretClient } from "@azure/keyvault-secrets";
-import type { SecretReference } from "@weaver/config-types";
+import type { SecretReference } from "@weaver-conf/config-types";
 import type {
   SecretProvider,
   SecretProviderHealth,

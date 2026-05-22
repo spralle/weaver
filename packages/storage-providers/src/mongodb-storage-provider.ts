@@ -4,13 +4,13 @@ import {
   consoleLogger,
   extractErrorMessage,
   type WeaverLogger,
-} from "@weaver/config-engine";
+} from "@weaver-conf/config-engine";
 import type {
   ConfigurationChange,
   ConfigurationLayerData,
   ConfigurationStorageProvider,
   WriteResult,
-} from "@weaver/config-types";
+} from "@weaver-conf/config-types";
 import type { ChangeStream, Collection } from "mongodb";
 import { z } from "zod";
 

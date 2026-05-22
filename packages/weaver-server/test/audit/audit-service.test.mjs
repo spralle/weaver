@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { createAuditService } from "@weaver/weaver-server";
+import { createAuditService } from "@weaver-conf/weaver-server";
 
 function makeEntry(overrides = {}) {
   return {

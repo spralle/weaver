@@ -4,7 +4,7 @@ import type {
   ConfigurationInspection,
   ConfigurationLayer,
   ConfigurationLayerStack,
-} from "@weaver/config-types";
+} from "@weaver-conf/config-types";
 
 import { deepMerge } from "./merge.js";
 

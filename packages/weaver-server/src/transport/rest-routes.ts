@@ -1,6 +1,6 @@
 // REST route definitions for config and scope endpoints
 
-import { buildPath } from "@weaver/config-engine";
+import { buildPath } from "@weaver-conf/config-engine";
 import type { WeaverConfigService, WriteContext } from "../core/config-service.js";
 import type { ScopeManager } from "../core/scope-manager.js";
 import { parseScopeQuery } from "../core/scope-utils.js";

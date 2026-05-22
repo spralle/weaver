@@ -1,4 +1,4 @@
-import type { SyncErrorMetadata } from "@weaver/config-types";
+import type { SyncErrorMetadata } from "@weaver-conf/config-types";
 
 export const DEFAULT_BATCH_SIZE = 50;
 export const DEFAULT_RETRY_BASE_MS = 500;

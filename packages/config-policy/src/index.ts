@@ -1,4 +1,4 @@
-// @weaver/config-policy — Policy evaluation, validation, and override tracking
+// @weaver-conf/config-policy — Policy evaluation, validation, and override tracking
 
 export { createFileSystemOverrideTracker } from "./fs-override-tracker.js";
 export { createInMemoryOverrideTracker } from "./memory-override-tracker.js";

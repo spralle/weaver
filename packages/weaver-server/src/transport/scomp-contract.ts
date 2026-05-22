@@ -3,7 +3,7 @@
 import type {
   ConfigurationInspection,
   WriteResult,
-} from "@weaver/config-types";
+} from "@weaver-conf/config-types";
 import type { ConfigDelta, ConfigSnapshot } from "../types/index.js";
 
 export interface WeaverConfigContract {

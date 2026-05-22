@@ -1,4 +1,4 @@
-import type { WriteResult } from "@weaver/config-types";
+import type { WriteResult } from "@weaver-conf/config-types";
 
 /**
  * Returns a readonly-rejection WriteResult for providers that don't support writes.

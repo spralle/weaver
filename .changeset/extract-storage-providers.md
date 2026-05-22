@@ -1,6 +1,6 @@
 ---
-"@weaver/storage-providers": minor
-"@weaver/weaver-server": patch
+"@weaver-conf/storage-providers": minor
+"@weaver-conf/weaver-server": patch
 ---
 
-Extract storage providers into dedicated @weaver/storage-providers package (SRP)
+Extract storage providers into dedicated @weaver-conf/storage-providers package (SRP)

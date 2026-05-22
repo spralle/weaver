@@ -10,7 +10,7 @@ import type {
   SyncResult,
   SyncSnapshotCache,
   SyncStatus,
-} from "@weaver/config-types";
+} from "@weaver-conf/config-types";
 
 /** Retry policy for sync operations (exponential backoff bounds). */
 export interface SyncRetryPolicy {

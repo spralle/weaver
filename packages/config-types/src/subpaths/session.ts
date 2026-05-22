@@ -1,4 +1,4 @@
-// Sub-path barrel: @weaver/config-types/session
+// Sub-path barrel: @weaver-conf/config-types/session
 
 export {
   godModeSessionSchema,

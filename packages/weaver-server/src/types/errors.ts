@@ -1,15 +1,15 @@
-// Re-export shared error taxonomy from @weaver/config-types
+// Re-export shared error taxonomy from @weaver-conf/config-types
 
-export type { WeaverError, WeaverErrorCode } from "@weaver/config-types";
+export type { WeaverError, WeaverErrorCode } from "@weaver-conf/config-types";
 export {
   createWeaverError,
   weaverErrorCodeSchema,
   weaverErrorCodes,
   weaverErrorSchema,
-} from "@weaver/config-types";
+} from "@weaver-conf/config-types";
 
 // Server-specific HTTP status mapping (not shared to config-types)
-import type { WeaverErrorCode } from "@weaver/config-types";
+import type { WeaverErrorCode } from "@weaver-conf/config-types";
 
 export const HTTP_STATUS_MAP: Record<WeaverErrorCode, number> = {
   NOT_FOUND: 404,

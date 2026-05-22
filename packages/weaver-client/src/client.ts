@@ -1,5 +1,5 @@
-import { deepGet } from "@weaver/config-engine";
-import type { ScopeInstance } from "@weaver/config-types";
+import { deepGet } from "@weaver-conf/config-engine";
+import type { ScopeInstance } from "@weaver-conf/config-types";
 import type { ZodRawShape } from "zod";
 
 import { bootClient } from "./client-boot.js";

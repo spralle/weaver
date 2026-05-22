@@ -2,9 +2,9 @@
 
 import { appendFile, mkdir, readFile } from "node:fs/promises";
 import { dirname } from "node:path";
-import { isNodeError } from "@weaver/config-engine";
-import type { ConfigDomainAuditEntry } from "@weaver/config-types";
-import { configDomainAuditEntrySchema } from "@weaver/config-types";
+import { isNodeError } from "@weaver-conf/config-engine";
+import type { ConfigDomainAuditEntry } from "@weaver-conf/config-types";
+import { configDomainAuditEntrySchema } from "@weaver-conf/config-types";
 import type { ConfigAuditLog } from "./types.js";
 
 function parseLines(content: string): ConfigDomainAuditEntry[] {

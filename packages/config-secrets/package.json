@@ -1,5 +1,5 @@
 {
-  "name": "@weaver/config-secrets",
+  "name": "@weaver-conf/config-secrets",
   "version": "0.1.0-pre.0",
   "description": "Server-side secret resolution for Weaver configuration",
   "license": "MIT",
@@ -38,7 +38,7 @@
   "dependencies": {
     "@azure/identity": "4.13.1",
     "@azure/keyvault-secrets": "4.11.1",
-    "@weaver/config-types": "workspace:*"
+    "@weaver-conf/config-types": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "25.6.0",

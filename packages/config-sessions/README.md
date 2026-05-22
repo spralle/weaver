@@ -1,16 +1,16 @@
-# @weaver/config-sessions
+# @weaver-conf/config-sessions
 
 > Override session provider with expiration, audit logging, and ephemeral storage for Weaver.
 
 ## Installation
 
 ```bash
-bun add @weaver/config-sessions
+bun add @weaver-conf/config-sessions
 ```
 
 ## Overview
 
-`@weaver/config-sessions` provides time-bounded override sessions for the Weaver configuration system. An override session allows temporary configuration changes that automatically expire after a configurable duration. All session lifecycle events (activate, deactivate, extend, expire) can be audited via a callback.
+`@weaver-conf/config-sessions` provides time-bounded override sessions for the Weaver configuration system. An override session allows temporary configuration changes that automatically expire after a configurable duration. All session lifecycle events (activate, deactivate, extend, expire) can be audited via a callback.
 
 The session controller manages an ephemeral in-memory storage provider that integrates directly into `createConfigurationService()`. When a session expires, all overrides are automatically cleared. This is the runtime backing for `Layers.Ephemeral("session")` in a Weaver layer stack.
 
@@ -19,9 +19,9 @@ The session controller manages an ephemeral in-memory storage provider that inte
 ### Creating and using an override session
 
 ```typescript
-import { defineWeaver, Layers, replaceOnly } from "@weaver/config-types";
-import { createOverrideSessionProvider } from "@weaver/config-sessions";
-import { createConfigurationService } from "@weaver/config-providers";
+import { defineWeaver, Layers, replaceOnly } from "@weaver-conf/config-types";
+import { createOverrideSessionProvider } from "@weaver-conf/config-sessions";
+import { createConfigurationService } from "@weaver-conf/config-providers";
 
 const weaver = defineWeaver([
   Layers.Static("core"),

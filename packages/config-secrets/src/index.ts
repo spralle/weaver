@@ -1,4 +1,4 @@
-// @weaver/config-secrets — Server-side secret resolution for Weaver
+// @weaver-conf/config-secrets — Server-side secret resolution for Weaver
 
 export type {
   AzureKeyVaultProvider,

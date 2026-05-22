@@ -83,7 +83,7 @@ import type {
   ConfigSnapshot,
   ConfigurationInspection,
   ConfigurationPropertySchema,
-} from "@weaver/config-types";
+} from "@weaver-conf/config-types";
 
 // --- Factory ---
 
@@ -266,9 +266,9 @@ export interface NamespaceDefinition<TShape extends z.ZodRawShape> {
 ### 1. Browser thick client with offline + typed namespaces
 
 ```typescript
-import { createWeaverClient, defineNamespace } from "@weaver/client";
-import { httpSseTransport } from "@weaver/client/transports";
-import { indexedDbPersistence } from "@weaver/client/persistence";
+import { createWeaverClient, defineNamespace } from "@weaver-conf/client";
+import { httpSseTransport } from "@weaver-conf/client/transports";
+import { indexedDbPersistence } from "@weaver-conf/client/persistence";
 import { z } from "zod";
 
 const uiPrefs = defineNamespace("app.ui", {
@@ -294,8 +294,8 @@ ui.onChange("fontSize", (size) => {
 ### 2. Backend microservice with schema + restart detection
 
 ```typescript
-import { createWeaverClient } from "@weaver/client";
-import { scompTransport } from "@weaver/client/transports";
+import { createWeaverClient } from "@weaver-conf/client";
+import { scompTransport } from "@weaver-conf/client/transports";
 import { peer } from "./scomp-peer.js";
 
 const client = createWeaverClient({
@@ -333,8 +333,8 @@ async function handleRequest(tenantId: string, locationId: string) {
 ### 4. Testing with local transport
 
 ```typescript
-import { createWeaverClient } from "@weaver/client";
-import { localTransport } from "@weaver/client/transports";
+import { createWeaverClient } from "@weaver-conf/client";
+import { localTransport } from "@weaver-conf/client/transports";
 
 const client = createWeaverClient({
   transport: localTransport({

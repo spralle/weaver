@@ -1,5 +1,5 @@
 {
-  "name": "@weaver/config-runtime",
+  "name": "@weaver-conf/config-runtime",
   "version": "0.1.0-pre.0",
   "description": "Pure state machine for Weaver configuration resolution",
   "license": "MIT",
@@ -20,7 +20,7 @@
     "lint": "biome check ."
   },
   "dependencies": {
-    "@weaver/config-engine": "workspace:*",
+    "@weaver-conf/config-engine": "workspace:*",
     "zod": "^4.0.0"
   },
   "devDependencies": {

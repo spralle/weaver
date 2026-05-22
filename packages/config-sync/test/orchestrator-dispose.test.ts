@@ -4,7 +4,7 @@ import type {
   ConfigurationLayerData,
   SyncMutationQueue,
   SyncSnapshotCache,
-} from "@weaver/config-types";
+} from "@weaver-conf/config-types";
 import { createConfigSyncOrchestrator } from "../src/index.js";
 
 function createMockTransport(): ConfigSyncTransport {

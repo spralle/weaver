@@ -1,6 +1,6 @@
-import { detectBreakingChanges, schemasEqual } from "@weaver/config-engine";
-import type { ConfigurationPropertySchema } from "@weaver/config-types";
-import { configurationPropertySchemaSchema } from "@weaver/config-types";
+import { detectBreakingChanges, schemasEqual } from "@weaver-conf/config-engine";
+import type { ConfigurationPropertySchema } from "@weaver-conf/config-types";
+import { configurationPropertySchemaSchema } from "@weaver-conf/config-types";
 import type { WeaverError } from "../types/errors.js";
 import { createWeaverError } from "../types/errors.js";
 import type { WeaverConfigService } from "./config-service.js";

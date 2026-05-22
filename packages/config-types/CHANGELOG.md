@@ -1,4 +1,4 @@
-# @weaver/config-types
+# @weaver-conf/config-types
 
 ## 0.1.0-pre.0
 

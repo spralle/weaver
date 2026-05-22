@@ -4,7 +4,7 @@ import type {
   ConfigAuditEntry,
   ConfigDomainAuditEntry,
   SinkDomainAuditEntry,
-} from "@weaver/config-types";
+} from "@weaver-conf/config-types";
 
 /**
  * Queryable audit log — supports append and various query patterns.

@@ -1,6 +1,6 @@
 // Scope chain builder for dynamic scope hierarchies
 
-import type { ScopeHierarchy, ScopeInstance } from "@weaver/config-types";
+import type { ScopeHierarchy, ScopeInstance } from "@weaver-conf/config-types";
 
 export interface ScopeChainEntry {
   scopeId: string;

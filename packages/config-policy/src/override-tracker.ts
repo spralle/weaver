@@ -1,6 +1,6 @@
 // Emergency override tracker interface for lifecycle tracking
 
-import type { EmergencyOverrideRecord } from "@weaver/config-types";
+import type { EmergencyOverrideRecord } from "@weaver-conf/config-types";
 
 export interface OverrideTrackerOptions {
   /**

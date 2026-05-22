@@ -2,7 +2,7 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { withAuth } from "../src/auth.js";
 import type { AuthConfig } from "../src/auth.js";
-import { defineWeaver } from "@weaver/config-types";
+import { defineWeaver } from "@weaver-conf/config-types";
 
 const weaverConfig = defineWeaver([
   { name: "core", type: { id: "static" } },

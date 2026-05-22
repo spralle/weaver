@@ -1,7 +1,7 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { createWeaverConfigService } from "../src/core/config-service.js";
-import { createInMemoryStorageProvider } from "@weaver/storage-providers";
+import { createInMemoryStorageProvider } from "@weaver-conf/storage-providers";
 
 describe("WeaverConfigService", () => {
   async function makeService(entries: Record<string, unknown> = {}) {

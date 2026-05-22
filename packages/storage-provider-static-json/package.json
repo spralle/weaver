@@ -1,5 +1,5 @@
 {
-  "name": "@weaver/storage-provider-static-json",
+  "name": "@weaver-conf/storage-provider-static-json",
   "version": "0.0.1-pre.0",
   "private": true,
   "description": "Read-only static JSON storage provider for Weaver",
@@ -26,8 +26,8 @@
     "lint": "biome check ."
   },
   "dependencies": {
-    "@weaver/config-types": "workspace:*",
-    "@weaver/config-engine": "workspace:*"
+    "@weaver-conf/config-types": "workspace:*",
+    "@weaver-conf/config-engine": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.8.3"

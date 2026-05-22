@@ -1,7 +1,7 @@
 import { z } from "zod";
 import type { ZodType } from "zod";
-import type { ScopeInstance } from "@weaver/config-types";
-import { deepGet } from "@weaver/config-engine";
+import type { ScopeInstance } from "@weaver-conf/config-types";
+import { deepGet } from "@weaver-conf/config-engine";
 import type { UntypedNamespaceClient, InstanceClient } from "./namespace.js";
 import type { ConfigDelta, Unsubscribe } from "./types.js";
 import type { WriteOptions, WriteResult } from "./transport.js";

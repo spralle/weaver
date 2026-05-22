@@ -1,9 +1,9 @@
 // Auth gate — bridges weaver-server AuthContext to config-auth RBAC functions
-import type { AuthFunctions } from "@weaver/config-auth";
+import type { AuthFunctions } from "@weaver-conf/config-auth";
 import type {
   ConfigurationAccessContext,
   ConfigurationPropertySchema,
-} from "@weaver/config-types";
+} from "@weaver-conf/config-types";
 import type { AuthContext } from "../auth/auth-middleware.js";
 import type { RestResponse } from "./rest-adapter.js";
 

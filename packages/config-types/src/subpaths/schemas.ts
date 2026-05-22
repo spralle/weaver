@@ -1,4 +1,4 @@
-// Sub-path barrel: @weaver/config-types/schemas
+// Sub-path barrel: @weaver-conf/config-types/schemas
 export {
   configurationAccessContextSchema,
   configurationSchemaFragmentSchema,

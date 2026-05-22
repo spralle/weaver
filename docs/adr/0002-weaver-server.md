@@ -473,7 +473,7 @@ const tenantMaxUsers = config.get("lynx.maxUsers", { tenantId: "acme" });
 Under the hood:
 1. On init: calls `resolveAll` to get full snapshot
 2. Subscribes to `configChanges` for live deltas
-3. Maintains local state (same `StateContainer` from `@weaver/config-providers`)
+3. Maintains local state (same `StateContainer` from `@weaver-conf/config-providers`)
 4. `get()` is synchronous from local state
 5. Deltas update local state and fire `onChange` listeners
 
@@ -997,9 +997,9 @@ Visual diff between environments: "what's in staging that isn't in production?" 
 ### Additional Secret Providers
 
 Extend `SecretProvider` interface with additional implementations:
-- `@weaver/config-secrets-aws` — AWS Secrets Manager
-- `@weaver/config-secrets-gcp` — Google Cloud Secret Manager
-- `@weaver/config-secrets-hashicorp` — HashiCorp Vault
+- `@weaver-conf/config-secrets-aws` — AWS Secrets Manager
+- `@weaver-conf/config-secrets-gcp` — Google Cloud Secret Manager
+- `@weaver-conf/config-secrets-hashicorp` — HashiCorp Vault
 
 ### Declaration Linter
 
@@ -1588,7 +1588,7 @@ The following items (B.1–B.9) capture binding architectural decisions made aft
 
 **Supersedes**: ADR sections 9.3, 14, A.7, A.15
 
-**Decision**: Replace all `tenantId` / `tenantScope` / `TenantManager` references with a generic scope model built on `ScopeInstance[]` and `ScopeDefinition` — types that already exist in `@weaver/config-types` but are underused.
+**Decision**: Replace all `tenantId` / `tenantScope` / `TenantManager` references with a generic scope model built on `ScopeInstance[]` and `ScopeDefinition` — types that already exist in `@weaver-conf/config-types` but are underused.
 
 **Context**: The layer naming convention already works generically. Providers named `tenant:acme`, `site:oslo`, `user:u123` encode scope via `{scopeId}:{value}`. The codebase special-cases `tenant` throughout — `isTenantLayer()`, `extractTenantId()`, `warmTenant()`, `TENANT_NOT_FOUND` — but the underlying resolution engine treats all scoped layers uniformly. Tenant is just one scope dimension.
 
@@ -1624,7 +1624,7 @@ await config.preloadScope([
 ]);
 ```
 
-**Rationale**: `ScopeInstance` and `ScopeDefinition` already exist in `@weaver/config-types`. The resolution engine already handles arbitrary scope layers. The only thing that special-cases tenant is the surrounding infrastructure — manager classes, error codes, client convenience methods, and REST parameters. Removing the special case eliminates a category of code that would need to be duplicated for every new scope dimension (site, region, user, environment group).
+**Rationale**: `ScopeInstance` and `ScopeDefinition` already exist in `@weaver-conf/config-types`. The resolution engine already handles arbitrary scope layers. The only thing that special-cases tenant is the surrounding infrastructure — manager classes, error codes, client convenience methods, and REST parameters. Removing the special case eliminates a category of code that would need to be duplicated for every new scope dimension (site, region, user, environment group).
 
 ---
 
@@ -1824,9 +1824,9 @@ Note: `serviceId` is removed from all method signatures per B.2.
 
 **Supersedes**: ADR sections 9.2, 9.3, 9.4
 
-**Decision**: Redesign WeaverClient to use `@weaver/config-types` (not parallel types), add write operations, scope-aware reads, admin capabilities, and generics.
+**Decision**: Redesign WeaverClient to use `@weaver-conf/config-types` (not parallel types), add write operations, scope-aware reads, admin capabilities, and generics.
 
-**Context**: The existing WeaverClient defines its own `ConfigDelta`, `ConfigSnapshot`, `GetOptions` in a local `types.ts`. These duplicate types from `@weaver/config-types` and will drift. Client-specific concerns (persistence options, transport selection) stay local; shared domain types must be imported.
+**Context**: The existing WeaverClient defines its own `ConfigDelta`, `ConfigSnapshot`, `GetOptions` in a local `types.ts`. These duplicate types from `@weaver-conf/config-types` and will drift. Client-specific concerns (persistence options, transport selection) stay local; shared domain types must be imported.
 
 **Revised interface**:
 
@@ -1881,7 +1881,7 @@ interface WeaverClient {
 - `listScopes()`, `listScopeValues()` for scope enumeration (B.7)
 - `inspect<T>()` for admin/debugging (layer provenance)
 - Health properties: `connected`, `lastSyncedAt`, `staleSince` (was deferred to v2 in original ADR, now v1)
-- All types imported from `@weaver/config-types` — no parallel type definitions
+- All types imported from `@weaver-conf/config-types` — no parallel type definitions
 
 **One client, not separate SDKs**: Admin operations (`getAtLayer`, `set`, `remove`, session ops) are gated by JWT role on the server, not by separate client classes. A regular service calling `set()` gets `FORBIDDEN` if its policy doesn't allow writes.
 
@@ -2066,11 +2066,11 @@ Per-key revision tracking (like Azure App Configuration's per-key ETags) is a fu
 
 ## Consequences
 
-- New `@weaver/weaver-server` package: central config server with Git + MongoDB storage, scomp/REST/SSE transports, JWT auth, promotion engine, rollback API, pluggable audit
-- New `@weaver/weaver-client` package: high-level client with pluggable transport (scomp or HTTP/SSE), tenant modes (lazy/eager/hot), offline persistence
+- New `@weaver-conf/weaver-server` package: central config server with Git + MongoDB storage, scomp/REST/SSE transports, JWT auth, promotion engine, rollback API, pluggable audit
+- New `@weaver-conf/weaver-client` package: high-level client with pluggable transport (scomp or HTTP/SSE), tenant modes (lazy/eager/hot), offline persistence
 - New dependencies: `simple-git`, `mongodb` (native driver), `slf`, `gh` CLI (runtime)
 - New dependency on `@scomp/core` and `@scomp/transport-websocket-server` for the scomp transport layer
-- `@weaver/config-types` gains `WeaverTransport` interface and `ConfigDelta` type
+- `@weaver-conf/config-types` gains `WeaverTransport` interface and `ConfigDelta` type
 - Requires a dedicated Git repository (`weaver-config`) for configuration storage
 - Requires MongoDB instance for user/device layers and audit
 - Requires Accounts service to support OAuth2 client_credentials grant (new capability, see weaver-nq3)

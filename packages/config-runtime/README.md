@@ -1,17 +1,17 @@
-# @weaver/config-runtime
+# @weaver-conf/config-runtime
 
 > Pure state machine for Weaver configuration resolution — manages layer entries, snapshots, and delta subscriptions.
 
 ## Installation
 
 ```bash
-bun add @weaver/config-runtime
+bun add @weaver-conf/config-runtime
 ```
 
 ## Usage
 
 ```typescript
-import { createStateContainer } from "@weaver/config-runtime";
+import { createStateContainer } from "@weaver-conf/config-runtime";
 
 const container = createStateContainer({ entries: {}, revision: "0" });
 

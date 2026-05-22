@@ -1,17 +1,17 @@
-# @weaver/storage-provider-static-json
+# @weaver-conf/storage-provider-static-json
 
 > Read-only static JSON storage provider for Weaver — serves configuration from bundled JSON files.
 
 ## Installation
 
 ```bash
-bun add @weaver/storage-provider-static-json
+bun add @weaver-conf/storage-provider-static-json
 ```
 
 ## Usage
 
 ```typescript
-import { createStaticJsonStorageProvider } from "@weaver/storage-provider-static-json";
+import { createStaticJsonStorageProvider } from "@weaver-conf/storage-provider-static-json";
 
 const provider = createStaticJsonStorageProvider({
   data: { "theme.mode": "dark", "feature.beta": true },

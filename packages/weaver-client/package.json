@@ -1,5 +1,5 @@
 {
-  "name": "@weaver/weaver-client",
+  "name": "@weaver-conf/weaver-client",
   "version": "0.1.0-pre.0",
   "description": "Configuration client SDK for Weaver",
   "license": "MIT",
@@ -25,10 +25,10 @@
     "lint": "biome check ."
   },
   "dependencies": {
-    "@weaver/config-engine": "workspace:*",
-    "@weaver/config-runtime": "workspace:*",
-    "@weaver/config-sync": "workspace:*",
-    "@weaver/config-types": "workspace:*"
+    "@weaver-conf/config-engine": "workspace:*",
+    "@weaver-conf/config-runtime": "workspace:*",
+    "@weaver-conf/config-sync": "workspace:*",
+    "@weaver-conf/config-types": "workspace:*"
   },
   "peerDependencies": {
     "zod": "^4.0.0"

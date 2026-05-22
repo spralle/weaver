@@ -1,4 +1,4 @@
-import type { SyncStatus } from "@weaver/config-types";
+import type { SyncStatus } from "@weaver-conf/config-types";
 import type {
   ConfigSyncOrchestratorOptions,
   SyncDiagnostics,

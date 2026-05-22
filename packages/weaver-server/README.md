@@ -1,17 +1,17 @@
-# @weaver/weaver-server
+# @weaver-conf/weaver-server
 
 > Central configuration server for Weaver — layer resolution, auth, audit, schema registry, and storage orchestration.
 
 ## Installation
 
 ```bash
-bun add @weaver/weaver-server
+bun add @weaver-conf/weaver-server
 ```
 
 ## Usage
 
 ```typescript
-import { bootstrap } from "@weaver/weaver-server";
+import { bootstrap } from "@weaver-conf/weaver-server";
 
 const server = await bootstrap({
   layers: ["core", "app", "tenant", "user"],

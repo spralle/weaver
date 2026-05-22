@@ -1,4 +1,4 @@
-import type { ScopeInstance } from "@weaver/config-types";
+import type { ScopeInstance } from "@weaver-conf/config-types";
 import type { WeaverTransport } from "./transport.js";
 import type { ConfigDelta, ConfigSnapshot } from "./types.js";
 

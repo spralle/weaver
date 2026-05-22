@@ -1,4 +1,4 @@
-import { getCachedRegex } from "@weaver/config-engine";
+import { getCachedRegex } from "@weaver-conf/config-engine";
 
 export function matchGlob(pattern: string, key: string): boolean {
   const regex = getCachedRegex(

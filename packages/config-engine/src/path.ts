@@ -1,6 +1,6 @@
 // Bracket-aware path parsing for compound key identifiers
 
-import { createWeaverError } from "@weaver/config-types";
+import { createWeaverError } from "@weaver-conf/config-types";
 
 /**
  * Parses a dot-delimited path with bracket notation into segments.

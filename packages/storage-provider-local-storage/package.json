@@ -1,5 +1,5 @@
 {
-  "name": "@weaver/storage-provider-local-storage",
+  "name": "@weaver-conf/storage-provider-local-storage",
   "version": "0.0.1-pre.0",
   "private": true,
   "description": "Browser localStorage storage provider for Weaver",
@@ -26,8 +26,8 @@
     "lint": "biome check ."
   },
   "dependencies": {
-    "@weaver/config-types": "workspace:*",
-    "@weaver/config-engine": "workspace:*"
+    "@weaver-conf/config-types": "workspace:*",
+    "@weaver-conf/config-engine": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.8.3"

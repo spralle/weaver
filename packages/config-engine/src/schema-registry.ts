@@ -1,6 +1,6 @@
 // Schema registry — aggregation and collision detection
 
-import type { ConfigurationPropertySchema } from "@weaver/config-types";
+import type { ConfigurationPropertySchema } from "@weaver-conf/config-types";
 
 import { qualifyKey, validateKeyFormat } from "./namespace.js";
 

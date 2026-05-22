@@ -6,7 +6,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { join } from "node:path";
-import { configSnapshotSchema } from "@weaver/config-types";
+import { configSnapshotSchema } from "@weaver-conf/config-types";
 import type { WeaverClientPersistence } from "./persistence.js";
 import type { ConfigSnapshot } from "./types.js";
 

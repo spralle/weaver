@@ -1,6 +1,6 @@
 // Policy validation — checks changePolicy assignments for security conventions
 
-import type { ComposedSchemaEntry } from "@weaver/config-engine";
+import type { ComposedSchemaEntry } from "@weaver-conf/config-engine";
 
 /** A detected policy violation with severity and suggested fix. */
 export interface PolicyViolation {

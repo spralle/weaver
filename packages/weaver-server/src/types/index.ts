@@ -1,5 +1,5 @@
-export type { ConfigDelta, ConfigSnapshot } from "@weaver/config-types";
-export { configDeltaSchema, configSnapshotSchema } from "@weaver/config-types";
+export type { ConfigDelta, ConfigSnapshot } from "@weaver-conf/config-types";
+export { configDeltaSchema, configSnapshotSchema } from "@weaver-conf/config-types";
 export type {
   BootstrapConfig,
   BootstrapLayer,

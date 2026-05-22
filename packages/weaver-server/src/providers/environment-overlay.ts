@@ -1,6 +1,6 @@
 // Environment overlay: wraps a provider with base + env deep-merge
 
-import { deepMerge } from "@weaver/config-engine";
+import { deepMerge } from "@weaver-conf/config-engine";
 import type {
   ConfigurationLayerData,
   ConfigurationStorageProvider,
@@ -8,7 +8,7 @@ import type {
   EnvironmentAwareStorageProvider,
   EnvironmentName,
   MergedLayerResult,
-} from "@weaver/config-types";
+} from "@weaver-conf/config-types";
 
 export interface EnvironmentOverlayOptions {
   /** The base provider to wrap */

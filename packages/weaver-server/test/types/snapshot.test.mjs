@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { configSnapshotSchema } from "@weaver/config-types";
+import { configSnapshotSchema } from "@weaver-conf/config-types";
 
 test("configSnapshotSchema validates valid snapshot", () => {
   const result = configSnapshotSchema.safeParse({

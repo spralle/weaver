@@ -19,11 +19,11 @@ Integrating with Weaver involves these steps:
 ## Prerequisites
 
 ```bash
-bun add @weaver/config-types @weaver/config-engine @weaver/config-providers
+bun add @weaver-conf/config-types @weaver-conf/config-engine @weaver-conf/config-providers
 # Optional, based on needs:
-bun add @weaver/config-auth      # Role-based access control
-bun add @weaver/config-policy    # Change policy enforcement
-bun add @weaver/config-sessions  # Emergency override sessions
+bun add @weaver-conf/config-auth      # Role-based access control
+bun add @weaver-conf/config-policy    # Change policy enforcement
+bun add @weaver-conf/config-sessions  # Emergency override sessions
 ```
 
 ---
@@ -33,7 +33,7 @@ bun add @weaver/config-sessions  # Emergency override sessions
 Every service has a **namespace** — a two-segment prefix that scopes all its keys. Weaver derives this from your `package.json`:
 
 ```typescript
-import { deriveContractFromPackageJson } from "@weaver/config-engine";
+import { deriveContractFromPackageJson } from "@weaver-conf/config-engine";
 
 const contract = deriveContractFromPackageJson({
   name: "@acme/billing-service",
@@ -85,8 +85,8 @@ Examples:
 Register the configuration keys your service owns. Each key has a **schema** that defines its type, constraints, and governance metadata.
 
 ```typescript
-import { createSchemaRegistry } from "@weaver/config-engine";
-import type { ConfigurationPropertySchema } from "@weaver/config-types";
+import { createSchemaRegistry } from "@weaver-conf/config-engine";
+import type { ConfigurationPropertySchema } from "@weaver-conf/config-types";
 
 const registry = createSchemaRegistry();
 
@@ -163,7 +163,7 @@ console.log("Registered keys:", result.registeredKeys);
 Auth controls who can read and write configuration values. You configure it once at application startup.
 
 ```typescript
-import { withAuth } from "@weaver/config-auth";
+import { withAuth } from "@weaver-conf/config-auth";
 
 const auth = withAuth({
   // The layer stack definition (from Step 4)
@@ -232,7 +232,7 @@ const accessContext = {
 Layers are the foundation of Weaver's resolution model. Higher layers override lower ones.
 
 ```typescript
-import { defineWeaver, Layers } from "@weaver/config-types";
+import { defineWeaver, Layers } from "@weaver-conf/config-types";
 
 const weaverConfig = defineWeaver([
   // Bottom (lowest priority) → Top (highest priority)
@@ -265,7 +265,7 @@ Each layer needs a storage provider:
 import {
   StaticJsonStorageProvider,
   InMemoryStorageProvider,
-} from "@weaver/config-providers";
+} from "@weaver-conf/config-providers";
 
 // Read-only: application defaults
 const defaultsProvider = new StaticJsonStorageProvider({
@@ -326,7 +326,7 @@ Bring it all together:
 import {
   createConfigurationService,
   createScopedConfigurationService,
-} from "@weaver/config-providers";
+} from "@weaver-conf/config-providers";
 
 // Create the root service
 const configService = await createConfigurationService({
@@ -380,7 +380,7 @@ const regionalCurrency = billingConfig.getForScope("currency", [
 For keys with change policies stricter than `"direct-allowed"`, check the policy before writing:
 
 ```typescript
-import { evaluateChangePolicy } from "@weaver/config-policy";
+import { evaluateChangePolicy } from "@weaver-conf/config-policy";
 
 const key = "acme.billingService.currency";
 const schema = registry.getSchema(key)?.schema;
@@ -431,7 +431,7 @@ if (schema) {
 For incident response, enable time-limited emergency overrides:
 
 ```typescript
-import { createOverrideSessionProvider } from "@weaver/config-sessions";
+import { createOverrideSessionProvider } from "@weaver-conf/config-sessions";
 
 const sessionController = createOverrideSessionProvider({
   layer: "session",
@@ -485,20 +485,20 @@ Control which keys participate in override sessions:
 ## Complete Example
 
 ```typescript
-import { defineWeaver, Layers } from "@weaver/config-types";
+import { defineWeaver, Layers } from "@weaver-conf/config-types";
 import {
   createSchemaRegistry,
   deriveContractFromPackageJson,
-} from "@weaver/config-engine";
+} from "@weaver-conf/config-engine";
 import {
   createConfigurationService,
   createScopedConfigurationService,
   StaticJsonStorageProvider,
   InMemoryStorageProvider,
-} from "@weaver/config-providers";
-import { withAuth } from "@weaver/config-auth";
-import { evaluateChangePolicy } from "@weaver/config-policy";
-import { createOverrideSessionProvider } from "@weaver/config-sessions";
+} from "@weaver-conf/config-providers";
+import { withAuth } from "@weaver-conf/config-auth";
+import { evaluateChangePolicy } from "@weaver-conf/config-policy";
+import { createOverrideSessionProvider } from "@weaver-conf/config-sessions";
 
 // ─── Layer Stack ────────────────────────────────────────────
 const weaverConfig = defineWeaver([
@@ -632,7 +632,7 @@ if (decision.outcome === "allowed") {
 
 ## Next Steps
 
-- **Server-side?** See `@weaver/config-server` for `FileSystemStorageProvider` and audit logging
-- **Offline sync?** See `@weaver/config-sync` for conflict resolution and queue management
-- **JSON Schema export?** Use `generateJsonSchema()` from `@weaver/config-engine` to export your schemas for external tooling
+- **Server-side?** See `@weaver-conf/config-server` for `FileSystemStorageProvider` and audit logging
+- **Offline sync?** See `@weaver-conf/config-sync` for conflict resolution and queue management
+- **JSON Schema export?** Use `generateJsonSchema()` from `@weaver-conf/config-engine` to export your schemas for external tooling
 - **Zod schema codegen?** Use `generateZodSchemaSource()` to generate runtime validators from your property schemas

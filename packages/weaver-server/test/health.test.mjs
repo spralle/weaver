@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { createHealthEndpoints } from "@weaver/weaver-server";
+import { createHealthEndpoints } from "@weaver-conf/weaver-server";
 
 describe("HealthEndpoints", () => {
   it("healthz returns 200 always", () => {

@@ -5,11 +5,11 @@ import { deriveContractFromPackageJson } from "../dist/contract-derivation.js";
 describe("deriveContractFromPackageJson", () => {
   it("derives correct namespace from scoped package name", () => {
     const result = deriveContractFromPackageJson({
-      name: "@weaver/vessel-view-plugin",
+      name: "@weaver-conf/vessel-view-plugin",
       version: "1.0.0",
     });
-    assert.equal(result.pluginId, "@weaver/vessel-view-plugin");
-    assert.equal(result.namespace, "weaver.vesselView");
+    assert.equal(result.pluginId, "@weaver-conf/vessel-view-plugin");
+    assert.equal(result.namespace, "weaverConf.vesselView");
     assert.equal(result.version, "1.0.0");
   });
 
@@ -32,37 +32,37 @@ describe("deriveContractFromPackageJson", () => {
 
   it("uses explicit weaver.configNamespace override", () => {
     const result = deriveContractFromPackageJson({
-      name: "@weaver/some-plugin",
+      name: "@weaver-conf/some-plugin",
       version: "1.0.0",
       weaver: { configNamespace: "custom.namespace" },
     });
     assert.equal(result.namespace, "custom.namespace");
-    assert.equal(result.pluginId, "@weaver/some-plugin");
+    assert.equal(result.pluginId, "@weaver-conf/some-plugin");
   });
 
   it("defaults version to '0.0.0' when missing", () => {
     const result = deriveContractFromPackageJson({
-      name: "@weaver/test-plugin",
+      name: "@weaver-conf/test-plugin",
     });
     assert.equal(result.version, "0.0.0");
   });
 
   it("defaults description to empty string when missing", () => {
     const result = deriveContractFromPackageJson({
-      name: "@weaver/test-plugin",
+      name: "@weaver-conf/test-plugin",
     });
     assert.equal(result.description, "");
   });
 
   it("returns all fields when all are present", () => {
     const result = deriveContractFromPackageJson({
-      name: "@weaver/vessel-view-plugin",
+      name: "@weaver-conf/vessel-view-plugin",
       version: "3.2.1",
       description: "Vessel view configuration plugin",
     });
     assert.deepStrictEqual(result, {
-      pluginId: "@weaver/vessel-view-plugin",
-      namespace: "weaver.vesselView",
+      pluginId: "@weaver-conf/vessel-view-plugin",
+      namespace: "weaverConf.vesselView",
       version: "3.2.1",
       description: "Vessel view configuration plugin",
     });
@@ -70,10 +70,10 @@ describe("deriveContractFromPackageJson", () => {
 
   it("converts hyphens in package name to camelCase namespace", () => {
     const result = deriveContractFromPackageJson({
-      name: "@weaver/theme-default-plugin",
+      name: "@weaver-conf/theme-default-plugin",
       version: "1.0.0",
     });
-    assert.equal(result.namespace, "weaver.themeDefault");
+    assert.equal(result.namespace, "weaverConf.themeDefault");
   });
 
   it("preserves pluginId as the raw package name", () => {
@@ -87,10 +87,10 @@ describe("deriveContractFromPackageJson", () => {
 
   it("handles weaver field with no configNamespace", () => {
     const result = deriveContractFromPackageJson({
-      name: "@weaver/nav-plugin",
+      name: "@weaver-conf/nav-plugin",
       weaver: {},
     });
-    assert.equal(result.namespace, "weaver.nav");
+    assert.equal(result.namespace, "weaverConf.nav");
     assert.equal(result.version, "0.0.0");
   });
 });

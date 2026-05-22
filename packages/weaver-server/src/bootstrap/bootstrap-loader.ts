@@ -1,7 +1,7 @@
 // Bootstrap loader — reads config from Git, resolves env vars, creates providers
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import type { ConfigurationStorageProvider } from "@weaver/config-types";
+import type { ConfigurationStorageProvider } from "@weaver-conf/config-types";
 import type { Collection } from "mongodb";
 import type { SimpleGit } from "simple-git";
 import type { GitManager } from "../providers/index.js";

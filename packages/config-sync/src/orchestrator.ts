@@ -2,7 +2,7 @@ import type {
   ConfigurationLayerData,
   SyncResult,
   SyncStatus,
-} from "@weaver/config-types";
+} from "@weaver-conf/config-types";
 import {
   classifySyncError,
   cloneSnapshot,

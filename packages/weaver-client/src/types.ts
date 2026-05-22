@@ -1,10 +1,10 @@
-import type { ScopeInstance } from "@weaver/config-types";
+import type { ScopeInstance } from "@weaver-conf/config-types";
 
 export type {
   ConfigDelta,
   ConfigSnapshot,
   ConfigurationInspection,
-} from "@weaver/config-types";
+} from "@weaver-conf/config-types";
 
 /** Options for resolving configuration (optional scope path and environment). */
 export interface ResolveOptions {

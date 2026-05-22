@@ -1,5 +1,5 @@
 {
-  "name": "@weaver/weaver-server",
+  "name": "@weaver-conf/weaver-server",
   "version": "0.1.0-pre.0",
   "description": "Central configuration server for Weaver",
   "license": "MIT",
@@ -25,10 +25,10 @@
     "lint": "biome check ."
   },
   "dependencies": {
-    "@weaver/config-types": "workspace:*",
-    "@weaver/config-engine": "workspace:*",
-    "@weaver/config-auth": "workspace:*",
-    "@weaver/storage-providers": "workspace:*",
+    "@weaver-conf/config-types": "workspace:*",
+    "@weaver-conf/config-engine": "workspace:*",
+    "@weaver-conf/config-auth": "workspace:*",
+    "@weaver-conf/storage-providers": "workspace:*",
     "zod": "^4.0.0"
   },
   "peerDependencies": {

@@ -1,5 +1,5 @@
 import type { ZodType } from "zod";
-import { deepGet } from "@weaver/config-engine";
+import { deepGet } from "@weaver-conf/config-engine";
 import type { InstanceClient } from "./namespace.js";
 import type { ConfigDelta, Unsubscribe } from "./types.js";
 import type { WriteOptions, WriteResult } from "./transport.js";

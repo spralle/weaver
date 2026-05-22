@@ -1,4 +1,4 @@
-// Sub-path barrel: @weaver/config-types/sync
+// Sub-path barrel: @weaver-conf/config-types/sync
 export type {
   ConfigSyncAckRequest,
   ConfigSyncAckResponse,

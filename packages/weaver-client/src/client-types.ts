@@ -1,4 +1,4 @@
-import type { ScopeDefinition, ScopeInstance } from "@weaver/config-types";
+import type { ScopeDefinition, ScopeInstance } from "@weaver-conf/config-types";
 import type { ZodRawShape } from "zod";
 
 import type { InstanceClient } from "./namespace.js";

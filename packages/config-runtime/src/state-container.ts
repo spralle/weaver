@@ -4,7 +4,7 @@ import {
   deepMerge,
   deepRemove,
   deepSet,
-} from "@weaver/config-engine";
+} from "@weaver-conf/config-engine";
 import { createSubscriptionManager } from "./subscriptions.js";
 import {
   type ConfigDelta,

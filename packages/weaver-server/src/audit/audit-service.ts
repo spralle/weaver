@@ -1,6 +1,6 @@
 // Audit service with pluggable sinks and sensitive value masking
-import type { WeaverLogger } from "@weaver/config-engine";
-import { consoleLogger } from "@weaver/config-engine";
+import type { WeaverLogger } from "@weaver-conf/config-engine";
+import { consoleLogger } from "@weaver-conf/config-engine";
 import type { ConfigAuditSink, SinkDomainAuditEntry } from "./types.js";
 
 export interface AuditServiceOptions {

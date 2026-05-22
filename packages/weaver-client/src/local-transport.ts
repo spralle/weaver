@@ -1,5 +1,5 @@
-import { deepGet, deepRemove, deepSet } from "@weaver/config-engine";
-import type { ScopeDefinition, ScopeInstance } from "@weaver/config-types";
+import { deepGet, deepRemove, deepSet } from "@weaver-conf/config-engine";
+import type { ScopeDefinition, ScopeInstance } from "@weaver-conf/config-types";
 import type {
   WeaverTransport,
   WriteOptions,

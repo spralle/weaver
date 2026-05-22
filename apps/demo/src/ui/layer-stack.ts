@@ -1,4 +1,4 @@
-import type { WeaverConfig } from "@weaver/config-types";
+import type { WeaverConfig } from "@weaver-conf/config-types";
 import { COUNTRY_CODES_WITH_PROVIDERS, findLocation } from "../locations.js";
 import { getSelectedLocation, onSelectedLocationChange } from "../state.js";
 

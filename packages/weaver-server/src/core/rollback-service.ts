@@ -1,4 +1,4 @@
-import type { ConfigurationStorageProvider } from "@weaver/config-types";
+import type { ConfigurationStorageProvider } from "@weaver-conf/config-types";
 import type { WeaverError } from "../types/errors.js";
 import { createWeaverError } from "../types/errors.js";
 import type { WeaverConfigService } from "./config-service.js";

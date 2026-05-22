@@ -1,4 +1,4 @@
-import type { ConfigurationPropertySchema } from "@weaver/config-types";
+import type { ConfigurationPropertySchema } from "@weaver-conf/config-types";
 
 import type { ClientSchemaRegistry } from "./schema-registry.js";
 import type { WeaverClientPersistence } from "./persistence.js";

@@ -1,7 +1,7 @@
 // Simple glob matching for SSE key filtering
 // Supports: * (any chars in segment), ** (any path segments)
 
-import { getCachedRegex } from "@weaver/config-engine";
+import { getCachedRegex } from "@weaver-conf/config-engine";
 
 export function matchGlob(pattern: string, key: string): boolean {
   const regex = globToRegex(pattern);

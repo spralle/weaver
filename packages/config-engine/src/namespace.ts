@@ -24,11 +24,11 @@ function kebabToCamel(segment: string): string {
  * Derives a configuration namespace from a plugin ID.
  *
  * - "myScope.vessel-view" → "myScope.vesselView" (kebab segments to camelCase)
- * - "@weaver/vessel-view-plugin" → "weaver.vesselView" (scoped package name)
+ * - "@weaver-conf/vessel-view-plugin" → "weaver.vesselView" (scoped package name)
  * - Already in namespace format → pass-through
  */
 export function deriveNamespace(pluginId: string): string {
-  // Scoped package name: @weaver/vessel-view-plugin → weaver.vesselView
+  // Scoped package name: @weaver-conf/vessel-view-plugin → weaverConf.vesselView
   if (pluginId.startsWith("@")) {
     const withoutAt = pluginId.slice(1);
     const slashIndex = withoutAt.indexOf("/");

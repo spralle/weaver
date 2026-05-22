@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { withAuth } from "../dist/auth.js";
-import { defineWeaver, Layers } from "@weaver/config-types";
+import { defineWeaver, Layers } from "@weaver-conf/config-types";
 
 // --- Test WeaverConfig and AuthConfig ---
 

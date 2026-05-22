@@ -1,5 +1,5 @@
 {
-  "name": "@weaver/storage-providers",
+  "name": "@weaver-conf/storage-providers",
   "version": "0.1.0-pre.0",
   "description": "Storage provider adapters for Weaver configuration",
   "license": "MIT",
@@ -20,8 +20,8 @@
     "lint": "biome check ."
   },
   "dependencies": {
-    "@weaver/config-engine": "workspace:*",
-    "@weaver/config-types": "workspace:*",
+    "@weaver-conf/config-engine": "workspace:*",
+    "@weaver-conf/config-types": "workspace:*",
     "zod": "^4.0.0"
   },
   "peerDependencies": {

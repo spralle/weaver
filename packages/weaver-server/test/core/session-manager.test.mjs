@@ -1,6 +1,6 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { createSessionManager } from "@weaver/weaver-server";
+import { createSessionManager } from "@weaver-conf/weaver-server";
 
 function mockAuditService() {
   const entries = [];

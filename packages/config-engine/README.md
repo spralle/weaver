@@ -1,16 +1,16 @@
-# @weaver/config-engine
+# @weaver-conf/config-engine
 
 > Deep merge, layer resolution, key inspection, scope chains, schema registry, and codegen for Weaver configuration.
 
 ## Installation
 
 ```bash
-bun add @weaver/config-engine
+bun add @weaver-conf/config-engine
 ```
 
 ## Overview
 
-`@weaver/config-engine` is the resolution core of the Weaver configuration system. It takes a stack of configuration layers and produces a single resolved output via deep merge, with full provenance tracking (which layer set each key).
+`@weaver-conf/config-engine` is the resolution core of the Weaver configuration system. It takes a stack of configuration layers and produces a single resolved output via deep merge, with full provenance tracking (which layer set each key).
 
 The package also provides namespace utilities for the `{namespace}.{category}.{setting}` key format, a scope chain builder for dynamic tenant hierarchies, a schema registry for aggregating property declarations across modules, and codegen utilities for generating JSON Schema and Zod source from property schemas.
 
@@ -19,7 +19,7 @@ The package also provides namespace utilities for the `{namespace}.{category}.{s
 ### Deep merge
 
 ```typescript
-import { deepMerge } from "@weaver/config-engine";
+import { deepMerge } from "@weaver-conf/config-engine";
 
 const base = { theme: { color: "blue", font: "sans" }, debug: false };
 const override = { theme: { color: "red" }, debug: true };
@@ -33,7 +33,7 @@ Merge rules: objects deep merge, arrays replace, primitives replace, `null` clea
 ### Resolving a layer stack
 
 ```typescript
-import { resolveConfiguration, inspectKey } from "@weaver/config-engine";
+import { resolveConfiguration, inspectKey } from "@weaver-conf/config-engine";
 
 const stack = {
   layers: [
@@ -56,7 +56,7 @@ inspection.layerValues;    // { core: "light", tenant: "dark" }
 ### Ceiling enforcement
 
 ```typescript
-import { resolveConfigurationWithCeiling } from "@weaver/config-engine";
+import { resolveConfigurationWithCeiling } from "@weaver-conf/config-engine";
 
 const schemaMap = new Map([
   ["app.security.apiKey", { maxOverrideLayer: "tenant" }],
@@ -71,7 +71,7 @@ const resolved = resolveConfigurationWithCeiling(
 ### Schema registry
 
 ```typescript
-import { createSchemaRegistry } from "@weaver/config-engine";
+import { createSchemaRegistry } from "@weaver-conf/config-engine";
 
 const registry = createSchemaRegistry();
 registry.register({
@@ -88,11 +88,11 @@ registry.getSchema("app.myPlugin.display.maxItems");
 ### Namespace utilities
 
 ```typescript
-import { qualifyKey, validateKeyFormat, deriveNamespace } from "@weaver/config-engine";
+import { qualifyKey, validateKeyFormat, deriveNamespace } from "@weaver-conf/config-engine";
 
 qualifyKey("app.vesselView", "map.defaultZoom"); // "app.vesselView.map.defaultZoom"
 validateKeyFormat("app.vesselView.map.defaultZoom"); // { valid: true }
-deriveNamespace("@weaver/vessel-view-plugin"); // "weaver.vesselView"
+deriveNamespace("@weaver-conf/vessel-view-plugin"); // "weaver.vesselView"
 ```
 
 ## API Reference

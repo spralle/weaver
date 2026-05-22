@@ -22,11 +22,11 @@ test("deriveNamespace converts kebab-case plugin IDs", () => {
 });
 
 test("deriveNamespace handles scoped package names", () => {
-  assert.equal(deriveNamespace("@weaver/vessel-view-plugin"), "weaver.vesselView");
+  assert.equal(deriveNamespace("@weaver-conf/vessel-view-plugin"), "weaverConf.vesselView");
 });
 
 test("deriveNamespace strips -plugin suffix from scoped names", () => {
-  assert.equal(deriveNamespace("@weaver/theme-default-plugin"), "weaver.themeDefault");
+  assert.equal(deriveNamespace("@weaver-conf/theme-default-plugin"), "weaverConf.themeDefault");
 });
 
 test("deriveNamespace passes through already-correct format", () => {

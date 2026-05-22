@@ -1,5 +1,5 @@
-import type { OverrideSessionController } from "@weaver/config-sessions";
-import type { ConfigurationService } from "@weaver/config-types";
+import type { OverrideSessionController } from "@weaver-conf/config-sessions";
+import type { ConfigurationService } from "@weaver-conf/config-types";
 import { addLogEntry, setSessionActive } from "../state.js";
 
 export function renderSessionPanel(

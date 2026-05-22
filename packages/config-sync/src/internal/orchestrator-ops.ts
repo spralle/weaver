@@ -7,7 +7,7 @@ import type {
   SyncMutationQueue,
   SyncQueuedMutation,
   SyncSnapshotCache,
-} from "@weaver/config-types";
+} from "@weaver-conf/config-types";
 import type { LocalMutationContext, PushBatchOutcome } from "../types.js";
 
 interface CommonArgs {

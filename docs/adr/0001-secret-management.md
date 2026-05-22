@@ -752,7 +752,7 @@ Resolution pipeline:
 
 ### 15. Package Structure
 
-#### Types in `@weaver/config-types`
+#### Types in `@weaver-conf/config-types`
 
 New/modified files:
 
@@ -766,7 +766,7 @@ New/modified files:
 - `environment.ts` -- `ConfigValueSource`, `MergedLayerResult`
 - `instance.ts` -- `InstanceConfigResolver` interface
 
-#### Resolution Engine: `@weaver/config-secrets` (new package)
+#### Resolution Engine: `@weaver-conf/config-secrets` (new package)
 
 Server-side package:
 
@@ -776,12 +776,12 @@ Server-side package:
 - `SecretAuditLog` -- Adapter interface for audit trail
 - `AzureKeyVaultProvider` -- First `SecretProvider` implementation
 
-Dependencies: `@weaver/config-types` only.
+Dependencies: `@weaver-conf/config-types` only.
 
 Azure SDK (`@azure/keyvault-secrets`, `@azure/identity`) is a direct dependency,
-planned for extraction to `@weaver/config-secrets-azure` later.
+planned for extraction to `@weaver-conf/config-secrets-azure` later.
 
-#### Integration: `@weaver/config-providers`
+#### Integration: `@weaver-conf/config-providers`
 
 `createConfigurationService()` gains optional `secrets` and mount resolution:
 
@@ -791,7 +791,7 @@ planned for extraction to `@weaver/config-secrets-azure` later.
 4. `get()` checks: mount map -> secret cache -> state container
 5. Bracket notation parsing in path traversal
 
-#### Policy: `@weaver/config-policy`
+#### Policy: `@weaver-conf/config-policy`
 
 New rule: `sensitive: true` + `visibility: "public"` = error.
 
@@ -850,7 +850,7 @@ and fully local deployment models. The architecture is topology-agnostic.
 
 weaver-server will be built in a later phase. Types and schemas are defined in
 `config-types` now; enforcement and storage logic will live in the
-`@weaver/weaver-server` package.
+`@weaver-conf/weaver-server` package.
 
 ### 17. Security Properties
 
@@ -897,7 +897,7 @@ implementation. They are organized by phase to guide sequencing.
 The central configuration server is the primary enforcement point for most of
 the access control and lifecycle features designed in this ADR.
 
-**weaver-server package** (`@weaver/weaver-server`): The central configuration
+**weaver-server package** (`@weaver-conf/weaver-server`): The central configuration
 server application. Stores all config data (including policies), enforces
 `ServiceAccessPolicy` at request time, registers and validates
 `ServiceConfigurationDeclaration` at service startup, resolves secrets before
@@ -998,17 +998,17 @@ built. Requires:
 ### Phase 5: Provider Ecosystem and Operations
 
 **Extract Azure provider**: Move `AzureKeyVaultProvider` from `config-secrets`
-to a dedicated `@weaver/config-secrets-azure` package. Keeps the core
+to a dedicated `@weaver-conf/config-secrets-azure` package. Keeps the core
 `config-secrets` package free of cloud-specific dependencies. The current direct
 dependency on `@azure/keyvault-secrets` and `@azure/identity` is intentionally
 temporary.
 
 **Additional secret providers**: The `SecretProvider` interface is designed
 for multi-provider support. Future implementations:
-- `@weaver/config-secrets-aws` — AWS Secrets Manager
-- `@weaver/config-secrets-gcp` — Google Cloud Secret Manager
-- `@weaver/config-secrets-hashicorp` — HashiCorp Vault
-- `@weaver/config-secrets-local` — File-based provider for local development
+- `@weaver-conf/config-secrets-aws` — AWS Secrets Manager
+- `@weaver-conf/config-secrets-gcp` — Google Cloud Secret Manager
+- `@weaver-conf/config-secrets-hashicorp` — HashiCorp Vault
+- `@weaver-conf/config-secrets-local` — File-based provider for local development
 
 **Secret resolution proxy**: A hardened, network-isolated microservice dedicated
 to secret resolution. The central config service delegates vault access to this
@@ -1058,7 +1058,7 @@ admin API and Phase 5's multi-provider support.
 
 ## Consequences
 
-- New `_weaver` marker system in `@weaver/config-types` (SecretReference +
+- New `_weaver` marker system in `@weaver-conf/config-types` (SecretReference +
   ConfigMount types, Zod schemas, type guards)
 - **Breaking change**: `ConfigurationPropertySchema` extensions move to
   `x-weaver` namespace. All existing code using `schema.sensitive`,
@@ -1068,14 +1068,14 @@ admin API and Phase 5's multi-provider support.
   `ConfigurationPropertySchema` instead of wrapper.
 - **Breaking change**: `ConfigurationStorageProvider` gains `environment`
   parameter on `load()` and `save()`.
-- New `ServiceAccessPolicy` type in `@weaver/config-types`
+- New `ServiceAccessPolicy` type in `@weaver-conf/config-types`
 - New `ConfigurationSchemaFragment` type for plugin architectures
 - New `ConfigValueSource` and extended `ConfigurationInspection` for provenance
-- New `@weaver/config-secrets` package (server-side only)
-- `@weaver/config-providers` gains marker resolution (mounts + secrets),
+- New `@weaver-conf/config-secrets` package (server-side only)
+- `@weaver-conf/config-providers` gains marker resolution (mounts + secrets),
   bracket-aware path parsing, and environment pre-merge
-- `@weaver/config-policy` gains sensitive + public visibility rule
-- `@weaver/config-engine` gains bracket-aware path parsing
+- `@weaver-conf/config-policy` gains sensitive + public visibility rule
+- `@weaver-conf/config-engine` gains bracket-aware path parsing
 - No changes to `config-sync`, `config-auth`, `config-sessions`
 - Azure SDK as direct dependency (future extraction planned)
 - `_weaver.*` namespace reserved for schemas, policies, server config

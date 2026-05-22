@@ -1,7 +1,7 @@
-import { deepEqual } from "@weaver/config-engine";
-import type { StateContainer } from "@weaver/config-runtime";
-import type { ConfigSyncOrchestrator } from "@weaver/config-sync";
-import type { ConfigurationLayerData } from "@weaver/config-types";
+import { deepEqual } from "@weaver-conf/config-engine";
+import type { StateContainer } from "@weaver-conf/config-runtime";
+import type { ConfigSyncOrchestrator } from "@weaver-conf/config-sync";
+import type { ConfigurationLayerData } from "@weaver-conf/config-types";
 
 export interface SyncRuntimeBridgeOptions {
   orchestrator: ConfigSyncOrchestrator;

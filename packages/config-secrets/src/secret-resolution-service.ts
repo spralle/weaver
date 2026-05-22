@@ -2,13 +2,13 @@ import type {
   Result,
   SecretDomainAuditEntry,
   SecretReference,
-} from "@weaver/config-types";
+} from "@weaver-conf/config-types";
 import {
   createWeaverError,
   err,
   isSecretReference,
   ok,
-} from "@weaver/config-types";
+} from "@weaver-conf/config-types";
 import type { SecretCache } from "./secret-cache.js";
 import { createSecretCache } from "./secret-cache.js";
 import type { SecretProvider, SecretStoreResult } from "./secret-provider.js";

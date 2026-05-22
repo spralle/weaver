@@ -1,6 +1,6 @@
-import { evaluateChangePolicy } from "@weaver/config-policy";
-import type { OverrideSessionController } from "@weaver/config-sessions";
-import type { ConfigurationService, WeaverConfig } from "@weaver/config-types";
+import { evaluateChangePolicy } from "@weaver-conf/config-policy";
+import type { OverrideSessionController } from "@weaver-conf/config-sessions";
+import type { ConfigurationService, WeaverConfig } from "@weaver-conf/config-types";
 import { COUNTRY_CODES_WITH_PROVIDERS, findLocation } from "../locations.js";
 import { getSchemaForKey } from "../schemas.js";
 import {

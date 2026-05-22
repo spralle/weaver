@@ -1,6 +1,6 @@
 // schema-diff.ts — Pure utility functions for schema comparison and conflict detection
 
-import type { ConfigurationPropertySchema } from "@weaver/config-types";
+import type { ConfigurationPropertySchema } from "@weaver-conf/config-types";
 import { deepEqual } from "./deep-equal.js";
 
 /**

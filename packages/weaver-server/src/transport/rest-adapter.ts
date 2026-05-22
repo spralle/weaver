@@ -1,6 +1,6 @@
 // REST transport adapter — maps HTTP routes to WeaverConfigService
 
-import type { ConfigurationPropertySchema } from "@weaver/config-types";
+import type { ConfigurationPropertySchema } from "@weaver-conf/config-types";
 import { ZodError } from "zod";
 import type { AuthContext } from "../auth/auth-middleware.js";
 import type { WeaverConfigService } from "../core/config-service.js";

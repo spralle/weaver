@@ -14,18 +14,18 @@
 
 | Category | Package | Role |
 |----------|---------|------|
-| CORE | `@weaver/config-types` | Shared types, Zod schemas, `defineWeaver` builder |
-| CORE | `@weaver/config-engine` | `deepGet`/`Set`/`Remove`/`Merge`, schema registry, JSON Schema codegen, namespace utilities |
-| SERVER | `@weaver/weaver-server` | Server process (storage, auth, transport, core service) |
-| CLIENT | `@weaver/weaver-client` | Client SDK (transport, local state, persistence) |
-| LIBRARY | `@weaver/config-providers` | Concrete storage providers (InMemory, StaticJson, LocalStorage) |
-| LIBRARY | `@weaver/config-auth` | `withAuth()` role-based access |
-| LIBRARY | `@weaver/config-policy` | Change policy evaluation |
-| LIBRARY | `@weaver/config-sessions` | Override sessions |
-| LIBRARY | `@weaver/config-server` | FileSystemStorageProvider, audit log, service config |
-| QUESTIONABLE | `@weaver/config-sync` | Offline sync (not wired into weaver-client, see issue #35) |
-| QUESTIONABLE | `@weaver/config-runtime` | Flat-key orchestration (broken, will be deleted and rebuilt) |
-| APP | `@weaver/demo` | Interactive demo (private, GitHub Pages) |
+| CORE | `@weaver-conf/config-types` | Shared types, Zod schemas, `defineWeaver` builder |
+| CORE | `@weaver-conf/config-engine` | `deepGet`/`Set`/`Remove`/`Merge`, schema registry, JSON Schema codegen, namespace utilities |
+| SERVER | `@weaver-conf/weaver-server` | Server process (storage, auth, transport, core service) |
+| CLIENT | `@weaver-conf/weaver-client` | Client SDK (transport, local state, persistence) |
+| LIBRARY | `@weaver-conf/config-providers` | Concrete storage providers (InMemory, StaticJson, LocalStorage) |
+| LIBRARY | `@weaver-conf/config-auth` | `withAuth()` role-based access |
+| LIBRARY | `@weaver-conf/config-policy` | Change policy evaluation |
+| LIBRARY | `@weaver-conf/config-sessions` | Override sessions |
+| LIBRARY | `@weaver-conf/config-server` | FileSystemStorageProvider, audit log, service config |
+| QUESTIONABLE | `@weaver-conf/config-sync` | Offline sync (not wired into weaver-client, see issue #35) |
+| QUESTIONABLE | `@weaver-conf/config-runtime` | Flat-key orchestration (broken, will be deleted and rebuilt) |
+| APP | `@weaver-conf/demo` | Interactive demo (private, GitHub Pages) |
 
 ---
 
@@ -93,12 +93,12 @@
 2. **Fold `config-server` INTO `weaver-server`**
    - `weaver-server` is the only consumer of `config-server`
    - Move `FileSystemStorageProvider`, audit log, and service config into `weaver-server/src/`
-   - Remove `@weaver/config-server` package
+   - Remove `@weaver-conf/config-server` package
 
 3. **Fold storage providers INTO `weaver-server`**
    - InMemory, StaticJson, FS, Git, MongoDB providers are server-side storage backends
    - Move into `weaver-server/src/providers/`
-   - Remove individual `@weaver/storage-provider-*` packages
+   - Remove individual `@weaver-conf/storage-provider-*` packages
 
 4. **Extract shared orchestration into new `config-runtime`**
    - State container (holds resolved config, emits changes)
@@ -156,14 +156,14 @@
 ## Target Package Structure (0.1.0-pre)
 
 ```
-@weaver/config-types    — Types, Zod schemas, defineWeaver
-@weaver/config-engine   — Primitives (deepGet/Set/Merge), schema registry, codegen
-@weaver/config-runtime  — Orchestration (state container, layer resolution, scoping, views)
-@weaver/config-auth     — withAuth() RBAC
-@weaver/config-policy   — Change policies, ratchets
-@weaver/config-sessions — Override sessions
-@weaver/weaver-server   — Server (absorbs storage providers)
-@weaver/weaver-client   — Opinionated SDK (config-runtime + transport + persistence)
+@weaver-conf/config-types    — Types, Zod schemas, defineWeaver
+@weaver-conf/config-engine   — Primitives (deepGet/Set/Merge), schema registry, codegen
+@weaver-conf/config-runtime  — Orchestration (state container, layer resolution, scoping, views)
+@weaver-conf/config-auth     — withAuth() RBAC
+@weaver-conf/config-policy   — Change policies, ratchets
+@weaver-conf/config-sessions — Override sessions
+@weaver-conf/weaver-server   — Server (absorbs storage providers)
+@weaver-conf/weaver-client   — Opinionated SDK (config-runtime + transport + persistence)
 ```
 
 **8 publishable packages** (down from ~20 post-arch-sweep).
@@ -176,7 +176,7 @@
 ┌─────────────────────────────────────────────────────────────┐
 │                        APPLICATIONS                          │
 │                                                             │
-│   @weaver/demo (private)                                    │
+│   @weaver-conf/demo (private)                                    │
 │       ├── weaver-server                                     │
 │       └── weaver-client                                     │
 └─────────────────────────────────────────────────────────────┘
@@ -184,7 +184,7 @@
 ┌─────────────────────────────────────────────────────────────┐
 │                          SERVER                              │
 │                                                             │
-│   @weaver/weaver-server                                     │
+│   @weaver-conf/weaver-server                                     │
 │       ├── config-runtime                                    │
 │       ├── config-auth                                       │
 │       ├── config-policy                                     │
@@ -194,27 +194,27 @@
 ┌─────────────────────────────────────────────────────────────┐
 │                          CLIENT                              │
 │                                                             │
-│   @weaver/weaver-client                                     │
+│   @weaver-conf/weaver-client                                     │
 │       └── config-runtime                                    │
 └─────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────┐
 │                        LIBRARIES                             │
 │                                                             │
-│   @weaver/config-auth ──────────┐                           │
-│   @weaver/config-policy ────────┼──► config-engine          │
-│   @weaver/config-sessions ──────┘                           │
+│   @weaver-conf/config-auth ──────────┐                           │
+│   @weaver-conf/config-policy ────────┼──► config-engine          │
+│   @weaver-conf/config-sessions ──────┘                           │
 │                                                             │
-│   @weaver/config-runtime ──────────► config-engine          │
+│   @weaver-conf/config-runtime ──────────► config-engine          │
 └─────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────┐
 │                           CORE                               │
 │                                                             │
-│   @weaver/config-engine                                     │
+│   @weaver-conf/config-engine                                     │
 │       └── config-types                                      │
 │                                                             │
-│   @weaver/config-types (leaf — no internal deps)            │
+│   @weaver-conf/config-types (leaf — no internal deps)            │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -226,9 +226,9 @@
 
 | Package | Disposition |
 |---------|-------------|
-| `@weaver/config-runtime` (current) | Deleted and rebuilt — current version uses stale flat-key model |
-| `@weaver/config-server` | Absorbed into `weaver-server` |
-| `@weaver/config-providers` | Absorbed into `weaver-server` |
-| `@weaver/storage-provider-*` (8 packages) | Absorbed into `weaver-server` |
-| `@weaver/storage-provider-core` | Absorbed into `weaver-server` |
-| `@weaver/config-sync` | TBD — decision tracked in issue #35 |
+| `@weaver-conf/config-runtime` (current) | Deleted and rebuilt — current version uses stale flat-key model |
+| `@weaver-conf/config-server` | Absorbed into `weaver-server` |
+| `@weaver-conf/config-providers` | Absorbed into `weaver-server` |
+| `@weaver-conf/storage-provider-*` (8 packages) | Absorbed into `weaver-server` |
+| `@weaver-conf/storage-provider-core` | Absorbed into `weaver-server` |
+| `@weaver-conf/config-sync` | TBD — decision tracked in issue #35 |

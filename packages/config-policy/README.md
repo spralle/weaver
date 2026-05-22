@@ -1,26 +1,26 @@
-# @weaver/config-policy
+# @weaver-conf/config-policy
 
 > Change control policies, ratchet validation, and emergency override tracking for Weaver configuration.
 
 ## Installation
 
 ```bash
-bun add @weaver/config-policy
+bun add @weaver-conf/config-policy
 ```
 
 ## Overview
 
-`@weaver/config-policy` provides governance controls for configuration changes. It includes a policy engine that evaluates `changePolicy` rules (direct-allowed, staging-gate, full-pipeline, emergency-override), a validation function that audits policy assignments against security conventions, a one-way ratchet validator that prevents loosening of restrictive settings across layers, and an override tracker for managing emergency override lifecycles with follow-up deadlines.
+`@weaver-conf/config-policy` provides governance controls for configuration changes. It includes a policy engine that evaluates `changePolicy` rules (direct-allowed, staging-gate, full-pipeline, emergency-override), a validation function that audits policy assignments against security conventions, a one-way ratchet validator that prevents loosening of restrictive settings across layers, and an override tracker for managing emergency override lifecycles with follow-up deadlines.
 
-These tools compose with `@weaver/config-auth` — the policy engine accepts a `canWrite` function from the auth layer and layers additional policy checks on top.
+These tools compose with `@weaver-conf/config-auth` — the policy engine accepts a `canWrite` function from the auth layer and layers additional policy checks on top.
 
 ## Usage
 
 ### Evaluating change policies
 
 ```typescript
-import { evaluateChangePolicy } from "@weaver/config-policy";
-import { withAuth } from "@weaver/config-auth";
+import { evaluateChangePolicy } from "@weaver-conf/config-policy";
+import { withAuth } from "@weaver-conf/config-auth";
 
 const auth = withAuth({ /* ... */ });
 
@@ -37,7 +37,7 @@ const decision = evaluateChangePolicy(
 ### Policy validation
 
 ```typescript
-import { validateChangePolicies } from "@weaver/config-policy";
+import { validateChangePolicies } from "@weaver-conf/config-policy";
 
 const violations = validateChangePolicies(registry.getSchemas());
 // Flags: security-sensitive keys with "direct-allowed", internal visibility
@@ -54,7 +54,7 @@ for (const v of violations) {
 import {
   validateOneWayRatchet,
   DEFAULT_PLUGIN_MANAGEMENT_RATCHET_RULES,
-} from "@weaver/config-policy";
+} from "@weaver-conf/config-policy";
 
 const result = validateOneWayRatchet(
   DEFAULT_PLUGIN_MANAGEMENT_RATCHET_RULES,
@@ -72,7 +72,7 @@ result.violations;
 ### Emergency override tracking
 
 ```typescript
-import { createInMemoryOverrideTracker } from "@weaver/config-policy";
+import { createInMemoryOverrideTracker } from "@weaver-conf/config-policy";
 
 const tracker = createInMemoryOverrideTracker({
   followUpDeadlineMs: 24 * 60 * 60 * 1000, // 24 hours

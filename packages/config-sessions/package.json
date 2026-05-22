@@ -1,5 +1,5 @@
 {
-  "name": "@weaver/config-sessions",
+  "name": "@weaver-conf/config-sessions",
   "version": "0.1.0-pre.0",
   "description": "Override session provider with expiration, audit logging, and ephemeral storage for Weaver",
   "license": "MIT",
@@ -38,7 +38,7 @@
     "lint": "biome check ."
   },
   "dependencies": {
-    "@weaver/config-types": "workspace:*"
+    "@weaver-conf/config-types": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.8.3"

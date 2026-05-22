@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { createStateContainer } from "@weaver/config-runtime";
+import { createStateContainer } from "@weaver-conf/config-runtime";
 import { createSyncRuntimeBridge } from "../src/sync-runtime-bridge.js";
 
 function createMockOrchestrator() {

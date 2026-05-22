@@ -1,5 +1,5 @@
 {
-  "name": "@weaver/config-engine",
+  "name": "@weaver-conf/config-engine",
   "version": "0.1.0-pre.0",
   "description": "Deep merge, layer resolution, key inspection, scope chains, and schema registry for Weaver configuration",
   "license": "MIT",
@@ -39,7 +39,7 @@
     "lint": "biome check ."
   },
   "dependencies": {
-    "@weaver/config-types": "workspace:*",
+    "@weaver-conf/config-types": "workspace:*",
     "zod": "^4.0.0"
   },
   "devDependencies": {

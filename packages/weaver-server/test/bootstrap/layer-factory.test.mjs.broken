@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { createProviders } from "../../src/bootstrap/layer-factory.ts";
 import { GitStorageProvider } from "../../src/storage/git-storage-provider.ts";
 import { MongoDBStorageProvider } from "../../src/storage/mongodb-storage-provider.ts";
-import { InMemoryStorageProvider } from "@weaver/config-providers";
+import { InMemoryStorageProvider } from "@weaver-conf/config-providers";
 
 function createMockGitManager() {
   return {

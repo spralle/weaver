@@ -1,4 +1,4 @@
-# @weaver/config-auth
+# @weaver-conf/config-auth
 
 ## Status: Deferred (Pre-built)
 

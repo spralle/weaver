@@ -1,12 +1,12 @@
 // Types and interfaces for WeaverConfigService
 
-import type { WeaverLogger } from "@weaver/config-engine";
+import type { WeaverLogger } from "@weaver-conf/config-engine";
 import type {
   ConfigurationInspection,
   ConfigurationStorageProvider,
   ScopeInstance,
   WriteResult,
-} from "@weaver/config-types";
+} from "@weaver-conf/config-types";
 import type { ConfigDelta, ConfigSnapshot } from "../types/index.js";
 
 export interface WriteContext {

@@ -1,6 +1,6 @@
 // Layer factory — creates storage providers from validated bootstrap config
 
-import type { ConfigurationStorageProvider } from "@weaver/config-types";
+import type { ConfigurationStorageProvider } from "@weaver-conf/config-types";
 import type { Collection } from "mongodb";
 import type { GitManager } from "../providers/index.js";
 import {

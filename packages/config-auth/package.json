@@ -1,5 +1,5 @@
 {
-  "name": "@weaver/config-auth",
+  "name": "@weaver-conf/config-auth",
   "version": "0.0.1-pre.0",
   "private": true,
   "description": "Role-based access control extension for Weaver configuration via withAuth() composition",
@@ -39,7 +39,7 @@
     "lint": "biome check ."
   },
   "dependencies": {
-    "@weaver/config-types": "workspace:*"
+    "@weaver-conf/config-types": "workspace:*"
   },
   "devDependencies": {
     "typescript": "^5.8.3"

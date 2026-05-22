@@ -5,7 +5,7 @@ import type {
   ConfigurationLayerData,
   ConfigurationStorageProvider,
   WriteResult,
-} from "@weaver/config-types";
+} from "@weaver-conf/config-types";
 
 /** Options for creating an in-memory storage provider (useful for tests and session layers). */
 export interface InMemoryProviderOptions {
