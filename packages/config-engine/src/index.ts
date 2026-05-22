@@ -12,6 +12,7 @@ export type {
   JsonSchemaDocument,
   JsonSchemaProperty,
 } from "./json-schema-generator.js";
+export { generateJsonSchema } from "./json-schema-generator.js";
 
 // layers.ts — Layer resolution engine
 export type { ResolvedConfiguration } from "./layers.js";

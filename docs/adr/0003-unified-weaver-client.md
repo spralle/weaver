@@ -266,9 +266,7 @@ export interface NamespaceDefinition<TShape extends z.ZodRawShape> {
 ### 1. Browser thick client with offline + typed namespaces
 
 ```typescript
-import { createWeaverClient, defineNamespace } from "@weaver-conf/client";
-import { httpSseTransport } from "@weaver-conf/client/transports";
-import { indexedDbPersistence } from "@weaver-conf/client/persistence";
+import { createWeaverClient, defineNamespace, createHttpTransport, createIndexedDbPersistence } from "@weaver-conf/weaver-client";
 import { z } from "zod";
 
 const uiPrefs = defineNamespace("app.ui", {
@@ -278,8 +276,8 @@ const uiPrefs = defineNamespace("app.ui", {
 });
 
 const client = createWeaverClient({
-  transport: httpSseTransport({ url: "/api/config" }),
-  persistence: indexedDbPersistence("my-app"),
+  transport: createHttpTransport({ url: "/api/config" }),
+  persistence: createIndexedDbPersistence({ dbName: "my-app" }),
   namespaces: [uiPrefs],
 });
 
@@ -294,12 +292,13 @@ ui.onChange("fontSize", (size) => {
 ### 2. Backend microservice with schema + restart detection
 
 ```typescript
-import { createWeaverClient } from "@weaver-conf/client";
-import { scompTransport } from "@weaver-conf/client/transports";
+import { createWeaverClient } from "@weaver-conf/weaver-client";
+// import { createScompTransport } from "@weaver-conf/weaver-client"; // SCOMP client transport not yet implemented
 import { peer } from "./scomp-peer.js";
 
 const client = createWeaverClient({
-  transport: scompTransport({ peer }),
+  // transport: createScompTransport({ peer }), // SCOMP client transport not yet implemented
+  transport: createHttpTransport({ baseUrl: "http://weaver-server:3399" }),
   schemas: true,
   staleness: { maxAgeMs: 30_000 },
 });
@@ -316,7 +315,8 @@ const dbHost = client.get<string>("database.host");
 
 ```typescript
 const client = createWeaverClient({
-  transport: scompTransport({ peer }),
+  // transport: createScompTransport({ peer }), // SCOMP client transport not yet implemented
+  transport: createHttpTransport({ baseUrl: "http://weaver-server:3399" }),
   schemas: true,
 });
 
@@ -333,11 +333,10 @@ async function handleRequest(tenantId: string, locationId: string) {
 ### 4. Testing with local transport
 
 ```typescript
-import { createWeaverClient } from "@weaver-conf/client";
-import { localTransport } from "@weaver-conf/client/transports";
+import { createWeaverClient, createLocalTransport } from "@weaver-conf/weaver-client";
 
 const client = createWeaverClient({
-  transport: localTransport({
+  transport: createLocalTransport({
     initial: { "app.ui.theme": "dark", "app.ui.fontSize": 14 },
   }),
 });
