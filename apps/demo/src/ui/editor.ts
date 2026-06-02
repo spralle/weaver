@@ -1,8 +1,9 @@
 import { evaluateChangePolicy } from "@weaver-conf/config-policy";
 import type { OverrideSessionController } from "@weaver-conf/config-sessions";
-import type { ConfigurationService, WeaverConfig } from "@weaver-conf/config-types";
-import { COUNTRY_CODES_WITH_PROVIDERS, findLocation } from "../locations.js";
-import { getSchemaForKey } from "../schemas.js";
+import type { WeaverClient } from "@weaver-conf/weaver-client";
+import type { WeaverConfig } from "@weaver-conf/config-types";
+import { COUNTRY_CODES_WITH_PROVIDERS, findLocation } from "../locations";
+import { getFullSchemaForKey, getSchemaForKey } from "../schemas";
 import {
   addLogEntry,
   getSelectedKey,
@@ -11,7 +12,7 @@ import {
   onSelectedKeyChange,
   onSelectedLocationChange,
   onSessionActiveChange,
-} from "../state.js";
+} from "../state";
 
 const BASE_WRITABLE_LAYERS = ["tenant", "user", "session"] as const;
 
@@ -30,7 +31,7 @@ function getWritableLayers(): string[] {
 
 export function renderEditor(
   container: HTMLElement,
-  service: ConfigurationService,
+  client: WeaverClient,
   session: OverrideSessionController,
   weaverConfig: WeaverConfig,
 ): void {
@@ -44,24 +45,17 @@ export function renderEditor(
       return;
     }
 
-    const currentValue = service.get(key);
+    const currentValue = client.get(key);
     const schema = getSchemaForKey(key);
     let html = `<h3>${key}</h3>`;
 
     for (const layer of getWritableLayers()) {
-      html += buildLayerSection(
-        layer,
-        key,
-        currentValue,
-        service,
-        schema,
-        weaverConfig,
-      );
+      html += buildLayerSection(layer, key, currentValue, schema, weaverConfig);
     }
 
     html += `<div class="policy-feedback" id="policy-feedback"></div>`;
     body.innerHTML = html;
-    bindEvents(body, key, service, session, weaverConfig);
+    bindEvents(body, key, client, session, weaverConfig);
   }
 
   render();
@@ -73,20 +67,18 @@ export function renderEditor(
   onSelectedKeyChange((key) => {
     cleanupOnChange?.();
     if (key !== null) {
-      cleanupOnChange = service.onChange(key, () => render());
+      cleanupOnChange = client.onChange(key, () => render());
     }
   });
 }
 
 function buildLayerSection(
   layer: string,
-  key: string,
+  _key: string,
   currentValue: unknown,
-  service: ConfigurationService,
   schema: ReturnType<typeof getSchemaForKey>,
   weaverConfig: WeaverConfig,
 ): string {
-  const layerValue = service.getAtLayer(layer, key);
   const blocked = isCeilingBlocked(layer, schema, weaverConfig);
 
   const cls = blocked ? "editor-layer ceiling-blocked" : "editor-layer";
@@ -98,11 +90,10 @@ function buildLayerSection(
     html += `<div class="ceiling-msg">🔒 Ceiling: max override at <strong>${ceiling}</strong></div>`;
   } else {
     html += `<div class="editor-controls">`;
-    html += buildInput(key, layer, currentValue, layerValue);
+    html += buildInput(layer, currentValue);
     html += `<button class="btn-set" data-layer="${layer}">Set</button>`;
-    html += `<button class="btn-remove" data-layer="${layer}" ${layerValue === undefined ? "disabled" : ""}>Remove</button>`;
+    html += `<button class="btn-remove" data-layer="${layer}">Remove</button>`;
     html += `</div>`;
-    html += `<span class="current-layer-val">${layerValue !== undefined ? JSON.stringify(layerValue) : "—"}</span>`;
   }
 
   html += `</div>`;
@@ -116,7 +107,6 @@ function isCeilingBlocked(
 ): boolean {
   if (!schema?.maxOverrideLayer) return false;
   if (layer === "session" && isSessionActive()) return false;
-  // Scope layers (country:*, location:*) sit between tenant (rank 2) and user (rank 3)
   const SCOPE_LAYER_RANK = 2.5;
   const isScopeLayer =
     layer.startsWith("location:") || layer.startsWith("country:");
@@ -128,31 +118,16 @@ function isCeilingBlocked(
   return layerRank > ceilingRank;
 }
 
-function buildInput(
-  _key: string,
-  layer: string,
-  currentValue: unknown,
-  layerValue: unknown,
-): string {
+function buildInput(layer: string, currentValue: unknown): string {
   const attr = `data-input-layer="${layer}"`;
-  const hasOwn = layerValue !== undefined;
 
   if (typeof currentValue === "boolean") {
-    const inherit = hasOwn
-      ? ""
-      : `<option value="" selected>— inherit —</option>`;
-    const tSel = hasOwn && layerValue === true ? " selected" : "";
-    const fSel = hasOwn && layerValue === false ? " selected" : "";
-    return `<select ${attr}>${inherit}<option value="true"${tSel}>true</option><option value="false"${fSel}>false</option></select>`;
+    return `<select ${attr}><option value="true">true</option><option value="false">false</option></select>`;
   }
   if (typeof currentValue === "number") {
-    const val = hasOwn ? ` value="${layerValue}"` : "";
-    const ph = hasOwn ? "" : ` placeholder="${currentValue}"`;
-    return `<input ${attr} type="number"${val}${ph} />`;
+    return `<input ${attr} type="number" placeholder="${currentValue}" />`;
   }
-  const val = hasOwn ? ` value="${layerValue}"` : "";
-  const ph = hasOwn ? "" : ` placeholder="${currentValue ?? ""}"`;
-  return `<input ${attr} type="text"${val}${ph} />`;
+  return `<input ${attr} type="text" placeholder="${currentValue ?? ""}" />`;
 }
 
 function parseInput(
@@ -191,16 +166,16 @@ async function handleSet(
   body: Element,
   key: string,
   layer: string,
-  service: ConfigurationService,
+  client: WeaverClient,
   session: OverrideSessionController,
-): void {
+): Promise<void> {
   const input = body.querySelector<HTMLInputElement | HTMLSelectElement>(
     `[data-input-layer="${layer}"]`,
   );
   if (!input) return;
 
-  const schema = getSchemaForKey(key);
-  const value = parseInput(input, service.get(key));
+  const schema = getFullSchemaForKey(key);
+  const value = parseInput(input, client.get(key));
 
   if (schema) {
     const ctx = {
@@ -228,29 +203,29 @@ async function handleSet(
   }
 
   clearFeedback(body);
-  await service.set(key, value, layer);
+  await client.set(key, value, { layer });
   addLogEntry(`Set ${key} = ${JSON.stringify(value)} at [${layer}]`);
 }
 
 function bindEvents(
   body: Element,
   key: string,
-  service: ConfigurationService,
+  client: WeaverClient,
   session: OverrideSessionController,
   _weaverConfig: WeaverConfig,
 ): void {
   for (const btn of body.querySelectorAll<HTMLButtonElement>(".btn-set")) {
     btn.addEventListener("click", () => {
-      const layer = btn.dataset.layer!;
-      handleSet(body, key, layer, service, session);
+      const layer = btn.dataset["layer"]!;
+      void handleSet(body, key, layer, client, session);
     });
   }
 
   for (const btn of body.querySelectorAll<HTMLButtonElement>(".btn-remove")) {
     btn.addEventListener("click", () => {
-      const layer = btn.dataset.layer!;
+      const layer = btn.dataset["layer"]!;
       clearFeedback(body);
-      service.remove(key, layer);
+      void client.remove(key, { layer });
       addLogEntry(`Removed ${key} from [${layer}]`);
     });
   }

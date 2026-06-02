@@ -1,18 +1,13 @@
-// TODO: rewire with new config-runtime — createConfigurationService removed
-import { createOverrideSessionProvider } from "@weaver-conf/config-sessions";
-import { defineWeaver, Layers } from "@weaver-conf/config-types";
-import { createLocalStorageProvider } from "@weaver-conf/storage-provider-local-storage";
-import { createInMemoryStorageProvider } from "@weaver-conf/weaver-server";
-import { createStaticJsonStorageProvider } from "@weaver-conf/storage-provider-static-json";
 import {
-  APP_DEFAULTS,
-  CORE_DEFAULTS,
-  COUNTRY_GB_DEFAULTS,
-  COUNTRY_NL_DEFAULTS,
-  LOCATION_FRCQF_DEFAULTS,
-  LOCATION_GBDVR_DEFAULTS,
-  LOCATION_NLEUR_DEFAULTS,
-} from "./seed-data.js";
+  createWeaverClient,
+  createLocalTransport,
+} from "@weaver-conf/weaver-client";
+import type { WeaverClient } from "@weaver-conf/weaver-client";
+import { createOverrideSessionProvider } from "@weaver-conf/config-sessions";
+import type { OverrideSessionController } from "@weaver-conf/config-sessions";
+import { defineWeaver, Layers } from "@weaver-conf/config-types";
+import type { WeaverConfig } from "@weaver-conf/config-types";
+import { SEED_SNAPSHOT } from "./seed-data";
 
 /** All registered provider layer names, in rank order (lowest to highest). */
 export const ALL_PROVIDER_LAYERS: readonly string[] = [
@@ -28,7 +23,11 @@ export const ALL_PROVIDER_LAYERS: readonly string[] = [
   "session",
 ];
 
-export async function initService() {
+export async function initService(): Promise<{
+  client: WeaverClient;
+  session: OverrideSessionController;
+  weaverConfig: WeaverConfig;
+}> {
   const weaverConfig = defineWeaver([
     Layers.Static("core"),
     Layers.Static("app"),
@@ -37,78 +36,14 @@ export async function initService() {
     Layers.Ephemeral("session"),
   ] as const);
 
-  const coreProvider = createStaticJsonStorageProvider({
-    id: "core-defaults",
-    layer: "core",
-    data: CORE_DEFAULTS,
-  });
-
-  const appProvider = createStaticJsonStorageProvider({
-    id: "app-defaults",
-    layer: "app",
-    data: APP_DEFAULTS,
-  });
-
-  const tenantProvider = createInMemoryStorageProvider({
-    id: "tenant-config",
-    layer: "tenant",
-  });
-
-  const userProvider = createLocalStorageProvider({
-    id: "user-prefs",
-    layer: "user",
-    storageKey: "weaver-demo-user",
-  });
-
-  // Country scope providers (no FR!)
-  const countryGB = createInMemoryStorageProvider({
-    id: "country-gb",
-    layer: "country:GB",
-    initialEntries: COUNTRY_GB_DEFAULTS,
-  });
-
-  const countryNL = createInMemoryStorageProvider({
-    id: "country-nl",
-    layer: "country:NL",
-    initialEntries: COUNTRY_NL_DEFAULTS,
-  });
-
-  // Location scope providers
-  const locationGBDVR = createInMemoryStorageProvider({
-    id: "location-gbdvr",
-    layer: "location:GBDVR",
-    initialEntries: LOCATION_GBDVR_DEFAULTS,
-  });
-
-  const locationFRCQF = createInMemoryStorageProvider({
-    id: "location-frcqf",
-    layer: "location:FRCQF",
-    initialEntries: LOCATION_FRCQF_DEFAULTS,
-  });
-
-  const locationNLEUR = createInMemoryStorageProvider({
-    id: "location-nleur",
-    layer: "location:NLEUR",
-    initialEntries: LOCATION_NLEUR_DEFAULTS,
-  });
-
   const session = createOverrideSessionProvider({
     layer: "session",
     defaultDurationMs: 5 * 60 * 1000,
   });
 
-  // TODO: rewire with new config-runtime
-  const providers = [
-    coreProvider,
-    appProvider,
-    tenantProvider,
-    countryGB,
-    countryNL,
-    locationGBDVR,
-    locationFRCQF,
-    locationNLEUR,
-    userProvider,
-  ];
+  const transport = createLocalTransport({ snapshot: SEED_SNAPSHOT });
 
-  return { providers, session, weaverConfig };
+  const client = await createWeaverClient({ transport });
+
+  return { client, session, weaverConfig };
 }

@@ -24,9 +24,8 @@
         "@weaver-conf/config-policy": "workspace:*",
         "@weaver-conf/config-sessions": "workspace:*",
         "@weaver-conf/config-types": "workspace:*",
-        "@weaver-conf/storage-provider-local-storage": "workspace:*",
-        "@weaver-conf/storage-provider-static-json": "workspace:*",
-        "@weaver-conf/weaver-server": "workspace:*",
+        "@weaver-conf/weaver-client": "workspace:*",
+        "zod": "^4.0.0",
       },
       "devDependencies": {
         "typescript": "^5.8.3",
@@ -35,7 +34,7 @@
     },
     "packages/config-auth": {
       "name": "@weaver-conf/config-auth",
-      "version": "0.0.1-pre.0",
+      "version": "0.1.0",
       "dependencies": {
         "@weaver-conf/config-types": "workspace:*",
       },
@@ -45,7 +44,7 @@
     },
     "packages/config-engine": {
       "name": "@weaver-conf/config-engine",
-      "version": "0.1.0-pre.0",
+      "version": "0.1.0",
       "dependencies": {
         "@weaver-conf/config-types": "workspace:*",
         "zod": "^4.0.0",
@@ -57,7 +56,7 @@
     },
     "packages/config-policy": {
       "name": "@weaver-conf/config-policy",
-      "version": "0.1.0-pre.0",
+      "version": "0.1.0",
       "dependencies": {
         "@weaver-conf/config-engine": "workspace:*",
         "@weaver-conf/config-types": "workspace:*",
@@ -70,7 +69,7 @@
     },
     "packages/config-runtime": {
       "name": "@weaver-conf/config-runtime",
-      "version": "0.1.0-pre.0",
+      "version": "0.1.0",
       "dependencies": {
         "@weaver-conf/config-engine": "workspace:*",
         "zod": "^4.0.0",
@@ -81,7 +80,7 @@
     },
     "packages/config-secrets": {
       "name": "@weaver-conf/config-secrets",
-      "version": "0.1.0-pre.0",
+      "version": "0.1.0",
       "dependencies": {
         "@azure/identity": "4.13.1",
         "@azure/keyvault-secrets": "4.11.1",
@@ -94,7 +93,7 @@
     },
     "packages/config-sessions": {
       "name": "@weaver-conf/config-sessions",
-      "version": "0.1.0-pre.0",
+      "version": "0.1.0",
       "dependencies": {
         "@weaver-conf/config-types": "workspace:*",
       },
@@ -104,7 +103,7 @@
     },
     "packages/config-sync": {
       "name": "@weaver-conf/config-sync",
-      "version": "0.1.0-pre.0",
+      "version": "0.1.0",
       "dependencies": {
         "@weaver-conf/config-engine": "workspace:*",
         "@weaver-conf/config-types": "workspace:*",
@@ -115,7 +114,7 @@
     },
     "packages/config-types": {
       "name": "@weaver-conf/config-types",
-      "version": "0.1.0-pre.0",
+      "version": "0.1.0",
       "dependencies": {
         "zod": "^4.0.0",
       },
@@ -125,7 +124,7 @@
     },
     "packages/storage-provider-local-storage": {
       "name": "@weaver-conf/storage-provider-local-storage",
-      "version": "0.0.1-pre.0",
+      "version": "0.1.0",
       "dependencies": {
         "@weaver-conf/config-engine": "workspace:*",
         "@weaver-conf/config-types": "workspace:*",
@@ -136,7 +135,7 @@
     },
     "packages/storage-provider-static-json": {
       "name": "@weaver-conf/storage-provider-static-json",
-      "version": "0.0.1-pre.0",
+      "version": "0.1.0",
       "dependencies": {
         "@weaver-conf/config-engine": "workspace:*",
         "@weaver-conf/config-types": "workspace:*",
@@ -147,7 +146,7 @@
     },
     "packages/storage-providers": {
       "name": "@weaver-conf/storage-providers",
-      "version": "0.1.0-pre.0",
+      "version": "0.1.0",
       "dependencies": {
         "@weaver-conf/config-engine": "workspace:*",
         "@weaver-conf/config-types": "workspace:*",
@@ -170,7 +169,7 @@
     },
     "packages/weaver-client": {
       "name": "@weaver-conf/weaver-client",
-      "version": "0.1.0-pre.0",
+      "version": "0.1.0",
       "dependencies": {
         "@weaver-conf/config-engine": "workspace:*",
         "@weaver-conf/config-runtime": "workspace:*",
@@ -188,7 +187,7 @@
     },
     "packages/weaver-server": {
       "name": "@weaver-conf/weaver-server",
-      "version": "0.1.0-pre.0",
+      "version": "0.1.0",
       "dependencies": {
         "@weaver-conf/config-auth": "workspace:*",
         "@weaver-conf/config-engine": "workspace:*",

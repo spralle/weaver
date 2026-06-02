@@ -2,12 +2,12 @@ import {
   COUNTRY_CODES_WITH_PROVIDERS,
   findLocation,
   LOCATIONS,
-} from "../locations.js";
+} from "../locations";
 import {
   getSelectedLocation,
   onSelectedLocationChange,
   setSelectedLocation,
-} from "../state.js";
+} from "../state";
 
 export function renderLocationSelector(container: HTMLElement): void {
   container.innerHTML = `

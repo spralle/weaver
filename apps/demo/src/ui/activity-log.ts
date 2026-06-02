@@ -1,5 +1,5 @@
-import type { LogEntry } from "../state.js";
-import { getLog, onLogChange } from "../state.js";
+import type { LogEntry } from "../state";
+import { getLog, onLogChange } from "../state";
 
 export function renderActivityLog(container: HTMLElement): void {
   container.innerHTML = `<h2>Activity Log</h2><div class="log-list"></div>`;
