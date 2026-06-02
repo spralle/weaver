@@ -1,11 +1,11 @@
 import type { OverrideSessionController } from "@weaver-conf/config-sessions";
-import type { ConfigurationService } from "@weaver-conf/config-types";
-import { addLogEntry, setSessionActive } from "../state.js";
+import type { WeaverClient } from "@weaver-conf/weaver-client";
+import { addLogEntry, setSessionActive } from "../state";
 
 export function renderSessionPanel(
   container: HTMLElement,
   session: OverrideSessionController,
-  service: ConfigurationService,
+  client: WeaverClient,
 ): void {
   container.innerHTML = `<h2>Override Session</h2><div class="session-body"></div>`;
   const body = container.querySelector(".session-body")!;
@@ -16,7 +16,7 @@ export function renderSessionPanel(
     if (current === null) return;
     const keys = Object.keys(current.overrides);
     for (const key of keys) {
-      service.remove(key, "session");
+      void client.remove(key, { layer: "session" });
     }
   }
 
@@ -66,7 +66,7 @@ export function renderSessionPanel(
         <button id="btn-deactivate" class="btn-danger">Deactivate</button>
       </div>`;
 
-    startCountdown(expiresAt, Object.keys(current.overrides));
+    startCountdown(expiresAt);
 
     body.querySelector("#btn-extend")?.addEventListener("click", () => {
       session.extend(5 * 60 * 1000);
@@ -83,19 +83,14 @@ export function renderSessionPanel(
     });
   }
 
-  function startCountdown(expiresAt: number, capturedKeys: string[]): void {
+  function startCountdown(expiresAt: number): void {
     function update(): void {
       const remaining = Math.max(0, expiresAt - Date.now());
       const el = document.getElementById("countdown");
       if (!el) return;
       if (remaining <= 0) {
         el.textContent = "Expired";
-        const current = session.getSession();
-        const keysToRemove =
-          current !== null ? Object.keys(current.overrides) : capturedKeys;
-        for (const key of keysToRemove) {
-          service.remove(key, "session");
-        }
+        clearSessionOverrides();
         setSessionActive(false);
         clearTimer();
         addLogEntry("Session expired — overrides cleared");

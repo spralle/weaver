@@ -5,16 +5,16 @@
   "scripts": {
     "dev": "vite",
     "build": "echo skip",
+    "typecheck": "tsc --noEmit",
     "preview": "vite preview"
   },
   "dependencies": {
+    "@weaver-conf/weaver-client": "workspace:*",
     "@weaver-conf/config-types": "workspace:*",
-    "@weaver-conf/config-engine": "workspace:*",
-    "@weaver-conf/storage-provider-static-json": "workspace:*",
-    "@weaver-conf/storage-provider-local-storage": "workspace:*",
     "@weaver-conf/config-sessions": "workspace:*",
     "@weaver-conf/config-policy": "workspace:*",
-    "@weaver-conf/weaver-server": "workspace:*"
+    "@weaver-conf/config-engine": "workspace:*",
+    "zod": "^4.0.0"
   },
   "devDependencies": {
     "typescript": "^5.8.3",

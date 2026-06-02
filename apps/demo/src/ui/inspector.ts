@@ -1,18 +1,18 @@
-import type { ConfigurationService, WeaverConfig } from "@weaver-conf/config-types";
+import type { WeaverClient } from "@weaver-conf/weaver-client";
+import type { WeaverConfig } from "@weaver-conf/config-types";
 import {
   buildScopePath,
   COUNTRY_CODES_WITH_PROVIDERS,
   findLocation,
   type LocationDef,
-} from "../locations.js";
-import { getSchemaForKey } from "../schemas.js";
-import { ALL_PROVIDER_LAYERS } from "../setup.js";
+} from "../locations";
+import { getSchemaForKey } from "../schemas";
 import {
   getSelectedKey,
   getSelectedLocation,
   onSelectedKeyChange,
   onSelectedLocationChange,
-} from "../state.js";
+} from "../state";
 
 const VISIBILITY_COLORS: Record<string, string> = {
   public: "#6bcb77",
@@ -30,7 +30,7 @@ const POLICY_COLORS: Record<string, string> = {
 
 export function renderInspector(
   container: HTMLElement,
-  service: ConfigurationService,
+  client: WeaverClient,
   weaverConfig?: WeaverConfig,
 ): void {
   container.innerHTML = `<h2>Key Inspector</h2><div class="inspector-body"></div>`;
@@ -43,48 +43,43 @@ export function renderInspector(
       return;
     }
 
-    const inspection = service.inspect(key);
     const locationCode = getSelectedLocation();
     const loc = locationCode ? findLocation(locationCode) : null;
+
+    const baseValue = client.get(key);
+    const scopedValue = loc
+      ? client.getForScope(key, buildScopePath(loc))
+      : baseValue;
+
+    const scopeLayers = buildScopeLayerNames(loc);
     const layerNames = weaverConfig
       ? [...weaverConfig.layerNames]
-      : Object.keys(inspection.layerValues);
-
-    // Insert scope layers between tenant and user if active
-    const scopeLayers = buildScopeLayerNames(loc);
+      : ["core", "app", "tenant", "user", "session"];
     const displayLayers = insertScopeLayers(layerNames, scopeLayers);
 
-    // Build scoped effective value info
-    const scopedValue = loc
-      ? service.getForScope(key, buildScopePath(loc))
-      : inspection.effectiveValue;
+    // Use async inspect for layer breakdown
+    client.inspect(key).then((inspection) => {
+      const isLocationWinner = loc !== null && scopedValue !== baseValue;
+      const effectiveLayer = isLocationWinner
+        ? (findWinnerScopeLayer(scopeLayers, inspection.layerValues) ??
+          inspection.effectiveLayer)
+        : inspection.effectiveLayer;
 
-    // Determine which scope layers have values
-    const scopeLayerValues: Record<string, unknown> = {};
-    for (const sl of scopeLayers) {
-      scopeLayerValues[sl] = service.getAtLayer(sl, key);
-    }
-
-    const isLocationWinner =
-      loc !== null && scopedValue !== inspection.effectiveValue;
-    const effectiveLayer = isLocationWinner
-      ? (findWinnerScopeLayer(scopeLayers, scopeLayerValues) ??
-        inspection.effectiveLayer)
-      : inspection.effectiveLayer;
-
-    let html = `<h3>${key}</h3>`;
-    html += buildEffectiveSection({
-      effectiveValue: scopedValue,
-      effectiveLayer,
+      let html = `<h3>${key}</h3>`;
+      html += buildEffectiveSection({ effectiveValue: scopedValue, effectiveLayer });
+      html += buildLayerBreakdown(displayLayers, {
+        effectiveLayer,
+        layerValues: inspection.layerValues ?? {},
+      });
+      html += buildSchemaSection(key);
+      body.innerHTML = html;
+    }).catch(() => {
+      // Fallback: show effective value without layer breakdown
+      let html = `<h3>${key}</h3>`;
+      html += buildEffectiveSection({ effectiveValue: scopedValue, effectiveLayer: undefined });
+      html += buildSchemaSection(key);
+      body.innerHTML = html;
     });
-    html += buildLayerBreakdown(displayLayers, {
-      ...inspection,
-      effectiveLayer,
-      layerValues: { ...inspection.layerValues, ...scopeLayerValues },
-    });
-    html += buildAllSourcesSection(key, service);
-    html += buildSchemaSection(key);
-    body.innerHTML = html;
   }
 
   render();
@@ -95,7 +90,7 @@ export function renderInspector(
   onSelectedKeyChange((key) => {
     cleanupOnChange?.();
     if (key !== null) {
-      cleanupOnChange = service.onChange(key, () => render());
+      cleanupOnChange = client.onChange(key, () => render());
     }
   });
 }
@@ -106,7 +101,7 @@ function buildEffectiveSection(inspection: {
 }): string {
   return `<div class="effective-value">
     Effective: <strong>${formatValue(inspection.effectiveValue)}</strong>
-    <span class="effective-layer">from <em>${inspection.effectiveLayer ?? "none"}</em></span>
+    <span class="effective-layer">from <em>${inspection.effectiveLayer ?? "local"}</em></span>
   </div>`;
 }
 
@@ -114,7 +109,7 @@ function buildLayerBreakdown(
   layerNames: string[],
   inspection: {
     effectiveLayer: string | undefined;
-    layerValues: Record<string, unknown>;
+    layerValues: Partial<Record<string, unknown>>;
   },
 ): string {
   let html = `<div class="layer-breakdown">`;
@@ -125,37 +120,6 @@ function buildLayerBreakdown(
       <div class="layer-row${isWinner ? " winner" : ""}">
         <span class="layer-label">${layer}</span>
         <span class="layer-val">${value !== undefined ? formatValue(value) : "—"}</span>
-      </div>`;
-  }
-  html += `</div>`;
-  return html;
-}
-
-function buildAllSourcesSection(
-  key: string,
-  service: ConfigurationService,
-): string {
-  const sources: Array<{ layer: string; value: unknown }> = [];
-
-  for (const layer of ALL_PROVIDER_LAYERS) {
-    const value = service.getAtLayer(layer, key);
-    if (value !== undefined) {
-      sources.push({ layer, value });
-    }
-  }
-
-  if (sources.length === 0) {
-    return `<div class="all-sources"><h4>All Sources</h4><p class="placeholder">No values set</p></div>`;
-  }
-
-  let html = `<div class="all-sources"><h4>All Sources</h4>`;
-  for (const { layer, value } of sources) {
-    const isScope = layer.includes(":");
-    const cls = isScope ? "source-row scope" : "source-row";
-    html += `
-      <div class="${cls}">
-        <span class="source-layer">${layer}</span>
-        <span class="source-val">${formatValue(value)}</span>
       </div>`;
   }
   html += `</div>`;
@@ -219,11 +183,11 @@ function insertScopeLayers(
 
 function findWinnerScopeLayer(
   scopeLayers: string[],
-  values: Record<string, unknown>,
+  values: Partial<Record<string, unknown>>,
 ): string | undefined {
-  // Highest scope layer (last in array) with a defined value wins
   for (let i = scopeLayers.length - 1; i >= 0; i--) {
-    if (values[scopeLayers[i]] !== undefined) return scopeLayers[i];
+    const layer = scopeLayers[i];
+    if (layer !== undefined && values[layer] !== undefined) return layer;
   }
   return undefined;
 }

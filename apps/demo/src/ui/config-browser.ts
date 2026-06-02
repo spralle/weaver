@@ -1,14 +1,15 @@
-import type { ConfigurationService, WeaverConfig } from "@weaver-conf/config-types";
-import { buildScopePath, findLocation } from "../locations.js";
-import { getSchemaForKey } from "../schemas.js";
-import { ALL_KEYS } from "../seed-data.js";
+import type { WeaverClient } from "@weaver-conf/weaver-client";
+import type { WeaverConfig } from "@weaver-conf/config-types";
+import { buildScopePath, findLocation } from "../locations";
+import { getSchemaForKey } from "../schemas";
+import { ALL_KEYS } from "../seed-data";
 import {
   getSelectedKey,
   getSelectedLocation,
   onSelectedKeyChange,
   onSelectedLocationChange,
   setSelectedKey,
-} from "../state.js";
+} from "../state";
 
 const LAYER_TYPE_COLORS: Record<string, string> = {
   static: "var(--color-static)",
@@ -27,7 +28,7 @@ const POLICY_CLASSES: Record<string, string> = {
 
 export function renderConfigBrowser(
   container: HTMLElement,
-  service: ConfigurationService,
+  client: WeaverClient,
   weaverConfig: WeaverConfig,
 ): void {
   container.innerHTML = `<h2>Config Browser</h2><div class="key-list"></div>`;
@@ -38,7 +39,7 @@ export function renderConfigBrowser(
     list.innerHTML = "";
 
     for (const key of ALL_KEYS) {
-      const row = buildRow(key, selected, service, weaverConfig);
+      const row = buildRow(key, selected, client, weaverConfig);
       row.addEventListener("click", () => setSelectedKey(key));
       list.appendChild(row);
     }
@@ -48,29 +49,25 @@ export function renderConfigBrowser(
   onSelectedKeyChange(() => render());
   onSelectedLocationChange(() => render());
   for (const key of ALL_KEYS) {
-    service.onChange(key, () => render());
+    client.onChange(key, () => render());
   }
 }
 
 function buildRow(
   key: string,
   selected: string | null,
-  service: ConfigurationService,
-  weaverConfig: WeaverConfig,
+  client: WeaverClient,
+  _weaverConfig: WeaverConfig,
 ): HTMLDivElement {
   const locationCode = getSelectedLocation();
   const loc = locationCode ? findLocation(locationCode) : null;
-  const baseValue = service.get(key);
-  const value = loc ? service.getForScope(key, buildScopePath(loc)) : baseValue;
-  const inspection = service.inspect(key);
+  const baseValue = client.get(key);
+  const value = loc ? client.getForScope(key, buildScopePath(loc)) : baseValue;
   const row = document.createElement("div");
   row.className = `key-row${key === selected ? " selected" : ""}`;
 
-  // If scoped value differs from base, location layer is the winner
   const isLocationWinner = loc !== null && value !== baseValue;
-  const borderColor = isLocationWinner
-    ? "var(--color-scope)"
-    : getLayerColor(inspection.effectiveLayer, weaverConfig);
+  const borderColor = isLocationWinner ? "var(--color-scope)" : null;
   if (borderColor) {
     row.style.borderLeft = `3px solid ${borderColor}`;
   }
@@ -83,16 +80,6 @@ function buildRow(
     <span class="key-value">${formatValue(value)}${badges}</span>
   `;
   return row;
-}
-
-function getLayerColor(
-  layerName: string | undefined,
-  weaverConfig: WeaverConfig,
-): string | null {
-  if (!layerName) return null;
-  const layer = weaverConfig.getLayer(layerName);
-  if (!layer) return null;
-  return LAYER_TYPE_COLORS[layer.type.id] ?? null;
 }
 
 function buildBadges(schema: ReturnType<typeof getSchemaForKey>): string {
