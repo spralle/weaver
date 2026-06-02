@@ -1,6 +1,10 @@
 // Weaver server entry point — orchestrates all subsystems
 
-import type { ConfigurationStorageProvider } from "@weaver-conf/config-types";
+import { withAuth } from "@weaver-conf/config-auth";
+import type { ConfigurationStorageProvider, WeaverConfig } from "@weaver-conf/config-types";
+import type { AuthContext, AuthMiddleware } from "./auth/auth-middleware";
+import { createAuthMiddleware } from "./auth/auth-middleware";
+import { createJwtValidator } from "./auth/jwt-validator";
 import { createAuditService, createStdoutAuditSink } from "./audit/index";
 import { createWeaverConfigService } from "./core/config-service";
 import type { HealthEndpoints } from "./health";
@@ -8,9 +12,11 @@ import { createHealthEndpoints } from "./health";
 import { createInMemoryStorageProvider } from "./providers/index";
 import { parseServerEnv } from "./server-env";
 import { createShutdownManager } from "./shutdown";
+import type { AuthGate } from "./transport/auth-gate";
+import { createAuthGate } from "./transport/auth-gate";
 import type { RestAdapter } from "./transport/rest-adapter";
 import { createRestAdapter } from "./transport/rest-adapter";
-import type { SSEAdapter, SSEClient } from "./transport/sse-adapter";
+import type { SSEAdapter } from "./transport/sse-adapter";
 import { createSSEAdapter } from "./transport/sse-adapter";
 import type { SSEMessage } from "./transport/sse-events";
 
@@ -39,6 +45,7 @@ export interface WeaverServerOptions {
 export interface WeaverServer {
   readonly port: number;
   readonly isReady: boolean;
+  readonly authEnabled: boolean;
   close(): Promise<void>;
 }
 
@@ -62,6 +69,7 @@ function createRequestHandler(
   health: HealthEndpoints,
   restAdapter: RestAdapter,
   sseAdapter: SSEAdapter,
+  authMiddleware?: AuthMiddleware,
 ) {
   return async function handleRequest(req: Request): Promise<Response> {
     const url = new URL(req.url);
@@ -88,7 +96,7 @@ function createRequestHandler(
     }
 
     if (url.pathname.startsWith("/v1/")) {
-      return handleRest(req, url, method, restAdapter);
+      return handleRest(req, url, method, restAdapter, authMiddleware);
     }
 
     return new Response(JSON.stringify({ error: "not found" }), {
@@ -103,6 +111,7 @@ async function handleRest(
   url: URL,
   method: string,
   restAdapter: RestAdapter,
+  authMiddleware?: AuthMiddleware,
 ): Promise<Response> {
   const query: Record<string, string> = {};
   url.searchParams.forEach((value, key) => {
@@ -123,12 +132,32 @@ async function handleRest(
     headers[key] = value;
   });
 
-  const restResponse = await restAdapter.handleRequest(method, url.pathname, {
+  // Authenticate if auth middleware is configured
+  let authContext: AuthContext | undefined;
+  if (authMiddleware) {
+    const token = authMiddleware.extractToken(headers);
+    if (token) {
+      try {
+        authContext = await authMiddleware.authenticate(token);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Unauthorized";
+        return new Response(
+          JSON.stringify({ error: { code: "UNAUTHORIZED", message } }),
+          { status: 401, headers: { "content-type": "application/json" } },
+        );
+      }
+    }
+  }
+
+  const restRequest: import("./transport/rest-adapter").RestRequest = {
     params: {},
     query,
     body,
     headers,
-  });
+    ...(authContext ? { authContext } : {}),
+  };
+
+  const restResponse = await restAdapter.handleRequest(method, url.pathname, restRequest);
 
   return new Response(JSON.stringify(restResponse.body), {
     status: restResponse.status,
@@ -206,14 +235,65 @@ export async function startWeaverServer(
     environment: config.environment,
   });
 
+  // Auth setup — only enabled when jwtSecret is configured
+  let authGate: AuthGate | undefined;
+  let authMiddleware: AuthMiddleware | undefined;
+
+  if (config.jwtSecret) {
+    const jwtValidator = createJwtValidator({
+      publicKeyOrSecret: config.jwtSecret,
+    });
+
+    authMiddleware = createAuthMiddleware({
+      jwtValidator,
+      adminRoles: config.adminRoles,
+    });
+
+    // Minimal WeaverConfig — only getRank is used by auth checks
+    const layerRanks = new Map([["platform", 0], ["tenant", 1], ["session", 2]]);
+    const weaverConfig = {
+      layers: [],
+      layerNames: [...layerRanks.keys()],
+      rankMap: layerRanks,
+      getRank: (layer: string) => layerRanks.get(layer) ?? -1,
+      getLayer: () => undefined,
+      getLayersByType: () => [],
+    } satisfies WeaverConfig;
+
+    const authFunctions = withAuth({
+      weaverConfig,
+      visibilityRoles: {
+        admin: new Set(config.adminRoles),
+        platform: new Set([...config.adminRoles, "platform"]),
+      },
+      layerWritePolicies: [
+        { layer: "platform", allowedRoles: config.adminRoles },
+      ],
+      dynamicScopeRoles: new Set(config.adminRoles),
+    });
+
+    authGate = createAuthGate({
+      authFunctions,
+      mapContext: (authCtx) => ({
+        userId: authCtx.identity.userId ?? authCtx.identity.serviceId ?? "anonymous",
+        roles: authCtx.identity.roles ?? [],
+        sessionMode: undefined,
+      }),
+    });
+  }
+
   const restAdapterOptions: {
     configService: typeof configService;
     corsOrigins?: string[];
+    authGate?: AuthGate;
   } = {
     configService,
   };
   if (config.corsOrigins) {
     restAdapterOptions.corsOrigins = config.corsOrigins;
+  }
+  if (authGate) {
+    restAdapterOptions.authGate = authGate;
   }
 
   const restAdapter = createRestAdapter(restAdapterOptions);
@@ -221,7 +301,7 @@ export async function startWeaverServer(
   const sseAdapter = createSSEAdapter({ configService });
   sseAdapter.startCheckpointTimer();
 
-  const handleRequest = createRequestHandler(health, restAdapter, sseAdapter);
+  const handleRequest = createRequestHandler(health, restAdapter, sseAdapter, authMiddleware);
 
   const server = Bun.serve({
     port: config.port,
@@ -248,6 +328,9 @@ export async function startWeaverServer(
     },
     get isReady() {
       return health.readyz().status === 200;
+    },
+    get authEnabled() {
+      return authMiddleware !== undefined;
     },
     async close() {
       await shutdownManager.shutdown();
