@@ -29,6 +29,7 @@
     "@weaver-conf/config-engine": "workspace:*",
     "@weaver-conf/config-auth": "workspace:*",
     "@weaver-conf/storage-providers": "workspace:*",
+    "@weaver-conf/transport-scomp": "workspace:*",
     "zod": "^4.0.0"
   },
   "peerDependencies": {

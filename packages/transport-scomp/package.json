@@ -1,0 +1,34 @@
+{
+  "name": "@weaver-conf/transport-scomp",
+  "version": "0.1.0",
+  "description": "Shared SCOMP contract and client transport for Weaver configuration",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/spralle/weaver.git",
+    "directory": "packages/transport-scomp"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test",
+    "lint": "biome check ."
+  },
+  "dependencies": {
+    "@scompr/core": "^0.1.0",
+    "@weaver-conf/config-types": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}

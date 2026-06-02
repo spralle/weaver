@@ -24,7 +24,7 @@ export {
 export type { ScompAdapter, ScompAdapterOptions } from "./scomp-adapter";
 export { createScompAdapter } from "./scomp-adapter";
 export type { WeaverConfigContract } from "./scomp-contract";
-export { WEAVER_CONFIG_V1 } from "./scomp-contract";
+export { WEAVER_CONFIG_V1, WeaverConfig } from "./scomp-contract";
 export type {
   SSEAdapter,
   SSEAdapterOptions,
