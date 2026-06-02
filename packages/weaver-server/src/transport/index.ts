@@ -21,8 +21,7 @@ export {
   configWriteBodySchema,
   scopeProvisionBodySchema,
 } from "./rest-schemas";
-export type { ScompAdapter, ScompAdapterOptions } from "./scomp-adapter";
-export { createScompAdapter } from "./scomp-adapter";
+export { createWeaverScompService } from "./scomp-service";
 export type { WeaverConfigContract } from "./scomp-contract";
 export { WEAVER_CONFIG_V1, WeaverConfig } from "./scomp-contract";
 export type {
