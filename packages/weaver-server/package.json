@@ -30,7 +30,8 @@
     "@weaver-conf/config-auth": "workspace:*",
     "@weaver-conf/storage-providers": "workspace:*",
     "@weaver-conf/transport-scomp": "workspace:*",
-    "zod": "^4.0.0"
+    "zod": "^4.0.0",
+    "@scompr/core": "^0.1.0"
   },
   "peerDependencies": {
     "mongodb": "^6.12.0",
