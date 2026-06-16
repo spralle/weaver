@@ -95,7 +95,7 @@ export class FileSystemStorageProvider implements ConfigurationStorageProvider {
 
   async write(key: string, value: unknown): Promise<WriteResult> {
     if (!this.writable) {
-      return { success: false, error: "Provider is read-only" };
+      return { success: false, error: { code: "READONLY", message: "Provider is read-only" } };
     }
     validateStorageKey(key);
 
@@ -111,7 +111,7 @@ export class FileSystemStorageProvider implements ConfigurationStorageProvider {
 
   async remove(key: string): Promise<WriteResult> {
     if (!this.writable) {
-      return { success: false, error: "Provider is read-only" };
+      return { success: false, error: { code: "READONLY", message: "Provider is read-only" } };
     }
     validateStorageKey(key);
 

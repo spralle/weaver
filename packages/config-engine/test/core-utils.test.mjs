@@ -32,7 +32,7 @@ describe("isNodeError", () => {
 describe("readonlyGuard", () => {
   it("returns readonly WriteResult", () => {
     const result = readonlyGuard("env-provider");
-    assert.deepEqual(result, { success: false, error: "env-provider is read-only" });
+    assert.deepEqual(result, { success: false, error: { code: "READONLY", message: "env-provider is read-only" } });
   });
 });
 

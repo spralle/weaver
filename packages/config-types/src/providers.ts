@@ -1,10 +1,17 @@
 import type { ConfigurationLayer, ConfigurationLayerData } from "./types";
 
+/** Structured error details returned from a failed write operation. */
+export interface WriteError {
+  code: string;
+  message: string;
+  details?: Record<string, unknown>;
+}
+
 /** Outcome of a write or remove operation against a storage provider. */
 export interface WriteResult {
   success: boolean;
-  error?: string | undefined;
   revision?: string | undefined;
+  error?: WriteError | undefined;
 }
 
 /** Describes a single key change detected by a storage provider. */

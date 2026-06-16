@@ -130,7 +130,8 @@ test("write() on read-only provider returns failure", async () => {
   });
   const result = await provider.write("key", "value");
   assert.equal(result.success, false);
-  assert.equal(result.error, "Provider is read-only");
+  assert.equal(result.error.code, "READONLY");
+  assert.equal(result.error.message, "Provider is read-only");
 });
 
 test("remove() removes key from file", async () => {
@@ -189,7 +190,8 @@ test("remove() on read-only provider returns failure", async () => {
   });
   const result = await provider.remove("key");
   assert.equal(result.success, false);
-  assert.equal(result.error, "Provider is read-only");
+  assert.equal(result.error.code, "READONLY");
+  assert.equal(result.error.message, "Provider is read-only");
 });
 
 test("writable defaults to false", () => {

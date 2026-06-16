@@ -1,13 +1,13 @@
 export { createStateContainer } from "./state-container";
 export type {
-  ConfigDelta,
+  StateDelta,
   LayerEntry,
   StateContainer,
   StateSnapshot,
   Unsubscribe,
 } from "./types";
 export {
-  ConfigDeltaSchema,
+  StateDeltaSchema,
   LayerEntrySchema,
   StateSnapshotSchema,
 } from "./types";

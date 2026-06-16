@@ -90,7 +90,7 @@ export function createPromotionEngine(
           method: "direct" as const,
           error: createWeaverError(
             "GIT_ERROR",
-            result.error ?? "Write failed during promotion",
+            result.error?.message ?? "Write failed during promotion",
           ),
         };
       }

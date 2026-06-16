@@ -77,7 +77,10 @@ export async function createWeaverConfigService(
     if (expectedRevision !== revision) {
       return {
         success: false,
-        error: `Revision conflict: expected ${expectedRevision}, current is ${revision}`,
+        error: {
+          code: "REVISION_CONFLICT",
+          message: `Revision conflict: expected ${expectedRevision}, current is ${revision}`,
+        },
       };
     }
     return null;
@@ -260,12 +263,15 @@ export async function createWeaverConfigService(
 
       const provider = providers.find((p) => p.layer === layer);
       if (!provider) {
-        return { success: false, error: `No provider for layer "${layer}"` };
+        return {
+          success: false,
+          error: { code: "LAYER_NOT_FOUND", message: `No provider for layer "${layer}"` },
+        };
       }
       if (!provider.writable) {
         return {
           success: false,
-          error: `Provider for layer "${layer}" is read-only`,
+          error: { code: "READONLY", message: `Provider for layer "${layer}" is read-only` },
         };
       }
 
@@ -313,12 +319,15 @@ export async function createWeaverConfigService(
 
       const provider = providers.find((p) => p.layer === layer);
       if (!provider) {
-        return { success: false, error: `No provider for layer "${layer}"` };
+        return {
+          success: false,
+          error: { code: "LAYER_NOT_FOUND", message: `No provider for layer "${layer}"` },
+        };
       }
       if (!provider.writable) {
         return {
           success: false,
-          error: `Provider for layer "${layer}" is read-only`,
+          error: { code: "READONLY", message: `Provider for layer "${layer}" is read-only` },
         };
       }
 

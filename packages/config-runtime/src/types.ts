@@ -19,7 +19,7 @@ export interface StateSnapshot {
 }
 
 /** A delta describing changes to apply to the state container. */
-export interface ConfigDelta {
+export interface StateDelta {
   readonly set?: Record<string, unknown>;
   readonly removed?: string[];
   readonly revision: number;
@@ -37,7 +37,7 @@ export interface StateContainer {
   subscribeAll(
     callback: (resolved: Record<string, unknown>) => void,
   ): Unsubscribe;
-  applyDelta(delta: ConfigDelta): void;
+  applyDelta(delta: StateDelta): void;
   snapshot(): StateSnapshot;
   hydrate(snapshot: StateSnapshot): void;
   setLayer(layer: LayerEntry): void;
@@ -59,7 +59,7 @@ export const StateSnapshotSchema = z.object({
   revision: z.number(),
 });
 
-export const ConfigDeltaSchema = z.object({
+export const StateDeltaSchema = z.object({
   set: z.record(z.string(), z.unknown()).optional(),
   removed: z.array(z.string()).optional(),
   revision: z.number(),

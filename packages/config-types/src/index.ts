@@ -106,6 +106,7 @@ export type {
   SyncResult,
   SyncSnapshotCache,
   SyncStatus,
+  WriteError,
   WriteResult,
 } from "./providers";
 // schemas-access.ts — Zod schemas for access context and write policy types

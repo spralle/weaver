@@ -7,8 +7,8 @@ import {
 } from "@weaver-conf/config-engine";
 import { createSubscriptionManager } from "./subscriptions";
 import {
-  type ConfigDelta,
-  ConfigDeltaSchema,
+  type StateDelta,
+  StateDeltaSchema,
   type LayerEntry,
   type StateContainer,
   type StateSnapshot,
@@ -80,8 +80,8 @@ export function createStateContainer(options?: {
     return subs.subscribeAll(callback);
   }
 
-  function applyDelta(delta: ConfigDelta): void {
-    const parsed = ConfigDeltaSchema.parse(delta);
+  function applyDelta(delta: StateDelta): void {
+    const parsed = StateDeltaSchema.parse(delta);
     const changedPaths = new Set<string>();
     const mutable = cloneValue(resolved) as Record<string, unknown>; // SAFETY: resolved is always Record<string, unknown>
 

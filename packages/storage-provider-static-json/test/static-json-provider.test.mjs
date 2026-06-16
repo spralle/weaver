@@ -47,7 +47,8 @@ test("write returns failure", async () => {
   });
   const result = await provider.write("ghost.app.theme", "light");
   assert.equal(result.success, false);
-  assert.equal(result.error, "StaticJsonStorageProvider is read-only");
+  assert.equal(result.error.code, "READONLY");
+  assert.equal(result.error.message, "StaticJsonStorageProvider is read-only");
 });
 
 test("remove returns failure", async () => {
@@ -58,7 +59,8 @@ test("remove returns failure", async () => {
   });
   const result = await provider.remove("key");
   assert.equal(result.success, false);
-  assert.equal(result.error, "StaticJsonStorageProvider is read-only");
+  assert.equal(result.error.code, "READONLY");
+  assert.equal(result.error.message, "StaticJsonStorageProvider is read-only");
 });
 
 test("writable is false", () => {
