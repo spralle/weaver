@@ -139,6 +139,7 @@ export type {
   SSEMessage,
   SSESnapshotEvent,
   WeaverConfigContract,
+  ScompServiceDeps,
 } from "./transport/index";
 // transport
 export {
