@@ -1,6 +1,5 @@
 import { createScompService } from "@scompr/core";
 import { WeaverConfig } from "@weaver-conf/transport-scomp";
-import type { ConfigDelta } from "../types/index";
 import type {
   WeaverConfigService,
   WriteContext,
@@ -8,6 +7,7 @@ import type {
 import type { SchemaRegistry } from "../core/schema-registry";
 import type { ScopeManager } from "../core/scope-manager";
 import { parseScopeQuery } from "../core/scope-utils";
+import type { ConfigDelta } from "../types/index";
 
 export interface ScompServiceDeps {
   configService: WeaverConfigService;
@@ -116,7 +116,9 @@ export function createWeaverScompService(deps: ScompServiceDeps) {
       try {
         while (true) {
           if (queue.length > 0) {
-            yield queue.shift()!;
+            const next = queue.shift();
+            if (next === undefined) continue;
+            yield next;
           } else {
             await new Promise<void>((r) => {
               resolve = r;

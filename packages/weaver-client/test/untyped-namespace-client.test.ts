@@ -1,13 +1,15 @@
-import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 import { z } from "zod";
-import { createUntypedNamespaceClient } from "../src/untyped-namespace-client.js";
-import type { UntypedNamespaceClientDeps } from "../src/untyped-namespace-client.js";
 import type { WriteResult } from "../src/transport.js";
+import type { UntypedNamespaceClientDeps } from "../src/untyped-namespace-client.js";
+import { createUntypedNamespaceClient } from "../src/untyped-namespace-client.js";
 
 function createMockDeps(
   state: Record<string, unknown>,
-): UntypedNamespaceClientDeps & { calls: Array<{ method: string; args: unknown[] }> } {
+): UntypedNamespaceClientDeps & {
+  calls: Array<{ method: string; args: unknown[] }>;
+} {
   const calls: Array<{ method: string; args: unknown[] }> = [];
   const success: WriteResult = { success: true, revision: "r1" };
 

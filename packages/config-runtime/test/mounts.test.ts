@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import {
   buildMountMap,
-  resolveMountedValue,
   resolveMountedNamespace,
+  resolveMountedValue,
 } from "../src/mounts";
 
 describe("buildMountMap", () => {

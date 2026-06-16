@@ -1,5 +1,5 @@
-import { describe, it, expect } from "bun:test";
-import { WeaverConfig, createScompTransport } from "../src/index";
+import { describe, expect, it } from "bun:test";
+import { createScompTransport, WeaverConfig } from "../src/index";
 
 describe("transport-scomp", () => {
   it("exports the contract token with correct name", () => {

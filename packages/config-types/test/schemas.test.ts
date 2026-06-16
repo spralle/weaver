@@ -1,11 +1,11 @@
-import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 import {
+  configurationContextSchema,
+  configurationLayerDataSchema,
+  configurationLayerEntrySchema,
   scopeDefinitionSchema,
   scopeInstanceSchema,
-  configurationContextSchema,
-  configurationLayerEntrySchema,
-  configurationLayerDataSchema,
 } from "../src/schemas-layers.js";
 
 describe("scopeDefinitionSchema", () => {
@@ -34,12 +34,18 @@ describe("scopeDefinitionSchema", () => {
 
 describe("scopeInstanceSchema", () => {
   it("accepts valid instance", () => {
-    const result = scopeInstanceSchema.safeParse({ scopeId: "org", value: "acme" });
+    const result = scopeInstanceSchema.safeParse({
+      scopeId: "org",
+      value: "acme",
+    });
     assert.equal(result.success, true);
   });
 
   it("rejects non-string value", () => {
-    const result = scopeInstanceSchema.safeParse({ scopeId: "org", value: 123 });
+    const result = scopeInstanceSchema.safeParse({
+      scopeId: "org",
+      value: 123,
+    });
     assert.equal(result.success, false);
   });
 });

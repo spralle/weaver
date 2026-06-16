@@ -2,13 +2,21 @@ import type { OverrideSessionController } from "@weaver-conf/config-sessions";
 import type { WeaverClient } from "@weaver-conf/weaver-client";
 import { addLogEntry, setSessionActive } from "../state";
 
+function requireQuery(container: HTMLElement, selector: string): Element {
+  const element = container.querySelector(selector);
+  if (element === null) {
+    throw new Error(`Missing required element: ${selector}`);
+  }
+  return element;
+}
+
 export function renderSessionPanel(
   container: HTMLElement,
   session: OverrideSessionController,
   client: WeaverClient,
 ): void {
   container.innerHTML = `<h2>Override Session</h2><div class="session-body"></div>`;
-  const body = container.querySelector(".session-body")!;
+  const body = requireQuery(container, ".session-body");
   let timerId: ReturnType<typeof setInterval> | null = null;
 
   function clearSessionOverrides(): void {

@@ -1,5 +1,5 @@
-import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 import { createOverrideSessionProvider } from "../src/override-session-provider.js";
 
 function createTestProvider() {
@@ -18,7 +18,10 @@ function createTestProvider() {
 describe("OverrideSessionProvider", () => {
   it("activates a session", () => {
     const { controller } = createTestProvider();
-    const session = controller.activate({ activatedBy: "admin", reason: "test" });
+    const session = controller.activate({
+      activatedBy: "admin",
+      reason: "test",
+    });
     assert.ok(session.id);
     assert.equal(session.activatedBy, "admin");
     assert.equal(session.isActive, true);
@@ -28,7 +31,9 @@ describe("OverrideSessionProvider", () => {
   it("throws when activating while session already active", () => {
     const { controller } = createTestProvider();
     controller.activate({ activatedBy: "admin", reason: "test" });
-    assert.throws(() => controller.activate({ activatedBy: "admin", reason: "again" }));
+    assert.throws(() =>
+      controller.activate({ activatedBy: "admin", reason: "again" }),
+    );
   });
 
   it("deactivates a session and clears overrides", () => {
@@ -56,7 +61,8 @@ describe("OverrideSessionProvider", () => {
     const { controller } = createTestProvider();
     controller.activate({ activatedBy: "admin", reason: "test" });
     const provider = controller.provider;
-    await provider.write!("feature.x", true);
+    assert.equal(typeof provider.write, "function");
+    await provider.write("feature.x", true);
     const data = await provider.load();
     assert.equal(data.entries["feature.x"], true);
   });
@@ -64,17 +70,20 @@ describe("OverrideSessionProvider", () => {
   it("provider remove clears override", async () => {
     const { controller } = createTestProvider();
     controller.activate({ activatedBy: "admin", reason: "test" });
-    await controller.provider.write!("k", "v");
-    await controller.provider.remove!("k");
+    assert.equal(typeof controller.provider.write, "function");
+    assert.equal(typeof controller.provider.remove, "function");
+    await controller.provider.write("k", "v");
+    await controller.provider.remove("k");
     const data = await controller.provider.load();
-    assert.equal(data.entries["k"], undefined);
+    assert.equal(data.entries.k, undefined);
   });
 
   it("deactivate reports correct overridesCleared count", async () => {
     const { controller } = createTestProvider();
     controller.activate({ activatedBy: "admin", reason: "test" });
-    await controller.provider.write!("a", 1);
-    await controller.provider.write!("b", 2);
+    assert.equal(typeof controller.provider.write, "function");
+    await controller.provider.write("a", 1);
+    await controller.provider.write("b", 2);
     const result = controller.deactivate();
     assert.equal(result.overridesCleared, 2);
   });
@@ -84,7 +93,10 @@ describe("OverrideSessionProvider", () => {
     controller.activate({ activatedBy: "admin", reason: "test" });
     controller.extend();
     controller.deactivate();
-    assert.deepEqual(audits.map((a) => a.action), ["activate", "extend", "deactivate"]);
+    assert.deepEqual(
+      audits.map((a) => a.action),
+      ["activate", "extend", "deactivate"],
+    );
   });
 
   it("dispose cleans up", () => {

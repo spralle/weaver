@@ -62,9 +62,15 @@ export const SEED_SNAPSHOT: ConfigSnapshot = {
   scopes: {
     "country:GB": COUNTRY_GB_DEFAULTS,
     "country:NL": COUNTRY_NL_DEFAULTS,
-    "country:GB/location:GBDVR": { ...COUNTRY_GB_DEFAULTS, ...LOCATION_GBDVR_DEFAULTS },
+    "country:GB/location:GBDVR": {
+      ...COUNTRY_GB_DEFAULTS,
+      ...LOCATION_GBDVR_DEFAULTS,
+    },
     "country:FR/location:FRCQF": LOCATION_FRCQF_DEFAULTS,
-    "country:NL/location:NLEUR": { ...COUNTRY_NL_DEFAULTS, ...LOCATION_NLEUR_DEFAULTS },
+    "country:NL/location:NLEUR": {
+      ...COUNTRY_NL_DEFAULTS,
+      ...LOCATION_NLEUR_DEFAULTS,
+    },
   },
 };
 

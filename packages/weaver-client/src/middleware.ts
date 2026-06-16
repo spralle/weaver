@@ -1,4 +1,4 @@
-import type { WeaverTransport, WriteOptions, WriteResult } from "./transport";
+import type { WeaverTransport, WriteResult } from "./transport";
 import type { ConfigDelta, Unsubscribe } from "./types";
 
 /**

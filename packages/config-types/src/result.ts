@@ -17,11 +17,15 @@ export function err<E>(error: E): Result<never, E> {
 }
 
 /** Type guard — narrows a Result to its success variant. */
-export function isOk<T, E>(result: Result<T, E>): result is { ok: true; value: T } {
+export function isOk<T, E>(
+  result: Result<T, E>,
+): result is { ok: true; value: T } {
   return result.ok;
 }
 
 /** Type guard — narrows a Result to its error variant. */
-export function isErr<T, E>(result: Result<T, E>): result is { ok: false; error: E } {
+export function isErr<T, E>(
+  result: Result<T, E>,
+): result is { ok: false; error: E } {
   return !result.ok;
 }

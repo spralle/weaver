@@ -1,5 +1,4 @@
 import type { ClientSchemaRegistry, ValidationResult } from "./schema-registry";
-import type { SchemaOptions } from "./types";
 
 export type { ValidationResult } from "./schema-registry";
 export type { SchemaOptions } from "./types";

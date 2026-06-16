@@ -1,9 +1,12 @@
-import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { createSecretResolutionService } from "../src/secret-resolution-service.js";
+import { describe, it } from "node:test";
 import type { SecretProvider } from "../src/secret-provider.js";
+import { createSecretResolutionService } from "../src/secret-resolution-service.js";
 
-function mockProvider(name: string, secrets: Record<string, string>): SecretProvider {
+function mockProvider(
+  name: string,
+  secrets: Record<string, string>,
+): SecretProvider {
   return {
     name,
     async resolve(ref) {
@@ -28,13 +31,21 @@ describe("SecretResolutionService", () => {
   it("resolves a secret from a registered provider", async () => {
     const svc = createSecretResolutionService();
     svc.registerProvider(mockProvider("vault", { "db/password": "s3cret" }));
-    const val = await svc.resolve({ _weaver: "secret-ref", provider: "vault", uri: "db/password" });
+    const val = await svc.resolve({
+      _weaver: "secret-ref",
+      provider: "vault",
+      uri: "db/password",
+    });
     assert.equal(val, "s3cret");
   });
 
   it("returns error for unregistered provider", async () => {
     const svc = createSecretResolutionService();
-    const result = await svc.resolveResult({ _weaver: "secret-ref", provider: "nope", uri: "x" });
+    const result = await svc.resolveResult({
+      _weaver: "secret-ref",
+      provider: "nope",
+      uri: "x",
+    });
     assert.equal(result.ok, false);
   });
 
@@ -42,14 +53,25 @@ describe("SecretResolutionService", () => {
     let callCount = 0;
     const provider: SecretProvider = {
       name: "counting",
-      async resolve() { callCount++; return { value: "v" }; },
-      async store() { return { uri: "", version: "" }; },
+      async resolve() {
+        callCount++;
+        return { value: "v" };
+      },
+      async store() {
+        return { uri: "", version: "" };
+      },
       async delete() {},
-      async healthCheck() { return { healthy: true, latencyMs: 0 }; },
+      async healthCheck() {
+        return { healthy: true, latencyMs: 0 };
+      },
     };
     const svc = createSecretResolutionService();
     svc.registerProvider(provider);
-    const ref = { _weaver: "secret-ref" as const, provider: "counting", uri: "k" };
+    const ref = {
+      _weaver: "secret-ref" as const,
+      provider: "counting",
+      uri: "k",
+    };
     await svc.resolve(ref);
     await svc.resolve(ref);
     assert.equal(callCount, 1);
@@ -57,16 +79,22 @@ describe("SecretResolutionService", () => {
 
   it("resolveAll handles mixed success and failure", async () => {
     const svc = createSecretResolutionService();
-    svc.registerProvider(mockProvider("vault", { "a": "val-a" }));
+    svc.registerProvider(mockProvider("vault", { a: "val-a" }));
     const entries = {
       good: { _weaver: "secret-ref" as const, provider: "vault", uri: "a" },
-      bad: { _weaver: "secret-ref" as const, provider: "vault", uri: "missing" },
+      bad: {
+        _weaver: "secret-ref" as const,
+        provider: "vault",
+        uri: "missing",
+      },
       plain: "not-a-secret",
     };
     const result = await svc.resolveAll(entries);
     assert.equal(result.resolved.get("good"), "val-a");
     assert.equal(result.failures.length, 1);
-    assert.equal(result.failures[0]!.key, "bad");
+    const failure = result.failures[0];
+    assert.ok(failure);
+    assert.equal(failure.key, "bad");
   });
 
   it("store delegates to provider", async () => {
@@ -79,11 +107,11 @@ describe("SecretResolutionService", () => {
   });
 
   it("delete removes from provider and invalidates cache", async () => {
-    const secrets: Record<string, string> = { "k": "v" };
+    const secrets: Record<string, string> = { k: "v" };
     const svc = createSecretResolutionService();
     svc.registerProvider(mockProvider("vault", secrets));
     await svc.delete("vault", "k");
-    assert.equal(secrets["k"], undefined);
+    assert.equal(secrets.k, undefined);
   });
 
   it("throws for store/delete on unregistered provider", async () => {

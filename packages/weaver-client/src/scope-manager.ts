@@ -1,5 +1,5 @@
-import { formatScopePath } from "@weaver-conf/config-types";
 import type { ScopeInstance } from "@weaver-conf/config-types";
+import { formatScopePath } from "@weaver-conf/config-types";
 import type { WeaverTransport } from "./transport";
 import type { ConfigDelta, ConfigSnapshot } from "./types";
 

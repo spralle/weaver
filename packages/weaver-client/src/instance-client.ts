@@ -1,15 +1,22 @@
-import type { ZodType } from "zod";
 import { deepGet } from "@weaver-conf/config-engine";
+import type { ZodType } from "zod";
 import type { InstanceClient } from "./namespace";
-import type { ConfigDelta, Unsubscribe } from "./types";
 import type { WriteOptions, WriteResult } from "./transport";
+import type { ConfigDelta, Unsubscribe } from "./types";
 
 /** Dependencies injected into an instance client for state access and writes. */
 export interface InstanceClientDeps {
   getState: () => Record<string, unknown>;
-  set: (key: string, value: unknown, opts?: WriteOptions) => Promise<WriteResult>;
+  set: (
+    key: string,
+    value: unknown,
+    opts?: WriteOptions,
+  ) => Promise<WriteResult>;
   remove: (key: string, opts?: WriteOptions) => Promise<WriteResult>;
-  onChange: (pattern: string, handler: (deltas: ConfigDelta[]) => void) => Unsubscribe;
+  onChange: (
+    pattern: string,
+    handler: (deltas: ConfigDelta[]) => void,
+  ) => Unsubscribe;
   defaultWriteLayer?: string;
 }
 
@@ -60,7 +67,10 @@ export function createInstanceClient(
       return deps.remove(instancePrefix, opts);
     },
 
-    onChange(pattern: string, handler: (deltas: ConfigDelta[]) => void): Unsubscribe {
+    onChange(
+      pattern: string,
+      handler: (deltas: ConfigDelta[]) => void,
+    ): Unsubscribe {
       return deps.onChange(`${instancePrefix}.${pattern}`, handler);
     },
   };

@@ -51,7 +51,7 @@ export function createAuthMiddleware(
     },
 
     extractToken(headers: Record<string, string>): string | undefined {
-      const auth = headers["authorization"] ?? headers["Authorization"];
+      const auth = headers.authorization ?? headers.Authorization;
       if (auth?.startsWith("Bearer ")) {
         return auth.slice(7);
       }

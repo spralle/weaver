@@ -29,7 +29,8 @@ function resolveString(
   const match = ENV_PATTERN.exec(str);
   if (!match) return str;
 
-  const varName = match[1]!;
+  const varName = match[1];
+  if (varName === undefined) return str;
   const value = env[varName];
   if (value === undefined) {
     throw new Error(`Environment variable "${varName}" is not defined`);

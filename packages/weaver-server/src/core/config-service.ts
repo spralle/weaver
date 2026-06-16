@@ -1,6 +1,5 @@
 // WeaverConfigService — server-side config service wrapping storage providers
 
-import type { WeaverLogger } from "@weaver-conf/config-engine";
 import {
   consoleLogger,
   deepGet,
@@ -23,8 +22,8 @@ import type {
 import { createResolutionPipeline } from "./resolution-pipeline";
 import { buildScopePathString, isScopedLayer } from "./scope-utils";
 
-export type { WeaverConfigService, WeaverConfigServiceOptions, WriteContext };
 export type { Unsubscribe } from "./config-service-types";
+export type { WeaverConfigService, WeaverConfigServiceOptions, WriteContext };
 
 const SIZE_WARNING = 1_048_576; // 1MB
 
@@ -221,7 +220,10 @@ export async function createWeaverConfigService(
         typeof value === "object" &&
         !Array.isArray(value)
       ) {
-        return pipeline.resolveEntries(value as Record<string, unknown>, prefix);
+        return pipeline.resolveEntries(
+          value as Record<string, unknown>,
+          prefix,
+        );
       }
       return {};
     },
@@ -265,13 +267,19 @@ export async function createWeaverConfigService(
       if (!provider) {
         return {
           success: false,
-          error: { code: "LAYER_NOT_FOUND", message: `No provider for layer "${layer}"` },
+          error: {
+            code: "LAYER_NOT_FOUND",
+            message: `No provider for layer "${layer}"`,
+          },
         };
       }
       if (!provider.writable) {
         return {
           success: false,
-          error: { code: "READONLY", message: `Provider for layer "${layer}" is read-only` },
+          error: {
+            code: "READONLY",
+            message: `Provider for layer "${layer}" is read-only`,
+          },
         };
       }
 
@@ -290,9 +298,9 @@ export async function createWeaverConfigService(
       updateRevision();
       pipeline.rebuildMountMap();
       if (pipeline.hasSecretResolver) {
-        pipeline.refreshSecrets(getBaseEntries()).catch((err) =>
-          logger.error("[config] secret refresh failed:", err),
-        );
+        pipeline
+          .refreshSecrets(getBaseEntries())
+          .catch((err) => logger.error("[config] secret refresh failed:", err));
       }
 
       const delta: ConfigDelta = {
@@ -321,13 +329,19 @@ export async function createWeaverConfigService(
       if (!provider) {
         return {
           success: false,
-          error: { code: "LAYER_NOT_FOUND", message: `No provider for layer "${layer}"` },
+          error: {
+            code: "LAYER_NOT_FOUND",
+            message: `No provider for layer "${layer}"`,
+          },
         };
       }
       if (!provider.writable) {
         return {
           success: false,
-          error: { code: "READONLY", message: `Provider for layer "${layer}" is read-only` },
+          error: {
+            code: "READONLY",
+            message: `Provider for layer "${layer}" is read-only`,
+          },
         };
       }
 
@@ -340,9 +354,9 @@ export async function createWeaverConfigService(
       updateRevision();
       pipeline.rebuildMountMap();
       if (pipeline.hasSecretResolver) {
-        pipeline.refreshSecrets(getBaseEntries()).catch((err) =>
-          logger.error("[config] secret refresh failed:", err),
-        );
+        pipeline
+          .refreshSecrets(getBaseEntries())
+          .catch((err) => logger.error("[config] secret refresh failed:", err));
       }
 
       const delta: ConfigDelta = {

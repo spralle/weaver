@@ -30,7 +30,8 @@ const defaultMerge: MergeFunction = (
     const result: Record<string, unknown> = {
       ...(base as Record<string, unknown>), // SAFETY: guarded by typeof/null/array checks above
     };
-    for (const [k, v] of Object.entries(override as Record<string, unknown>)) { // SAFETY: guarded by typeof/null/array checks above
+    for (const [k, v] of Object.entries(override as Record<string, unknown>)) {
+      // SAFETY: guarded by typeof/null/array checks above
       result[k] = defaultMerge(result[k], v);
     }
     return result;

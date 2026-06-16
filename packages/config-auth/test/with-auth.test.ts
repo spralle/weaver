@@ -1,8 +1,8 @@
-import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { withAuth } from "../src/auth.js";
-import type { AuthConfig } from "../src/auth.js";
+import { describe, it } from "node:test";
 import { defineWeaver } from "@weaver-conf/config-types";
+import type { AuthConfig } from "../src/auth.js";
+import { withAuth } from "../src/auth.js";
 
 const weaverConfig = defineWeaver([
   { name: "core", type: { id: "static" } },
@@ -34,22 +34,46 @@ describe("withAuth", () => {
   describe("canRead", () => {
     it("allows public visibility for any role", () => {
       const ctx = { userId: "u1", roles: ["user"] as const };
-      assert.equal(auth.canRead(ctx, "k", { type: "string", "x-weaver": { visibility: "public" } }), true);
+      assert.equal(
+        auth.canRead(ctx, "k", {
+          type: "string",
+          "x-weaver": { visibility: "public" },
+        }),
+        true,
+      );
     });
 
     it("denies admin visibility without admin role", () => {
       const ctx = { userId: "u1", roles: ["user"] as const };
-      assert.equal(auth.canRead(ctx, "k", { type: "string", "x-weaver": { visibility: "admin" } }), false);
+      assert.equal(
+        auth.canRead(ctx, "k", {
+          type: "string",
+          "x-weaver": { visibility: "admin" },
+        }),
+        false,
+      );
     });
 
     it("allows admin visibility with admin role", () => {
       const ctx = { userId: "u1", roles: ["admin"] as const };
-      assert.equal(auth.canRead(ctx, "k", { type: "string", "x-weaver": { visibility: "admin" } }), true);
+      assert.equal(
+        auth.canRead(ctx, "k", {
+          type: "string",
+          "x-weaver": { visibility: "admin" },
+        }),
+        true,
+      );
     });
 
     it("denies internal visibility always", () => {
       const ctx = { userId: "u1", roles: ["admin"] as const };
-      assert.equal(auth.canRead(ctx, "k", { type: "string", "x-weaver": { visibility: "internal" } }), false);
+      assert.equal(
+        auth.canRead(ctx, "k", {
+          type: "string",
+          "x-weaver": { visibility: "internal" },
+        }),
+        false,
+      );
     });
   });
 
@@ -66,19 +90,32 @@ describe("withAuth", () => {
 
     it("denies write when writeRestriction not met", () => {
       const ctx = { userId: "u1", roles: ["developer"] as const };
-      const schema = { type: "string" as const, "x-weaver": { writeRestriction: ["admin"] } };
+      const schema = {
+        type: "string" as const,
+        "x-weaver": { writeRestriction: ["admin"] },
+      };
       assert.equal(auth.canWrite(ctx, "app", "k", schema), false);
     });
 
     it("blocks session write for blocked sessionMode property", () => {
       const ctx = { userId: "u1", roles: ["user"] as const };
-      const schema = { type: "string" as const, "x-weaver": { sessionMode: "blocked" as const } };
+      const schema = {
+        type: "string" as const,
+        "x-weaver": { sessionMode: "blocked" as const },
+      };
       assert.equal(auth.canWrite(ctx, "session", "k", schema), false);
     });
 
     it("allows restricted sessionMode with elevated mode", () => {
-      const ctx = { userId: "u1", roles: ["user"] as const, sessionMode: "god-mode" as const };
-      const schema = { type: "string" as const, "x-weaver": { sessionMode: "restricted" as const } };
+      const ctx = {
+        userId: "u1",
+        roles: ["user"] as const,
+        sessionMode: "god-mode" as const,
+      };
+      const schema = {
+        type: "string" as const,
+        "x-weaver": { sessionMode: "restricted" as const },
+      };
       assert.equal(auth.canWrite(ctx, "session", "k", schema), true);
     });
   });
@@ -88,12 +125,24 @@ describe("withAuth", () => {
       const ctx = { userId: "u1", roles: ["user"] as const };
       const entries = { pub: "yes", secret: "no" };
       const schemaMap = new Map([
-        ["pub", { type: "string" as const, "x-weaver": { visibility: "public" as const } }],
-        ["secret", { type: "string" as const, "x-weaver": { visibility: "internal" as const } }],
+        [
+          "pub",
+          {
+            type: "string" as const,
+            "x-weaver": { visibility: "public" as const },
+          },
+        ],
+        [
+          "secret",
+          {
+            type: "string" as const,
+            "x-weaver": { visibility: "internal" as const },
+          },
+        ],
       ]);
       const result = auth.filterVisibleKeys(ctx, entries, schemaMap);
-      assert.equal(result["pub"], "yes");
-      assert.equal(result["secret"], undefined);
+      assert.equal(result.pub, "yes");
+      assert.equal(result.secret, undefined);
     });
   });
 });

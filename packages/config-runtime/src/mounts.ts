@@ -79,7 +79,12 @@ export function resolveMountedNamespace(
   for (const [k, v] of Object.entries(entries)) {
     const fullKey = prefix ? `${prefix}.${k}` : k;
     if (isConfigMount(v)) {
-      const resolved = resolveMountedValue(fullKey, mountMap, getValue, maxDepth);
+      const resolved = resolveMountedValue(
+        fullKey,
+        mountMap,
+        getValue,
+        maxDepth,
+      );
       result[k] = resolved.ok ? resolved.resolution.value : undefined;
     } else {
       result[k] = v;

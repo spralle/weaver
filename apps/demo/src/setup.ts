@@ -1,12 +1,12 @@
-import {
-  createWeaverClient,
-  createLocalTransport,
-} from "@weaver-conf/weaver-client";
-import type { WeaverClient } from "@weaver-conf/weaver-client";
-import { createOverrideSessionProvider } from "@weaver-conf/config-sessions";
 import type { OverrideSessionController } from "@weaver-conf/config-sessions";
-import { defineWeaver, Layers } from "@weaver-conf/config-types";
+import { createOverrideSessionProvider } from "@weaver-conf/config-sessions";
 import type { WeaverConfig } from "@weaver-conf/config-types";
+import { defineWeaver, Layers } from "@weaver-conf/config-types";
+import type { WeaverClient } from "@weaver-conf/weaver-client";
+import {
+  createLocalTransport,
+  createWeaverClient,
+} from "@weaver-conf/weaver-client";
 import { SEED_SNAPSHOT } from "./seed-data";
 
 /** All registered provider layer names, in rank order (lowest to highest). */

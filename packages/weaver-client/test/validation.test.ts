@@ -1,11 +1,13 @@
-import { describe, it, mock } from "node:test";
 import assert from "node:assert/strict";
-import { validateOnRead, validateOnWrite } from "../src/validation.js";
-import type { ClientSchemaRegistry, ValidationResult } from "../src/schema-registry.js";
+import { describe, it } from "node:test";
 import { createWeaverClient } from "../src/client.js";
+import type { ClientSchemaRegistry } from "../src/schema-registry.js";
 import type { WeaverTransport } from "../src/transport.js";
+import { validateOnRead, validateOnWrite } from "../src/validation.js";
 
-function createMockRegistry(overrides: Partial<ClientSchemaRegistry> = {}): ClientSchemaRegistry {
+function createMockRegistry(
+  overrides: Partial<ClientSchemaRegistry> = {},
+): ClientSchemaRegistry {
   return {
     load: () => {},
     getSchema: () => undefined,
@@ -20,34 +22,50 @@ function createMockRegistry(overrides: Partial<ClientSchemaRegistry> = {}): Clie
 describe("validateOnRead", () => {
   it("passes valid value through", () => {
     const registry = createMockRegistry({ validate: () => ({ valid: true }) });
-    const result = validateOnRead("key", 42, registry, { warnOnMismatch: true });
+    const result = validateOnRead("key", 42, registry, {
+      warnOnMismatch: true,
+    });
     assert.equal(result, 42);
   });
 
   it("returns value but warns on invalid", () => {
     const registry = createMockRegistry({
-      validate: () => ({ valid: false, errors: [{ path: "", message: "bad type" }] }),
+      validate: () => ({
+        valid: false,
+        errors: [{ path: "", message: "bad type" }],
+      }),
     });
     const warns: string[] = [];
     const logger = { warn: (msg: string) => warns.push(msg) };
-    const result = validateOnRead("key", "bad", registry, { warnOnMismatch: true, logger });
+    const result = validateOnRead("key", "bad", registry, {
+      warnOnMismatch: true,
+      logger,
+    });
     assert.equal(result, "bad");
     assert.equal(warns.length, 1);
     assert.ok(warns[0].includes("bad type"));
   });
 
   it("returns value as-is when no registry", () => {
-    const result = validateOnRead("key", "hello", undefined, { warnOnMismatch: true });
+    const result = validateOnRead("key", "hello", undefined, {
+      warnOnMismatch: true,
+    });
     assert.equal(result, "hello");
   });
 
   it("suppresses warnings when warnOnMismatch is false", () => {
     const registry = createMockRegistry({
-      validate: () => ({ valid: false, errors: [{ path: "", message: "bad" }] }),
+      validate: () => ({
+        valid: false,
+        errors: [{ path: "", message: "bad" }],
+      }),
     });
     const warns: string[] = [];
     const logger = { warn: (msg: string) => warns.push(msg) };
-    const result = validateOnRead("key", "val", registry, { warnOnMismatch: false, logger });
+    const result = validateOnRead("key", "val", registry, {
+      warnOnMismatch: false,
+      logger,
+    });
     assert.equal(result, "val");
     assert.equal(warns.length, 0);
   });
@@ -62,18 +80,31 @@ describe("validateOnWrite", () => {
 
   it("returns invalid for bad value", () => {
     const errors = [{ path: "", message: "Expected number, got string" }];
-    const registry = createMockRegistry({ validate: () => ({ valid: false, errors }) });
+    const registry = createMockRegistry({
+      validate: () => ({ valid: false, errors }),
+    });
     const result = validateOnWrite("key", "bad", registry);
     assert.equal(result.valid, false);
     assert.deepEqual(result.errors, errors);
   });
 });
 
-function createMockTransport(overrides: Partial<WeaverTransport> = {}): WeaverTransport {
+function createMockTransport(
+  overrides: Partial<WeaverTransport> = {},
+): WeaverTransport {
   return {
-    resolveAll: async () => ({ entries: {}, scopes: {}, revision: "r1", timestamp: new Date().toISOString() }),
+    resolveAll: async () => ({
+      entries: {},
+      scopes: {},
+      revision: "r1",
+      timestamp: new Date().toISOString(),
+    }),
     resolve: async () => undefined,
-    inspect: async () => ({ key: "", effectiveValue: undefined, layerValues: {} }),
+    inspect: async () => ({
+      key: "",
+      effectiveValue: undefined,
+      layerValues: {},
+    }),
     set: async () => ({ success: true, revision: "r2" }),
     setMany: async () => ({ success: true }),
     remove: async () => ({ success: true }),
@@ -89,8 +120,16 @@ describe("client validation integration", () => {
   it("set() rejects invalid value without calling transport", async () => {
     let transportCalled = false;
     const transport = createMockTransport({
-      set: async () => { transportCalled = true; return { success: true }; },
-      resolveAll: async () => ({ entries: {}, scopes: {}, revision: "r1", timestamp: new Date().toISOString() }),
+      set: async () => {
+        transportCalled = true;
+        return { success: true };
+      },
+      resolveAll: async () => ({
+        entries: {},
+        scopes: {},
+        revision: "r1",
+        timestamp: new Date().toISOString(),
+      }),
     });
     // Add fetchSchemas to transport
     (transport as Record<string, unknown>).fetchSchemas = async () => ({
@@ -107,7 +146,10 @@ describe("client validation integration", () => {
   it("set() allows valid value through to transport", async () => {
     let transportCalled = false;
     const transport = createMockTransport({
-      set: async () => { transportCalled = true; return { success: true, revision: "r2" }; },
+      set: async () => {
+        transportCalled = true;
+        return { success: true, revision: "r2" };
+      },
     });
     (transport as Record<string, unknown>).fetchSchemas = async () => ({
       "app.port": { type: "number" as const },
@@ -135,7 +177,10 @@ describe("client validation integration", () => {
   it("isSensitive() returns correct boolean", async () => {
     const transport = createMockTransport();
     (transport as Record<string, unknown>).fetchSchemas = async () => ({
-      "db.password": { type: "string" as const, "x-weaver": { sensitive: true } },
+      "db.password": {
+        type: "string" as const,
+        "x-weaver": { sensitive: true },
+      },
       "app.name": { type: "string" as const },
     });
 

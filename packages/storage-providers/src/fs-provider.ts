@@ -1,11 +1,11 @@
 import { type FSWatcher, watch } from "node:fs";
 import { mkdir, readFile, rename, stat, writeFile } from "node:fs/promises";
-import { dirname, resolve, sep } from "node:path";
+import { dirname, resolve } from "node:path";
 import {
+  deepEqual,
   deepMerge,
   deepRemove,
   deepSet,
-  deepEqual,
   isNodeError,
   safeParseConfigEntries,
 } from "@weaver-conf/config-engine";
@@ -35,21 +35,12 @@ export interface FileSystemProviderOptions {
  * Rejects null bytes, control characters, and `..` segments.
  */
 export function validateStorageKey(key: string): void {
-  if (/[\x00-\x1f]/.test(key)) {
+  if ([...key].some((char) => char.charCodeAt(0) <= 0x1f)) {
     throw new Error("Invalid key: contains control characters");
   }
   if (key.includes("..")) {
     throw new Error(`Path traversal rejected: ${key}`);
   }
-}
-
-function resolveAndGuard(root: string, key: string): string {
-  validateStorageKey(key);
-  const resolved = resolve(root, key);
-  if (resolved !== root && !resolved.startsWith(root + sep)) {
-    throw new Error(`Path traversal rejected: ${key}`);
-  }
-  return resolved;
 }
 
 /** @see {@link createFileSystemStorageProvider} — prefer the factory function for consistency */
@@ -96,7 +87,10 @@ export class FileSystemStorageProvider implements ConfigurationStorageProvider {
 
   async write(key: string, value: unknown): Promise<WriteResult> {
     if (!this.writable) {
-      return { success: false, error: { code: "READONLY", message: "Provider is read-only" } };
+      return {
+        success: false,
+        error: { code: "READONLY", message: "Provider is read-only" },
+      };
     }
     validateStorageKey(key);
 
@@ -112,7 +106,10 @@ export class FileSystemStorageProvider implements ConfigurationStorageProvider {
 
   async remove(key: string): Promise<WriteResult> {
     if (!this.writable) {
-      return { success: false, error: { code: "READONLY", message: "Provider is read-only" } };
+      return {
+        success: false,
+        error: { code: "READONLY", message: "Provider is read-only" },
+      };
     }
     validateStorageKey(key);
 
@@ -266,5 +263,3 @@ function diffEntries(
 
   return changes;
 }
-
-

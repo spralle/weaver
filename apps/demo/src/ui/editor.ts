@@ -1,7 +1,7 @@
 import { evaluateChangePolicy } from "@weaver-conf/config-policy";
 import type { OverrideSessionController } from "@weaver-conf/config-sessions";
-import type { WeaverClient } from "@weaver-conf/weaver-client";
 import type { WeaverConfig } from "@weaver-conf/config-types";
+import type { WeaverClient } from "@weaver-conf/weaver-client";
 import { COUNTRY_CODES_WITH_PROVIDERS, findLocation } from "../locations";
 import { getFullSchemaForKey, getSchemaForKey } from "../schemas";
 import {
@@ -15,6 +15,14 @@ import {
 } from "../state";
 
 const BASE_WRITABLE_LAYERS = ["tenant", "user", "session"] as const;
+
+function requireQuery(container: HTMLElement, selector: string): Element {
+  const element = container.querySelector(selector);
+  if (element === null) {
+    throw new Error(`Missing required element: ${selector}`);
+  }
+  return element;
+}
 
 function getWritableLayers(): string[] {
   const locationCode = getSelectedLocation();
@@ -36,7 +44,7 @@ export function renderEditor(
   weaverConfig: WeaverConfig,
 ): void {
   container.innerHTML = `<h2>Value Editor</h2><div class="editor-body"></div>`;
-  const body = container.querySelector(".editor-body")!;
+  const body = requireQuery(container, ".editor-body");
 
   function render(): void {
     const key = getSelectedKey();
@@ -216,14 +224,16 @@ function bindEvents(
 ): void {
   for (const btn of body.querySelectorAll<HTMLButtonElement>(".btn-set")) {
     btn.addEventListener("click", () => {
-      const layer = btn.dataset["layer"]!;
+      const layer = btn.dataset.layer;
+      if (layer === undefined) return;
       void handleSet(body, key, layer, client, session);
     });
   }
 
   for (const btn of body.querySelectorAll<HTMLButtonElement>(".btn-remove")) {
     btn.addEventListener("click", () => {
-      const layer = btn.dataset["layer"]!;
+      const layer = btn.dataset.layer;
+      if (layer === undefined) return;
       clearFeedback(body);
       void client.remove(key, { layer });
       addLogEntry(`Removed ${key} from [${layer}]`);

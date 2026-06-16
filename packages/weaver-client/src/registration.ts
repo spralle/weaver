@@ -54,22 +54,31 @@ function inferZodType(schema: unknown): {
   const innerDef = getZodDef(current);
   const typeName = innerDef?.type as string | undefined; // SAFETY: Zod def.type is always string if present
 
-  if (typeName === "string") return { jsonType: { type: "string" }, isOptional };
-  if (typeName === "number" || typeName === "float") return { jsonType: { type: "number" }, isOptional };
+  if (typeName === "string")
+    return { jsonType: { type: "string" }, isOptional };
+  if (typeName === "number" || typeName === "float")
+    return { jsonType: { type: "number" }, isOptional };
   if (typeName === "int") return { jsonType: { type: "integer" }, isOptional };
-  if (typeName === "boolean") return { jsonType: { type: "boolean" }, isOptional };
+  if (typeName === "boolean")
+    return { jsonType: { type: "boolean" }, isOptional };
   if (typeName === "array") return { jsonType: { type: "array" }, isOptional };
   if (typeName === "object") {
     const shape = innerDef?.shape;
     if (shape && typeof shape === "object") {
-      return { jsonType: zodShapeToJsonSchema(shape as ZodRawShape), isOptional }; // SAFETY: confirmed shape is object
+      return {
+        jsonType: zodShapeToJsonSchema(shape as ZodRawShape),
+        isOptional,
+      }; // SAFETY: confirmed shape is object
     }
     return { jsonType: { type: "object" }, isOptional };
   }
   if (typeName === "enum") {
     const entries = innerDef?.entries;
     if (entries && typeof entries === "object") {
-      return { jsonType: { type: "string", enum: Object.keys(entries as object) }, isOptional }; // SAFETY: entries confirmed as object
+      return {
+        jsonType: { type: "string", enum: Object.keys(entries as object) },
+        isOptional,
+      }; // SAFETY: entries confirmed as object
     }
     return { jsonType: { type: "string" }, isOptional };
   }

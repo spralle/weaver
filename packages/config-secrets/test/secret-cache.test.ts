@@ -1,6 +1,6 @@
-import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { SecretCache, createSecretCache } from "../src/secret-cache.js";
+import { describe, it } from "node:test";
+import { createSecretCache, SecretCache } from "../src/secret-cache.js";
 
 describe("SecretCache", () => {
   it("stores and retrieves a value", () => {
@@ -22,7 +22,9 @@ describe("SecretCache", () => {
     cache.set("key1", "val");
     // Force expiry by waiting (TTL=1ms)
     const start = Date.now();
-    while (Date.now() - start < 5) { /* spin */ }
+    while (Date.now() - start < 5) {
+      /* spin */
+    }
     assert.equal(cache.get("key1"), undefined);
   });
 
@@ -56,7 +58,9 @@ describe("SecretCache", () => {
     const cache = new SecretCache({ defaultTtlMs: 100_000 });
     cache.set("short", "val", undefined, 1);
     const start = Date.now();
-    while (Date.now() - start < 5) { /* spin */ }
+    while (Date.now() - start < 5) {
+      /* spin */
+    }
     assert.equal(cache.get("short"), undefined);
   });
 });

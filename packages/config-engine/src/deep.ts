@@ -1,6 +1,14 @@
 // Deep object path utilities — bracket-aware via parsePath
 import { parsePath } from "./path";
 
+function getLastSegment(segments: readonly string[]): string {
+  const segment = segments.at(-1);
+  if (segment === undefined) {
+    throw new Error("Path must not be empty");
+  }
+  return segment;
+}
+
 /**
  * Get a value at a dot/bracket path in a nested object.
  * Returns undefined if any segment along the path doesn't exist.
@@ -33,8 +41,7 @@ export function deepSet(
 ): void {
   const segments = parsePath(path);
   let current: Record<string, unknown> = obj;
-  for (let i = 0; i < segments.length - 1; i++) {
-    const segment = segments[i]!; // SAFETY: index within bounds
+  for (const segment of segments.slice(0, -1)) {
     const next = current[segment];
     if (
       next === null ||
@@ -46,7 +53,7 @@ export function deepSet(
     }
     current = current[segment] as Record<string, unknown>; // SAFETY: just assigned {} or confirmed object
   }
-  const lastKey = segments[segments.length - 1]!; // SAFETY: segments is non-empty
+  const lastKey = getLastSegment(segments);
   current[lastKey] = value;
 }
 
@@ -61,21 +68,20 @@ export function deepRemove(
 ): boolean {
   const segments = parsePath(path);
   if (segments.length === 1) {
-    const firstSeg = segments[0]!; // SAFETY: length checked
+    const firstSeg = getLastSegment(segments);
     const existed = firstSeg in obj;
     delete obj[firstSeg];
     return existed;
   }
   let current: Record<string, unknown> = obj;
-  for (let i = 0; i < segments.length - 1; i++) {
-    const segment = segments[i]!; // SAFETY: index within bounds
+  for (const segment of segments.slice(0, -1)) {
     const next = current[segment];
     if (next === null || next === undefined || typeof next !== "object") {
       return false;
     }
     current = next as Record<string, unknown>; // SAFETY: guarded by typeof check above
   }
-  const lastSeg = segments[segments.length - 1]!; // SAFETY: segments.length > 1
+  const lastSeg = getLastSegment(segments);
   const existed = lastSeg in current;
   delete current[lastSeg];
   return existed;

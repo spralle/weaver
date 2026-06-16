@@ -1,5 +1,5 @@
-import { formatScopePath } from "@weaver-conf/config-types";
 import type { ScopeInstance } from "@weaver-conf/config-types";
+import { formatScopePath } from "@weaver-conf/config-types";
 
 export function parseScopeLayer(
   layer: string,

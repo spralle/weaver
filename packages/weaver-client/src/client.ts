@@ -3,29 +3,32 @@ import type { ScopeInstance } from "@weaver-conf/config-types";
 import type { ZodRawShape } from "zod";
 
 import { bootClient } from "./client-boot";
+import { applyNamespace } from "./client-helpers";
 import { setupDeltaSubscription } from "./client-subscriptions";
 import type { WeaverClient, WeaverClientOptions } from "./client-types";
 import { createInstanceClient } from "./instance-client";
+import type {
+  NamespaceDefinition,
+  TypedNamespaceClient,
+  UntypedNamespaceClient,
+} from "./namespace";
+import { registerNamespaces } from "./registration";
+import type { ValidationResult } from "./schema-registry";
+import {
+  type ClientSchemaRegistry,
+  createClientSchemaRegistry,
+} from "./schema-registry";
 import { createScopeLoader } from "./scope-manager";
 import { createStalenessMonitor } from "./staleness";
 import type { WriteOptions, WriteResult } from "./transport";
-import type { ConfigDelta, Unsubscribe } from "./types";
+import { createTypedNamespaceClient } from "./typed-namespace-client";
+import type { ConfigDelta, SchemaOptions, Unsubscribe } from "./types";
+import { createUntypedNamespaceClient } from "./untyped-namespace-client";
 import {
-  createClientSchemaRegistry,
-  type ClientSchemaRegistry,
-} from "./schema-registry";
-import {
+  type ValidationOptions,
   validateOnRead,
   validateOnWrite,
-  type ValidationOptions,
 } from "./validation";
-import { applyNamespace } from "./client-helpers";
-import type { NamespaceDefinition } from "./namespace";
-import { createTypedNamespaceClient } from "./typed-namespace-client";
-import { createUntypedNamespaceClient } from "./untyped-namespace-client";
-import { registerNamespaces } from "./registration";
-import type { SchemaOptions } from "./types";
-import type { ValidationResult } from "./schema-registry";
 
 export type { WeaverClient, WeaverClientOptions } from "./client-types";
 
@@ -123,6 +126,34 @@ export async function createWeaverClient(
     if (!staleSince) staleSince = new Date();
   }
 
+  function namespaceClient<TShape extends ZodRawShape>(
+    definition: NamespaceDefinition<string, TShape>,
+  ): TypedNamespaceClient<TShape>;
+  function namespaceClient(prefix: string): UntypedNamespaceClient;
+  function namespaceClient(
+    defOrPrefix: NamespaceDefinition | string,
+  ): TypedNamespaceClient<ZodRawShape> | UntypedNamespaceClient {
+    if (typeof defOrPrefix === "string") {
+      const resolvedPrefix = applyNamespace(namespace, defOrPrefix);
+      return createUntypedNamespaceClient(resolvedPrefix, {
+        getState: (sp) =>
+          sp ? (scopeLoader.getScopeState(sp) ?? {}) : baseState,
+        set: (key, value, opts) => transport.set(key, value, opts),
+        setMany: (entries, opts) => transport.setMany(entries, opts),
+        remove: (key, opts) => transport.remove(key, opts),
+        onChange: (pattern, handler) => client.onChange(pattern, handler),
+      });
+    }
+
+    return createTypedNamespaceClient(defOrPrefix, {
+      getState: (sp) =>
+        sp ? (scopeLoader.getScopeState(sp) ?? {}) : baseState,
+      set: (key, value, opts) => transport.set(key, value, opts),
+      remove: (key, opts) => transport.remove(key, opts),
+      onChange: (pattern, handler) => client.onChange(pattern, handler),
+    });
+  }
+
   const client: WeaverClient = {
     get<T>(key: string, scopePath?: ScopeInstance[]): T | undefined {
       const resolvedKey = applyNamespace(namespace, key);
@@ -131,15 +162,15 @@ export async function createWeaverClient(
         const scopeState = scopeLoader.getScopeState(scopePath);
         if (!scopeState) return undefined;
         // SAFETY: deepGet returns the stored value which was set with correct type
-        value = deepGet(scopeState, resolvedKey) as
-          | T
-          | undefined;
+        value = deepGet(scopeState, resolvedKey) as T | undefined;
       } else {
         // SAFETY: deepGet returns the stored value which was set with correct type
         value = deepGet(baseState, resolvedKey) as T | undefined;
       }
       // SAFETY: validateOnRead preserves the type or returns undefined
-      return validateOnRead(resolvedKey, value, registry, validationOptions) as T | undefined;
+      return validateOnRead(resolvedKey, value, registry, validationOptions) as
+        | T
+        | undefined;
     },
 
     getWithDefault<T>(
@@ -147,7 +178,9 @@ export async function createWeaverClient(
       defaultValue: T,
       scopePath?: ScopeInstance[],
     ): T {
-      const value = scopePath ? client.get<T>(key, scopePath) : client.get<T>(key);
+      const value = scopePath
+        ? client.get<T>(key, scopePath)
+        : client.get<T>(key);
       return value !== undefined ? value : defaultValue;
     },
 
@@ -174,7 +207,9 @@ export async function createWeaverClient(
       return {};
     },
 
-    async inspect<T>(key: string): Promise<import("./types.js").ConfigurationInspection<T>> {
+    async inspect<T>(
+      key: string,
+    ): Promise<import("./types.js").ConfigurationInspection<T>> {
       const resolvedKey = applyNamespace(namespace, key);
       const raw = await transport.inspect(resolvedKey);
       // SAFETY: transport.inspect returns the inspection structure matching ConfigurationInspection<T>
@@ -189,8 +224,17 @@ export async function createWeaverClient(
       const resolvedKey = applyNamespace(namespace, key);
       const result = validateOnWrite(resolvedKey, value, registry);
       if (!result.valid) {
-        const message = result.errors?.map((e) => e.message).join(", ") ?? "Validation failed";
-        return { success: false, error: { code: "VALIDATION_ERROR", message, details: { errors: result.errors } } };
+        const message =
+          result.errors?.map((e) => e.message).join(", ") ??
+          "Validation failed";
+        return {
+          success: false,
+          error: {
+            code: "VALIDATION_ERROR",
+            message,
+            details: { errors: result.errors },
+          },
+        };
       }
       return transport.set(resolvedKey, value, opts);
     },
@@ -235,7 +279,11 @@ export async function createWeaverClient(
       if (!changeListeners.has(pattern)) {
         changeListeners.set(pattern, new Set());
       }
-      changeListeners.get(pattern)!.add(handler);
+      const listeners = changeListeners.get(pattern);
+      if (listeners === undefined) {
+        throw new Error(`Change listener set missing for pattern: ${pattern}`);
+      }
+      listeners.add(handler);
       return () => {
         changeListeners.get(pattern)?.delete(handler);
       };
@@ -308,26 +356,7 @@ export async function createWeaverClient(
       });
     },
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    namespace(defOrPrefix: NamespaceDefinition | string): any {
-      if (typeof defOrPrefix === "string") {
-        const resolvedPrefix = applyNamespace(namespace, defOrPrefix);
-        return createUntypedNamespaceClient(resolvedPrefix, {
-          getState: (sp) => sp ? (scopeLoader.getScopeState(sp) ?? {}) : baseState,
-          set: (key, value, opts) => transport.set(key, value, opts),
-          setMany: (entries, opts) => transport.setMany(entries, opts),
-          remove: (key, opts) => transport.remove(key, opts),
-          onChange: (pattern, handler) => client.onChange(pattern, handler),
-        });
-      }
-      // SAFETY: defOrPrefix is NamespaceDefinition which extends NamespaceDefinition<string, ZodRawShape>
-      return createTypedNamespaceClient(defOrPrefix as NamespaceDefinition<string, ZodRawShape>, {
-        getState: (sp) => sp ? (scopeLoader.getScopeState(sp) ?? {}) : baseState,
-        set: (key, value, opts) => transport.set(key, value, opts),
-        remove: (key, opts) => transport.remove(key, opts),
-        onChange: (pattern, handler) => client.onChange(pattern, handler),
-      });
-    },
+    namespace: namespaceClient,
 
     async registerNamespaces(definitions: ReadonlyArray<NamespaceDefinition>) {
       return registerNamespaces(definitions, transport);

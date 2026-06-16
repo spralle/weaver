@@ -1,19 +1,25 @@
 // Resolution pipeline — resolves ConfigMount and SecretReference markers in config values
 
 import { deepGet } from "@weaver-conf/config-engine";
+import type {
+  SecretBackend,
+  SecretResolver,
+} from "@weaver-conf/config-runtime";
 import {
   buildMountMap,
   createSecretResolver,
   resolveMountedValue,
 } from "@weaver-conf/config-runtime";
-import type { SecretBackend, SecretResolver } from "@weaver-conf/config-runtime";
 import { isConfigMount, isSecretReference } from "@weaver-conf/config-types";
 
 export interface ResolutionPipeline {
   /** Resolve a single keyed value through mounts then secrets. */
   resolveValue(key: string, rawValue: unknown): unknown;
   /** Resolve all markers in an entries object recursively. */
-  resolveEntries(entries: Record<string, unknown>, prefix?: string): Record<string, unknown>;
+  resolveEntries(
+    entries: Record<string, unknown>,
+    prefix?: string,
+  ): Record<string, unknown>;
   /** Rebuild internal mount map after state changes. */
   rebuildMountMap(): void;
   /** Refresh secret cache (fire-and-forget safe). */
@@ -53,10 +59,8 @@ export async function createResolutionPipeline(
     let resolvedKey = key;
 
     if (isConfigMount(rawValue)) {
-      const result = resolveMountedValue(
-        key,
-        mountMap,
-        (k) => deepGet(getMergedState(), k),
+      const result = resolveMountedValue(key, mountMap, (k) =>
+        deepGet(getMergedState(), k),
       );
       if (!result.ok) return undefined;
       rawValue = result.resolution.value;
@@ -79,10 +83,8 @@ export async function createResolutionPipeline(
     for (const [k, v] of Object.entries(entries)) {
       const fullKey = prefix ? `${prefix}.${k}` : k;
       if (isConfigMount(v)) {
-        const mountResult = resolveMountedValue(
-          fullKey,
-          mountMap,
-          (mk) => deepGet(getMergedState(), mk),
+        const mountResult = resolveMountedValue(fullKey, mountMap, (mk) =>
+          deepGet(getMergedState(), mk),
         );
         if (!mountResult.ok) {
           result[k] = undefined;

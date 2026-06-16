@@ -1,16 +1,37 @@
-import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { createInstanceClient, type InstanceClientDeps } from "../src/instance-client.js";
+import { describe, it } from "node:test";
+import {
+  createInstanceClient,
+  type InstanceClientDeps,
+} from "../src/instance-client.js";
 import type { WriteResult } from "../src/transport.js";
 
-function makeDeps(state: Record<string, unknown>, overrides?: Partial<InstanceClientDeps>): InstanceClientDeps & { calls: { set: unknown[][]; remove: unknown[][]; onChange: unknown[][] } } {
+function makeDeps(
+  state: Record<string, unknown>,
+  overrides?: Partial<InstanceClientDeps>,
+): InstanceClientDeps & {
+  calls: { set: unknown[][]; remove: unknown[][]; onChange: unknown[][] };
+} {
   const successResult: WriteResult = { success: true, revision: "r1" };
-  const calls = { set: [] as unknown[][], remove: [] as unknown[][], onChange: [] as unknown[][] };
+  const calls = {
+    set: [] as unknown[][],
+    remove: [] as unknown[][],
+    onChange: [] as unknown[][],
+  };
   return {
     getState: () => state,
-    set: async (...args) => { calls.set.push(args); return successResult; },
-    remove: async (...args) => { calls.remove.push(args); return successResult; },
-    onChange: (...args) => { calls.onChange.push(args); return () => {}; },
+    set: async (...args) => {
+      calls.set.push(args);
+      return successResult;
+    },
+    remove: async (...args) => {
+      calls.remove.push(args);
+      return successResult;
+    },
+    onChange: (...args) => {
+      calls.onChange.push(args);
+      return () => {};
+    },
     calls,
     ...overrides,
   };
@@ -18,7 +39,9 @@ function makeDeps(state: Record<string, unknown>, overrides?: Partial<InstanceCl
 
 describe("createInstanceClient", () => {
   it("get() reads from instance path when override exists", () => {
-    const state = { editor: { instances: { vim: { theme: "dark" } }, theme: "light" } };
+    const state = {
+      editor: { instances: { vim: { theme: "dark" } }, theme: "light" },
+    };
     const client = createInstanceClient("editor", "vim", makeDeps(state));
     assert.equal(client.get("theme"), "dark");
   });
@@ -51,12 +74,25 @@ describe("createInstanceClient", () => {
   });
 
   it("set() uses defaultWriteLayer", async () => {
-    const calls = { set: [] as unknown[][], remove: [] as unknown[][], onChange: [] as unknown[][] };
+    const calls = {
+      set: [] as unknown[][],
+      remove: [] as unknown[][],
+      onChange: [] as unknown[][],
+    };
     const deps: InstanceClientDeps & { calls: typeof calls } = {
       getState: () => ({}),
-      set: async (...args) => { calls.set.push(args); return { success: true }; },
-      remove: async (...args) => { calls.remove.push(args); return { success: true }; },
-      onChange: (...args) => { calls.onChange.push(args); return () => {}; },
+      set: async (...args) => {
+        calls.set.push(args);
+        return { success: true };
+      },
+      remove: async (...args) => {
+        calls.remove.push(args);
+        return { success: true };
+      },
+      onChange: (...args) => {
+        calls.onChange.push(args);
+        return () => {};
+      },
       defaultWriteLayer: "user",
       calls,
     };

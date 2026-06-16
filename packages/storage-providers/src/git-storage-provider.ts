@@ -66,7 +66,10 @@ class GitStorageProvider implements ConfigurationStorageProvider {
 
   async write(key: string, value: unknown): Promise<WriteResult> {
     if (!this.writable) {
-      return { success: false, error: { code: "READONLY", message: "Provider is read-only" } };
+      return {
+        success: false,
+        error: { code: "READONLY", message: "Provider is read-only" },
+      };
     }
     const result = await this.fsp.write(key, value);
     if (result.success) {
@@ -78,7 +81,10 @@ class GitStorageProvider implements ConfigurationStorageProvider {
 
   async remove(key: string): Promise<WriteResult> {
     if (!this.writable) {
-      return { success: false, error: { code: "READONLY", message: "Provider is read-only" } };
+      return {
+        success: false,
+        error: { code: "READONLY", message: "Provider is read-only" },
+      };
     }
     const result = await this.fsp.remove(key);
     if (result.success) {

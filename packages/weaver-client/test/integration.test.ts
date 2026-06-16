@@ -1,5 +1,5 @@
-import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 import { z } from "zod";
 import { createWeaverClient } from "../src/client.js";
 import { defineNamespace } from "../src/namespace.js";
@@ -13,15 +13,20 @@ function createMockTransport(
 
   return {
     async resolveAll() {
-      return { entries: { ...state }, scopes: {}, revision: "rev-1", timestamp: new Date().toISOString() };
+      return {
+        entries: { ...state },
+        scopes: {},
+        revision: "rev-1",
+        timestamp: new Date().toISOString(),
+      };
     },
-    async get(key) {
+    async get(_key) {
       return undefined;
     },
-    async getNamespace(prefix) {
+    async getNamespace(_prefix) {
       return {};
     },
-    async inspect(key) {
+    async inspect(_key) {
       return {};
     },
     subscribe(handler): Unsubscribe {
@@ -31,13 +36,13 @@ function createMockTransport(
         if (idx >= 0) subscribers.splice(idx, 1);
       };
     },
-    async set(key, value) {
+    async set(_key, _value) {
       return { success: true, revision: "rev-2" };
     },
-    async setMany(entries) {
+    async setMany(_entries) {
       return { success: true, revision: "rev-2" };
     },
-    async remove(key) {
+    async remove(_key) {
       return { success: true, revision: "rev-2" };
     },
     async listScopes() {
@@ -57,7 +62,9 @@ function createMockTransport(
 
 describe("Integration: WeaverClient full flow", () => {
   it("creates client, uses typed namespace, get/set works", async () => {
-    const transport = createMockTransport({ editor: { fontSize: 14, theme: "dark" } });
+    const transport = createMockTransport({
+      editor: { fontSize: 14, theme: "dark" },
+    });
     const client = await createWeaverClient({ transport });
 
     const editorNs = defineNamespace("editor", {
@@ -89,7 +96,9 @@ describe("Integration: WeaverClient full flow", () => {
   it("registerNamespaces delegates to transport", async () => {
     const registered: string[] = [];
     const transport = createMockTransport();
-    (transport as unknown as Record<string, unknown>).registerSchema = async (ns: string) => {
+    (transport as unknown as Record<string, unknown>).registerSchema = async (
+      ns: string,
+    ) => {
       registered.push(ns);
     };
 
@@ -105,26 +114,31 @@ describe("Integration: WeaverClient full flow", () => {
 
   it("pendingRestart fires when restart-required key changes", async () => {
     const transport = createMockTransport({ app: { port: 3000 } });
-    (transport as unknown as Record<string, unknown>).fetchSchemas = async () => ({
-      "app.port": {
-        type: "number",
-        "x-weaver": { reloadBehavior: "restart-required" },
-      },
-    });
+    (transport as unknown as Record<string, unknown>).fetchSchemas =
+      async () => ({
+        "app.port": {
+          type: "number",
+          "x-weaver": { reloadBehavior: "restart-required" },
+        },
+      });
 
     const client = await createWeaverClient({ transport, schemas: true });
     assert.equal(client.pendingRestart, false);
 
     let restartFired = false;
-    client.onRestartRequired(() => { restartFired = true; });
+    client.onRestartRequired(() => {
+      restartFired = true;
+    });
 
-    transport.fireDeltas([{
-      key: "app.port",
-      action: "set",
-      value: 4000,
-      layer: "user",
-      timestamp: new Date().toISOString(),
-    }]);
+    transport.fireDeltas([
+      {
+        key: "app.port",
+        action: "set",
+        value: 4000,
+        layer: "user",
+        timestamp: new Date().toISOString(),
+      },
+    ]);
 
     assert.equal(client.pendingRestart, true);
     assert.equal(restartFired, true);

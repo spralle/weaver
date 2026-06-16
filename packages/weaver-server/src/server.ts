@@ -1,7 +1,10 @@
 // Weaver server entry point — orchestrates all subsystems
 
 import { withAuth } from "@weaver-conf/config-auth";
-import type { ConfigurationStorageProvider, WeaverConfig } from "@weaver-conf/config-types";
+import type {
+  ConfigurationStorageProvider,
+  WeaverConfig,
+} from "@weaver-conf/config-types";
 import type { AuthContext, AuthMiddleware } from "./auth/auth-middleware";
 import { createAuthMiddleware } from "./auth/auth-middleware";
 import { createJwtValidator } from "./auth/jwt-validator";
@@ -13,7 +16,7 @@ import { parseServerEnv } from "./server-env";
 import { createShutdownManager } from "./shutdown";
 import type { AuthGate } from "./transport/auth-gate";
 import { createAuthGate } from "./transport/auth-gate";
-import type { RestAdapter } from "./transport/rest-adapter";
+import type { RestAdapter, RestRequest } from "./transport/rest-adapter";
 import { createRestAdapter } from "./transport/rest-adapter";
 import type { SSEAdapter } from "./transport/sse-adapter";
 import { createSSEAdapter } from "./transport/sse-adapter";
@@ -131,32 +134,28 @@ async function handleRest(
     headers[key] = value;
   });
 
-  // Authenticate if auth middleware is configured
-  let authContext: AuthContext | undefined;
-  if (authMiddleware) {
-    const token = authMiddleware.extractToken(headers);
-    if (token) {
-      try {
-        authContext = await authMiddleware.authenticate(token);
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "Unauthorized";
-        return new Response(
-          JSON.stringify({ error: { code: "UNAUTHORIZED", message } }),
-          { status: 401, headers: { "content-type": "application/json" } },
-        );
-      }
-    }
+  const authResult = await authenticateRestRequest(
+    method,
+    headers,
+    authMiddleware,
+  );
+  if (authResult instanceof Response) {
+    return authResult;
   }
 
-  const restRequest: import("./transport/rest-adapter").RestRequest = {
+  const restRequest: RestRequest = {
     params: {},
     query,
     body,
     headers,
-    ...(authContext ? { authContext } : {}),
+    ...(authResult ? { authContext: authResult } : {}),
   };
 
-  const restResponse = await restAdapter.handleRequest(method, url.pathname, restRequest);
+  const restResponse = await restAdapter.handleRequest(
+    method,
+    url.pathname,
+    restRequest,
+  );
 
   return new Response(JSON.stringify(restResponse.body), {
     status: restResponse.status,
@@ -169,9 +168,9 @@ async function handleSSE(url: URL, sseAdapter: SSEAdapter): Promise<Response> {
   const prefix = url.searchParams.get("prefix");
   const scope = url.searchParams.get("scope");
   const since = url.searchParams.get("since");
-  if (prefix) clientOptions["prefix"] = prefix;
-  if (scope) clientOptions["scope"] = scope;
-  if (since) clientOptions["since"] = since;
+  if (prefix) clientOptions.prefix = prefix;
+  if (scope) clientOptions.scope = scope;
+  if (since) clientOptions.since = since;
 
   const client = await sseAdapter.createClient(clientOptions);
 
@@ -213,6 +212,40 @@ async function handleSSE(url: URL, sseAdapter: SSEAdapter): Promise<Response> {
   });
 }
 
+function isWriteMethod(method: string): boolean {
+  return (
+    method === "POST" ||
+    method === "PUT" ||
+    method === "PATCH" ||
+    method === "DELETE"
+  );
+}
+
+function unauthorized(message: string): Response {
+  return new Response(
+    JSON.stringify({ error: { code: "UNAUTHORIZED", message } }),
+    { status: 401, headers: { "content-type": "application/json" } },
+  );
+}
+
+async function authenticateRestRequest(
+  method: string,
+  headers: Record<string, string>,
+  authMiddleware?: AuthMiddleware,
+): Promise<AuthContext | Response | undefined> {
+  if (!authMiddleware) return undefined;
+
+  const token = authMiddleware.extractToken(headers);
+  if (!token && !isWriteMethod(method)) return undefined;
+
+  try {
+    return await authMiddleware.authenticate(token);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unauthorized";
+    return unauthorized(message);
+  }
+}
+
 export async function startWeaverServer(
   options?: WeaverServerOptions,
 ): Promise<WeaverServer> {
@@ -245,7 +278,11 @@ export async function startWeaverServer(
     });
 
     // Minimal WeaverConfig — only getRank is used by auth checks
-    const layerRanks = new Map([["platform", 0], ["tenant", 1], ["session", 2]]);
+    const layerRanks = new Map([
+      ["platform", 0],
+      ["tenant", 1],
+      ["session", 2],
+    ]);
     const weaverConfig = {
       layers: [],
       layerNames: [...layerRanks.keys()],
@@ -270,7 +307,8 @@ export async function startWeaverServer(
     authGate = createAuthGate({
       authFunctions,
       mapContext: (authCtx) => ({
-        userId: authCtx.identity.userId ?? authCtx.identity.serviceId ?? "anonymous",
+        userId:
+          authCtx.identity.userId ?? authCtx.identity.serviceId ?? "anonymous",
         roles: authCtx.identity.roles ?? [],
         sessionMode: undefined,
       }),
@@ -296,7 +334,12 @@ export async function startWeaverServer(
   const sseAdapter = createSSEAdapter({ configService });
   sseAdapter.startCheckpointTimer();
 
-  const handleRequest = createRequestHandler(health, restAdapter, sseAdapter, authMiddleware);
+  const handleRequest = createRequestHandler(
+    health,
+    restAdapter,
+    sseAdapter,
+    authMiddleware,
+  );
 
   const server = Bun.serve({
     port: config.port,

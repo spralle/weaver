@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { WeaverConfigService } from "../core/config-service";
+import type { ScopeManager } from "../core/scope-manager";
 import { createRestAdapter } from "./rest-adapter";
 
 function mockConfigService(): WeaverConfigService {
@@ -79,15 +80,23 @@ describe("REST body validation", () => {
   });
 
   it("POST /v1/admin/scopes/:scopeId rejects body without value", async () => {
-    const sm = {
+    const sm: ScopeManager = {
       listScopes: () => [],
       listScopeValues: () => [],
-      provision: async () => ({ success: true }),
-      deprovision: async () => ({ success: true }),
+      provision: async (request) => ({
+        success: true,
+        scopeId: request.scopeId,
+        value: request.value,
+      }),
+      deprovision: async (request) => ({
+        success: true,
+        scopeId: request.scopeId,
+        value: request.value,
+      }),
     };
     const adapter = createRestAdapter({
       configService: mockConfigService(),
-      scopeManager: sm as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+      scopeManager: sm,
     });
     const res = await adapter.handleRequest("POST", "/v1/admin/scopes/region", {
       params: {},
@@ -99,15 +108,23 @@ describe("REST body validation", () => {
   });
 
   it("POST /v1/admin/scopes/:scopeId accepts valid body", async () => {
-    const sm = {
+    const sm: ScopeManager = {
       listScopes: () => [],
       listScopeValues: () => [],
-      provision: async () => ({ success: true }),
-      deprovision: async () => ({ success: true }),
+      provision: async (request) => ({
+        success: true,
+        scopeId: request.scopeId,
+        value: request.value,
+      }),
+      deprovision: async (request) => ({
+        success: true,
+        scopeId: request.scopeId,
+        value: request.value,
+      }),
     };
     const adapter = createRestAdapter({
       configService: mockConfigService(),
-      scopeManager: sm as any, // eslint-disable-line @typescript-eslint/no-explicit-any
+      scopeManager: sm,
     });
     const res = await adapter.handleRequest("POST", "/v1/admin/scopes/region", {
       params: {},

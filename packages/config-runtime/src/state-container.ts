@@ -8,10 +8,10 @@ import {
 } from "@weaver-conf/config-engine";
 import { createSubscriptionManager } from "./subscriptions";
 import {
-  type StateDelta,
-  StateDeltaSchema,
   type LayerEntry,
   type StateContainer,
+  type StateDelta,
+  StateDeltaSchema,
   type StateSnapshot,
   StateSnapshotSchema,
   type Unsubscribe,
@@ -188,5 +188,3 @@ function diffTopLevelKeys(
   }
   return changed;
 }
-
-

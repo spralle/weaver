@@ -8,13 +8,13 @@ import { parseScopeQuery } from "../core/scope-utils";
 import type { WeaverErrorCode } from "../types/index";
 import { createWeaverError, httpStatusForError } from "../types/index";
 import type { AuthGate } from "./auth-gate";
+import type { RestRequest, RestResponse, RestRoute } from "./rest-adapter";
 import { envelope, errorEnvelope, v1Headers } from "./rest-helpers";
 import {
   configBatchBodySchema,
   configWriteBodySchema,
   scopeProvisionBodySchema,
 } from "./rest-schemas";
-import type { RestRequest, RestResponse, RestRoute } from "./rest-adapter";
 
 export interface RouteFactoryDeps {
   configService: WeaverConfigService;
@@ -77,9 +77,10 @@ function writeErrorResponse(
 ): RestResponse {
   const errorObj = result.error;
   const msg = errorObj?.message ?? fallback;
-  const code: WeaverErrorCode = errorObj?.code === "REVISION_CONFLICT"
-    ? "REVISION_CONFLICT"
-    : "VALIDATION_ERROR";
+  const code: WeaverErrorCode =
+    errorObj?.code === "REVISION_CONFLICT"
+      ? "REVISION_CONFLICT"
+      : "VALIDATION_ERROR";
   const status = code === "REVISION_CONFLICT" ? 409 : httpStatusForError(code);
   const rev = configService.revision;
   return {
@@ -228,7 +229,11 @@ export function buildRoutes(deps: RouteFactoryDeps): RestRoute[] {
         if (environment) writeCtx.environment = environment;
         const result = await configService.setMany(layer, entries, writeCtx);
         if (!result.success)
-          return writeErrorResponse(configService, result, "Batch write failed");
+          return writeErrorResponse(
+            configService,
+            result,
+            "Batch write failed",
+          );
         return v1Response(configService, 200, {
           ...result,
           written: Object.keys(entries).length,

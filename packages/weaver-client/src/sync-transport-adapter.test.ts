@@ -45,7 +45,8 @@ describe("createWeaverSyncTransport", () => {
       };
       const result = await syncTransport.pull({});
       assert.equal(result.changes.length, 1);
-      const change = result.changes[0]!;
+      const change = result.changes[0];
+      assert.ok(change);
       assert.equal(change.key, "app");
     });
 
@@ -56,7 +57,8 @@ describe("createWeaverSyncTransport", () => {
       delete (snapshot.entries as Record<string, unknown>).app;
       const result = await syncTransport.pull({});
       assert.equal(result.changes.length, 1);
-      const change = result.changes[0]!;
+      const change = result.changes[0];
+      assert.ok(change);
       assert.equal(change.key, "app");
       assert.equal(change.operation, "remove");
     });
@@ -130,7 +132,8 @@ describe("createWeaverSyncTransport", () => {
           },
         ],
       });
-      const r = result.results[0]!;
+      const r = result.results[0];
+      assert.ok(r);
       assert.equal(r.accepted, true);
       assert.equal(r.mutationId, "m-3");
       assert.ok(r.revision);

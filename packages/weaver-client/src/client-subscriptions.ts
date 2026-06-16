@@ -1,10 +1,9 @@
-import { deepSet, deepRemove } from "@weaver-conf/config-engine";
-
+import { deepRemove, deepSet } from "@weaver-conf/config-engine";
+import { matchGlob } from "./client-helpers";
 import type { ClientSchemaRegistry } from "./schema-registry";
 import type { StalenessMonitor } from "./staleness";
 import type { WeaverTransport } from "./transport";
 import type { ConfigDelta, Unsubscribe } from "./types";
-import { matchGlob } from "./client-helpers";
 
 export interface SubscriptionDeps {
   baseState: Record<string, unknown>;

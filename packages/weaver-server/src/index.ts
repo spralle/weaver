@@ -129,6 +129,7 @@ export type {
   RestRequest,
   RestResponse,
   RestRoute,
+  ScompServiceDeps,
   SSEAdapter,
   SSEAdapterOptions,
   SSEChangeEvent,
@@ -139,15 +140,14 @@ export type {
   SSEMessage,
   SSESnapshotEvent,
   WeaverConfigContract,
-  ScompServiceDeps,
 } from "./transport/index";
 // transport
 export {
   configBatchBodySchema,
   configWriteBodySchema,
   createRestAdapter,
-  createWeaverScompService,
   createSSEAdapter,
+  createWeaverScompService,
   formatSSEMessage,
   matchGlob,
   scopeProvisionBodySchema,

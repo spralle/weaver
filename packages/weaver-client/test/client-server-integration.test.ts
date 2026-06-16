@@ -1,9 +1,9 @@
-import { describe, it, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
-import { createWeaverClient } from "../src/client.js";
-import { createLocalTransport } from "../src/local-transport.js";
-import type { LocalTransport } from "../src/local-transport.js";
+import { afterEach, beforeEach, describe, it } from "node:test";
 import type { WeaverClient } from "../src/client.js";
+import { createWeaverClient } from "../src/client.js";
+import type { LocalTransport } from "../src/local-transport.js";
+import { createLocalTransport } from "../src/local-transport.js";
 import type { ConfigDelta } from "../src/types.js";
 
 describe("client↔server integration (local transport round-trip)", () => {
@@ -13,7 +13,10 @@ describe("client↔server integration (local transport round-trip)", () => {
   beforeEach(async () => {
     transport = createLocalTransport({
       snapshot: {
-        entries: { app: { name: "initial" }, database: { host: "localhost", port: 5432 } },
+        entries: {
+          app: { name: "initial" },
+          database: { host: "localhost", port: 5432 },
+        },
         scopes: {},
         revision: "rev-0",
         timestamp: new Date().toISOString(),
@@ -95,7 +98,12 @@ describe("client↔server integration (local transport round-trip)", () => {
     // Re-assign so afterEach doesn't double-close
     client = await createWeaverClient({
       transport: createLocalTransport({
-        snapshot: { entries: {}, scopes: {}, revision: "r", timestamp: new Date().toISOString() },
+        snapshot: {
+          entries: {},
+          scopes: {},
+          revision: "r",
+          timestamp: new Date().toISOString(),
+        },
       }),
     });
   });

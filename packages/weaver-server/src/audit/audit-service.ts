@@ -18,7 +18,7 @@ export function createAuditService(options: AuditServiceOptions): AuditService {
   const logger = options.logger ?? consoleLogger;
 
   function maskEntry(entry: SinkDomainAuditEntry): SinkDomainAuditEntry {
-    if (!sensitiveKeys || !sensitiveKeys.has(entry.key)) {
+    if (!sensitiveKeys?.has(entry.key)) {
       return entry;
     }
     return {

@@ -128,19 +128,27 @@ export function createJwtValidator(options: JwtValidatorOptions): JwtValidator {
       if (parts.length !== 3) {
         throw createWeaverError("UNAUTHORIZED", "Malformed JWT");
       }
+      const [headerPart, payloadPart, signaturePart] = parts;
+      if (
+        headerPart === undefined ||
+        payloadPart === undefined ||
+        signaturePart === undefined
+      ) {
+        throw createWeaverError("UNAUTHORIZED", "Malformed JWT");
+      }
 
       let header: Record<string, unknown>;
       let payload: Record<string, unknown>;
       let signature: Uint8Array;
       try {
-        header = decodeJsonPart(parts[0]!);
-        payload = decodeJsonPart(parts[1]!);
-        signature = base64UrlDecode(parts[2]!);
+        header = decodeJsonPart(headerPart);
+        payload = decodeJsonPart(payloadPart);
+        signature = base64UrlDecode(signaturePart);
       } catch {
         throw createWeaverError("UNAUTHORIZED", "Malformed JWT");
       }
 
-      const signingInput = `${parts[0]}.${parts[1]}`;
+      const signingInput = `${headerPart}.${payloadPart}`;
 
       // Verify algorithm matches expectation
       const alg = header.alg as string; // SAFETY: JWT header.alg is always a string per RFC 7515

@@ -1,9 +1,9 @@
-import { describe, it, before, after } from "node:test";
 import assert from "node:assert/strict";
-import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
-import { mkdir, writeFile, rm } from "node:fs/promises";
+import { mkdir, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { after, before, describe, it } from "node:test";
 import { createFileSystemStorageProvider } from "../src/fs-provider.js";
 
 let testDir: string;
@@ -13,7 +13,11 @@ before(async () => {
   testDir = join(tmpdir(), `weaver-fs-${randomUUID()}`);
   await mkdir(testDir, { recursive: true });
   filePath = join(testDir, "config.json");
-  await writeFile(filePath, JSON.stringify({ "app.name": "test", "app.port": 3000 }), "utf-8");
+  await writeFile(
+    filePath,
+    JSON.stringify({ "app.name": "test", "app.port": 3000 }),
+    "utf-8",
+  );
 });
 
 after(async () => {
@@ -40,10 +44,11 @@ describe("FileSystemStorageProvider", () => {
       filePath,
       writable: true,
     });
-    const result = await provider.write!("app.new", "hello");
+    assert.equal(typeof provider.write, "function");
+    const result = await provider.write("app.new", "hello");
     assert.equal(result.success, true);
     const data = await provider.load();
-    assert.equal((data.entries["app"] as Record<string, unknown>)?.["new"], "hello");
+    assert.equal((data.entries.app as Record<string, unknown>)?.new, "hello");
   });
 
   it("removes a key", async () => {
@@ -53,11 +58,16 @@ describe("FileSystemStorageProvider", () => {
       filePath,
       writable: true,
     });
-    await provider.write!("temp.val", "x");
-    const result = await provider.remove!("temp.val");
+    assert.equal(typeof provider.write, "function");
+    assert.equal(typeof provider.remove, "function");
+    await provider.write("temp.val", "x");
+    const result = await provider.remove("temp.val");
     assert.equal(result.success, true);
     const data = await provider.load();
-    assert.equal((data.entries["temp"] as Record<string, unknown>)?.["val"], undefined);
+    assert.equal(
+      (data.entries.temp as Record<string, unknown>)?.val,
+      undefined,
+    );
   });
 
   it("reports writable status from options", () => {

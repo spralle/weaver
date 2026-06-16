@@ -7,12 +7,13 @@ export type {
 } from "./contract-derivation";
 // deep.ts — Deep object path utilities
 export { deepGet, deepRemove, deepSet } from "./deep";
+export { deepEqual } from "./deep-equal";
+export { matchGlob } from "./glob-match";
 // json-schema-generator.ts — JSON Schema generation
 export type {
   JsonSchemaDocument,
   JsonSchemaProperty,
 } from "./json-schema-generator";
-
 // layers.ts — Layer resolution engine
 export type { ResolvedConfiguration } from "./layers";
 // merge.ts — Deep merge utility
@@ -20,6 +21,7 @@ export { deepMerge } from "./merge";
 // namespace.ts — Namespace utilities
 // path.ts — Bracket-aware path parsing
 export { buildPath } from "./path";
+export { clearRegexCache, getCachedRegex, isSafePattern } from "./regex-cache";
 // schema-diff.ts — Schema comparison utilities
 export type { BreakingChange } from "./schema-diff";
 export {
@@ -39,9 +41,7 @@ export type {
   SchemaCompositionError,
   UnregisterSchemaResult,
 } from "./schema-registry";
-export {
-  createSchemaRegistry,
-} from "./schema-registry";
+export { createSchemaRegistry } from "./schema-registry";
 // scope.ts — Scope chain builder
 export type { BuildScopeChainResult, ScopeChainEntry } from "./scope";
 // utils — shared utilities (formerly @weaver-conf/storage-provider-core)
@@ -51,6 +51,3 @@ export type { LogFields, WeaverLogger } from "./utils/logger";
 export { consoleLogger } from "./utils/logger";
 export { safeParseConfigEntries } from "./utils/validation";
 export { readonlyGuard } from "./utils/write-utils";
-export { getCachedRegex, isSafePattern, clearRegexCache } from "./regex-cache";
-export { deepEqual } from "./deep-equal";
-export { matchGlob } from "./glob-match";

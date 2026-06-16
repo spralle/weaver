@@ -65,7 +65,10 @@ class LocalStorageProvider implements ConfigurationStorageProvider {
       this.storage.setItem(this.storageKey, JSON.stringify(current));
       return { success: true };
     } catch (err: unknown) {
-      return { success: false, error: { code: "WRITE_ERROR", message: extractErrorMessage(err) } };
+      return {
+        success: false,
+        error: { code: "WRITE_ERROR", message: extractErrorMessage(err) },
+      };
     }
   }
 
@@ -76,7 +79,10 @@ class LocalStorageProvider implements ConfigurationStorageProvider {
       this.storage.setItem(this.storageKey, JSON.stringify(current));
       return { success: true };
     } catch (err: unknown) {
-      return { success: false, error: { code: "WRITE_ERROR", message: extractErrorMessage(err) } };
+      return {
+        success: false,
+        error: { code: "WRITE_ERROR", message: extractErrorMessage(err) },
+      };
     }
   }
 

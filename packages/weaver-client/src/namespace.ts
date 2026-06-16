@@ -1,8 +1,8 @@
-import { z } from "zod";
-import type { ZodObject, ZodRawShape, ZodType } from "zod";
 import type { ScopeInstance } from "@weaver-conf/config-types";
-import type { ConfigDelta, Unsubscribe } from "./types";
+import type { ZodObject, ZodRawShape, ZodType } from "zod";
+import { z } from "zod";
 import type { WriteOptions, WriteResult } from "./transport";
+import type { ConfigDelta, Unsubscribe } from "./types";
 
 // ─── Namespace Declaration ────────────────────────────────
 
@@ -30,9 +30,7 @@ export function defineNamespace<
 // ─── TypedNamespaceClient ─────────────────────────────────
 
 export interface TypedNamespaceClient<TShape extends ZodRawShape> {
-  get<K extends keyof TShape & string>(
-    key: K,
-  ): z.infer<TShape[K]> | undefined;
+  get<K extends keyof TShape & string>(key: K): z.infer<TShape[K]> | undefined;
 
   getOrDefault<K extends keyof TShape & string>(
     key: K,
@@ -60,9 +58,7 @@ export interface TypedNamespaceClient<TShape extends ZodRawShape> {
 // ─── TypedInstanceClient ──────────────────────────────────
 
 export interface TypedInstanceClient<TShape extends ZodRawShape> {
-  get<K extends keyof TShape & string>(
-    key: K,
-  ): z.infer<TShape[K]> | undefined;
+  get<K extends keyof TShape & string>(key: K): z.infer<TShape[K]> | undefined;
 
   getOrDefault<K extends keyof TShape & string>(
     key: K,

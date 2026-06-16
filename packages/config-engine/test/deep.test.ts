@@ -1,6 +1,6 @@
-import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { deepGet, deepSet, deepRemove } from "../src/deep.js";
+import { describe, it } from "node:test";
+import { deepGet, deepRemove, deepSet } from "../src/deep.js";
 
 describe("deepGet", () => {
   it("retrieves nested values", () => {
@@ -21,7 +21,10 @@ describe("deepGet", () => {
   });
 
   it("returns undefined when traversing through null", () => {
-    assert.equal(deepGet({ a: null } as Record<string, unknown>, "a.b"), undefined);
+    assert.equal(
+      deepGet({ a: null } as Record<string, unknown>, "a.b"),
+      undefined,
+    );
   });
 });
 

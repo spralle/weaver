@@ -10,12 +10,20 @@ const TYPE_COLORS: Record<string, string> = {
   scope: "var(--color-scope)",
 };
 
+function requireQuery(container: HTMLElement, selector: string): Element {
+  const element = container.querySelector(selector);
+  if (element === null) {
+    throw new Error(`Missing required element: ${selector}`);
+  }
+  return element;
+}
+
 export function renderLayerStack(
   container: HTMLElement,
   weaverConfig: WeaverConfig,
 ): void {
   container.innerHTML = `<h2>Layer Stack</h2><div class="layer-list"></div>`;
-  const list = container.querySelector(".layer-list")!;
+  const list = requireQuery(container, ".layer-list");
 
   function render(): void {
     list.innerHTML = "";

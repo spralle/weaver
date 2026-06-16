@@ -1,5 +1,5 @@
-import { isSecretReference } from "@weaver-conf/config-types";
 import type { SecretReference } from "@weaver-conf/config-types";
+import { isSecretReference } from "@weaver-conf/config-types";
 
 /** Minimal interface for resolving secrets — decoupled from the full SecretResolutionService. */
 export interface SecretBackend {
@@ -57,7 +57,9 @@ export async function createSecretResolver(
   let refs = scanSecrets(initialEntries);
   let timer: number | null = null;
 
-  async function resolveAll(secrets: Map<string, SecretReference>): Promise<void> {
+  async function resolveAll(
+    secrets: Map<string, SecretReference>,
+  ): Promise<void> {
     for (const [key, ref] of secrets) {
       try {
         const value = await backend.resolve(ref);

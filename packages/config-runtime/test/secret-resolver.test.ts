@@ -1,7 +1,7 @@
-import { describe, expect, test, beforeEach, afterEach, mock } from "bun:test";
-import { createSecretResolver } from "../src/secret-resolver";
-import type { SecretBackend } from "../src/secret-resolver";
+import { describe, expect, test } from "bun:test";
 import type { SecretReference } from "@weaver-conf/config-types";
+import type { SecretBackend } from "../src/secret-resolver";
+import { createSecretResolver } from "../src/secret-resolver";
 
 function makeRef(provider: string, uri: string): SecretReference {
   return { _weaver: "secret-ref", provider, uri };

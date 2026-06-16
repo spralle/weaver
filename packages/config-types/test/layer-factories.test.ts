@@ -1,5 +1,5 @@
-import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 import { Layers, replaceOnly } from "../src/layer-factories.js";
 import { defineWeaver } from "../src/weaver.js";
 
@@ -55,7 +55,10 @@ describe("defineWeaver", () => {
   });
 
   it("getLayer returns the definition by name", () => {
-    const config = defineWeaver([Layers.Static("a"), Layers.Dynamic("b")] as const);
+    const config = defineWeaver([
+      Layers.Static("a"),
+      Layers.Dynamic("b"),
+    ] as const);
     const layer = config.getLayer("b");
     assert.equal(layer?.type.id, "dynamic");
   });

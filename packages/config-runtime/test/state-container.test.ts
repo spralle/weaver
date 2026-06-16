@@ -98,7 +98,11 @@ describe("createStateContainer", () => {
   test("getAll() returns cloned object — mutations don't leak", () => {
     const container = createStateContainer({
       layers: [
-        { id: "base", priority: 0, entries: { database: { host: "localhost" } } },
+        {
+          id: "base",
+          priority: 0,
+          entries: { database: { host: "localhost" } },
+        },
       ],
     });
     const result = container.getAll();
@@ -133,7 +137,9 @@ describe("createStateContainer", () => {
   test("applyDelta rejects invalid delta", () => {
     const container = createStateContainer();
     expect(() => {
-      container.applyDelta({ revision: "not-a-number" } as unknown as Parameters<typeof container.applyDelta>[0]);
+      container.applyDelta({
+        revision: "not-a-number",
+      } as unknown as Parameters<typeof container.applyDelta>[0]);
     }).toThrow();
   });
 });

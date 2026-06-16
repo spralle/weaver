@@ -1,5 +1,5 @@
-import type { WeaverClient } from "@weaver-conf/weaver-client";
 import type { WeaverConfig } from "@weaver-conf/config-types";
+import type { WeaverClient } from "@weaver-conf/weaver-client";
 import { buildScopePath, findLocation } from "../locations";
 import { getSchemaForKey } from "../schemas";
 import { ALL_KEYS } from "../seed-data";
@@ -11,14 +11,6 @@ import {
   setSelectedKey,
 } from "../state";
 
-const LAYER_TYPE_COLORS: Record<string, string> = {
-  static: "var(--color-static)",
-  dynamic: "var(--color-dynamic)",
-  personal: "var(--color-personal)",
-  ephemeral: "var(--color-ephemeral)",
-  scope: "var(--color-scope)",
-};
-
 const POLICY_CLASSES: Record<string, string> = {
   "direct-allowed": "policy-direct",
   "staging-gate": "policy-staging",
@@ -26,13 +18,21 @@ const POLICY_CLASSES: Record<string, string> = {
   "emergency-override": "policy-emergency",
 };
 
+function requireQuery(container: HTMLElement, selector: string): Element {
+  const element = container.querySelector(selector);
+  if (element === null) {
+    throw new Error(`Missing required element: ${selector}`);
+  }
+  return element;
+}
+
 export function renderConfigBrowser(
   container: HTMLElement,
   client: WeaverClient,
   weaverConfig: WeaverConfig,
 ): void {
   container.innerHTML = `<h2>Config Browser</h2><div class="key-list"></div>`;
-  const list = container.querySelector(".key-list")!;
+  const list = requireQuery(container, ".key-list");
 
   function render(): void {
     const selected = getSelectedKey();

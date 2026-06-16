@@ -109,7 +109,9 @@ describe("WeaverClient", () => {
     const scopes = await client.listScopes();
     assert.ok(Array.isArray(scopes));
     assert.equal(scopes.length, 1);
-    assert.equal(scopes[0]!.id, "scope");
+    const scope = scopes[0];
+    assert.ok(scope);
+    assert.equal(scope.id, "scope");
   });
 
   it("listScopeValues() delegates to transport", async () => {
