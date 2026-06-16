@@ -70,7 +70,6 @@ export function createHttpTransport(
   const requestTimeout = options.timeout ?? 30000;
 
   const deltaHandlers = new Set<(delta: ConfigDelta) => void>();
-  const snapshotHandlers = new Set<(snapshot: ConfigSnapshot) => void>();
 
   const sse: SSEState = {
     abortController: null,
@@ -186,19 +185,6 @@ export function createHttpTransport(
         onError?.({
           type: "parse",
           message: "Failed to parse SSE change event",
-          retryable: false,
-        });
-      }
-    } else if (eventType === "snapshot" && data) {
-      try {
-        const snapshot = JSON.parse(data) as ConfigSnapshot; // SAFETY: SSE snapshot event matches ConfigSnapshot schema
-        for (const handler of snapshotHandlers) {
-          handler(snapshot);
-        }
-      } catch {
-        onError?.({
-          type: "parse",
-          message: "Failed to parse SSE snapshot event",
           retryable: false,
         });
       }
@@ -346,14 +332,14 @@ export function createHttpTransport(
 
     subscribe(handler: (delta: ConfigDelta) => void): Unsubscribe {
       deltaHandlers.add(handler);
-      if (deltaHandlers.size === 1 && snapshotHandlers.size === 0) {
+      if (deltaHandlers.size === 1) {
         sse.disposed = false;
         sse.reconnectAttempts = 0;
         connectSSE();
       }
       return () => {
         deltaHandlers.delete(handler);
-        if (deltaHandlers.size === 0 && snapshotHandlers.size === 0) {
+        if (deltaHandlers.size === 0) {
           disconnectSSE();
         }
       };
@@ -464,7 +450,6 @@ export function createHttpTransport(
     async close(): Promise<void> {
       disconnectSSE();
       deltaHandlers.clear();
-      snapshotHandlers.clear();
     },
   };
 }

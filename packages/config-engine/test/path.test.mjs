@@ -5,9 +5,11 @@ import {
   buildPath,
   isCompoundSegment,
   pathDepth,
+} from "../src/path.ts";
+import {
   validateKeyFormat,
   extractNamespace,
-} from "../dist/index.js";
+} from "../src/namespace.ts";
 
 // parsePath tests
 

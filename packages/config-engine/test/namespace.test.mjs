@@ -5,7 +5,7 @@ import {
   deriveNamespace,
   validateKeyFormat,
   extractNamespace,
-} from "../dist/index.js";
+} from "../src/namespace.ts";
 
 test("qualifyKey combines namespace + relative key", () => {
   const result = qualifyKey("ghost.vesselView", "map.defaultZoom");

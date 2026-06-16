@@ -10,13 +10,6 @@ export type {
 } from "./rest-adapter";
 export { createRestAdapter } from "./rest-adapter";
 export {
-  corsHeaders,
-  envelope,
-  errorEnvelope,
-  matchPath,
-  v1Headers,
-} from "./rest-helpers";
-export {
   configBatchBodySchema,
   configWriteBodySchema,
   scopeProvisionBodySchema,
