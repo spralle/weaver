@@ -1,6 +1,7 @@
 // Types and interfaces for WeaverConfigService
 
 import type { WeaverLogger } from "@weaver-conf/config-engine";
+import type { SecretBackend } from "@weaver-conf/config-runtime";
 import type {
   ConfigurationInspection,
   ConfigurationStorageProvider,
@@ -21,6 +22,8 @@ export interface WeaverConfigServiceOptions {
   environment: string;
   logger?: WeaverLogger;
   flushDebounceMs?: number;
+  /** Optional secret backend for resolving SecretReference markers. */
+  secretBackend?: SecretBackend;
 }
 
 export type Unsubscribe = () => void;

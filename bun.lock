@@ -205,6 +205,7 @@
         "@scompr/core": "^0.1.0",
         "@weaver-conf/config-auth": "workspace:*",
         "@weaver-conf/config-engine": "workspace:*",
+        "@weaver-conf/config-runtime": "workspace:*",
         "@weaver-conf/config-types": "workspace:*",
         "@weaver-conf/storage-providers": "workspace:*",
         "@weaver-conf/transport-scomp": "workspace:*",

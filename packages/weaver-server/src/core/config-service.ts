@@ -20,6 +20,7 @@ import type {
   WeaverConfigServiceOptions,
   WriteContext,
 } from "./config-service-types";
+import { createResolutionPipeline } from "./resolution-pipeline";
 import { buildScopePathString, isScopedLayer } from "./scope-utils";
 
 export type { WeaverConfigService, WeaverConfigServiceOptions, WriteContext };
@@ -150,6 +151,13 @@ export async function createWeaverConfigService(
 
   updateRevision();
 
+  // --- Mount + Secret resolution pipeline ---
+  const pipeline = await createResolutionPipeline({
+    getMergedState: () => getMergedState(),
+    getBaseEntries,
+    secretBackend: options.secretBackend,
+  });
+
   function fireDelta(delta: ConfigDelta): void {
     for (const handler of deltaHandlers) {
       handler(delta);
@@ -172,7 +180,8 @@ export async function createWeaverConfigService(
     async resolveAll(opts?: {
       scopePath?: ScopeInstance[];
     }): Promise<ConfigSnapshot> {
-      const entries = getBaseEntries();
+      const rawEntries = getBaseEntries();
+      const entries = pipeline.resolveEntries(rawEntries);
       const scopes = opts?.scopePath?.length
         ? {
             [buildScopePathString(opts.scopePath)]: getScopeState(
@@ -194,7 +203,8 @@ export async function createWeaverConfigService(
       opts?: { scopePath?: ScopeInstance[] },
     ): Promise<unknown> {
       const state = getMergedState(opts?.scopePath);
-      return deepGet(state, key);
+      const rawValue = deepGet(state, key);
+      return pipeline.resolveValue(key, rawValue);
     },
 
     async getNamespace(
@@ -208,7 +218,7 @@ export async function createWeaverConfigService(
         typeof value === "object" &&
         !Array.isArray(value)
       ) {
-        return value as Record<string, unknown>; // SAFETY: guarded by typeof/null/array checks
+        return pipeline.resolveEntries(value as Record<string, unknown>, prefix);
       }
       return {};
     },
@@ -272,6 +282,12 @@ export async function createWeaverConfigService(
       deepSet(entries, key, value);
       layerData.set(provider.id, entries);
       updateRevision();
+      pipeline.rebuildMountMap();
+      if (pipeline.hasSecretResolver) {
+        pipeline.refreshSecrets(getBaseEntries()).catch((err) =>
+          logger.error("[config] secret refresh failed:", err),
+        );
+      }
 
       const delta: ConfigDelta = {
         action: "set",
@@ -313,6 +329,12 @@ export async function createWeaverConfigService(
       deepRemove(entries, key);
       layerData.set(provider.id, entries);
       updateRevision();
+      pipeline.rebuildMountMap();
+      if (pipeline.hasSecretResolver) {
+        pipeline.refreshSecrets(getBaseEntries()).catch((err) =>
+          logger.error("[config] secret refresh failed:", err),
+        );
+      }
 
       const delta: ConfigDelta = {
         action: "remove",
