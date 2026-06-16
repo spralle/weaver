@@ -1,5 +1,6 @@
 import {
   cloneValue,
+  deepEqual,
   deepGet,
   deepMerge,
   deepRemove,
@@ -7,8 +8,8 @@ import {
 } from "@weaver-conf/config-engine";
 import { createSubscriptionManager } from "./subscriptions";
 import {
-  type ConfigDelta,
-  ConfigDeltaSchema,
+  type StateDelta,
+  StateDeltaSchema,
   type LayerEntry,
   type StateContainer,
   type StateSnapshot,
@@ -80,8 +81,8 @@ export function createStateContainer(options?: {
     return subs.subscribeAll(callback);
   }
 
-  function applyDelta(delta: ConfigDelta): void {
-    const parsed = ConfigDeltaSchema.parse(delta);
+  function applyDelta(delta: StateDelta): void {
+    const parsed = StateDeltaSchema.parse(delta);
     const changedPaths = new Set<string>();
     const mutable = cloneValue(resolved) as Record<string, unknown>; // SAFETY: resolved is always Record<string, unknown>
 
@@ -188,19 +189,4 @@ function diffTopLevelKeys(
   return changed;
 }
 
-/** Recursive structural equality for JSON-serializable values (no Date/Symbol/Map support). */
-function deepEqual(a: unknown, b: unknown): boolean {
-  if (a === b) return true;
-  if (a === null || b === null) return false;
-  if (typeof a !== "object" || typeof b !== "object") return false;
-  if (Array.isArray(a) !== Array.isArray(b)) return false;
-  const aObj = a as Record<string, unknown>; // SAFETY: both confirmed non-null objects above
-  const bObj = b as Record<string, unknown>; // SAFETY: both confirmed non-null objects above
-  const aKeys = Object.keys(aObj);
-  const bKeys = Object.keys(bObj);
-  if (aKeys.length !== bKeys.length) return false;
-  for (const key of aKeys) {
-    if (!deepEqual(aObj[key], bObj[key])) return false;
-  }
-  return true;
-}
+

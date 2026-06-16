@@ -93,7 +93,7 @@ class MongoDBStorageProvider implements ConfigurationStorageProvider {
 
   async write(key: string, value: unknown): Promise<WriteResult> {
     if (!this.writable) {
-      return { success: false, error: "Provider is read-only" };
+      return { success: false, error: { code: "READONLY", message: "Provider is read-only" } };
     }
 
     const updatedAt = new Date().toISOString();
@@ -107,7 +107,7 @@ class MongoDBStorageProvider implements ConfigurationStorageProvider {
       const message = extractErrorMessage(err);
       return {
         success: false,
-        error: `MongoDB write failed for key "${key}": ${message}`,
+        error: { code: "WRITE_ERROR", message: `MongoDB write failed for key "${key}": ${message}` },
       };
     }
     return { success: true };
@@ -115,7 +115,7 @@ class MongoDBStorageProvider implements ConfigurationStorageProvider {
 
   async remove(key: string): Promise<WriteResult> {
     if (!this.writable) {
-      return { success: false, error: "Provider is read-only" };
+      return { success: false, error: { code: "READONLY", message: "Provider is read-only" } };
     }
 
     try {
@@ -131,7 +131,7 @@ class MongoDBStorageProvider implements ConfigurationStorageProvider {
       const message = extractErrorMessage(err);
       return {
         success: false,
-        error: `MongoDB remove failed for key "${key}": ${message}`,
+        error: { code: "WRITE_ERROR", message: `MongoDB remove failed for key "${key}": ${message}` },
       };
     }
     return { success: true };

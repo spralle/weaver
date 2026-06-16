@@ -1,6 +1,7 @@
 // REST route definitions for config and scope endpoints
 
 import { buildPath } from "@weaver-conf/config-engine";
+import type { WriteResult } from "@weaver-conf/config-types";
 import type { WeaverConfigService, WriteContext } from "../core/config-service";
 import type { ScopeManager } from "../core/scope-manager";
 import { parseScopeQuery } from "../core/scope-utils";
@@ -71,15 +72,15 @@ function extractExpectedRevision(req: RestRequest): string | undefined {
 
 function writeErrorResponse(
   configService: WeaverConfigService,
-  result: { error?: string | undefined },
+  result: WriteResult,
   fallback: string,
 ): RestResponse {
-  const msg = result.error ?? fallback;
-  const isConflict = msg.includes("Revision conflict");
-  const code: WeaverErrorCode = isConflict
+  const errorObj = result.error;
+  const msg = errorObj?.message ?? fallback;
+  const code: WeaverErrorCode = errorObj?.code === "REVISION_CONFLICT"
     ? "REVISION_CONFLICT"
     : "VALIDATION_ERROR";
-  const status = isConflict ? 409 : httpStatusForError(code);
+  const status = code === "REVISION_CONFLICT" ? 409 : httpStatusForError(code);
   const rev = configService.revision;
   return {
     status,

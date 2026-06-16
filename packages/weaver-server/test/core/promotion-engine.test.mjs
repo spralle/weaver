@@ -12,12 +12,12 @@ function createTestProvider(id, layer, entries, writable = true) {
     writable,
     async load() { return { entries: JSON.parse(JSON.stringify(data)) }; },
     async write(key, value) {
-      if (!writable) return { success: false, error: "read-only" };
+      if (!writable) return { success: false, error: { code: "READONLY", message: "read-only" } };
       deepSet(data, key, value);
       return { success: true };
     },
     async remove(key) {
-      if (!writable) return { success: false, error: "read-only" };
+      if (!writable) return { success: false, error: { code: "READONLY", message: "read-only" } };
       deepRemove(data, key);
       return { success: true };
     },

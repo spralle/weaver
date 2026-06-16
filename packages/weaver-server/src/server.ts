@@ -5,7 +5,6 @@ import type { ConfigurationStorageProvider, WeaverConfig } from "@weaver-conf/co
 import type { AuthContext, AuthMiddleware } from "./auth/auth-middleware";
 import { createAuthMiddleware } from "./auth/auth-middleware";
 import { createJwtValidator } from "./auth/jwt-validator";
-import { createAuditService, createStdoutAuditSink } from "./audit/index";
 import { createWeaverConfigService } from "./core/config-service";
 import type { HealthEndpoints } from "./health";
 import { createHealthEndpoints } from "./health";
@@ -221,10 +220,6 @@ export async function startWeaverServer(
 
   const health = createHealthEndpoints();
   const shutdownManager = createShutdownManager({ drainTimeoutMs: 10_000 });
-
-  const auditService = createAuditService({
-    sinks: [createStdoutAuditSink()],
-  });
 
   const inputProviders = config.providers ?? [
     createInMemoryStorageProvider({ id: "default", layer: "platform" }),

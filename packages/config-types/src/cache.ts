@@ -20,3 +20,8 @@ export interface ScopeResolutionCache {
 export function serializeScopePath(scopePath: ScopeInstance[]): string {
   return scopePath.map((s) => `${s.scopeId}:${s.value}`).join("|");
 }
+
+/** Format scope path for wire/transport (scopeId:value/scopeId:value). */
+export function formatScopePath(scopePath: ScopeInstance[]): string {
+  return scopePath.map((s) => `${s.scopeId}:${s.value}`).join("/");
+}

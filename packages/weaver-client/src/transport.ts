@@ -2,7 +2,7 @@ import type {
   ConfigurationPropertySchema,
   ScopeDefinition,
   ScopeInstance,
-  WeaverErrorCode,
+  WriteResult,
 } from "@weaver-conf/config-types";
 import type {
   ConfigDelta,
@@ -19,16 +19,7 @@ export interface WriteOptions {
   ifRevision?: string;
 }
 
-/** Result of a write operation — includes success status, new revision, or error details. */
-export interface WriteResult {
-  success: boolean;
-  revision?: string;
-  error?: {
-    code: WeaverErrorCode | string;
-    message: string;
-    details?: Record<string, unknown>;
-  };
-}
+export type { WriteResult };
 
 /**
  * Transport interface for communicating with a Weaver configuration backend.

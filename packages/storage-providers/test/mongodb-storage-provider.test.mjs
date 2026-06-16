@@ -142,5 +142,5 @@ test("write() returns error result when collection fails", async () => {
 
   const result = await provider.write("key", "val");
   assert.equal(result.success, false);
-  assert.match(result.error, /write timeout/);
+  assert.match(result.error.message, /write timeout/);
 });

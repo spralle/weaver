@@ -10,18 +10,12 @@ export type {
 } from "./rest-adapter";
 export { createRestAdapter } from "./rest-adapter";
 export {
-  corsHeaders,
-  envelope,
-  errorEnvelope,
-  matchPath,
-  v1Headers,
-} from "./rest-helpers";
-export {
   configBatchBodySchema,
   configWriteBodySchema,
   scopeProvisionBodySchema,
 } from "./rest-schemas";
 export { createWeaverScompService } from "./scomp-service";
+export type { ScompServiceDeps } from "./scomp-service";
 export type { WeaverConfigContract } from "./scomp-contract";
 export { WEAVER_CONFIG_V1, WeaverConfig } from "./scomp-contract";
 export type {

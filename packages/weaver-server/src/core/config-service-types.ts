@@ -6,9 +6,12 @@ import type {
   ConfigurationInspection,
   ConfigurationStorageProvider,
   ScopeInstance,
+  Unsubscribe,
   WriteResult,
 } from "@weaver-conf/config-types";
 import type { ConfigDelta, ConfigSnapshot } from "../types/index";
+
+export type { Unsubscribe } from "@weaver-conf/config-types";
 
 export interface WriteContext {
   environment?: string;
@@ -25,8 +28,6 @@ export interface WeaverConfigServiceOptions {
   /** Optional secret backend for resolving SecretReference markers. */
   secretBackend?: SecretBackend;
 }
-
-export type Unsubscribe = () => void;
 
 export interface WeaverConfigService {
   resolveAll(options?: {

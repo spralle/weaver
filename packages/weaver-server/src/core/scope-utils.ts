@@ -1,3 +1,4 @@
+import { formatScopePath } from "@weaver-conf/config-types";
 import type { ScopeInstance } from "@weaver-conf/config-types";
 
 export function parseScopeLayer(
@@ -16,7 +17,7 @@ export function isScopedLayer(layer: string): boolean {
 }
 
 export function buildScopePathString(scopePath: ScopeInstance[]): string {
-  return scopePath.map((s) => `${s.scopeId}:${s.value}`).join("/");
+  return formatScopePath(scopePath);
 }
 
 export function parseScopeQuery(

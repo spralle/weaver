@@ -5,9 +5,18 @@ import type {
   WeaverConfigService,
   WriteContext,
 } from "../core/config-service-types";
+import type { SchemaRegistry } from "../core/schema-registry";
+import type { ScopeManager } from "../core/scope-manager";
 import { parseScopeQuery } from "../core/scope-utils";
 
-export function createWeaverScompService(configService: WeaverConfigService) {
+export interface ScompServiceDeps {
+  configService: WeaverConfigService;
+  scopeManager: ScopeManager;
+  schemaRegistry: SchemaRegistry;
+}
+
+export function createWeaverScompService(deps: ScompServiceDeps) {
+  const { configService, scopeManager, schemaRegistry } = deps;
   return createScompService(WeaverConfig).implement({
     async resolveAll(input) {
       const scopePath = input.scope ? parseScopeQuery(input.scope) : undefined;
@@ -73,18 +82,24 @@ export function createWeaverScompService(configService: WeaverConfigService) {
     },
 
     async listScopes(_input) {
-      return { scopes: [] };
+      return { scopes: scopeManager.listScopes() };
     },
 
-    async listScopeValues(_input) {
-      return { values: [] };
+    async listScopeValues(input) {
+      return { values: scopeManager.listScopeValues(input.scopeId) };
     },
 
     async fetchSchemas(_input) {
-      return { schemas: {} };
+      return { schemas: schemaRegistry.listAll() };
     },
 
-    async registerSchema(_input) {},
+    async registerSchema(input) {
+      await schemaRegistry.register({
+        serviceId: input.namespace,
+        declaration: input.schema,
+        environment: "default",
+      });
+    },
 
     async *subscribe(_input) {
       const queue: ConfigDelta[] = [];

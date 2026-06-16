@@ -26,22 +26,6 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    },
-    "./schemas": {
-      "types": "./dist/subpaths/schemas.d.ts",
-      "import": "./dist/subpaths/schemas.js"
-    },
-    "./sync": {
-      "types": "./dist/subpaths/sync.d.ts",
-      "import": "./dist/subpaths/sync.js"
-    },
-    "./session": {
-      "types": "./dist/subpaths/session.d.ts",
-      "import": "./dist/subpaths/session.js"
-    },
-    "./access": {
-      "types": "./dist/subpaths/access.d.ts",
-      "import": "./dist/subpaths/access.js"
     }
   },
   "files": [

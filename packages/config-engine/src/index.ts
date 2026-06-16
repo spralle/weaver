@@ -12,25 +12,14 @@ export type {
   JsonSchemaDocument,
   JsonSchemaProperty,
 } from "./json-schema-generator";
-export { generateJsonSchema } from "./json-schema-generator";
 
 // layers.ts — Layer resolution engine
 export type { ResolvedConfiguration } from "./layers";
-export {
-  inspectKey,
-  resolveConfiguration,
-} from "./layers";
 // merge.ts — Deep merge utility
 export { deepMerge } from "./merge";
 // namespace.ts — Namespace utilities
-export {
-  deriveNamespace,
-  extractNamespace,
-  qualifyKey,
-  validateKeyFormat,
-} from "./namespace";
 // path.ts — Bracket-aware path parsing
-export { buildPath, isCompoundSegment, parsePath, pathDepth } from "./path";
+export { buildPath } from "./path";
 // schema-diff.ts — Schema comparison utilities
 export type { BreakingChange } from "./schema-diff";
 export {
@@ -51,7 +40,6 @@ export type {
   UnregisterSchemaResult,
 } from "./schema-registry";
 export {
-  composeConfigurationSchemas,
   createSchemaRegistry,
 } from "./schema-registry";
 // scope.ts — Scope chain builder
@@ -65,3 +53,4 @@ export { safeParseConfigEntries } from "./utils/validation";
 export { readonlyGuard } from "./utils/write-utils";
 export { getCachedRegex, isSafePattern, clearRegexCache } from "./regex-cache";
 export { deepEqual } from "./deep-equal";
+export { matchGlob } from "./glob-match";

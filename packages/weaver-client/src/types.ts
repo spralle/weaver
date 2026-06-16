@@ -4,6 +4,7 @@ export type {
   ConfigDelta,
   ConfigSnapshot,
   ConfigurationInspection,
+  Unsubscribe,
 } from "@weaver-conf/config-types";
 
 /** Options for resolving configuration (optional scope path and environment). */
@@ -31,9 +32,6 @@ export interface ClientLayerInspection<T> {
 
 /** Current operational mode of the client (live, cached, or degraded). */
 export type ClientMode = "live" | "cached" | "degraded";
-
-/** Function that unsubscribes a listener when called. */
-export type Unsubscribe = () => void;
 
 /** Options for enabling schema validation on the client. */
 export interface SchemaOptions {

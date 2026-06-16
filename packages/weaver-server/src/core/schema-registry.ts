@@ -28,6 +28,7 @@ export interface SchemaRegistry {
     request: SchemaRegistrationRequest,
   ): Promise<SchemaRegistrationResult>;
   getSchema(serviceId: string, environment: string): Promise<unknown | null>;
+  listAll(): Record<string, ConfigurationPropertySchema>;
 }
 
 interface SchemaEntry {
@@ -114,6 +115,14 @@ export function createSchemaRegistry(
     ): Promise<unknown | null> {
       const entry = schemas.get(schemaKey(serviceId, environment));
       return entry?.declaration ?? null;
+    },
+
+    listAll(): Record<string, ConfigurationPropertySchema> {
+      const result: Record<string, ConfigurationPropertySchema> = {};
+      for (const [key, entry] of schemas) {
+        result[key] = entry.declaration;
+      }
+      return result;
     },
   };
 }
