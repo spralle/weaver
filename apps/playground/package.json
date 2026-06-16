@@ -1,0 +1,20 @@
+{
+  "name": "@weaver-conf/playground",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@weaver-conf/weaver-server": "workspace:*",
+    "@weaver-conf/weaver-client": "workspace:*",
+    "@weaver-conf/config-types": "workspace:*",
+    "@weaver-conf/storage-provider-static-json": "workspace:*",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "typescript": "^5.8.3"
+  }
+}
