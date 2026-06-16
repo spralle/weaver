@@ -1,4 +1,7 @@
 import { z } from "zod";
+import type { Unsubscribe } from "@weaver-conf/config-types";
+
+export type { Unsubscribe } from "@weaver-conf/config-types";
 
 /** A configuration layer entry with priority-based resolution ordering. */
 export interface LayerEntry {
@@ -24,9 +27,6 @@ export interface StateDelta {
   readonly removed?: string[];
   readonly revision: number;
 }
-
-/** Function that unsubscribes a listener when called. */
-export type Unsubscribe = () => void;
 
 /** Reactive state container that resolves config from prioritized layers. */
 export interface StateContainer {

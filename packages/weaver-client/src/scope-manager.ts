@@ -1,3 +1,4 @@
+import { formatScopePath } from "@weaver-conf/config-types";
 import type { ScopeInstance } from "@weaver-conf/config-types";
 import type { WeaverTransport } from "./transport";
 import type { ConfigDelta, ConfigSnapshot } from "./types";
@@ -23,7 +24,7 @@ export interface ScopeLoader {
 }
 
 function buildScopeKey(scopePath: ScopeInstance[]): string {
-  return scopePath.map((s) => `${s.scopeId}:${s.value}`).join("/");
+  return formatScopePath(scopePath);
 }
 
 /**

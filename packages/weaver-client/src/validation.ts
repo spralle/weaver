@@ -1,17 +1,12 @@
 import type { ClientSchemaRegistry, ValidationResult } from "./schema-registry";
+import type { SchemaOptions } from "./types";
 
 export type { ValidationResult } from "./schema-registry";
+export type { SchemaOptions } from "./types";
 
 export interface ValidationOptions {
   warnOnMismatch: boolean;
   logger?: { warn: (msg: string) => void };
-}
-
-export interface SchemaOptions {
-  /** Subscribe to schema changes from server (default: true) */
-  live?: boolean;
-  /** Log warnings when values don't match server schema (default: true) */
-  warnOnMismatch?: boolean;
 }
 
 /**

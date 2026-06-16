@@ -1,4 +1,5 @@
 import { deepGet, deepRemove, deepSet } from "@weaver-conf/config-engine";
+import { formatScopePath } from "@weaver-conf/config-types";
 import type { ScopeDefinition, ScopeInstance } from "@weaver-conf/config-types";
 import type {
   WeaverTransport,
@@ -23,7 +24,7 @@ export interface LocalTransport extends WeaverTransport {
 }
 
 function buildScopeKey(scopePath: ScopeInstance[]): string {
-  return scopePath.map((s) => `${s.scopeId}:${s.value}`).join("/");
+  return formatScopePath(scopePath);
 }
 
 /**

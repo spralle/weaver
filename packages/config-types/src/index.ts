@@ -15,7 +15,7 @@ export type {
 } from "./access";
 // cache.ts — Scope resolution cache interface
 export type { ScopeResolutionCache } from "./cache";
-export { serializeScopePath } from "./cache";
+export { serializeScopePath, formatScopePath } from "./cache";
 // environment.ts — Environment-aware provider types and provenance tracking
 export type {
   ConfigValueSource,
@@ -242,6 +242,7 @@ export type {
   ScopeHierarchy,
   ScopeInstance,
   TenantScopeHierarchy,
+  Unsubscribe,
 } from "./types";
 // view-config-declaration.ts — View config declaration type and factory
 export type { ViewConfigDeclaration } from "./view-config-declaration";

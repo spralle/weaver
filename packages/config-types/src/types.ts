@@ -1,6 +1,9 @@
 /** Layer identifier (opaque string, e.g., "defaults", "user", "session"). */
 export type ConfigurationLayer = string;
 
+/** Callback to remove a subscription. */
+export type Unsubscribe = () => void;
+
 /** Definition of a scope dimension (e.g., "region", "tenant"). */
 export interface ScopeDefinition {
   id: string;

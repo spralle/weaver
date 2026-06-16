@@ -1,3 +1,4 @@
+import { formatScopePath } from "@weaver-conf/config-types";
 import type { ScopeDefinition, ScopeInstance } from "@weaver-conf/config-types";
 import type {
   WeaverTransport,
@@ -92,7 +93,7 @@ export function createHttpTransport(
 
   function buildScopeQuery(scopePath?: ScopeInstance[]): string {
     if (!scopePath?.length) return "";
-    return scopePath.map((s) => `${s.scopeId}:${s.value}`).join("/");
+    return formatScopePath(scopePath);
   }
 
   function queryString(params: Record<string, string | undefined>): string {

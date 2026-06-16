@@ -1,5 +1,6 @@
 import {
   cloneValue,
+  deepEqual,
   deepGet,
   deepMerge,
   deepRemove,
@@ -188,19 +189,4 @@ function diffTopLevelKeys(
   return changed;
 }
 
-/** Recursive structural equality for JSON-serializable values (no Date/Symbol/Map support). */
-function deepEqual(a: unknown, b: unknown): boolean {
-  if (a === b) return true;
-  if (a === null || b === null) return false;
-  if (typeof a !== "object" || typeof b !== "object") return false;
-  if (Array.isArray(a) !== Array.isArray(b)) return false;
-  const aObj = a as Record<string, unknown>; // SAFETY: both confirmed non-null objects above
-  const bObj = b as Record<string, unknown>; // SAFETY: both confirmed non-null objects above
-  const aKeys = Object.keys(aObj);
-  const bKeys = Object.keys(bObj);
-  if (aKeys.length !== bKeys.length) return false;
-  for (const key of aKeys) {
-    if (!deepEqual(aObj[key], bObj[key])) return false;
-  }
-  return true;
-}
+

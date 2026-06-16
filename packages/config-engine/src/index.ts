@@ -65,3 +65,4 @@ export { safeParseConfigEntries } from "./utils/validation";
 export { readonlyGuard } from "./utils/write-utils";
 export { getCachedRegex, isSafePattern, clearRegexCache } from "./regex-cache";
 export { deepEqual } from "./deep-equal";
+export { matchGlob } from "./glob-match";

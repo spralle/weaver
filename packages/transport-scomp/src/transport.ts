@@ -7,6 +7,7 @@ import type {
   ScopeInstance,
   WriteResult,
 } from "@weaver-conf/config-types";
+import { formatScopePath } from "@weaver-conf/config-types";
 import { WeaverConfig } from "./contract";
 
 // --- Transport types (defined locally to avoid depending on weaver-client) ---
@@ -48,7 +49,7 @@ export interface ScompTransportOptions {
 
 function buildScopeString(scopePath?: ScopeInstance[]): string | undefined {
   if (!scopePath?.length) return undefined;
-  return scopePath.map((s) => `${s.scopeId}:${s.value}`).join("/");
+  return formatScopePath(scopePath);
 }
 
 /** Creates a WeaverTransport backed by a SCOMP peer consuming the WeaverConfig contract. */

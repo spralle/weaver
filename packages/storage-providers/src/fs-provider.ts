@@ -5,6 +5,7 @@ import {
   deepMerge,
   deepRemove,
   deepSet,
+  deepEqual,
   isNodeError,
   safeParseConfigEntries,
 } from "@weaver-conf/config-engine";
@@ -266,24 +267,4 @@ function diffEntries(
   return changes;
 }
 
-function deepEqual(a: unknown, b: unknown): boolean {
-  if (a === b) return true;
-  if (a === null || b === null) return false;
-  if (typeof a !== "object" || typeof b !== "object") return false;
 
-  const aIsArray = Array.isArray(a);
-  const bIsArray = Array.isArray(b);
-  if (aIsArray !== bIsArray) return false;
-  if (aIsArray && bIsArray) {
-    if (a.length !== b.length) return false;
-    return a.every((val, i) => deepEqual(val, b[i]));
-  }
-
-  const aObj = a as Record<string, unknown>; // SAFETY: confirmed non-null, non-array objects above
-  const bObj = b as Record<string, unknown>; // SAFETY: confirmed non-null, non-array objects above
-  const aKeys = Object.keys(aObj);
-  const bKeys = Object.keys(bObj);
-
-  if (aKeys.length !== bKeys.length) return false;
-  return aKeys.every((k) => deepEqual(aObj[k], bObj[k]));
-}
