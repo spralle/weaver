@@ -1,7 +1,10 @@
 // Weaver server entry point — orchestrates all subsystems
 
 import { withAuth } from "@weaver-conf/config-auth";
-import type { ConfigurationStorageProvider, WeaverConfig } from "@weaver-conf/config-types";
+import type {
+  ConfigurationStorageProvider,
+  WeaverConfig,
+} from "@weaver-conf/config-types";
 import type { AuthContext, AuthMiddleware } from "./auth/auth-middleware";
 import { createAuthMiddleware } from "./auth/auth-middleware";
 import { createJwtValidator } from "./auth/jwt-validator";
@@ -165,9 +168,9 @@ async function handleSSE(url: URL, sseAdapter: SSEAdapter): Promise<Response> {
   const prefix = url.searchParams.get("prefix");
   const scope = url.searchParams.get("scope");
   const since = url.searchParams.get("since");
-  if (prefix) clientOptions["prefix"] = prefix;
-  if (scope) clientOptions["scope"] = scope;
-  if (since) clientOptions["since"] = since;
+  if (prefix) clientOptions.prefix = prefix;
+  if (scope) clientOptions.scope = scope;
+  if (since) clientOptions.since = since;
 
   const client = await sseAdapter.createClient(clientOptions);
 
@@ -275,7 +278,11 @@ export async function startWeaverServer(
     });
 
     // Minimal WeaverConfig — only getRank is used by auth checks
-    const layerRanks = new Map([["platform", 0], ["tenant", 1], ["session", 2]]);
+    const layerRanks = new Map([
+      ["platform", 0],
+      ["tenant", 1],
+      ["session", 2],
+    ]);
     const weaverConfig = {
       layers: [],
       layerNames: [...layerRanks.keys()],
@@ -300,7 +307,8 @@ export async function startWeaverServer(
     authGate = createAuthGate({
       authFunctions,
       mapContext: (authCtx) => ({
-        userId: authCtx.identity.userId ?? authCtx.identity.serviceId ?? "anonymous",
+        userId:
+          authCtx.identity.userId ?? authCtx.identity.serviceId ?? "anonymous",
         roles: authCtx.identity.roles ?? [],
         sessionMode: undefined,
       }),
@@ -326,7 +334,12 @@ export async function startWeaverServer(
   const sseAdapter = createSSEAdapter({ configService });
   sseAdapter.startCheckpointTimer();
 
-  const handleRequest = createRequestHandler(health, restAdapter, sseAdapter, authMiddleware);
+  const handleRequest = createRequestHandler(
+    health,
+    restAdapter,
+    sseAdapter,
+    authMiddleware,
+  );
 
   const server = Bun.serve({
     port: config.port,

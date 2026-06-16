@@ -61,7 +61,9 @@ export interface ListScopeValuesInput {
   parentScope?: Array<{ scopeId: string; value: string }>;
 }
 
-export interface FetchSchemasInput {}
+export type EmptyInput = Record<PropertyKey, never>;
+
+export type FetchSchemasInput = EmptyInput;
 
 export interface RegisterSchemaInput {
   namespace: string;
@@ -79,14 +81,18 @@ export interface WeaverConfigContract {
   // Requests (return Promise<T>)
   resolveAll(input: ResolveAllInput): Promise<ConfigSnapshot>;
   get(input: GetInput): Promise<{ value: unknown }>;
-  getNamespace(input: GetNamespaceInput): Promise<{ entries: Record<string, unknown> }>;
+  getNamespace(
+    input: GetNamespaceInput,
+  ): Promise<{ entries: Record<string, unknown> }>;
   inspect(input: InspectInput): Promise<ConfigurationInspection<unknown>>;
   set(input: SetInput): Promise<WriteResult>;
   setMany(input: SetManyInput): Promise<WriteResult>;
   remove(input: RemoveInput): Promise<WriteResult>;
-  listScopes(input: {}): Promise<{ scopes: ScopeDefinition[] }>;
+  listScopes(input: EmptyInput): Promise<{ scopes: ScopeDefinition[] }>;
   listScopeValues(input: ListScopeValuesInput): Promise<{ values: string[] }>;
-  fetchSchemas(input: FetchSchemasInput): Promise<{ schemas: Record<string, ConfigurationPropertySchema> }>;
+  fetchSchemas(
+    input: FetchSchemasInput,
+  ): Promise<{ schemas: Record<string, ConfigurationPropertySchema> }>;
   registerSchema(input: RegisterSchemaInput): Promise<void>;
 
   // Feed (returns AsyncIterable<T>)
@@ -94,4 +100,5 @@ export interface WeaverConfigContract {
 }
 
 /** Contract token for the Weaver configuration service. Shared between client and server peers. */
-export const WeaverConfig = createContractToken<WeaverConfigContract>("weaver-config-v1");
+export const WeaverConfig =
+  createContractToken<WeaverConfigContract>("weaver-config-v1");

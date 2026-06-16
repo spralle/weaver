@@ -1,11 +1,11 @@
-import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 import { z } from "zod";
 import {
   defineNamespace,
-  type TypedNamespaceClient,
-  type TypedInstanceClient,
   type NamespaceDefinition,
+  type TypedInstanceClient,
+  type TypedNamespaceClient,
 } from "../src/namespace.js";
 
 describe("defineNamespace", () => {
@@ -60,12 +60,13 @@ describe("TypedNamespaceClient type inference", () => {
 
     // Verify the definition type is correctly inferred
     type Def = typeof def;
-    type _AssertPrefix = Def extends NamespaceDefinition<"test", infer _S>
-      ? true
-      : never;
+    type _AssertPrefix =
+      Def extends NamespaceDefinition<"test", infer _S> ? true : never;
 
     // Simulate typed client usage (type-level only)
-    type Client = TypedNamespaceClient<typeof def extends NamespaceDefinition<string, infer S> ? S : never>;
+    type Client = TypedNamespaceClient<
+      typeof def extends NamespaceDefinition<string, infer S> ? S : never
+    >;
 
     // These type assignments verify inference works
     const _clientUsage = (client: Client) => {
@@ -82,7 +83,9 @@ describe("TypedNamespaceClient type inference", () => {
     };
 
     // Verify instance client types
-    type Instance = TypedInstanceClient<typeof def extends NamespaceDefinition<string, infer S> ? S : never>;
+    type Instance = TypedInstanceClient<
+      typeof def extends NamespaceDefinition<string, infer S> ? S : never
+    >;
 
     const _instanceUsage = (inst: Instance) => {
       const _val: string | undefined = inst.get("name");

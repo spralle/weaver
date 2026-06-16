@@ -20,8 +20,7 @@ export function matchPath(
   const pathParts = path.split("/");
   const params: Record<string, string> = {};
 
-  for (let i = 0; i < patternParts.length; i++) {
-    const pp = patternParts[i]!;
+  for (const [i, pp] of patternParts.entries()) {
     if (pp.startsWith("*")) {
       const remaining = pathParts.slice(i);
       if (remaining.length === 0) return null;
@@ -30,7 +29,9 @@ export function matchPath(
     }
     if (i >= pathParts.length) return null;
     if (pp.startsWith(":")) {
-      params[pp.slice(1)] = pathParts[i]!;
+      const pathPart = pathParts[i];
+      if (pathPart === undefined) return null;
+      params[pp.slice(1)] = pathPart;
     } else if (pp !== pathParts[i]) {
       return null;
     }

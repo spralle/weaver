@@ -1,5 +1,5 @@
-import type { WeaverClient } from "@weaver-conf/weaver-client";
 import type { WeaverConfig } from "@weaver-conf/config-types";
+import type { WeaverClient } from "@weaver-conf/weaver-client";
 import {
   buildScopePath,
   COUNTRY_CODES_WITH_PROVIDERS,
@@ -28,13 +28,21 @@ const POLICY_COLORS: Record<string, string> = {
   "emergency-override": "#e74c3c",
 };
 
+function requireQuery(container: HTMLElement, selector: string): Element {
+  const element = container.querySelector(selector);
+  if (element === null) {
+    throw new Error(`Missing required element: ${selector}`);
+  }
+  return element;
+}
+
 export function renderInspector(
   container: HTMLElement,
   client: WeaverClient,
   weaverConfig?: WeaverConfig,
 ): void {
   container.innerHTML = `<h2>Key Inspector</h2><div class="inspector-body"></div>`;
-  const body = container.querySelector(".inspector-body")!;
+  const body = requireQuery(container, ".inspector-body");
 
   function render(): void {
     const key = getSelectedKey();
@@ -58,28 +66,37 @@ export function renderInspector(
     const displayLayers = insertScopeLayers(layerNames, scopeLayers);
 
     // Use async inspect for layer breakdown
-    client.inspect(key).then((inspection) => {
-      const isLocationWinner = loc !== null && scopedValue !== baseValue;
-      const effectiveLayer = isLocationWinner
-        ? (findWinnerScopeLayer(scopeLayers, inspection.layerValues) ??
-          inspection.effectiveLayer)
-        : inspection.effectiveLayer;
+    client
+      .inspect(key)
+      .then((inspection) => {
+        const isLocationWinner = loc !== null && scopedValue !== baseValue;
+        const effectiveLayer = isLocationWinner
+          ? (findWinnerScopeLayer(scopeLayers, inspection.layerValues) ??
+            inspection.effectiveLayer)
+          : inspection.effectiveLayer;
 
-      let html = `<h3>${key}</h3>`;
-      html += buildEffectiveSection({ effectiveValue: scopedValue, effectiveLayer });
-      html += buildLayerBreakdown(displayLayers, {
-        effectiveLayer,
-        layerValues: inspection.layerValues ?? {},
+        let html = `<h3>${key}</h3>`;
+        html += buildEffectiveSection({
+          effectiveValue: scopedValue,
+          effectiveLayer,
+        });
+        html += buildLayerBreakdown(displayLayers, {
+          effectiveLayer,
+          layerValues: inspection.layerValues ?? {},
+        });
+        html += buildSchemaSection(key);
+        body.innerHTML = html;
+      })
+      .catch(() => {
+        // Fallback: show effective value without layer breakdown
+        let html = `<h3>${key}</h3>`;
+        html += buildEffectiveSection({
+          effectiveValue: scopedValue,
+          effectiveLayer: undefined,
+        });
+        html += buildSchemaSection(key);
+        body.innerHTML = html;
       });
-      html += buildSchemaSection(key);
-      body.innerHTML = html;
-    }).catch(() => {
-      // Fallback: show effective value without layer breakdown
-      let html = `<h3>${key}</h3>`;
-      html += buildEffectiveSection({ effectiveValue: scopedValue, effectiveLayer: undefined });
-      html += buildSchemaSection(key);
-      body.innerHTML = html;
-    });
   }
 
   render();

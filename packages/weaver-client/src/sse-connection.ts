@@ -25,8 +25,17 @@ interface SSEState {
   lastCheckpoint: number;
 }
 
-export function createSSEConnection(options: SSEConnectionOptions): SSEConnection {
-  const { baseUrl, token, extraHeaders, fetchFn, maxReconnectAttempts, onError } = options;
+export function createSSEConnection(
+  options: SSEConnectionOptions,
+): SSEConnection {
+  const {
+    baseUrl,
+    token,
+    extraHeaders,
+    fetchFn,
+    maxReconnectAttempts,
+    onError,
+  } = options;
   const deltaHandlers = new Set<(delta: ConfigDelta) => void>();
 
   const state: SSEState = {
@@ -101,7 +110,7 @@ export function createSSEConnection(options: SSEConnectionOptions): SSEConnectio
     state.abortController = new AbortController();
 
     const sseHeaders: Record<string, string> = { Accept: "text/event-stream" };
-    if (token) sseHeaders["Authorization"] = `Bearer ${token}`;
+    if (token) sseHeaders.Authorization = `Bearer ${token}`;
     if (extraHeaders) Object.assign(sseHeaders, extraHeaders);
 
     fetchFn(`${baseUrl}/v1/events`, {

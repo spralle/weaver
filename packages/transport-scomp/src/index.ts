@@ -1,18 +1,18 @@
 export type {
-  WeaverConfigContract,
-  ConfigSnapshot,
   ConfigDelta,
-  ResolveAllInput,
+  ConfigSnapshot,
+  FetchSchemasInput,
   GetInput,
   GetNamespaceInput,
   InspectInput,
+  ListScopeValuesInput,
+  RegisterSchemaInput,
+  RemoveInput,
+  ResolveAllInput,
   SetInput,
   SetManyInput,
-  RemoveInput,
-  ListScopeValuesInput,
-  FetchSchemasInput,
-  RegisterSchemaInput,
   SubscribeInput,
+  WeaverConfigContract,
 } from "./contract";
 export { WeaverConfig } from "./contract";
 

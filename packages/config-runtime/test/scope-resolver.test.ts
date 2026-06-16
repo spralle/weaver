@@ -1,9 +1,12 @@
 import { describe, expect, test } from "bun:test";
-import { createScopeResolver, createScopeCache } from "../src/scope-resolver";
-import type { ScopeInstance, WeaverConfig } from "@weaver-conf/config-types";
-import type { LayerType } from "@weaver-conf/config-types";
-import { defineWeaver } from "@weaver-conf/config-types";
 import { deepMerge } from "@weaver-conf/config-engine";
+import type {
+  LayerType,
+  ScopeInstance,
+  WeaverConfig,
+} from "@weaver-conf/config-types";
+import { defineWeaver } from "@weaver-conf/config-types";
+import { createScopeCache, createScopeResolver } from "../src/scope-resolver";
 
 // Minimal layer type stubs for testing
 const staticType: LayerType = {
@@ -51,7 +54,9 @@ describe("createScopeResolver", () => {
       "region:eu-west": { database: { host: "eu.db.com" } },
     };
 
-    const scopePath: ScopeInstance[] = [{ scopeId: "region", value: "eu-west" }];
+    const scopePath: ScopeInstance[] = [
+      { scopeId: "region", value: "eu-west" },
+    ];
 
     const resolver = createScopeResolver({
       getLayerEntries: (layer) => layerData[layer] ?? {},

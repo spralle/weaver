@@ -1,7 +1,7 @@
-import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { createClientSchemaRegistry } from "../src/schema-registry.js";
+import { describe, it } from "node:test";
 import type { ConfigurationPropertySchema } from "@weaver-conf/config-types";
+import { createClientSchemaRegistry } from "../src/schema-registry.js";
 
 describe("ClientSchemaRegistry", () => {
   it("getSchema returns undefined for unknown key", () => {

@@ -194,7 +194,7 @@ export async function pullChanges(args: CommonArgs): Promise<number> {
 export function classifySyncError(error: unknown): SyncErrorMetadata {
   if (typeof error === "object" && error !== null) {
     if ("syncError" in error) {
-      const candidate = (error as Record<string, unknown>)["syncError"]; // SAFETY: guarded by typeof/null/"syncError" in checks
+      const candidate = (error as Record<string, unknown>).syncError; // SAFETY: guarded by typeof/null/"syncError" in checks
       if (isSyncErrorMetadata(candidate)) {
         return candidate;
       }
@@ -205,12 +205,8 @@ export function classifySyncError(error: unknown): SyncErrorMetadata {
     return error;
   }
 
-  if (
-    typeof error === "object" &&
-    error !== null &&
-    "message" in error
-  ) {
-    const msg = (error as Record<string, unknown>)["message"]; // SAFETY: guarded by typeof/null/"message" in checks
+  if (typeof error === "object" && error !== null && "message" in error) {
+    const msg = (error as Record<string, unknown>).message; // SAFETY: guarded by typeof/null/"message" in checks
     if (typeof msg === "string") {
       return {
         code: "unknown",

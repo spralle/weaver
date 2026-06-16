@@ -20,7 +20,7 @@ function createMockConfigService(initialEntries?: Record<string, unknown>) {
         return currentRevision;
       },
       providers: [],
-      resolveAll: async (options?: { scopePath?: unknown }) => ({
+      resolveAll: async (_options?: { scopePath?: unknown }) => ({
         entries: { ...entries },
         scopes: {},
         revision: currentRevision,
@@ -62,8 +62,7 @@ function makeDelta(overrides?: Partial<ConfigDelta>): ConfigDelta {
 
 interface ParsedMessage {
   event: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data: Record<string, any>;
+  data: Record<string, unknown>;
 }
 
 function parseMessages(client: {
@@ -74,9 +73,13 @@ function parseMessages(client: {
     const dataMatch = raw.match(/^data: (.+)$/m);
     assert.ok(eventMatch, "expected event field in SSE message");
     assert.ok(dataMatch, "expected data field in SSE message");
+    const event = eventMatch[1];
+    const data = dataMatch[1];
+    assert.ok(event, "expected event value in SSE message");
+    assert.ok(data, "expected data value in SSE message");
     return {
-      event: eventMatch[1]!,
-      data: JSON.parse(dataMatch[1]!) as Record<string, unknown>,
+      event,
+      data: JSON.parse(data) as Record<string, unknown>,
     };
   });
 }
@@ -85,6 +88,12 @@ function msg(msgs: ParsedMessage[], idx: number): ParsedMessage {
   const m = msgs[idx];
   assert.ok(m, `expected message at index ${idx}`);
   return m;
+}
+
+function expectRecord(value: unknown): Record<string, unknown> {
+  assert.equal(typeof value, "object");
+  assert.notEqual(value, null);
+  return value as Record<string, unknown>;
 }
 
 describe("SSEAdapter", () => {
@@ -114,11 +123,9 @@ describe("SSEAdapter", () => {
     const client = await adapter.createClient({ prefix: "app" });
     const msgs = parseMessages(client);
     assert.equal(msg(msgs, 0).event, "snapshot");
-    assert.deepEqual(Object.keys(msg(msgs, 0).data.entries).sort(), [
-      "app.name",
-      "app.port",
-    ]);
-    assert.equal(msg(msgs, 0).data.entries["db.host"], undefined);
+    const entries = expectRecord(msg(msgs, 0).data.entries);
+    assert.deepEqual(Object.keys(entries).sort(), ["app.name", "app.port"]);
+    assert.equal(entries["db.host"], undefined);
     client.close();
   });
 
@@ -147,7 +154,7 @@ describe("SSEAdapter", () => {
     client.close();
   });
 
-  it("sends checkpoint events to all clients on timer", async (t) => {
+  it("sends checkpoint events to all clients on timer", async (_t) => {
     const client1 = await adapter.createClient();
     const client2 = await adapter.createClient({ prefix: "db" });
     mock.setRevision("rev-5");
@@ -240,7 +247,9 @@ describe("SSEAdapter", () => {
     // Oldest messages (snapshot + early changes) should be evicted
     const msgs = parseMessages(client);
     // Last message should be the most recent change
-    assert.equal(msgs[msgs.length - 1]!.data.value, "v5");
+    const last = msgs.at(-1);
+    assert.ok(last);
+    assert.equal(last.data.value, "v5");
     client.close();
   });
 });

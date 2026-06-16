@@ -1,7 +1,7 @@
-import { describe, it } from "node:test";
 import assert from "node:assert/strict";
-import { createWeaverConfigService } from "../src/core/config-service.js";
+import { describe, it } from "node:test";
 import { createInMemoryStorageProvider } from "@weaver-conf/storage-providers";
+import { createWeaverConfigService } from "../src/core/config-service.js";
 
 describe("WeaverConfigService", () => {
   async function makeService(entries: Record<string, unknown> = {}) {
@@ -64,7 +64,9 @@ describe("WeaverConfigService", () => {
 
   it("rejects write with stale revision", async () => {
     const svc = await makeService({});
-    const result = await svc.set("app", "k", "v", { expectedRevision: "stale-rev" });
+    const result = await svc.set("app", "k", "v", {
+      expectedRevision: "stale-rev",
+    });
     assert.equal(result.success, false);
   });
 
@@ -73,12 +75,14 @@ describe("WeaverConfigService", () => {
       id: "bad",
       layer: "core",
       writable: false as const,
-      async load() { throw new Error("connection failed"); },
+      async load() {
+        throw new Error("connection failed");
+      },
     };
     const goodProvider = createInMemoryStorageProvider({
       id: "good",
       layer: "app",
-      initialEntries: { "k": "v" },
+      initialEntries: { k: "v" },
     });
     const svc = await createWeaverConfigService({
       providers: [badProvider, goodProvider],
@@ -90,9 +94,12 @@ describe("WeaverConfigService", () => {
   });
 
   it("getNamespace returns nested object at prefix", async () => {
-    const svc = await makeService({ app: { name: "w", port: 3000 }, db: { host: "x" } });
+    const svc = await makeService({
+      app: { name: "w", port: 3000 },
+      db: { host: "x" },
+    });
     const ns = await svc.getNamespace("app");
-    assert.equal(ns["name"], "w");
-    assert.equal(ns["port"], 3000);
+    assert.equal(ns.name, "w");
+    assert.equal(ns.port, 3000);
   });
 });

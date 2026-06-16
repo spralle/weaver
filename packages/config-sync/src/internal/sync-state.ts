@@ -1,8 +1,5 @@
 import type { SyncStatus } from "@weaver-conf/config-types";
-import type {
-  ConfigSyncOrchestratorOptions,
-  SyncDiagnostics,
-} from "../types";
+import type { ConfigSyncOrchestratorOptions, SyncDiagnostics } from "../types";
 
 export interface SyncStateManager {
   getSyncState(): SyncStatus;

@@ -1,11 +1,7 @@
 import { deepGet, deepRemove, deepSet } from "@weaver-conf/config-engine";
-import { formatScopePath } from "@weaver-conf/config-types";
 import type { ScopeDefinition, ScopeInstance } from "@weaver-conf/config-types";
-import type {
-  WeaverTransport,
-  WriteOptions,
-  WriteResult,
-} from "./transport";
+import { formatScopePath } from "@weaver-conf/config-types";
+import type { WeaverTransport, WriteOptions, WriteResult } from "./transport";
 import type {
   ConfigDelta,
   ConfigSnapshot,

@@ -2,15 +2,15 @@
 // Boots weaver-server, connects weaver-client via HTTP transport, and exercises major surfaces.
 
 import { createStaticJsonStorageProvider } from "@weaver-conf/storage-provider-static-json";
-import {
-  createWeaverClient,
-  createHttpTransport,
-  defineNamespace,
-} from "@weaver-conf/weaver-client";
 import type { ConfigDelta } from "@weaver-conf/weaver-client";
 import {
-  startWeaverServer,
+  createHttpTransport,
+  createWeaverClient,
+  defineNamespace,
+} from "@weaver-conf/weaver-client";
+import {
   createInMemoryStorageProvider,
+  startWeaverServer,
 } from "@weaver-conf/weaver-server";
 import { z } from "zod";
 
@@ -94,7 +94,10 @@ async function main() {
   assert(client.connected === true, "Client is connected after creation");
 
   const appName = client.get<string>("app.name");
-  assert(appName === "Weaver Playground", `client.get("app.name") = "${appName}"`);
+  assert(
+    appName === "Weaver Playground",
+    `client.get("app.name") = "${appName}"`,
+  );
 
   const darkMode = client.get<boolean>("feature.darkMode");
   assert(darkMode === true, `client.get("feature.darkMode") = ${darkMode}`);
@@ -102,7 +105,9 @@ async function main() {
   // ─── 3. Write & Read-Back ──────────────────────────────────
   section("3. Write & Read-Back");
 
-  const writeResult = await client.set("app.version", "1.0.0", { layer: "default" });
+  const writeResult = await client.set("app.version", "1.0.0", {
+    layer: "default",
+  });
   assert(writeResult.success === true, "client.set() returns success=true");
 
   // Small delay for SSE delta propagation
@@ -115,7 +120,10 @@ async function main() {
   section("4. Namespace Operations");
 
   const appNs = client.getNamespace("app");
-  assert(typeof appNs === "object" && appNs !== null, "getNamespace returns an object");
+  assert(
+    typeof appNs === "object" && appNs !== null,
+    "getNamespace returns an object",
+  );
   assert("name" in appNs, 'Namespace has "name" key');
   assert("description" in appNs, 'Namespace has "description" key');
 
@@ -142,9 +150,15 @@ async function main() {
   await client.set("app.locale", "en-US", { layer: "default" });
   await delay(200);
 
-  assert(received.length > 0, `onChange handler called (received ${received.length} delta(s))`);
+  assert(
+    received.length > 0,
+    `onChange handler called (received ${received.length} delta(s))`,
+  );
   if (received.length > 0) {
-    const delta = received[0]!;
+    const delta = received[0];
+    if (delta === undefined) {
+      throw new Error("Expected at least one delta");
+    }
     assert(delta.key === "app.locale", `Delta key = "${delta.key}"`);
     assert(delta.value === "en-US", `Delta value = "${delta.value}"`);
   }
@@ -157,8 +171,12 @@ async function main() {
   const regResult = await client.registerNamespaces([metricsDef]);
 
   // Transport may not support registerSchema — in that case it skips
-  const registered = regResult.registered.length > 0 || regResult.skipped.length > 0;
-  assert(registered, `registerNamespaces completed (registered=${regResult.registered.length}, skipped=${regResult.skipped.length})`);
+  const registered =
+    regResult.registered.length > 0 || regResult.skipped.length > 0;
+  assert(
+    registered,
+    `registerNamespaces completed (registered=${regResult.registered.length}, skipped=${regResult.skipped.length})`,
+  );
 
   // ─── 8. Server Auth (optional gate) ───────────────────────
   section("8. Server Auth (optional gate)");

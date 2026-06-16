@@ -1,3 +1,4 @@
+import { deepGet, deepMerge } from "@weaver-conf/config-engine";
 import type {
   ConfigurationLayerEntry,
   ConfigurationLayerStack,
@@ -6,7 +7,6 @@ import type {
   WeaverConfig,
 } from "@weaver-conf/config-types";
 import { serializeScopePath } from "@weaver-conf/config-types";
-import { deepGet, deepMerge } from "@weaver-conf/config-engine";
 
 export interface ScopeResolverOptions {
   /** Retrieve raw entries for a named layer. */
@@ -16,7 +16,10 @@ export interface ScopeResolverOptions {
 }
 
 export interface ScopeResolver {
-  getForScope<T = unknown>(key: string, scopePath: ScopeInstance[]): T | undefined;
+  getForScope<T = unknown>(
+    key: string,
+    scopePath: ScopeInstance[],
+  ): T | undefined;
   invalidate(): void;
   buildScopedStack(scopePath: ScopeInstance[]): ConfigurationLayerStack;
 }
@@ -65,7 +68,9 @@ export function createScopeCache(maxSize = 100): ScopeResolutionCache {
   };
 }
 
-export function createScopeResolver(options: ScopeResolverOptions): ScopeResolver {
+export function createScopeResolver(
+  options: ScopeResolverOptions,
+): ScopeResolver {
   const { getLayerEntries, weaverConfig, cacheSize = 100 } = options;
   const cache = createScopeCache(cacheSize);
 
@@ -84,7 +89,9 @@ export function createScopeResolver(options: ScopeResolverOptions): ScopeResolve
     return { baseLayers, dynamicLayers };
   }
 
-  function buildScopedStack(scopePath: ScopeInstance[]): ConfigurationLayerStack {
+  function buildScopedStack(
+    scopePath: ScopeInstance[],
+  ): ConfigurationLayerStack {
     const layers: ConfigurationLayerEntry[] = [];
     const { baseLayers } = classifyLayers();
 
@@ -106,7 +113,9 @@ export function createScopeResolver(options: ScopeResolverOptions): ScopeResolve
     return { layers };
   }
 
-  function resolveForScope(scopePath: ScopeInstance[]): Record<string, unknown> {
+  function resolveForScope(
+    scopePath: ScopeInstance[],
+  ): Record<string, unknown> {
     const cacheKey = serializeScopePath(scopePath);
     const cached = cache.get(cacheKey);
     if (cached) return cached;
@@ -122,7 +131,10 @@ export function createScopeResolver(options: ScopeResolverOptions): ScopeResolve
   }
 
   return {
-    getForScope<T = unknown>(key: string, scopePath: ScopeInstance[]): T | undefined {
+    getForScope<T = unknown>(
+      key: string,
+      scopePath: ScopeInstance[],
+    ): T | undefined {
       const resolved = resolveForScope(scopePath);
       return deepGet(resolved, key) as T | undefined;
     },

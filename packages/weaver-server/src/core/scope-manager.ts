@@ -3,7 +3,7 @@ import type { WeaverError } from "../types/errors";
 import { createWeaverError } from "../types/errors";
 import type { WeaverConfigService } from "./config-service";
 import type { SchemaRegistry } from "./schema-registry";
-import { isScopedLayer, parseScopeLayer } from "./scope-utils";
+import { parseScopeLayer } from "./scope-utils";
 
 export interface ProvisionScopeRequest {
   scopeId: string;
@@ -49,7 +49,11 @@ export function createScopeManager(options: ScopeManagerOptions): ScopeManager {
       if (!activeScopes.has(parsed.scopeId)) {
         activeScopes.set(parsed.scopeId, new Set());
       }
-      activeScopes.get(parsed.scopeId)!.add(parsed.value);
+      const values = activeScopes.get(parsed.scopeId);
+      if (values === undefined) {
+        throw new Error(`Scope set missing for ${parsed.scopeId}`);
+      }
+      values.add(parsed.value);
     }
   }
 
@@ -58,9 +62,9 @@ export function createScopeManager(options: ScopeManagerOptions): ScopeManager {
       request: ProvisionScopeRequest,
     ): Promise<ScopeProvisionResult> {
       const { scopeId, value, actor } = request;
-      const values = activeScopes.get(scopeId);
+      const existingValues = activeScopes.get(scopeId);
 
-      if (values?.has(value)) {
+      if (existingValues?.has(value)) {
         return {
           success: false,
           scopeId,
@@ -86,7 +90,11 @@ export function createScopeManager(options: ScopeManagerOptions): ScopeManager {
       if (!activeScopes.has(scopeId)) {
         activeScopes.set(scopeId, new Set());
       }
-      activeScopes.get(scopeId)!.add(value);
+      const updatedValues = activeScopes.get(scopeId);
+      if (updatedValues === undefined) {
+        throw new Error(`Scope set missing for ${scopeId}`);
+      }
+      updatedValues.add(value);
       return { success: true, scopeId, value };
     },
 

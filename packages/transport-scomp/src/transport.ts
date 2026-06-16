@@ -26,18 +26,37 @@ export type { WriteResult };
  * Matches the contract expected by @weaver-conf/weaver-client.
  */
 export interface WeaverTransport {
-  resolveAll(options?: { scopePath?: ScopeInstance[]; namespace?: string }): Promise<ConfigSnapshot>;
+  resolveAll(options?: {
+    scopePath?: ScopeInstance[];
+    namespace?: string;
+  }): Promise<ConfigSnapshot>;
   get(key: string, options?: { scopePath?: ScopeInstance[] }): Promise<unknown>;
-  getNamespace(prefix: string, options?: { scopePath?: ScopeInstance[] }): Promise<Record<string, unknown>>;
+  getNamespace(
+    prefix: string,
+    options?: { scopePath?: ScopeInstance[] },
+  ): Promise<Record<string, unknown>>;
   inspect(key: string): Promise<unknown>;
   subscribe(handler: (delta: ConfigDelta) => void): () => void;
-  set(key: string, value: unknown, options?: WriteOptions): Promise<WriteResult>;
-  setMany(entries: Record<string, unknown>, options?: WriteOptions): Promise<WriteResult>;
+  set(
+    key: string,
+    value: unknown,
+    options?: WriteOptions,
+  ): Promise<WriteResult>;
+  setMany(
+    entries: Record<string, unknown>,
+    options?: WriteOptions,
+  ): Promise<WriteResult>;
   remove(key: string, options?: WriteOptions): Promise<WriteResult>;
   listScopes(): Promise<ScopeDefinition[]>;
-  listScopeValues(scopeId: string, parentScope?: ScopeInstance[]): Promise<string[]>;
+  listScopeValues(
+    scopeId: string,
+    parentScope?: ScopeInstance[],
+  ): Promise<string[]>;
   fetchSchemas?(): Promise<Record<string, ConfigurationPropertySchema>>;
-  registerSchema?(namespace: string, schema: Record<string, unknown>): Promise<void>;
+  registerSchema?(
+    namespace: string,
+    schema: Record<string, unknown>,
+  ): Promise<void>;
   close(): Promise<void>;
 }
 
@@ -53,7 +72,9 @@ function buildScopeString(scopePath?: ScopeInstance[]): string | undefined {
 }
 
 /** Creates a WeaverTransport backed by a SCOMP peer consuming the WeaverConfig contract. */
-export function createScompTransport(options: ScompTransportOptions): WeaverTransport {
+export function createScompTransport(
+  options: ScompTransportOptions,
+): WeaverTransport {
   const { peer } = options;
   const client = peer.consumes(WeaverConfig);
 
@@ -157,7 +178,10 @@ export function createScompTransport(options: ScompTransportOptions): WeaverTran
       const result = await client.listScopeValues({
         scopeId,
         ...(parentScope != null && {
-          parentScope: parentScope.map((s) => ({ scopeId: s.scopeId, value: s.value })),
+          parentScope: parentScope.map((s) => ({
+            scopeId: s.scopeId,
+            value: s.value,
+          })),
         }),
       });
       return result.values;

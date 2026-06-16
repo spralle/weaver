@@ -1,8 +1,11 @@
-import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 import { z } from "zod";
-import { zodShapeToJsonSchema, registerNamespaces } from "../src/registration.js";
 import { defineNamespace } from "../src/namespace.js";
+import {
+  registerNamespaces,
+  zodShapeToJsonSchema,
+} from "../src/registration.js";
 import type { WeaverTransport } from "../src/transport.js";
 
 describe("zodShapeToJsonSchema", () => {
@@ -48,7 +51,8 @@ describe("zodShapeToJsonSchema", () => {
 
 describe("registerNamespaces", () => {
   it("calls transport.registerSchema for each definition", async () => {
-    const registered: Array<{ ns: string; schema: Record<string, unknown> }> = [];
+    const registered: Array<{ ns: string; schema: Record<string, unknown> }> =
+      [];
     const transport = {
       registerSchema: async (ns: string, schema: Record<string, unknown>) => {
         registered.push({ ns, schema });

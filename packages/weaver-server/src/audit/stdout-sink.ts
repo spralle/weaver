@@ -4,7 +4,7 @@ import type { ConfigAuditSink, SinkDomainAuditEntry } from "./types";
 export function createStdoutAuditSink(): ConfigAuditSink {
   return {
     async record(entry: SinkDomainAuditEntry): Promise<void> {
-      process.stdout.write(JSON.stringify(entry) + "\n");
+      process.stdout.write(`${JSON.stringify(entry)}\n`);
     },
   };
 }

@@ -4,25 +4,37 @@ import { createStateContainer } from "../src/state-container.js";
 describe("deep equality diffing", () => {
   test("no false positive: same nested structure, different reference", () => {
     const container = createStateContainer({
-      layers: [{ id: "a", priority: 0, entries: { config: { a: 1, b: { c: 2 } } } }],
+      layers: [
+        { id: "a", priority: 0, entries: { config: { a: 1, b: { c: 2 } } } },
+      ],
     });
     let fired = false;
     container.subscribe("config", () => {
       fired = true;
     });
-    container.setLayer({ id: "a", priority: 0, entries: { config: { a: 1, b: { c: 2 } } } });
+    container.setLayer({
+      id: "a",
+      priority: 0,
+      entries: { config: { a: 1, b: { c: 2 } } },
+    });
     expect(fired).toBe(false);
   });
 
   test("detects actual change in nested value", () => {
     const container = createStateContainer({
-      layers: [{ id: "a", priority: 0, entries: { config: { a: 1, b: { c: 2 } } } }],
+      layers: [
+        { id: "a", priority: 0, entries: { config: { a: 1, b: { c: 2 } } } },
+      ],
     });
     let fired = false;
     container.subscribe("config", () => {
       fired = true;
     });
-    container.setLayer({ id: "a", priority: 0, entries: { config: { a: 1, b: { c: 999 } } } });
+    container.setLayer({
+      id: "a",
+      priority: 0,
+      entries: { config: { a: 1, b: { c: 999 } } },
+    });
     expect(fired).toBe(true);
   });
 

@@ -1,5 +1,7 @@
 import { initService } from "./setup";
 import "./schemas";
+import { defineNamespace } from "@weaver-conf/weaver-client";
+import { z } from "zod";
 import { ALL_KEYS } from "./seed-data";
 import { addLogEntry } from "./state";
 import { renderActivityLog } from "./ui/activity-log";
@@ -9,8 +11,14 @@ import { renderInspector } from "./ui/inspector";
 import { renderLayerStack } from "./ui/layer-stack";
 import { renderLocationSelector } from "./ui/location-selector";
 import { renderSessionPanel } from "./ui/session-panel";
-import { defineNamespace } from "@weaver-conf/weaver-client";
-import { z } from "zod";
+
+function requireElement(id: string): HTMLElement {
+  const element = document.getElementById(id);
+  if (element === null) {
+    throw new Error(`Missing required element: ${id}`);
+  }
+  return element;
+}
 
 async function main(): Promise<void> {
   const { client, session, weaverConfig } = await initService();
@@ -27,26 +35,13 @@ async function main(): Promise<void> {
   }
 
   // Mount UI panels
-  renderLayerStack(document.getElementById("layer-stack")!, weaverConfig);
-  renderLocationSelector(document.getElementById("location-selector")!);
-  renderConfigBrowser(
-    document.getElementById("config-browser")!,
-    client,
-    weaverConfig,
-  );
-  renderInspector(document.getElementById("inspector")!, client, weaverConfig);
-  renderEditor(
-    document.getElementById("editor")!,
-    client,
-    session,
-    weaverConfig,
-  );
-  renderSessionPanel(
-    document.getElementById("session-panel")!,
-    session,
-    client,
-  );
-  renderActivityLog(document.getElementById("activity-log")!);
+  renderLayerStack(requireElement("layer-stack"), weaverConfig);
+  renderLocationSelector(requireElement("location-selector"));
+  renderConfigBrowser(requireElement("config-browser"), client, weaverConfig);
+  renderInspector(requireElement("inspector"), client, weaverConfig);
+  renderEditor(requireElement("editor"), client, session, weaverConfig);
+  renderSessionPanel(requireElement("session-panel"), session, client);
+  renderActivityLog(requireElement("activity-log"));
 
   // Typed namespace showcase
   const uiConfig = defineNamespace("app.ui", {

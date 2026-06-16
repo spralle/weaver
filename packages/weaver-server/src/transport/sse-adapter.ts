@@ -38,7 +38,7 @@ export interface SSEAdapter {
 
 function matchesPrefix(key: string, prefix: string | undefined): boolean {
   if (!prefix) return true;
-  return key === prefix || key.startsWith(prefix + ".");
+  return key === prefix || key.startsWith(`${prefix}.`);
 }
 
 function filterEntriesByPrefix(
@@ -61,7 +61,7 @@ function matchesScopeFilter(
 ): boolean {
   if (!scope) return true;
   // scope filter format: "scopeId:value" — match against delta.layer
-  return delta.layer === scope || delta.layer.startsWith(scope + "/");
+  return delta.layer === scope || delta.layer.startsWith(`${scope}/`);
 }
 
 export function createSSEAdapter(options: SSEAdapterOptions): SSEAdapter {

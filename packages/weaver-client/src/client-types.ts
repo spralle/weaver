@@ -1,8 +1,14 @@
 import type { ScopeDefinition, ScopeInstance } from "@weaver-conf/config-types";
 import type { ZodRawShape } from "zod";
-
-import type { InstanceClient } from "./namespace";
+import type {
+  InstanceClient,
+  NamespaceDefinition,
+  TypedNamespaceClient,
+  UntypedNamespaceClient,
+} from "./namespace";
 import type { WeaverClientPersistence } from "./persistence";
+import type { SchemaRegistrationResult } from "./registration";
+import type { ValidationResult } from "./schema-registry";
 import type { ScopeLoadingMode } from "./scope-manager";
 import type { StalenessConfig } from "./staleness";
 import type { WeaverTransport, WriteOptions, WriteResult } from "./transport";
@@ -13,13 +19,6 @@ import type {
   SchemaOptions,
   Unsubscribe,
 } from "./types";
-import type { ValidationResult } from "./schema-registry";
-import type {
-  NamespaceDefinition,
-  TypedNamespaceClient,
-  UntypedNamespaceClient,
-} from "./namespace";
-import type { SchemaRegistrationResult } from "./registration";
 
 /** Configuration options for creating a WeaverClient instance. */
 export interface WeaverClientOptions {

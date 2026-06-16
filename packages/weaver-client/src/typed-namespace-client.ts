@@ -1,21 +1,28 @@
-import { z } from "zod";
-import type { ZodRawShape } from "zod";
-import type { ScopeInstance } from "@weaver-conf/config-types";
 import { deepGet } from "@weaver-conf/config-engine";
+import type { ScopeInstance } from "@weaver-conf/config-types";
+import type { ZodRawShape } from "zod";
+import { z } from "zod";
 import type {
-  TypedNamespaceClient,
-  TypedInstanceClient,
   NamespaceDefinition,
+  TypedInstanceClient,
+  TypedNamespaceClient,
 } from "./namespace";
-import type { ConfigDelta, Unsubscribe } from "./types";
 import type { WriteOptions, WriteResult } from "./transport";
+import type { ConfigDelta, Unsubscribe } from "./types";
 
 /** Dependencies injected into a typed namespace client. */
 export interface NamespaceClientDeps {
   getState: (scopePath?: ScopeInstance[]) => Record<string, unknown>;
-  set: (key: string, value: unknown, opts?: WriteOptions) => Promise<WriteResult>;
+  set: (
+    key: string,
+    value: unknown,
+    opts?: WriteOptions,
+  ) => Promise<WriteResult>;
   remove: (key: string, opts?: WriteOptions) => Promise<WriteResult>;
-  onChange: (pattern: string, handler: (deltas: ConfigDelta[]) => void) => Unsubscribe;
+  onChange: (
+    pattern: string,
+    handler: (deltas: ConfigDelta[]) => void,
+  ) => Unsubscribe;
 }
 
 /**
@@ -52,7 +59,9 @@ export function createTypedNamespaceClient<TShape extends ZodRawShape>(
   const client: TypedNamespaceClient<TShape> = {
     get(key) {
       const state = deps.getState(scopePath);
-      return getValidated(key, state) as ReturnType<TypedNamespaceClient<TShape>["get"]>; // SAFETY: getValidated returns Zod-parsed value matching the schema type
+      return getValidated(key, state) as ReturnType<
+        TypedNamespaceClient<TShape>["get"]
+      >; // SAFETY: getValidated returns Zod-parsed value matching the schema type
     },
 
     getOrDefault(key, defaultValue) {
@@ -97,7 +106,10 @@ export function createTypedNamespaceClient<TShape extends ZodRawShape>(
     onChange(keyOrHandler: unknown, handler?: unknown): Unsubscribe {
       if (typeof keyOrHandler === "function") {
         // SAFETY: caller passes (deltas: ConfigDelta[]) => void per the overload signature
-        return deps.onChange(`${prefix}.*`, keyOrHandler as (deltas: ConfigDelta[]) => void);
+        return deps.onChange(
+          `${prefix}.*`,
+          keyOrHandler as (deltas: ConfigDelta[]) => void,
+        );
       }
       const fullKey = resolveKey(keyOrHandler as string); // SAFETY: non-function overload passes string
       const typedHandler = handler as (value: unknown) => void; // SAFETY: second overload passes value handler
@@ -158,7 +170,9 @@ function createTypedInstanceClient<TShape extends ZodRawShape>(
   return {
     get(key) {
       const state = deps.getState(scopePath);
-      return getInstanceValue(key, state) as ReturnType<TypedInstanceClient<TShape>["get"]>; // SAFETY: getInstanceValue returns Zod-parsed value
+      return getInstanceValue(key, state) as ReturnType<
+        TypedInstanceClient<TShape>["get"]
+      >; // SAFETY: getInstanceValue returns Zod-parsed value
     },
 
     getOrDefault(key, defaultValue) {
@@ -189,7 +203,8 @@ function createTypedInstanceClient<TShape extends ZodRawShape>(
       const fullKey = `${instancePrefix}.${key as string}`; // SAFETY: key is keyof TShape & string
       return deps.onChange(fullKey, (deltas) => {
         for (const delta of deltas) {
-          if (delta.action === "set") (handler as (v: unknown) => void)(delta.value); // SAFETY: handler accepts the field value type
+          if (delta.action === "set")
+            (handler as (v: unknown) => void)(delta.value); // SAFETY: handler accepts the field value type
         }
       });
     },

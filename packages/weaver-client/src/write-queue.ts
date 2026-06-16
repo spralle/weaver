@@ -11,7 +11,11 @@ interface QueuedWrite {
 export interface WriteQueue {
   enqueue(key: string, value: unknown, options?: WriteOptions): void;
   drain(
-    sender: (key: string, value: unknown, opts?: WriteOptions) => Promise<WriteResult>,
+    sender: (
+      key: string,
+      value: unknown,
+      opts?: WriteOptions,
+    ) => Promise<WriteResult>,
   ): Promise<WriteResult[]>;
   readonly pending: number;
   clear(): void;
@@ -32,7 +36,8 @@ export function createWriteQueue(): WriteQueue {
     async drain(sender) {
       const results: WriteResult[] = [];
       while (queue.length > 0) {
-        const item = queue.shift()!;
+        const item = queue.shift();
+        if (item === undefined) continue;
         const result = await sender(item.key, item.value, item.options);
         results.push(result);
       }

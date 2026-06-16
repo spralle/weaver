@@ -1,10 +1,8 @@
-import { formatScopePath } from "@weaver-conf/config-types";
 import type { ScopeDefinition, ScopeInstance } from "@weaver-conf/config-types";
-import type {
-  WeaverTransport,
-  WriteOptions,
-  WriteResult,
-} from "./transport";
+import { formatScopePath } from "@weaver-conf/config-types";
+import { fetchWithRetry, type RetryOptions } from "./http-retry";
+import { createSSEConnection } from "./sse-connection";
+import type { WeaverTransport, WriteOptions, WriteResult } from "./transport";
 import type {
   ConfigDelta,
   ConfigSnapshot,
@@ -12,8 +10,6 @@ import type {
   ResolveOptions,
   Unsubscribe,
 } from "./types";
-import { fetchWithRetry, type RetryOptions } from "./http-retry";
-import { createSSEConnection } from "./sse-connection";
 
 export interface TransportError {
   type: "connection" | "timeout" | "parse" | "server";
@@ -73,7 +69,7 @@ export function createHttpTransport(
       ...extraHeaders,
     };
     if (token) {
-      h["Authorization"] = `Bearer ${token}`;
+      h.Authorization = `Bearer ${token}`;
     }
     return h;
   }
@@ -103,11 +99,15 @@ export function createHttpTransport(
   ): Promise<T> {
     let res: Response;
     try {
-      res = await fetchWithRetry(`${baseUrl}${path}`, {
-        method,
-        headers: buildHeaders(),
-        ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
-      }, { retry: retryConfig, timeout: requestTimeout, fetchFn, onError });
+      res = await fetchWithRetry(
+        `${baseUrl}${path}`,
+        {
+          method,
+          headers: buildHeaders(),
+          ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+        },
+        { retry: retryConfig, timeout: requestTimeout, fetchFn, onError },
+      );
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e);
       onError?.({
@@ -118,7 +118,11 @@ export function createHttpTransport(
       throw e;
     }
     // SAFETY: server API contract guarantees this response shape
-    let json: { data: T; meta: { revision: string }; error?: { code: string; message: string } };
+    let json: {
+      data: T;
+      meta: { revision: string };
+      error?: { code: string; message: string };
+    };
     try {
       json = (await res.json()) as typeof json;
     } catch (e) {

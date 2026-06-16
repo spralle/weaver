@@ -70,9 +70,7 @@ export class SecretResolutionService {
     return result.value;
   }
 
-  async resolveResult(
-    ref: SecretReference,
-  ): Promise<Result<string, Error>> {
+  async resolveResult(ref: SecretReference): Promise<Result<string, Error>> {
     const cacheKey = `${ref.provider}:${ref.uri}:${ref.version ?? ""}`;
     const cached = this.cache.get(cacheKey);
     if (cached) {
@@ -83,9 +81,13 @@ export class SecretResolutionService {
     const provider = this.providers.get(ref.provider);
     if (!provider) {
       return err(
-        createWeaverError("NOT_FOUND", `Secret provider "${ref.provider}" not registered`, {
-          provider: ref.provider,
-        }),
+        createWeaverError(
+          "NOT_FOUND",
+          `Secret provider "${ref.provider}" not registered`,
+          {
+            provider: ref.provider,
+          },
+        ),
       );
     }
 
@@ -121,9 +123,12 @@ export class SecretResolutionService {
     const resolved = new Map<string, string>();
     const failures: SecretResolutionFailure[] = [];
 
-    for (let i = 0; i < settled.length; i++) {
-      const outcome = settled[i]!; // index within bounds
-      const { key, ref } = refs[i]!; // index within bounds
+    for (const [i, outcome] of settled.entries()) {
+      const refEntry = refs[i];
+      if (refEntry === undefined) {
+        throw new Error("Secret resolution result missing matching reference");
+      }
+      const { key, ref } = refEntry;
       if (outcome.status === "fulfilled") {
         resolved.set(outcome.value.key, outcome.value.value);
       } else {

@@ -1,10 +1,6 @@
 // Git repository clone/pull management
 
-import {
-  consoleLogger,
-  extractErrorMessage,
-  type WeaverLogger,
-} from "@weaver-conf/config-engine";
+import { consoleLogger, extractErrorMessage } from "@weaver-conf/config-engine";
 import type { SimpleGit } from "simple-git";
 
 /** Result of a git operation — success with data or failure with error details. */

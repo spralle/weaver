@@ -24,9 +24,7 @@ export interface ClientSchemaRegistry {
 export function createClientSchemaRegistry(): ClientSchemaRegistry {
   const schemas = new Map<string, ConfigurationPropertySchema>();
 
-  function load(
-    input: Record<string, ConfigurationPropertySchema>,
-  ): void {
+  function load(input: Record<string, ConfigurationPropertySchema>): void {
     schemas.clear();
     for (const [key, schema] of Object.entries(input)) {
       schemas.set(key, schema);
@@ -99,8 +97,12 @@ function checkType(
   const types = Array.isArray(schema.type) ? schema.type : [schema.type];
   const actual = getJsonType(value);
   if (actual === "integer" && types.includes("number")) return true;
-  if (!types.includes(actual as (typeof types)[number])) { // SAFETY: checking membership validates the narrowing
-    errors.push({ path, message: `Expected ${types.join("|")}, got ${actual}` });
+  if (!types.includes(actual as (typeof types)[number])) {
+    // SAFETY: checking membership validates the narrowing
+    errors.push({
+      path,
+      message: `Expected ${types.join("|")}, got ${actual}`,
+    });
     return false;
   }
   return true;
@@ -122,7 +124,10 @@ function checkEnum(
   errors: Array<{ path: string; message: string }>,
 ): void {
   if (schema.enum !== undefined && !schema.enum.includes(value)) {
-    errors.push({ path, message: `Value not in enum: [${schema.enum.join(", ")}]` });
+    errors.push({
+      path,
+      message: `Value not in enum: [${schema.enum.join(", ")}]`,
+    });
   }
 }
 
@@ -144,16 +149,28 @@ function checkString(
   errors: Array<{ path: string; message: string }>,
 ): void {
   if (schema.minLength !== undefined && value.length < schema.minLength) {
-    errors.push({ path, message: `String length ${value.length} < minLength ${schema.minLength}` });
+    errors.push({
+      path,
+      message: `String length ${value.length} < minLength ${schema.minLength}`,
+    });
   }
   if (schema.maxLength !== undefined && value.length > schema.maxLength) {
-    errors.push({ path, message: `String length ${value.length} > maxLength ${schema.maxLength}` });
+    errors.push({
+      path,
+      message: `String length ${value.length} > maxLength ${schema.maxLength}`,
+    });
   }
   if (schema.pattern !== undefined) {
     if (!isSafePattern(schema.pattern)) {
-      errors.push({ path, message: `Pattern rejected as potentially unsafe: ${schema.pattern}` });
+      errors.push({
+        path,
+        message: `Pattern rejected as potentially unsafe: ${schema.pattern}`,
+      });
     } else if (!getCachedRegex(schema.pattern).test(value)) {
-      errors.push({ path, message: `String does not match pattern ${schema.pattern}` });
+      errors.push({
+        path,
+        message: `String does not match pattern ${schema.pattern}`,
+      });
     }
   }
 }
@@ -170,14 +187,29 @@ function checkNumber(
   if (schema.maximum !== undefined && value > schema.maximum) {
     errors.push({ path, message: `${value} > maximum ${schema.maximum}` });
   }
-  if (schema.exclusiveMinimum !== undefined && value <= schema.exclusiveMinimum) {
-    errors.push({ path, message: `${value} <= exclusiveMinimum ${schema.exclusiveMinimum}` });
+  if (
+    schema.exclusiveMinimum !== undefined &&
+    value <= schema.exclusiveMinimum
+  ) {
+    errors.push({
+      path,
+      message: `${value} <= exclusiveMinimum ${schema.exclusiveMinimum}`,
+    });
   }
-  if (schema.exclusiveMaximum !== undefined && value >= schema.exclusiveMaximum) {
-    errors.push({ path, message: `${value} >= exclusiveMaximum ${schema.exclusiveMaximum}` });
+  if (
+    schema.exclusiveMaximum !== undefined &&
+    value >= schema.exclusiveMaximum
+  ) {
+    errors.push({
+      path,
+      message: `${value} >= exclusiveMaximum ${schema.exclusiveMaximum}`,
+    });
   }
   if (schema.multipleOf !== undefined && value % schema.multipleOf !== 0) {
-    errors.push({ path, message: `${value} is not a multiple of ${schema.multipleOf}` });
+    errors.push({
+      path,
+      message: `${value} is not a multiple of ${schema.multipleOf}`,
+    });
   }
 }
 
@@ -188,12 +220,21 @@ function checkArray(
   errors: Array<{ path: string; message: string }>,
 ): void {
   if (schema.minItems !== undefined && value.length < schema.minItems) {
-    errors.push({ path, message: `Array length ${value.length} < minItems ${schema.minItems}` });
+    errors.push({
+      path,
+      message: `Array length ${value.length} < minItems ${schema.minItems}`,
+    });
   }
   if (schema.maxItems !== undefined && value.length > schema.maxItems) {
-    errors.push({ path, message: `Array length ${value.length} > maxItems ${schema.maxItems}` });
+    errors.push({
+      path,
+      message: `Array length ${value.length} > maxItems ${schema.maxItems}`,
+    });
   }
-  if (schema.uniqueItems && new Set(value.map((v) => JSON.stringify(v))).size !== value.length) {
+  if (
+    schema.uniqueItems &&
+    new Set(value.map((v) => JSON.stringify(v))).size !== value.length
+  ) {
     errors.push({ path, message: "Array items are not unique" });
   }
 }

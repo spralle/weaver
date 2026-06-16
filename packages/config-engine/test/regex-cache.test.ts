@@ -1,6 +1,10 @@
-import { describe, it, beforeEach } from "node:test";
 import assert from "node:assert/strict";
-import { getCachedRegex, isSafePattern, clearRegexCache } from "../src/regex-cache.js";
+import { beforeEach, describe, it } from "node:test";
+import {
+  clearRegexCache,
+  getCachedRegex,
+  isSafePattern,
+} from "../src/regex-cache.js";
 
 describe("getCachedRegex", () => {
   beforeEach(() => clearRegexCache());

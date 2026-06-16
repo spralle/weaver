@@ -1,9 +1,5 @@
 // @weaver-conf/config-types — Configuration type definitions and Zod schemas
 
-// result.ts — Discriminated Result<T,E> union for fallible operations
-export type { Result } from "./result";
-export { ok, err, isOk, isErr } from "./result";
-
 // access.ts — Permission types and default policies
 export type {
   ConfigurationAccessContext,
@@ -15,7 +11,7 @@ export type {
 } from "./access";
 // cache.ts — Scope resolution cache interface
 export type { ScopeResolutionCache } from "./cache";
-export { serializeScopePath, formatScopePath } from "./cache";
+export { formatScopePath, serializeScopePath } from "./cache";
 // environment.ts — Environment-aware provider types and provenance tracking
 export type {
   ConfigValueSource,
@@ -109,6 +105,9 @@ export type {
   WriteError,
   WriteResult,
 } from "./providers";
+// result.ts — Discriminated Result<T,E> union for fallible operations
+export type { Result } from "./result";
+export { err, isErr, isOk, ok } from "./result";
 // schemas-access.ts — Zod schemas for access context and write policy types
 export {
   configurationAccessContextSchema,

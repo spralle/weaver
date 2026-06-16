@@ -12,9 +12,8 @@ export function matchGlob(pattern: string, key: string): boolean {
 function globToRegex(pattern: string): RegExp {
   let result = "^";
   const parts = pattern.split(".");
-  for (let i = 0; i < parts.length; i++) {
+  for (const [i, part] of parts.entries()) {
     if (i > 0) result += "\\.";
-    const part = parts[i]!;
     if (part === "**") {
       result += ".*";
       if (i < parts.length - 1) {

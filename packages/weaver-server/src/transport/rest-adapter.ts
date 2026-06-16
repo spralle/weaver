@@ -5,7 +5,6 @@ import { ZodError } from "zod";
 import type { AuthContext } from "../auth/auth-middleware";
 import type { WeaverConfigService } from "../core/config-service";
 import type { ScopeManager } from "../core/scope-manager";
-import type { WeaverError, WeaverErrorCode } from "../types/index";
 import { createWeaverError } from "../types/index";
 import type { AuthGate } from "./auth-gate";
 import {

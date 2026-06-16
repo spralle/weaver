@@ -1,7 +1,6 @@
 import type { ConfigurationPropertySchema } from "@weaver-conf/config-types";
-
-import type { ClientSchemaRegistry } from "./schema-registry";
 import type { WeaverClientPersistence } from "./persistence";
+import type { ClientSchemaRegistry } from "./schema-registry";
 import type { StalenessMonitor } from "./staleness";
 import type { WeaverTransport } from "./transport";
 import type { ConfigSnapshot } from "./types";
@@ -22,7 +21,14 @@ export async function bootClient(options: {
   registry: ClientSchemaRegistry | undefined;
   stalenessMonitor: StalenessMonitor;
 }): Promise<BootResult> {
-  const { namespace, transport, persistence, offlineBoot, registry, stalenessMonitor } = options;
+  const {
+    namespace,
+    transport,
+    persistence,
+    offlineBoot,
+    registry,
+    stalenessMonitor,
+  } = options;
 
   let baseState: Record<string, unknown> = {};
   let revision = "";
@@ -56,10 +62,16 @@ export async function bootClient(options: {
     if (registry && "fetchSchemas" in transport) {
       try {
         // SAFETY: duck-typing transport for optional fetchSchemas capability
-        const fetch = (transport as { fetchSchemas: () => Promise<Record<string, unknown>> }).fetchSchemas;
+        const fetch = (
+          transport as { fetchSchemas: () => Promise<Record<string, unknown>> }
+        ).fetchSchemas;
         // SAFETY: fetchSchemas returns schema registry structure
-        registry.load(await fetch() as Record<string, ConfigurationPropertySchema>);
-      } catch { /* Schema loading is optional */ }
+        registry.load(
+          (await fetch()) as Record<string, ConfigurationPropertySchema>,
+        );
+      } catch {
+        /* Schema loading is optional */
+      }
     }
   } catch (error) {
     if (offlineBoot && revision) {

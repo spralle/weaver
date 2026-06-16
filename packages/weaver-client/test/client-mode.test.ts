@@ -12,9 +12,7 @@ function makeSnapshot(
   return { entries, scopes: {}, revision, timestamp: new Date().toISOString() };
 }
 
-function createSuccessTransport(
-  snapshot?: ConfigSnapshot,
-): WeaverTransport {
+function createSuccessTransport(snapshot?: ConfigSnapshot): WeaverTransport {
   const snap = snapshot ?? makeSnapshot({ app: { name: "live" } });
   return {
     async resolveAll() {

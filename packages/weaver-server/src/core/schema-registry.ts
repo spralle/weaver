@@ -1,4 +1,7 @@
-import { detectBreakingChanges, schemasEqual } from "@weaver-conf/config-engine";
+import {
+  detectBreakingChanges,
+  schemasEqual,
+} from "@weaver-conf/config-engine";
 import type { ConfigurationPropertySchema } from "@weaver-conf/config-types";
 import { configurationPropertySchemaSchema } from "@weaver-conf/config-types";
 import type { WeaverError } from "../types/errors";
@@ -41,7 +44,7 @@ function schemaKey(serviceId: string, environment: string): string {
 }
 
 export function createSchemaRegistry(
-  options: SchemaRegistryOptions,
+  _options: SchemaRegistryOptions,
 ): SchemaRegistry {
   const schemas = new Map<string, SchemaEntry>();
 

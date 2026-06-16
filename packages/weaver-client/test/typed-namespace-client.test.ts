@@ -1,8 +1,11 @@
-import { describe, it } from "node:test";
 import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 import { z } from "zod";
 import { defineNamespace } from "../src/namespace.js";
-import { createTypedNamespaceClient, type NamespaceClientDeps } from "../src/typed-namespace-client.js";
+import {
+  createTypedNamespaceClient,
+  type NamespaceClientDeps,
+} from "../src/typed-namespace-client.js";
 
 const testNamespace = defineNamespace("editor", {
   fontSize: z.number().min(8).max(72),
@@ -11,7 +14,10 @@ const testNamespace = defineNamespace("editor", {
 });
 
 function createMockDeps(state: Record<string, unknown>): NamespaceClientDeps {
-  const listeners: Array<{ pattern: string; handler: (deltas: unknown[]) => void }> = [];
+  const listeners: Array<{
+    pattern: string;
+    handler: (deltas: unknown[]) => void;
+  }> = [];
   return {
     getState: () => state,
     set: async (key, value) => {
@@ -38,60 +44,87 @@ function createMockDeps(state: Record<string, unknown>): NamespaceClientDeps {
 describe("createTypedNamespaceClient", () => {
   it("get() returns typed value from state", () => {
     const state = { editor: { fontSize: 14, theme: "dark", wordWrap: true } };
-    const client = createTypedNamespaceClient(testNamespace, createMockDeps(state));
+    const client = createTypedNamespaceClient(
+      testNamespace,
+      createMockDeps(state),
+    );
     assert.equal(client.get("fontSize"), 14);
     assert.equal(client.get("theme"), "dark");
   });
 
   it("get() returns undefined when key not in state", () => {
     const state = { editor: {} };
-    const client = createTypedNamespaceClient(testNamespace, createMockDeps(state));
+    const client = createTypedNamespaceClient(
+      testNamespace,
+      createMockDeps(state),
+    );
     assert.equal(client.get("fontSize"), undefined);
   });
 
   it("get() returns undefined when value fails Zod validation", () => {
     const state = { editor: { fontSize: 999, theme: "invalid" } };
-    const client = createTypedNamespaceClient(testNamespace, createMockDeps(state));
+    const client = createTypedNamespaceClient(
+      testNamespace,
+      createMockDeps(state),
+    );
     assert.equal(client.get("fontSize"), undefined);
     assert.equal(client.get("theme"), undefined);
   });
 
   it("getOrDefault() returns default when missing", () => {
     const state = { editor: {} };
-    const client = createTypedNamespaceClient(testNamespace, createMockDeps(state));
+    const client = createTypedNamespaceClient(
+      testNamespace,
+      createMockDeps(state),
+    );
     assert.equal(client.getOrDefault("fontSize", 16), 16);
   });
 
   it("getOrDefault() returns value when present", () => {
     const state = { editor: { fontSize: 12 } };
-    const client = createTypedNamespaceClient(testNamespace, createMockDeps(state));
+    const client = createTypedNamespaceClient(
+      testNamespace,
+      createMockDeps(state),
+    );
     assert.equal(client.getOrDefault("fontSize", 16), 12);
   });
 
   it("getAll() returns all valid namespace entries", () => {
     const state = { editor: { fontSize: 14, theme: "light", wordWrap: false } };
-    const client = createTypedNamespaceClient(testNamespace, createMockDeps(state));
+    const client = createTypedNamespaceClient(
+      testNamespace,
+      createMockDeps(state),
+    );
     const all = client.getAll();
     assert.deepEqual(all, { fontSize: 14, theme: "light", wordWrap: false });
   });
 
   it("getAll() skips invalid entries", () => {
     const state = { editor: { fontSize: 14, theme: "invalid" } };
-    const client = createTypedNamespaceClient(testNamespace, createMockDeps(state));
+    const client = createTypedNamespaceClient(
+      testNamespace,
+      createMockDeps(state),
+    );
     const all = client.getAll();
     assert.deepEqual(all, { fontSize: 14 });
   });
 
   it("set() succeeds with valid value", async () => {
     const state = { editor: {} };
-    const client = createTypedNamespaceClient(testNamespace, createMockDeps(state));
+    const client = createTypedNamespaceClient(
+      testNamespace,
+      createMockDeps(state),
+    );
     const result = await client.set("fontSize", 20);
     assert.equal(result.success, true);
   });
 
   it("set() returns VALIDATION_ERROR for invalid value", async () => {
     const state = { editor: {} };
-    const client = createTypedNamespaceClient(testNamespace, createMockDeps(state));
+    const client = createTypedNamespaceClient(
+      testNamespace,
+      createMockDeps(state),
+    );
     // @ts-expect-error - intentionally passing invalid value for test
     const result = await client.set("fontSize", "not-a-number");
     assert.equal(result.success, false);
@@ -122,7 +155,10 @@ describe("createTypedNamespaceClient", () => {
         instances: { panel1: { fontSize: 20 } },
       },
     };
-    const client = createTypedNamespaceClient(testNamespace, createMockDeps(state));
+    const client = createTypedNamespaceClient(
+      testNamespace,
+      createMockDeps(state),
+    );
     const inst = client.instance("panel1");
     // Instance override
     assert.equal(inst.get("fontSize"), 20);

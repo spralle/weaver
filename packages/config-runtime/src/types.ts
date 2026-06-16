@@ -1,5 +1,5 @@
-import { z } from "zod";
 import type { Unsubscribe } from "@weaver-conf/config-types";
+import { z } from "zod";
 
 export type { Unsubscribe } from "@weaver-conf/config-types";
 

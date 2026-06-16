@@ -9,14 +9,22 @@ import {
   setSelectedLocation,
 } from "../state";
 
+function requireQuery(container: HTMLElement, selector: string): Element {
+  const element = container.querySelector(selector);
+  if (element === null) {
+    throw new Error(`Missing required element: ${selector}`);
+  }
+  return element;
+}
+
 export function renderLocationSelector(container: HTMLElement): void {
   container.innerHTML = `
     <h2>Location Scope</h2>
     <div class="location-buttons"></div>
     <div class="scope-chain"></div>
   `;
-  const wrapper = container.querySelector(".location-buttons")!;
-  const chainEl = container.querySelector(".scope-chain")!;
+  const wrapper = requireQuery(container, ".location-buttons");
+  const chainEl = requireQuery(container, ".scope-chain");
 
   function render(): void {
     const current = getSelectedLocation();

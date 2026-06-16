@@ -1,22 +1,28 @@
+export type { MountError, MountResolution, MountResult } from "./mounts";
+export {
+  buildMountMap,
+  resolveMountedNamespace,
+  resolveMountedValue,
+} from "./mounts";
+export type { ScopeResolver, ScopeResolverOptions } from "./scope-resolver";
+export { createScopeCache, createScopeResolver } from "./scope-resolver";
+export type {
+  SecretBackend,
+  SecretResolver,
+  SecretResolverOptions,
+} from "./secret-resolver";
+
+export { createSecretResolver } from "./secret-resolver";
 export { createStateContainer } from "./state-container";
 export type {
-  StateDelta,
   LayerEntry,
   StateContainer,
+  StateDelta,
   StateSnapshot,
   Unsubscribe,
 } from "./types";
 export {
-  StateDeltaSchema,
   LayerEntrySchema,
+  StateDeltaSchema,
   StateSnapshotSchema,
 } from "./types";
-
-export { buildMountMap, resolveMountedValue, resolveMountedNamespace } from "./mounts";
-export type { MountResolution, MountError, MountResult } from "./mounts";
-
-export { createSecretResolver } from "./secret-resolver";
-export type { SecretBackend, SecretResolverOptions, SecretResolver } from "./secret-resolver";
-
-export { createScopeResolver, createScopeCache } from "./scope-resolver";
-export type { ScopeResolverOptions, ScopeResolver } from "./scope-resolver";
