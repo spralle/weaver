@@ -13,7 +13,7 @@ import { parseServerEnv } from "./server-env";
 import { createShutdownManager } from "./shutdown";
 import type { AuthGate } from "./transport/auth-gate";
 import { createAuthGate } from "./transport/auth-gate";
-import type { RestAdapter } from "./transport/rest-adapter";
+import type { RestAdapter, RestRequest } from "./transport/rest-adapter";
 import { createRestAdapter } from "./transport/rest-adapter";
 import type { SSEAdapter } from "./transport/sse-adapter";
 import { createSSEAdapter } from "./transport/sse-adapter";
@@ -131,32 +131,28 @@ async function handleRest(
     headers[key] = value;
   });
 
-  // Authenticate if auth middleware is configured
-  let authContext: AuthContext | undefined;
-  if (authMiddleware) {
-    const token = authMiddleware.extractToken(headers);
-    if (token) {
-      try {
-        authContext = await authMiddleware.authenticate(token);
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "Unauthorized";
-        return new Response(
-          JSON.stringify({ error: { code: "UNAUTHORIZED", message } }),
-          { status: 401, headers: { "content-type": "application/json" } },
-        );
-      }
-    }
+  const authResult = await authenticateRestRequest(
+    method,
+    headers,
+    authMiddleware,
+  );
+  if (authResult instanceof Response) {
+    return authResult;
   }
 
-  const restRequest: import("./transport/rest-adapter").RestRequest = {
+  const restRequest: RestRequest = {
     params: {},
     query,
     body,
     headers,
-    ...(authContext ? { authContext } : {}),
+    ...(authResult ? { authContext: authResult } : {}),
   };
 
-  const restResponse = await restAdapter.handleRequest(method, url.pathname, restRequest);
+  const restResponse = await restAdapter.handleRequest(
+    method,
+    url.pathname,
+    restRequest,
+  );
 
   return new Response(JSON.stringify(restResponse.body), {
     status: restResponse.status,
@@ -211,6 +207,40 @@ async function handleSSE(url: URL, sseAdapter: SSEAdapter): Promise<Response> {
       Connection: "keep-alive",
     },
   });
+}
+
+function isWriteMethod(method: string): boolean {
+  return (
+    method === "POST" ||
+    method === "PUT" ||
+    method === "PATCH" ||
+    method === "DELETE"
+  );
+}
+
+function unauthorized(message: string): Response {
+  return new Response(
+    JSON.stringify({ error: { code: "UNAUTHORIZED", message } }),
+    { status: 401, headers: { "content-type": "application/json" } },
+  );
+}
+
+async function authenticateRestRequest(
+  method: string,
+  headers: Record<string, string>,
+  authMiddleware?: AuthMiddleware,
+): Promise<AuthContext | Response | undefined> {
+  if (!authMiddleware) return undefined;
+
+  const token = authMiddleware.extractToken(headers);
+  if (!token && !isWriteMethod(method)) return undefined;
+
+  try {
+    return await authMiddleware.authenticate(token);
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unauthorized";
+    return unauthorized(message);
+  }
 }
 
 export async function startWeaverServer(

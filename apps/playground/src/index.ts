@@ -183,11 +183,11 @@ async function main() {
     },
   );
 
-  // Without a token, the request may go through (no token = no auth context).
-  // The auth gate only blocks when authContext is present but lacks permissions.
-  // What matters is that the server is operational with auth configured.
   assert(authServer.isReady === true, "Auth server is operational");
-  assert(unauthRes.status > 0, `Unauthenticated write returned status ${unauthRes.status}`);
+  assert(
+    unauthRes.status === 401 || unauthRes.status === 403,
+    `Unauthenticated write rejected with status ${unauthRes.status}`,
+  );
 
   await authServer.close();
 
