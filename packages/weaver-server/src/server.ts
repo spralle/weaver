@@ -32,6 +32,8 @@ declare const Bun: {
   };
 };
 
+type BunServer = ReturnType<typeof Bun.serve>;
+
 export interface WeaverServerOptions {
   port?: number;
   repoUrl?: string;
@@ -268,116 +270,132 @@ export async function startWeaverServer(
     throw err;
   }
 
-  // Auth setup — only enabled when jwtSecret is configured
-  let authGate: AuthGate | undefined;
-  let authMiddleware: AuthMiddleware | undefined;
+  let sseAdapter: SSEAdapter | undefined;
+  let server: BunServer | undefined;
 
-  if (config.jwtSecret) {
-    const jwtValidator = createJwtValidator({
-      publicKeyOrSecret: config.jwtSecret,
+  try {
+    // Auth setup — only enabled when jwtSecret is configured
+    let authGate: AuthGate | undefined;
+    let authMiddleware: AuthMiddleware | undefined;
+
+    if (config.jwtSecret) {
+      const jwtValidator = createJwtValidator({
+        publicKeyOrSecret: config.jwtSecret,
+      });
+
+      authMiddleware = createAuthMiddleware({
+        jwtValidator,
+        adminRoles: config.adminRoles,
+      });
+
+      // Minimal WeaverConfig — only getRank is used by auth checks
+      const layerRanks = new Map([
+        ["platform", 0],
+        ["tenant", 1],
+        ["session", 2],
+      ]);
+      const weaverConfig = {
+        layers: [],
+        layerNames: [...layerRanks.keys()],
+        rankMap: layerRanks,
+        getRank: (layer: string) => layerRanks.get(layer) ?? -1,
+        getLayer: () => undefined,
+        getLayersByType: () => [],
+      } satisfies WeaverConfig;
+
+      const authFunctions = withAuth({
+        weaverConfig,
+        visibilityRoles: {
+          admin: new Set(config.adminRoles),
+          platform: new Set([...config.adminRoles, "platform"]),
+        },
+        layerWritePolicies: [
+          { layer: "platform", allowedRoles: config.adminRoles },
+        ],
+        dynamicScopeRoles: new Set(config.adminRoles),
+      });
+
+      authGate = createAuthGate({
+        authFunctions,
+        mapContext: (authCtx) => ({
+          userId:
+            authCtx.identity.userId ??
+            authCtx.identity.serviceId ??
+            "anonymous",
+          roles: authCtx.identity.roles ?? [],
+          sessionMode: undefined,
+        }),
+      });
+    }
+
+    const restAdapterOptions: {
+      configService: typeof configService;
+      corsOrigins?: string[];
+      authGate?: AuthGate;
+    } = {
+      configService,
+    };
+    if (config.corsOrigins) {
+      restAdapterOptions.corsOrigins = config.corsOrigins;
+    }
+    if (authGate) {
+      restAdapterOptions.authGate = authGate;
+    }
+
+    const restAdapter = createRestAdapter(restAdapterOptions);
+
+    sseAdapter = createSSEAdapter({ configService });
+    sseAdapter.startCheckpointTimer();
+
+    const handleRequest = createRequestHandler(
+      health,
+      restAdapter,
+      sseAdapter,
+      authMiddleware,
+    );
+
+    server = Bun.serve({
+      port: config.port,
+      fetch: handleRequest,
+    });
+    const activeSseAdapter = sseAdapter;
+    const activeServer = server;
+
+    health.setDegradedInfo({
+      degradedProviders: configService.degradedProviders,
+      totalProviders: inputProviders.length,
+    });
+    health.setReady(true);
+
+    shutdownManager.onShutdown(async () => {
+      health.setReady(false);
+      await configService.flush();
+      activeSseAdapter.stopCheckpointTimer();
+      activeSseAdapter.closeAll();
+      activeServer.stop();
+      await bootstrapResult.dispose();
     });
 
-    authMiddleware = createAuthMiddleware({
-      jwtValidator,
-      adminRoles: config.adminRoles,
-    });
-
-    // Minimal WeaverConfig — only getRank is used by auth checks
-    const layerRanks = new Map([
-      ["platform", 0],
-      ["tenant", 1],
-      ["session", 2],
-    ]);
-    const weaverConfig = {
-      layers: [],
-      layerNames: [...layerRanks.keys()],
-      rankMap: layerRanks,
-      getRank: (layer: string) => layerRanks.get(layer) ?? -1,
-      getLayer: () => undefined,
-      getLayersByType: () => [],
-    } satisfies WeaverConfig;
-
-    const authFunctions = withAuth({
-      weaverConfig,
-      visibilityRoles: {
-        admin: new Set(config.adminRoles),
-        platform: new Set([...config.adminRoles, "platform"]),
+    return {
+      get port() {
+        return activeServer.port;
       },
-      layerWritePolicies: [
-        { layer: "platform", allowedRoles: config.adminRoles },
-      ],
-      dynamicScopeRoles: new Set(config.adminRoles),
-    });
-
-    authGate = createAuthGate({
-      authFunctions,
-      mapContext: (authCtx) => ({
-        userId:
-          authCtx.identity.userId ?? authCtx.identity.serviceId ?? "anonymous",
-        roles: authCtx.identity.roles ?? [],
-        sessionMode: undefined,
-      }),
-    });
-  }
-
-  const restAdapterOptions: {
-    configService: typeof configService;
-    corsOrigins?: string[];
-    authGate?: AuthGate;
-  } = {
-    configService,
-  };
-  if (config.corsOrigins) {
-    restAdapterOptions.corsOrigins = config.corsOrigins;
-  }
-  if (authGate) {
-    restAdapterOptions.authGate = authGate;
-  }
-
-  const restAdapter = createRestAdapter(restAdapterOptions);
-
-  const sseAdapter = createSSEAdapter({ configService });
-  sseAdapter.startCheckpointTimer();
-
-  const handleRequest = createRequestHandler(
-    health,
-    restAdapter,
-    sseAdapter,
-    authMiddleware,
-  );
-
-  const server = Bun.serve({
-    port: config.port,
-    fetch: handleRequest,
-  });
-
-  health.setDegradedInfo({
-    degradedProviders: configService.degradedProviders,
-    totalProviders: inputProviders.length,
-  });
-  health.setReady(true);
-
-  shutdownManager.onShutdown(async () => {
+      get isReady() {
+        return health.readyz().status === 200;
+      },
+      get authEnabled() {
+        return authMiddleware !== undefined;
+      },
+      async close() {
+        await shutdownManager.shutdown();
+      },
+    };
+  } catch (err) {
     health.setReady(false);
-    await configService.flush();
-    sseAdapter.stopCheckpointTimer();
-    sseAdapter.closeAll();
-    server.stop();
+    sseAdapter?.stopCheckpointTimer();
+    sseAdapter?.closeAll();
+    server?.stop();
     await bootstrapResult.dispose();
-  });
-
-  return {
-    get port() {
-      return server.port;
-    },
-    get isReady() {
-      return health.readyz().status === 200;
-    },
-    get authEnabled() {
-      return authMiddleware !== undefined;
-    },
-    async close() {
-      await shutdownManager.shutdown();
-    },
-  };
+    throw err;
+  }
 }

@@ -153,4 +153,24 @@ describe("Weaver server bootstrap", () => {
       await server.close();
     }
   });
+
+  it("cleans up when startup fails after config service creation", async () => {
+    const server = await startWeaverServer({ port: 0 });
+
+    try {
+      await assert.rejects(
+        startWeaverServer({
+          port: server.port,
+          providers: [
+            createInMemoryStorageProvider({
+              id: "conflict",
+              layer: "platform",
+            }),
+          ],
+        }),
+      );
+    } finally {
+      await server.close();
+    }
+  });
 });
