@@ -1,5 +1,3 @@
-// Weaver server entry point — orchestrates all subsystems
-
 import { withAuth } from "@weaver-conf/config-auth";
 import type {
   ConfigurationStorageProvider,
@@ -8,10 +6,10 @@ import type {
 import type { AuthContext, AuthMiddleware } from "./auth/auth-middleware";
 import { createAuthMiddleware } from "./auth/auth-middleware";
 import { createJwtValidator } from "./auth/jwt-validator";
+import { resolveServerBootstrap } from "./bootstrap/server-bootstrap";
 import { createWeaverConfigService } from "./core/config-service";
 import type { HealthEndpoints } from "./health";
 import { createHealthEndpoints } from "./health";
-import { createInMemoryStorageProvider } from "./providers/index";
 import { parseServerEnv } from "./server-env";
 import { createShutdownManager } from "./shutdown";
 import type { AuthGate } from "./transport/auth-gate";
@@ -31,7 +29,8 @@ declare const Bun: {
     stop(): void;
   };
 };
-
+type BunServer = ReturnType<typeof Bun.serve>;
+type BootstrapResolver = typeof resolveServerBootstrap;
 export interface WeaverServerOptions {
   port?: number;
   repoUrl?: string;
@@ -43,7 +42,6 @@ export interface WeaverServerOptions {
   corsOrigins?: string[];
   providers?: ConfigurationStorageProvider[];
 }
-
 export interface WeaverServer {
   readonly port: number;
   readonly isReady: boolean;
@@ -66,7 +64,6 @@ function resolveOptions(options?: WeaverServerOptions) {
     providers: options?.providers,
   };
 }
-
 function createRequestHandler(
   health: HealthEndpoints,
   restAdapter: RestAdapter,
@@ -107,7 +104,6 @@ function createRequestHandler(
     });
   };
 }
-
 async function handleRest(
   req: Request,
   url: URL,
@@ -249,129 +245,156 @@ async function authenticateRestRequest(
 export async function startWeaverServer(
   options?: WeaverServerOptions,
 ): Promise<WeaverServer> {
+  return startWeaverServerInternal(options, resolveServerBootstrap);
+}
+
+export async function startWeaverServerInternal(
+  options: WeaverServerOptions | undefined,
+  resolveBootstrap: BootstrapResolver,
+): Promise<WeaverServer> {
   const config = resolveOptions(options);
 
   const health = createHealthEndpoints();
   const shutdownManager = createShutdownManager({ drainTimeoutMs: 10_000 });
 
-  const inputProviders = config.providers ?? [
-    createInMemoryStorageProvider({ id: "default", layer: "platform" }),
-  ];
+  const bootstrapResult = await resolveBootstrap(config);
+  const inputProviders = bootstrapResult.providers;
 
-  const configService = await createWeaverConfigService({
-    providers: inputProviders,
-    environment: config.environment,
-  });
+  let configService: Awaited<ReturnType<typeof createWeaverConfigService>>;
+  try {
+    configService = await createWeaverConfigService({
+      providers: inputProviders,
+      environment: config.environment,
+    });
+  } catch (err) {
+    await bootstrapResult.dispose();
+    throw err;
+  }
 
-  // Auth setup — only enabled when jwtSecret is configured
-  let authGate: AuthGate | undefined;
-  let authMiddleware: AuthMiddleware | undefined;
+  let sseAdapter: SSEAdapter | undefined;
+  let server: BunServer | undefined;
 
-  if (config.jwtSecret) {
-    const jwtValidator = createJwtValidator({
-      publicKeyOrSecret: config.jwtSecret,
+  try {
+    let authGate: AuthGate | undefined;
+    let authMiddleware: AuthMiddleware | undefined;
+
+    if (config.jwtSecret) {
+      const jwtValidator = createJwtValidator({
+        publicKeyOrSecret: config.jwtSecret,
+      });
+
+      authMiddleware = createAuthMiddleware({
+        jwtValidator,
+        adminRoles: config.adminRoles,
+      });
+
+      const layerRanks = new Map([
+        ["platform", 0],
+        ["tenant", 1],
+        ["session", 2],
+      ]);
+      const weaverConfig = {
+        layers: [],
+        layerNames: [...layerRanks.keys()],
+        rankMap: layerRanks,
+        getRank: (layer: string) => layerRanks.get(layer) ?? -1,
+        getLayer: () => undefined,
+        getLayersByType: () => [],
+      } satisfies WeaverConfig;
+
+      const authFunctions = withAuth({
+        weaverConfig,
+        visibilityRoles: {
+          admin: new Set(config.adminRoles),
+          platform: new Set([...config.adminRoles, "platform"]),
+        },
+        layerWritePolicies: [
+          { layer: "platform", allowedRoles: config.adminRoles },
+        ],
+        dynamicScopeRoles: new Set(config.adminRoles),
+      });
+
+      authGate = createAuthGate({
+        authFunctions,
+        mapContext: (authCtx) => ({
+          userId:
+            authCtx.identity.userId ??
+            authCtx.identity.serviceId ??
+            "anonymous",
+          roles: authCtx.identity.roles ?? [],
+          sessionMode: undefined,
+        }),
+      });
+    }
+
+    const restAdapterOptions: {
+      configService: typeof configService;
+      corsOrigins?: string[];
+      authGate?: AuthGate;
+    } = {
+      configService,
+    };
+    if (config.corsOrigins) {
+      restAdapterOptions.corsOrigins = config.corsOrigins;
+    }
+    if (authGate) {
+      restAdapterOptions.authGate = authGate;
+    }
+
+    const restAdapter = createRestAdapter(restAdapterOptions);
+
+    sseAdapter = createSSEAdapter({ configService });
+    sseAdapter.startCheckpointTimer();
+
+    const handleRequest = createRequestHandler(
+      health,
+      restAdapter,
+      sseAdapter,
+      authMiddleware,
+    );
+
+    server = Bun.serve({
+      port: config.port,
+      fetch: handleRequest,
+    });
+    const activeSseAdapter = sseAdapter;
+    const activeServer = server;
+
+    health.setDegradedInfo({
+      degradedProviders: configService.degradedProviders,
+      totalProviders: inputProviders.length,
+    });
+    health.setReady(true);
+
+    shutdownManager.onShutdown(async () => {
+      health.setReady(false);
+      await configService.flush();
+      activeSseAdapter.stopCheckpointTimer();
+      activeSseAdapter.closeAll();
+      activeServer.stop();
+      await bootstrapResult.dispose();
     });
 
-    authMiddleware = createAuthMiddleware({
-      jwtValidator,
-      adminRoles: config.adminRoles,
-    });
-
-    // Minimal WeaverConfig — only getRank is used by auth checks
-    const layerRanks = new Map([
-      ["platform", 0],
-      ["tenant", 1],
-      ["session", 2],
-    ]);
-    const weaverConfig = {
-      layers: [],
-      layerNames: [...layerRanks.keys()],
-      rankMap: layerRanks,
-      getRank: (layer: string) => layerRanks.get(layer) ?? -1,
-      getLayer: () => undefined,
-      getLayersByType: () => [],
-    } satisfies WeaverConfig;
-
-    const authFunctions = withAuth({
-      weaverConfig,
-      visibilityRoles: {
-        admin: new Set(config.adminRoles),
-        platform: new Set([...config.adminRoles, "platform"]),
+    return {
+      get port() {
+        return activeServer.port;
       },
-      layerWritePolicies: [
-        { layer: "platform", allowedRoles: config.adminRoles },
-      ],
-      dynamicScopeRoles: new Set(config.adminRoles),
-    });
-
-    authGate = createAuthGate({
-      authFunctions,
-      mapContext: (authCtx) => ({
-        userId:
-          authCtx.identity.userId ?? authCtx.identity.serviceId ?? "anonymous",
-        roles: authCtx.identity.roles ?? [],
-        sessionMode: undefined,
-      }),
-    });
-  }
-
-  const restAdapterOptions: {
-    configService: typeof configService;
-    corsOrigins?: string[];
-    authGate?: AuthGate;
-  } = {
-    configService,
-  };
-  if (config.corsOrigins) {
-    restAdapterOptions.corsOrigins = config.corsOrigins;
-  }
-  if (authGate) {
-    restAdapterOptions.authGate = authGate;
-  }
-
-  const restAdapter = createRestAdapter(restAdapterOptions);
-
-  const sseAdapter = createSSEAdapter({ configService });
-  sseAdapter.startCheckpointTimer();
-
-  const handleRequest = createRequestHandler(
-    health,
-    restAdapter,
-    sseAdapter,
-    authMiddleware,
-  );
-
-  const server = Bun.serve({
-    port: config.port,
-    fetch: handleRequest,
-  });
-
-  health.setDegradedInfo({
-    degradedProviders: configService.degradedProviders,
-    totalProviders: inputProviders.length,
-  });
-  health.setReady(true);
-
-  shutdownManager.onShutdown(async () => {
+      get isReady() {
+        return health.readyz().status === 200;
+      },
+      get authEnabled() {
+        return authMiddleware !== undefined;
+      },
+      async close() {
+        await shutdownManager.shutdown();
+      },
+    };
+  } catch (err) {
     health.setReady(false);
-    await configService.flush();
-    sseAdapter.stopCheckpointTimer();
-    sseAdapter.closeAll();
-    server.stop();
-  });
-
-  return {
-    get port() {
-      return server.port;
-    },
-    get isReady() {
-      return health.readyz().status === 200;
-    },
-    get authEnabled() {
-      return authMiddleware !== undefined;
-    },
-    async close() {
-      await shutdownManager.shutdown();
-    },
-  };
+    sseAdapter?.stopCheckpointTimer();
+    sseAdapter?.closeAll();
+    server?.stop();
+    await bootstrapResult.dispose();
+    throw err;
+  }
 }
