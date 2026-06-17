@@ -1,5 +1,51 @@
 # @weaver-conf/weaver-server
 
+## 1.0.0
+
+### Major Changes
+
+- [#130](https://github.com/spralle/weaver/pull/130) [`f2abae4`](https://github.com/spralle/weaver/commit/f2abae4c382dab04bb7e6cf7bb9b96df7cd783f4) Thanks [@spralle](https://github.com/spralle)! - Unify WriteResult type and rename config-runtime ConfigDelta
+
+  **Breaking changes:**
+
+  - `WriteResult.error` is now a structured object `{ code: string; message: string; details?: Record<string, unknown> }` instead of a plain string. All consumers checking `result.error` must update to access `result.error.message` or `result.error.code`.
+  - `config-runtime` renames `ConfigDelta` to `StateDelta` and `ConfigDeltaSchema` to `StateDeltaSchema` to avoid collision with the transport-level `ConfigDelta` in `config-types`.
+  - `weaver-client` no longer defines its own `WriteResult`; it re-exports from `@weaver-conf/config-types`.
+
+### Minor Changes
+
+- [`a0c6869`](https://github.com/spralle/weaver/commit/a0c68692c7276c46fc62c2331242093586f8b6b2) Thanks [@spralle](https://github.com/spralle)! - Wire transparent mount + secret resolution into the server read path
+
+  Consumers calling `get()`, `getNamespace()`, and `resolveAll()` now receive
+  fully resolved values — ConfigMount markers are followed through their
+  indirection chain and SecretReference markers are swapped for cached
+  plaintext. No consumer-side awareness of markers required.
+
+  - Resolution pipeline extracted to `resolution-pipeline.ts`
+  - `SecretBackend` option added to `WeaverConfigServiceOptions`
+  - Mount map + secret cache rebuilt automatically on writes
+  - Without a secret backend, markers pass through unchanged (graceful degradation)
+
+- [#130](https://github.com/spralle/weaver/pull/130) [`f2abae4`](https://github.com/spralle/weaver/commit/f2abae4c382dab04bb7e6cf7bb9b96df7cd783f4) Thanks [@spralle](https://github.com/spralle)! - Wire SCOMP service stubs to real ScopeManager and SchemaRegistry implementations. Add SchemaRegistry.listAll() for full schema retrieval. Split http-transport.ts into http-transport + sse-connection to respect 400-line limit.
+
+### Patch Changes
+
+- [#132](https://github.com/spralle/weaver/pull/132) [`0217300`](https://github.com/spralle/weaver/commit/02173000516822712b76e0f6558c5609031fd8f2) Thanks [@spralle](https://github.com/spralle)! - Reject unauthenticated REST writes when JWT auth is enabled while preserving public reads.
+
+- [#133](https://github.com/spralle/weaver/pull/133) [`df639a0`](https://github.com/spralle/weaver/commit/df639a04c41d6c885b6662c86921e628845172c3) Thanks [@spralle](https://github.com/spralle)! - Wire startWeaverServer to load providers from the existing single-repo bootstrap configuration when repoUrl is supplied.
+
+- [#130](https://github.com/spralle/weaver/pull/130) [`f2abae4`](https://github.com/spralle/weaver/commit/f2abae4c382dab04bb7e6cf7bb9b96df7cd783f4) Thanks [@spralle](https://github.com/spralle)! - Consolidate DRY violations: deepEqual, scope path formatting, matchGlob, SchemaOptions, and Unsubscribe type now have single canonical definitions.
+
+- [#135](https://github.com/spralle/weaver/pull/135) [`f205f45`](https://github.com/spralle/weaver/commit/f205f45c220f9ef207976ab35adec426d9731859) Thanks [@spralle](https://github.com/spralle)! - Add an async persistent schema registry factory that hydrates schemas from config storage and persists successful registrations.
+
+- Updated dependencies [[`f2abae4`](https://github.com/spralle/weaver/commit/f2abae4c382dab04bb7e6cf7bb9b96df7cd783f4), [`55d25c9`](https://github.com/spralle/weaver/commit/55d25c97b5615ef8ebb987220cb48cc23b9acdf1), [`f2abae4`](https://github.com/spralle/weaver/commit/f2abae4c382dab04bb7e6cf7bb9b96df7cd783f4)]:
+  - @weaver-conf/config-types@1.0.0
+  - @weaver-conf/config-engine@1.0.0
+  - @weaver-conf/config-runtime@1.0.0
+  - @weaver-conf/storage-providers@1.0.0
+  - @weaver-conf/transport-scomp@1.0.0
+  - @weaver-conf/config-auth@0.1.1
+
 ## 0.1.0
 
 ### Minor Changes
