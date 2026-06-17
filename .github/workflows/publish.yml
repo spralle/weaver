@@ -8,6 +8,7 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 permissions:
   contents: write
   pull-requests: write
+  id-token: write
 
 jobs:
   publish:
@@ -29,4 +30,6 @@ jobs:
           # GitHub App installation token with Contents: write and
           # Pull requests: write for this repository.
           GITHUB_TOKEN: ${{ secrets.CHANGESETS_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          # npm trusted publishing uses GitHub OIDC via id-token: write.
+          # Configure each package/scope on npm with this workflow as a trusted publisher.
+          NPM_CONFIG_PROVENANCE: "true"
