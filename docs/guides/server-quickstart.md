@@ -20,6 +20,8 @@ const server = await startWeaverServer({ port: 3399 });
 
 This starts a `Bun.serve()` HTTP server on port 3399 with in-memory storage. Useful for local development and testing, but not production — see below for persistent storage.
 
+For repository-driven startup, see the [Bootstrap Config Repository guide](./bootstrap-config-repo.md).
+
 ## Environment Variables
 
 Configure the server via environment variables. These are validated at startup using the `serverEnvSchema`:
@@ -230,3 +232,4 @@ process.on("SIGTERM", async () => {
 
 - [Browser Client Guide](./browser-client.md) — Connect a browser SPA to weaver-server
 - [Backend Client Guide](./backend-client.md) — Connect a Node.js/Bun service to weaver-server
+- [Bootstrap Config Repository](./bootstrap-config-repo.md) — Start the server from a Git-backed bootstrap repository
