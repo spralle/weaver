@@ -97,6 +97,11 @@ Each configuration property can declare schema metadata:
 
 `defineNamespace()` creates a typed accessor bound to a Zod shape. The client validates reads and writes at runtime while providing full TypeScript inference for keys and value types.
 
+## Guides
+
+- [Server Quickstart](./docs/guides/server-quickstart.md)
+- [Bootstrap Config Repository](./docs/guides/bootstrap-config-repo.md)
+
 ## Development
 
 ```bash

@@ -54,6 +54,7 @@ export type {
   DeprovisionScopeRequest,
   OverrideSessionInfo,
   OverrideSessionRequest,
+  PersistentSchemaRegistryOptions,
   PromotionEngine,
   PromotionEngineOptions,
   PromotionRequest,
@@ -82,6 +83,7 @@ export type {
 export {
   buildScopePathString,
   createChangeDetector,
+  createPersistentSchemaRegistry,
   createPromotionEngine,
   createRollbackService,
   createSchemaRegistry,
