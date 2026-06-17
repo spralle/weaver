@@ -24,12 +24,16 @@ export type {
 } from "./rollback-service";
 export { createRollbackService } from "./rollback-service";
 export type {
+  PersistentSchemaRegistryOptions,
   SchemaRegistrationRequest,
   SchemaRegistrationResult,
   SchemaRegistry,
   SchemaRegistryOptions,
 } from "./schema-registry";
-export { createSchemaRegistry } from "./schema-registry";
+export {
+  createPersistentSchemaRegistry,
+  createSchemaRegistry,
+} from "./schema-registry";
 export type {
   DeprovisionScopeRequest,
   ProvisionScopeRequest,
