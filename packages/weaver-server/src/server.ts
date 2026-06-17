@@ -8,10 +8,10 @@ import type {
 import type { AuthContext, AuthMiddleware } from "./auth/auth-middleware";
 import { createAuthMiddleware } from "./auth/auth-middleware";
 import { createJwtValidator } from "./auth/jwt-validator";
+import { resolveServerBootstrap } from "./bootstrap/server-bootstrap";
 import { createWeaverConfigService } from "./core/config-service";
 import type { HealthEndpoints } from "./health";
 import { createHealthEndpoints } from "./health";
-import { createInMemoryStorageProvider } from "./providers/index";
 import { parseServerEnv } from "./server-env";
 import { createShutdownManager } from "./shutdown";
 import type { AuthGate } from "./transport/auth-gate";
@@ -254,14 +254,19 @@ export async function startWeaverServer(
   const health = createHealthEndpoints();
   const shutdownManager = createShutdownManager({ drainTimeoutMs: 10_000 });
 
-  const inputProviders = config.providers ?? [
-    createInMemoryStorageProvider({ id: "default", layer: "platform" }),
-  ];
+  const bootstrapResult = await resolveServerBootstrap(config);
+  const inputProviders = bootstrapResult.providers;
 
-  const configService = await createWeaverConfigService({
-    providers: inputProviders,
-    environment: config.environment,
-  });
+  let configService: Awaited<ReturnType<typeof createWeaverConfigService>>;
+  try {
+    configService = await createWeaverConfigService({
+      providers: inputProviders,
+      environment: config.environment,
+    });
+  } catch (err) {
+    await bootstrapResult.dispose();
+    throw err;
+  }
 
   // Auth setup — only enabled when jwtSecret is configured
   let authGate: AuthGate | undefined;
@@ -358,6 +363,7 @@ export async function startWeaverServer(
     sseAdapter.stopCheckpointTimer();
     sseAdapter.closeAll();
     server.stop();
+    await bootstrapResult.dispose();
   });
 
   return {
