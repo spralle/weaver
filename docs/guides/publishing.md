@@ -54,6 +54,16 @@ On pushes to `main`, the workflow:
 1. installs dependencies with Bun,
 2. builds the monorepo,
 3. creates/updates the Changesets release PR when changesets exist, or
-4. publishes packages to npm through trusted publishing when the release PR has been merged.
+4. runs a separate `npm publish --access public --workspaces --if-present` step through trusted publishing when the release PR has been merged.
 
 The workflow uses `actions/checkout@v5` to avoid Node.js 20 action-runtime deprecation warnings.
+
+## Relation to scheman
+
+The release workflow follows the same trusted-publishing structure as `../scheman`:
+
+1. `changesets/action` is responsible for version PR creation only.
+2. npm publishing happens in a separate `npm publish --access public --workspaces --if-present` step.
+3. `actions/setup-node` configures the npm registry before publishing.
+
+Weaver differs only in using `CHANGESETS_TOKEN` for the Changesets step because this repository policy prevents the default `GITHUB_TOKEN` from creating pull requests.
