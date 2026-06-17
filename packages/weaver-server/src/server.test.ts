@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, it } from "node:test";
 import { createInMemoryStorageProvider } from "./providers/index";
-import { startWeaverServer } from "./server";
+import { startWeaverServer, startWeaverServerInternal } from "./server";
 
 async function createBootstrapRepo(): Promise<{
   readonly repoPath: string;
@@ -156,19 +156,23 @@ describe("Weaver server bootstrap", () => {
 
   it("cleans up when startup fails after config service creation", async () => {
     const server = await startWeaverServer({ port: 0 });
+    let disposeCalled = false;
 
     try {
       await assert.rejects(
-        startWeaverServer({
-          port: server.port,
+        startWeaverServerInternal({ port: server.port }, async () => ({
           providers: [
             createInMemoryStorageProvider({
               id: "conflict",
               layer: "platform",
             }),
           ],
-        }),
+          dispose: async () => {
+            disposeCalled = true;
+          },
+        })),
       );
+      assert.equal(disposeCalled, true);
     } finally {
       await server.close();
     }

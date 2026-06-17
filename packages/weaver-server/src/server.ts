@@ -1,5 +1,3 @@
-// Weaver server entry point — orchestrates all subsystems
-
 import { withAuth } from "@weaver-conf/config-auth";
 import type {
   ConfigurationStorageProvider,
@@ -31,9 +29,8 @@ declare const Bun: {
     stop(): void;
   };
 };
-
 type BunServer = ReturnType<typeof Bun.serve>;
-
+type BootstrapResolver = typeof resolveServerBootstrap;
 export interface WeaverServerOptions {
   port?: number;
   repoUrl?: string;
@@ -45,7 +42,6 @@ export interface WeaverServerOptions {
   corsOrigins?: string[];
   providers?: ConfigurationStorageProvider[];
 }
-
 export interface WeaverServer {
   readonly port: number;
   readonly isReady: boolean;
@@ -68,7 +64,6 @@ function resolveOptions(options?: WeaverServerOptions) {
     providers: options?.providers,
   };
 }
-
 function createRequestHandler(
   health: HealthEndpoints,
   restAdapter: RestAdapter,
@@ -109,7 +104,6 @@ function createRequestHandler(
     });
   };
 }
-
 async function handleRest(
   req: Request,
   url: URL,
@@ -251,12 +245,19 @@ async function authenticateRestRequest(
 export async function startWeaverServer(
   options?: WeaverServerOptions,
 ): Promise<WeaverServer> {
+  return startWeaverServerInternal(options, resolveServerBootstrap);
+}
+
+export async function startWeaverServerInternal(
+  options: WeaverServerOptions | undefined,
+  resolveBootstrap: BootstrapResolver,
+): Promise<WeaverServer> {
   const config = resolveOptions(options);
 
   const health = createHealthEndpoints();
   const shutdownManager = createShutdownManager({ drainTimeoutMs: 10_000 });
 
-  const bootstrapResult = await resolveServerBootstrap(config);
+  const bootstrapResult = await resolveBootstrap(config);
   const inputProviders = bootstrapResult.providers;
 
   let configService: Awaited<ReturnType<typeof createWeaverConfigService>>;
@@ -274,7 +275,6 @@ export async function startWeaverServer(
   let server: BunServer | undefined;
 
   try {
-    // Auth setup — only enabled when jwtSecret is configured
     let authGate: AuthGate | undefined;
     let authMiddleware: AuthMiddleware | undefined;
 
@@ -288,7 +288,6 @@ export async function startWeaverServer(
         adminRoles: config.adminRoles,
       });
 
-      // Minimal WeaverConfig — only getRank is used by auth checks
       const layerRanks = new Map([
         ["platform", 0],
         ["tenant", 1],
