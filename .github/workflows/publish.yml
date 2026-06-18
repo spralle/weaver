@@ -22,7 +22,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "24"
           registry-url: "https://registry.npmjs.org"
 
       - run: bun install --frozen-lockfile
@@ -44,6 +44,10 @@ jobs:
 
       - name: Publish to npm via Trusted Publishing
         if: steps.changesets.outputs.hasChangesets == 'false'
-        run: npm publish --access public --workspaces --if-present
+        run: |
+          echo "registry=https://registry.npmjs.org/" > "$NPM_CONFIG_USERCONFIG"
+          unset NODE_AUTH_TOKEN
+          npx changeset publish
         env:
+          NODE_AUTH_TOKEN: ""
           NPM_CONFIG_PROVENANCE: "true"
