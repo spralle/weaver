@@ -42,6 +42,6 @@
     "typescript-eslint": "8.58.2"
   },
   "overrides": {
-    "@scompr/types": "0.1.0"
+    "@scompr/types": "0.2.0"
   }
 }
