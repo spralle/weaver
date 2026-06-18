@@ -32,7 +32,7 @@ Package publishing uses npm trusted publishing with GitHub OIDC instead of an `N
 
 Configure npm trusted publishing for each published package, or for the `@weaver-conf` scope if npm supports scope-level trusted publisher configuration for the account. The trusted publisher must match:
 
-- repository: `spralle/weaver`
+- repository: `surikaterna/weaver`
 - workflow: `.github/workflows/publish.yml`
 - branch/environment: `main`
 

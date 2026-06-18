@@ -5,7 +5,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/spralle/weaver.git",
+    "url": "https://github.com/surikaterna/weaver.git",
     "directory": "packages/weaver-client"
   },
   "type": "module",

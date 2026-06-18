@@ -13,7 +13,7 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    if: github.repository == 'spralle/weaver'
+    if: github.repository == 'surikaterna/weaver'
     steps:
       - uses: actions/checkout@v5
       - uses: oven-sh/setup-bun@v2

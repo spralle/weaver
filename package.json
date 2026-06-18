@@ -4,11 +4,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/spralle/weaver.git"
+    "url": "https://github.com/surikaterna/weaver.git"
   },
-  "homepage": "https://github.com/spralle/weaver#readme",
+  "homepage": "https://github.com/surikaterna/weaver#readme",
   "bugs": {
-    "url": "https://github.com/spralle/weaver/issues"
+    "url": "https://github.com/surikaterna/weaver/issues"
   },
   "type": "module",
   "packageManager": "bun@1.2.21",
