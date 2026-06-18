@@ -1,6 +1,6 @@
 {
   "name": "@weaver-conf/weaver-server",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Central configuration server for Weaver",
   "license": "MIT",
   "repository": {

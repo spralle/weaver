@@ -1,5 +1,14 @@
 # @weaver-conf/weaver-server
 
+## 1.0.1
+
+### Patch Changes
+
+- [#139](https://github.com/spralle/weaver/pull/139) [`bdb19fe`](https://github.com/spralle/weaver/commit/bdb19fe3fe3526bb6d49aba5f5aa734cc8c9e04d) Thanks [@spralle](https://github.com/spralle)! - Update SCOMP runtime dependencies to `@scompr/*` 0.2.0.
+
+- Updated dependencies [[`bdb19fe`](https://github.com/spralle/weaver/commit/bdb19fe3fe3526bb6d49aba5f5aa734cc8c9e04d)]:
+  - @weaver-conf/transport-scomp@1.0.1
+
 ## 1.0.0
 
 ### Major Changes
