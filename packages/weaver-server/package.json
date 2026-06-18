@@ -5,10 +5,13 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/spralle/weaver.git",
+    "url": "https://github.com/surikaterna/weaver.git",
     "directory": "packages/weaver-server"
   },
   "type": "module",
+  "bin": {
+    "weaver-server": "./dist/cli.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -20,6 +23,7 @@
   ],
   "scripts": {
     "build": "tsup",
+    "start": "bun dist/cli.js",
     "typecheck": "tsc --noEmit",
     "test": "bun test",
     "lint": "biome check ."
