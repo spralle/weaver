@@ -1,5 +1,3 @@
-import test from "node:test";
-import assert from "node:assert/strict";
 
 import {
   syncQueueMetadataSchema,
@@ -13,5 +11,5 @@ test("syncQueueMetadataSchema accepts queue counters", () => {
     newestQueuedAt: 1713123450000,
   });
 
-  assert.equal(result.success, true);
+  expect(result.success).toBe(true);
 });

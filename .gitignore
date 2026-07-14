@@ -21,7 +21,10 @@ docs-dist/
 .opencode/node_modules/
 .opencode/package.json
 .opencode/package-lock.json
-.opencode/bun.lock
+.opencode/pnpm-lock.yaml
 .opencode/.gitignore
 
 trees/
+
+# Beads / Dolt files (added by bd init)
+.beads/proxieddb/

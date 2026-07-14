@@ -5,7 +5,7 @@
 ## Installation
 
 ```bash
-bun add @weaver-conf/config-runtime
+pnpm add @weaver-conf/config-runtime
 ```
 
 ## Usage

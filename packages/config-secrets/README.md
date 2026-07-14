@@ -5,7 +5,7 @@
 ## Installation
 
 ```bash
-bun add @weaver-conf/config-secrets
+pnpm add @weaver-conf/config-secrets
 ```
 
 ## Usage

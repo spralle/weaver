@@ -1,4 +1,3 @@
-import { test, expect, describe } from "bun:test";
 import { createLocalTransport } from "../src/local-transport.js";
 
 const snapshot = {
@@ -37,7 +36,7 @@ describe("LocalTransport", () => {
     t.subscribe((delta) => received.push(delta));
     const delta = { action: "set", key: "db.host", value: "newhost", layer: "platform", environment: "prod", timestamp: "t1" };
     t.pushDelta(delta);
-    expect(received).toHaveLength(1);
+    expect(received.length).toBe(1);
     expect(received[0]).toEqual(delta);
   });
 
@@ -57,7 +56,7 @@ describe("LocalTransport", () => {
     const t = createLocalTransport({ snapshot: makeSnapshot() });
     const result = await t.set("new.key", 42);
     expect(result.success).toBe(true);
-    expect(result.revision).toBeDefined();
+    expect(result.revision !== undefined).toBeTruthy();
     expect(await t.get("new.key")).toBe(42);
   });
 
@@ -66,7 +65,7 @@ describe("LocalTransport", () => {
     expect(await t.get("db.host")).toBe("localhost");
     const result = await t.remove("db.host");
     expect(result.success).toBe(true);
-    expect(await t.get("db.host")).toBeUndefined();
+    expect(await t.get("db.host")).toBe(undefined);
   });
 
   test("listScopes returns scope definitions from snapshot", async () => {
@@ -74,7 +73,7 @@ describe("LocalTransport", () => {
     const scopes = await t.listScopes();
     const ids = scopes.map(s => s.id).sort();
     expect(ids).toEqual(["env", "tenant"]);
-    expect(scopes[0]).toHaveProperty("label");
+    expect("label" in scopes[0]).toBeTruthy();
   });
 
   test("listScopeValues returns values for a scope", async () => {

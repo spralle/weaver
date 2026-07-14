@@ -1,23 +1,27 @@
-FROM oven/bun:1.2.21-alpine AS deps
+FROM node:24-alpine AS deps
 WORKDIR /app
 
-COPY package.json bun.lock turbo.json tsconfig.base.json ./
+RUN corepack enable
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json ./
 COPY packages ./packages
 COPY apps ./apps
-RUN bun install --frozen-lockfile
+RUN pnpm install --frozen-lockfile
 
 FROM deps AS builder
-RUN bun run build
+RUN pnpm run build
 
-FROM oven/bun:1.2.21-alpine AS runner
+FROM node:24-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV WEAVER_PORT=3399
 
-COPY package.json bun.lock ./
+RUN corepack enable
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY --from=builder /app/packages ./packages
 COPY --from=builder /app/apps ./apps
-RUN bun install --frozen-lockfile --production
+RUN pnpm install --frozen-lockfile --prod
 
 EXPOSE 3399
-CMD ["bun", "run", "--cwd", "packages/weaver-server", "start"]
+CMD ["pnpm", "--filter", "@weaver-conf/weaver-server", "run", "start"]

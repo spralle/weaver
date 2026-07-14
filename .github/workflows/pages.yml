@@ -20,17 +20,23 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
         with:
-          bun-version: "1.2.21"
+          node-version: "24"
+          cache: pnpm
 
-      - run: bun install
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.13.0
+          run_install: false
+
+      - run: pnpm install --frozen-lockfile
 
       # Build all packages + demo app via Turborepo
-      - run: bun run build
+      - run: pnpm run build
 
       # Generate TypeDoc API docs into docs-dist/api/
-      - run: bunx typedoc
+      - run: pnpm exec typedoc
 
       # Copy demo app into docs-dist/ root (alongside api/)
       - run: cp -r apps/demo/dist/* docs-dist/

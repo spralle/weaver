@@ -1,5 +1,3 @@
-import { describe, it } from "node:test";
-import assert from "node:assert/strict";
 import {
   generateJsonSchema,
   generateSinglePropertySchema,
@@ -16,7 +14,7 @@ describe("generateSinglePropertySchema", () => {
       "ghost.shell.theme",
       entry("ghost.shell", { type: "string" }),
     );
-    assert.equal(result.type, "string");
+    expect(result.type).toBe("string");
   });
 
   it("maps number type with min/max", () => {
@@ -24,9 +22,9 @@ describe("generateSinglePropertySchema", () => {
       "ghost.map.zoom",
       entry("ghost.map", { type: "number", minimum: 1, maximum: 20 }),
     );
-    assert.equal(result.type, "number");
-    assert.equal(result.minimum, 1);
-    assert.equal(result.maximum, 20);
+    expect(result.type).toBe("number");
+    expect(result.minimum).toBe(1);
+    expect(result.maximum).toBe(20);
   });
 
   it("maps boolean type", () => {
@@ -34,7 +32,7 @@ describe("generateSinglePropertySchema", () => {
       "ghost.shell.enabled",
       entry("ghost.shell", { type: "boolean" }),
     );
-    assert.equal(result.type, "boolean");
+    expect(result.type).toBe("boolean");
   });
 
   it("maps object type", () => {
@@ -42,7 +40,7 @@ describe("generateSinglePropertySchema", () => {
       "ghost.shell.layout",
       entry("ghost.shell", { type: "object" }),
     );
-    assert.equal(result.type, "object");
+    expect(result.type).toBe("object");
   });
 
   it("maps array type", () => {
@@ -50,7 +48,7 @@ describe("generateSinglePropertySchema", () => {
       "ghost.shell.plugins",
       entry("ghost.shell", { type: "array" }),
     );
-    assert.equal(result.type, "array");
+    expect(result.type).toBe("array");
   });
 
   it("preserves description", () => {
@@ -58,7 +56,7 @@ describe("generateSinglePropertySchema", () => {
       "ghost.shell.theme",
       entry("ghost.shell", { type: "string", description: "UI theme" }),
     );
-    assert.equal(result.description, "UI theme");
+    expect(result.description).toBe("UI theme");
   });
 
   it("preserves default value", () => {
@@ -66,7 +64,7 @@ describe("generateSinglePropertySchema", () => {
       "ghost.shell.theme",
       entry("ghost.shell", { type: "string", default: "dark" }),
     );
-    assert.equal(result.default, "dark");
+    expect(result.default).toBe("dark");
   });
 
   it("preserves enum values", () => {
@@ -74,7 +72,7 @@ describe("generateSinglePropertySchema", () => {
       "ghost.shell.theme",
       entry("ghost.shell", { type: "string", enum: ["dark", "light"] }),
     );
-    assert.deepEqual(result.enum, ["dark", "light"]);
+    expect(result.enum).toEqual(["dark", "light"]);
   });
 
   it("preserves nested JSON Schema structures", () => {
@@ -102,14 +100,14 @@ describe("generateSinglePropertySchema", () => {
       }),
     );
 
-    assert.equal(result.type, "object");
-    assert.deepEqual(result.required, ["panels"]);
-    assert.equal(result.additionalProperties, false);
-    assert.equal(result.properties.panels.type, "array");
-    assert.equal(result.properties.panels.minItems, 1);
-    assert.equal(result.properties.panels.items.type, "object");
-    assert.equal(result.properties.panels.items.properties.width.type, "integer");
-    assert.equal(result.properties.panels.items.additionalProperties, false);
+    expect(result.type).toBe("object");
+    expect(result.required).toEqual(["panels"]);
+    expect(result.additionalProperties).toBe(false);
+    expect(result.properties.panels.type).toBe("array");
+    expect(result.properties.panels.minItems).toBe(1);
+    expect(result.properties.panels.items.type).toBe("object");
+    expect(result.properties.panels.items.properties.width.type).toBe("integer");
+    expect(result.properties.panels.items.additionalProperties).toBe(false);
   });
 
   it("preserves union JSON schema type arrays", () => {
@@ -121,8 +119,8 @@ describe("generateSinglePropertySchema", () => {
       }),
     );
 
-    assert.deepEqual(result.type, ["integer", "null"]);
-    assert.equal(result.minimum, 10);
+    expect(result.type).toEqual(["integer", "null"]);
+    expect(result.minimum).toBe(10);
   });
 
   it("populates x-weaver extension object", () => {
@@ -137,7 +135,7 @@ describe("generateSinglePropertySchema", () => {
         },
       }),
     );
-    assert.deepEqual(result["x-weaver"], {
+    expect(result["x-weaver"]).toEqual({
       namespace: "ghost.shell",
       changePolicy: "full-pipeline",
       visibility: "public",
@@ -150,13 +148,13 @@ describe("generateSinglePropertySchema", () => {
       "ghost.shell.theme",
       entry("ghost.shell", { type: "string" }),
     );
-    assert.equal(result.description, undefined);
-    assert.equal(result.default, undefined);
-    assert.equal(result.enum, undefined);
-    assert.equal(result.minimum, undefined);
-    assert.equal(result.maximum, undefined);
-    assert.equal(result["x-weaver"].changePolicy, undefined);
-    assert.equal(result["x-weaver"].namespace, "ghost.shell");
+    expect(result.description).toBe(undefined);
+    expect(result.default).toBe(undefined);
+    expect(result.enum).toBe(undefined);
+    expect(result.minimum).toBe(undefined);
+    expect(result.maximum).toBe(undefined);
+    expect(result["x-weaver"].changePolicy).toBe(undefined);
+    expect(result["x-weaver"].namespace).toBe("ghost.shell");
   });
 
   it("emits sensitive field in x-weaver when present", () => {
@@ -164,7 +162,7 @@ describe("generateSinglePropertySchema", () => {
       "ghost.shell.secret",
       entry("ghost.shell", { type: "string", "x-weaver": { sensitive: true } }),
     );
-    assert.equal(result["x-weaver"].sensitive, true);
+    expect(result["x-weaver"].sensitive).toBe(true);
   });
 
   it("emits maxOverrideLayer in x-weaver when present", () => {
@@ -172,7 +170,7 @@ describe("generateSinglePropertySchema", () => {
       "ghost.shell.key",
       entry("ghost.shell", { type: "string", "x-weaver": { maxOverrideLayer: "user" } }),
     );
-    assert.equal(result["x-weaver"].maxOverrideLayer, "user");
+    expect(result["x-weaver"].maxOverrideLayer).toBe("user");
   });
 
   it("emits writeRestriction in x-weaver when present", () => {
@@ -180,7 +178,7 @@ describe("generateSinglePropertySchema", () => {
       "ghost.shell.key",
       entry("ghost.shell", { type: "string", "x-weaver": { writeRestriction: ["admin", "platform"] } }),
     );
-    assert.deepEqual(result["x-weaver"].writeRestriction, ["admin", "platform"]);
+    expect(result["x-weaver"].writeRestriction).toEqual(["admin", "platform"]);
   });
 
   it("emits sessionMode in x-weaver when present", () => {
@@ -188,7 +186,7 @@ describe("generateSinglePropertySchema", () => {
       "ghost.shell.key",
       entry("ghost.shell", { type: "string", "x-weaver": { sessionMode: "ephemeral" } }),
     );
-    assert.equal(result["x-weaver"].sessionMode, "ephemeral");
+    expect(result["x-weaver"].sessionMode).toBe("ephemeral");
   });
 
   it("emits expressionAllowed in x-weaver when present", () => {
@@ -196,7 +194,7 @@ describe("generateSinglePropertySchema", () => {
       "ghost.shell.key",
       entry("ghost.shell", { type: "string", "x-weaver": { expressionAllowed: true } }),
     );
-    assert.equal(result["x-weaver"].expressionAllowed, true);
+    expect(result["x-weaver"].expressionAllowed).toBe(true);
   });
 
   it("omits undefined extension fields from x-weaver", () => {
@@ -205,13 +203,13 @@ describe("generateSinglePropertySchema", () => {
       entry("ghost.shell", { type: "string" }),
     );
     const xw = result["x-weaver"];
-    assert.equal(Object.prototype.hasOwnProperty.call(xw, "sensitive"), false);
-    assert.equal(Object.prototype.hasOwnProperty.call(xw, "maxOverrideLayer"), false);
-    assert.equal(Object.prototype.hasOwnProperty.call(xw, "writeRestriction"), false);
-    assert.equal(Object.prototype.hasOwnProperty.call(xw, "sessionMode"), false);
-    assert.equal(Object.prototype.hasOwnProperty.call(xw, "expressionAllowed"), false);
-    assert.equal(Object.prototype.hasOwnProperty.call(xw, "instanceOverridable"), false);
-    assert.equal(Object.prototype.hasOwnProperty.call(xw, "viewConfig"), false);
+    expect(Object.prototype.hasOwnProperty.call(xw, "sensitive")).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(xw, "maxOverrideLayer")).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(xw, "writeRestriction")).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(xw, "sessionMode")).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(xw, "expressionAllowed")).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(xw, "instanceOverridable")).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(xw, "viewConfig")).toBe(false);
   });
 });
 
@@ -230,23 +228,23 @@ describe("generateJsonSchema", () => {
     });
 
     const doc = generateJsonSchema(schemas);
-    assert.equal(doc.$schema, "http://json-schema.org/draft-07/schema#");
-    assert.equal(doc.title, "Weaver Configuration Schema");
-    assert.equal(doc.type, "object");
-    assert.equal(doc.additionalProperties, false);
-    assert.equal(Object.keys(doc.properties).length, 2);
-    assert.equal(doc.properties["ghost.shell.theme"].type, "string");
-    assert.equal(doc.properties["ghost.map.zoom"].type, "number");
+    expect(doc.$schema).toBe("http://json-schema.org/draft-07/schema#");
+    expect(doc.title).toBe("Weaver Configuration Schema");
+    expect(doc.type).toBe("object");
+    expect(doc.additionalProperties).toBe(false);
+    expect(Object.keys(doc.properties).length).toBe(2);
+    expect(doc.properties["ghost.shell.theme"].type).toBe("string");
+    expect(doc.properties["ghost.map.zoom"].type).toBe("number");
   });
 
   it("uses custom title when provided", () => {
     const doc = generateJsonSchema(new Map(), { title: "Custom Title" });
-    assert.equal(doc.title, "Custom Title");
+    expect(doc.title).toBe("Custom Title");
   });
 
   it("handles empty schema map", () => {
     const doc = generateJsonSchema(new Map());
-    assert.equal(doc.$schema, "http://json-schema.org/draft-07/schema#");
-    assert.equal(Object.keys(doc.properties).length, 0);
+    expect(doc.$schema).toBe("http://json-schema.org/draft-07/schema#");
+    expect(Object.keys(doc.properties).length).toBe(0);
   });
 });

@@ -1,5 +1,3 @@
-import { describe, it } from "node:test";
-import { strict as assert } from "node:assert";
 import {
   extractErrorMessage,
   isNodeError,
@@ -11,28 +9,28 @@ import {
 
 describe("extractErrorMessage", () => {
   it("returns .message for Error instances", () => {
-    assert.equal(extractErrorMessage(new Error("boom")), "boom");
+    expect(extractErrorMessage(new Error("boom"))).toBe("boom");
   });
   it("returns String() for non-errors", () => {
-    assert.equal(extractErrorMessage(42), "42");
-    assert.equal(extractErrorMessage(null), "null");
+    expect(extractErrorMessage(42)).toBe("42");
+    expect(extractErrorMessage(null)).toBe("null");
   });
 });
 
 describe("isNodeError", () => {
   it("returns true for errors with code property", () => {
     const err = Object.assign(new Error("fail"), { code: "ENOENT" });
-    assert.equal(isNodeError(err), true);
+    expect(isNodeError(err)).toBe(true);
   });
   it("returns false for plain errors", () => {
-    assert.equal(isNodeError(new Error("plain")), false);
+    expect(isNodeError(new Error("plain"))).toBe(false);
   });
 });
 
 describe("readonlyGuard", () => {
   it("returns readonly WriteResult", () => {
     const result = readonlyGuard("env-provider");
-    assert.deepEqual(result, { success: false, error: { code: "READONLY", message: "env-provider is read-only" } });
+    expect(result).toEqual({ success: false, error: { code: "READONLY", message: "env-provider is read-only" } });
   });
 });
 
@@ -41,23 +39,23 @@ describe("cloneValue", () => {
     const original = { a: { b: 1 } };
     const clone = cloneValue(original);
     clone.a.b = 99;
-    assert.equal(original.a.b, 1);
+    expect(original.a.b).toBe(1);
   });
 });
 
 describe("safeParseConfigEntries", () => {
   it("returns valid entries", () => {
     const result = safeParseConfigEntries({ foo: "bar" });
-    assert.deepEqual(result, { foo: "bar" });
+    expect(result).toEqual({ foo: "bar" });
   });
   it("throws on non-object input", () => {
-    assert.throws(() => safeParseConfigEntries("not-an-object"));
+    expect(() => safeParseConfigEntries("not-an-object")).toThrow();
   });
 });
 
 describe("consoleLogger", () => {
   it("has warn and error methods", () => {
-    assert.equal(typeof consoleLogger.warn, "function");
-    assert.equal(typeof consoleLogger.error, "function");
+    expect(typeof consoleLogger.warn).toBe("function");
+    expect(typeof consoleLogger.error).toBe("function");
   });
 });

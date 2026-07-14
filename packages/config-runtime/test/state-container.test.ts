@@ -1,4 +1,3 @@
-import { describe, expect, test } from "bun:test";
 import { createStateContainer } from "../src/state-container.js";
 
 describe("createStateContainer", () => {
@@ -24,7 +23,7 @@ describe("createStateContainer", () => {
 
   test("get returns undefined for missing paths", () => {
     const container = createStateContainer({ layers: [] });
-    expect(container.get("nonexistent.path")).toBeUndefined();
+    expect(container.get("nonexistent.path")).toBe(undefined);
   });
 
   test("getAll returns full resolved tree", () => {

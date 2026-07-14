@@ -1,5 +1,3 @@
-import { test, describe } from "node:test";
-import assert from "node:assert/strict";
 import { createWeaverScompService } from "../../src/transport/scomp-service.ts";
 import { createWeaverConfigService } from "../../src/core/config-service.ts";
 import { createSchemaRegistry } from "../../src/core/schema-registry.ts";
@@ -41,9 +39,9 @@ describe("createWeaverScompService", () => {
     const provider = createTestProvider("p1", "platform", { app: { name: "test" } });
     const svc = await createWeaverConfigService({ providers: [provider], environment: "dev" });
     const service = createWeaverScompService(buildScompDeps(svc));
-    assert.ok(service);
-    assert.equal(service.name, PREFIX);
-    assert.ok(service.router);
+    expect(service).toBeTruthy();
+    expect(service.name).toBe(PREFIX);
+    expect(service.router).toBeTruthy();
   });
 
   test("router contains all contract method routes", async () => {
@@ -57,9 +55,9 @@ describe("createWeaverScompService", () => {
       "registerSchema", "subscribe",
     ];
     for (const name of expected) {
-      assert.ok(routes.includes(route(name)), `missing route: ${name}`);
+      expect(routes.includes(route(name))).toBeTruthy();
     }
-    assert.equal(routes.length, expected.length);
+    expect(routes.length).toBe(expected.length);
   });
 
   test("resolveAll handler returns snapshot", async () => {
@@ -67,9 +65,9 @@ describe("createWeaverScompService", () => {
     const svc = await createWeaverConfigService({ providers: [provider], environment: "dev" });
     const service = createWeaverScompService(buildScompDeps(svc));
     const result = await service.router[route("resolveAll")].handler({});
-    assert.ok(result.entries);
-    assert.equal(result.entries.app.port, 3000);
-    assert.ok(result.revision);
+    expect(result.entries).toBeTruthy();
+    expect(result.entries.app.port).toBe(3000);
+    expect(result.revision).toBeTruthy();
   });
 
   test("get handler returns value", async () => {
@@ -77,7 +75,7 @@ describe("createWeaverScompService", () => {
     const svc = await createWeaverConfigService({ providers: [provider], environment: "dev" });
     const service = createWeaverScompService(buildScompDeps(svc));
     const result = await service.router[route("get")].handler({ key: "db.host" });
-    assert.deepEqual(result, { value: "localhost" });
+    expect(result).toEqual({ value: "localhost" });
   });
 
   test("set handler writes and succeeds", async () => {
@@ -85,9 +83,9 @@ describe("createWeaverScompService", () => {
     const svc = await createWeaverConfigService({ providers: [provider], environment: "dev" });
     const service = createWeaverScompService(buildScompDeps(svc));
     const result = await service.router[route("set")].handler({ key: "app.name", value: "hello", layer: "platform" });
-    assert.equal(result.success, true);
+    expect(result.success).toBe(true);
     const get = await service.router[route("get")].handler({ key: "app.name" });
-    assert.deepEqual(get, { value: "hello" });
+    expect(get).toEqual({ value: "hello" });
   });
 
   test("remove handler deletes key", async () => {
@@ -95,9 +93,9 @@ describe("createWeaverScompService", () => {
     const svc = await createWeaverConfigService({ providers: [provider], environment: "dev" });
     const service = createWeaverScompService(buildScompDeps(svc));
     const result = await service.router[route("remove")].handler({ key: "x", layer: "platform" });
-    assert.equal(result.success, true);
+    expect(result.success).toBe(true);
     const get = await service.router[route("get")].handler({ key: "x" });
-    assert.deepEqual(get, { value: undefined });
+    expect(get).toEqual({ value: undefined });
   });
 
   test("subscribe handler yields deltas", async () => {
@@ -110,9 +108,9 @@ describe("createWeaverScompService", () => {
 
     const iterator = feed[Symbol.asyncIterator]();
     const first = await iterator.next();
-    assert.equal(first.done, false);
-    assert.equal(first.value.key, "key1");
-    assert.equal(first.value.value, "val1");
+    expect(first.done).toBe(false);
+    expect(first.value.key).toBe("key1");
+    expect(first.value.value).toBe("val1");
     await iterator.return();
   });
 
@@ -120,9 +118,9 @@ describe("createWeaverScompService", () => {
     const provider = createTestProvider("p1", "platform", {});
     const svc = await createWeaverConfigService({ providers: [provider], environment: "dev" });
     const service = createWeaverScompService(buildScompDeps(svc));
-    assert.equal(service.router[route("resolveAll")].kind, "request");
-    assert.equal(service.router[route("get")].kind, "request");
-    assert.equal(service.router[route("set")].kind, "request");
-    assert.equal(service.router[route("subscribe")].kind, "request"); // scomp handles feed semantics at proxy layer
+    expect(service.router[route("resolveAll")].kind).toBe("request");
+    expect(service.router[route("get")].kind).toBe("request");
+    expect(service.router[route("set")].kind).toBe("request");
+    expect(service.router[route("subscribe")].kind).toBe("request"); // scomp handles feed semantics at proxy layer
   });
 });

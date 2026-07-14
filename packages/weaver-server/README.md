@@ -5,7 +5,7 @@
 ## Installation
 
 ```bash
-bun add @weaver-conf/weaver-server
+pnpm add @weaver-conf/weaver-server
 ```
 
 ## Usage

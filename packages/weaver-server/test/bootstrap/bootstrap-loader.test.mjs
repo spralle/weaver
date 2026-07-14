@@ -1,5 +1,3 @@
-import { test } from "node:test";
-import assert from "node:assert/strict";
 import { mkdtemp, writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -41,8 +39,8 @@ test("bootstrap creates providers from config file", async () => {
       git: createMockGit(),
     });
 
-    assert.equal(result.providers.length, 1);
-    assert.equal(result.environment, "test");
+    expect(result.providers.length).toBe(1);
+    expect(result.environment).toBe("test");
   } finally {
     process.cwd = origCwd;
   }
@@ -61,13 +59,11 @@ test("bootstrap throws on invalid config", async () => {
   process.cwd = () => tmp;
 
   try {
-    await assert.rejects(
-      bootstrap({
+    await expect(bootstrap({
         repoUrl: "https://github.com/test/repo.git",
         environment: "test",
         git: createMockGit(),
-      }),
-    );
+      })).rejects.toThrow();
   } finally {
     process.cwd = origCwd;
   }

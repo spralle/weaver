@@ -1,5 +1,3 @@
-import { test, describe } from "node:test";
-import assert from "node:assert/strict";
 import { createRollbackService } from "../../src/core/rollback-service.ts";
 import { createWeaverConfigService } from "../../src/core/config-service.ts";
 
@@ -48,7 +46,7 @@ describe("RollbackService", () => {
       actor: "admin",
     });
 
-    assert.equal(result.success, true);
+    expect(result.success).toBe(true);
   });
 
   test("rollback bypasses changePolicy", async () => {
@@ -66,7 +64,7 @@ describe("RollbackService", () => {
       actor: "admin",
     });
 
-    assert.equal(result.success, true);
+    expect(result.success).toBe(true);
   });
 
   test("rollback reloads affected provider", async () => {
@@ -94,7 +92,7 @@ describe("RollbackService", () => {
       actor: "admin",
     });
 
-    assert.equal(loadCount, initialLoads + 1);
+    expect(loadCount).toBe(initialLoads + 1);
   });
 
   test("rollback calls provider.revert with correct args", async () => {
@@ -112,9 +110,9 @@ describe("RollbackService", () => {
       actor: "admin",
     });
 
-    assert.equal(provider._revertCalls.length, 1);
-    assert.equal(provider._revertCalls[0].toRevision, "abc123");
-    assert.equal(provider._revertCalls[0].actor, "admin");
+    expect(provider._revertCalls.length).toBe(1);
+    expect(provider._revertCalls[0].toRevision).toBe("abc123");
+    expect(provider._revertCalls[0].actor).toBe("admin");
   });
 
   test("rollback returns actual revertedCommits count", async () => {
@@ -132,8 +130,8 @@ describe("RollbackService", () => {
       actor: "admin",
     });
 
-    assert.equal(result.success, true);
-    assert.equal(result.revertedCommits, 3);
+    expect(result.success).toBe(true);
+    expect(result.revertedCommits).toBe(3);
   });
 
   test("rollback fails when provider does not support revert", async () => {
@@ -151,9 +149,9 @@ describe("RollbackService", () => {
       actor: "admin",
     });
 
-    assert.equal(result.success, false);
-    assert.equal(result.revertedCommits, 0);
-    assert.ok(result.error);
+    expect(result.success).toBe(false);
+    expect(result.revertedCommits).toBe(0);
+    expect(result.error).toBeTruthy();
   });
 
   test("rollback fails when no provider for layer", async () => {
@@ -171,7 +169,7 @@ describe("RollbackService", () => {
       actor: "admin",
     });
 
-    assert.equal(result.success, false);
-    assert.equal(result.revertedCommits, 0);
+    expect(result.success).toBe(false);
+    expect(result.revertedCommits).toBe(0);
   });
 });

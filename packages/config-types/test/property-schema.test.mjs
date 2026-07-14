@@ -1,5 +1,3 @@
-import test from "node:test";
-import assert from "node:assert/strict";
 
 import { configurationPropertySchemaSchema } from "../src/schemas-property.ts";
 
@@ -35,7 +33,7 @@ test("configurationPropertySchemaSchema accepts recursive nested JSON schema", (
   };
 
   const result = configurationPropertySchemaSchema.safeParse(schema);
-  assert.equal(result.success, true);
+  expect(result.success).toBe(true);
 });
 
 test("configurationPropertySchemaSchema preserves backwards compatibility", () => {
@@ -47,7 +45,7 @@ test("configurationPropertySchemaSchema preserves backwards compatibility", () =
   };
 
   const result = configurationPropertySchemaSchema.safeParse(schema);
-  assert.equal(result.success, true);
+  expect(result.success).toBe(true);
 });
 
 test("configurationPropertySchemaSchema rejects unsupported $ref and $defs", () => {
@@ -55,11 +53,11 @@ test("configurationPropertySchemaSchema rejects unsupported $ref and $defs", () 
     type: "object",
     $ref: "#/something",
   });
-  assert.equal(withRef.success, false);
+  expect(withRef.success).toBe(false);
 
   const withDefs = configurationPropertySchemaSchema.safeParse({
     type: "object",
     $defs: {},
   });
-  assert.equal(withDefs.success, false);
+  expect(withDefs.success).toBe(false);
 });

@@ -1,4 +1,3 @@
-import { test, expect, describe } from "bun:test";
 import { createScopeLoader } from "../src/scope-manager.js";
 
 function createMockSnapshot() {
@@ -41,7 +40,7 @@ describe("ScopeLoader", () => {
       transport: createMockTransport(),
       initialSnapshot: createMockSnapshot(),
     });
-    expect(sl.getScopeState([{ scopeId: "tenant", value: "tenant-a" }])).toBeUndefined();
+    expect(sl.getScopeState([{ scopeId: "tenant", value: "tenant-a" }])).toBe(undefined);
     expect(sl.loadedScopes().length).toBe(0);
   });
 
@@ -53,7 +52,7 @@ describe("ScopeLoader", () => {
     });
     await sl.preloadScope([{ scopeId: "tenant", value: "tenant-a" }]);
     expect(sl.getScopeState([{ scopeId: "tenant", value: "tenant-a" }])).toEqual({ "feature.x": true });
-    expect(sl.loadedScopes()).toContain("tenant:tenant-a");
+    expect(sl.loadedScopes().includes("tenant:tenant-a")).toBe(true);
   });
 
   test("hot mode: snapshot scopes loaded, others lazy", () => {
@@ -63,7 +62,7 @@ describe("ScopeLoader", () => {
       initialSnapshot: createMockSnapshot(),
     });
     expect(sl.getScopeState([{ scopeId: "tenant", value: "tenant-a" }])).toEqual({ "feature.x": true });
-    expect(sl.getScopeState([{ scopeId: "tenant", value: "unknown" }])).toBeUndefined();
+    expect(sl.getScopeState([{ scopeId: "tenant", value: "unknown" }])).toBe(undefined);
   });
 
   test("applyDelta updates correct scope state", () => {
@@ -85,7 +84,7 @@ describe("ScopeLoader", () => {
     });
     expect(sl.loadedScopes().length).toBe(0);
     await sl.preloadScope([{ scopeId: "tenant", value: "tenant-b" }]);
-    expect(sl.loadedScopes()).toContain("tenant:tenant-b");
+    expect(sl.loadedScopes().includes("tenant:tenant-b")).toBe(true);
     expect(sl.loadedScopes().length).toBe(1);
   });
 });

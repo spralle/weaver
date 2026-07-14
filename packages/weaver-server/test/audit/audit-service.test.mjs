@@ -1,5 +1,3 @@
-import { describe, it } from "node:test";
-import assert from "node:assert/strict";
 import { createAuditService } from "@weaver-conf/weaver-server";
 
 function makeEntry(overrides = {}) {
@@ -27,8 +25,8 @@ describe("AuditService", () => {
 
     await service.record(makeEntry());
 
-    assert.equal(recorded1.length, 1);
-    assert.equal(recorded2.length, 1);
+    expect(recorded1.length).toBe(1);
+    expect(recorded2.length).toBe(1);
   });
 
   it("masks sensitive values", async () => {
@@ -41,8 +39,8 @@ describe("AuditService", () => {
 
     await service.record(makeEntry({ key: "secret.key", oldValue: "s3cr3t", newValue: "n3w" }));
 
-    assert.equal(recorded[0].oldValue, "***");
-    assert.equal(recorded[0].newValue, "***");
+    expect(recorded[0].oldValue).toBe("***");
+    expect(recorded[0].newValue).toBe("***");
   });
 
   it("does not mask non-sensitive keys", async () => {
@@ -55,8 +53,8 @@ describe("AuditService", () => {
 
     await service.record(makeEntry({ key: "normal.key" }));
 
-    assert.equal(recorded[0].oldValue, "old");
-    assert.equal(recorded[0].newValue, "new");
+    expect(recorded[0].oldValue).toBe("old");
+    expect(recorded[0].newValue).toBe("new");
   });
 
   it("continues if one sink fails", async () => {
@@ -67,7 +65,7 @@ describe("AuditService", () => {
 
     await service.record(makeEntry());
 
-    assert.equal(recorded.length, 1);
+    expect(recorded.length).toBe(1);
   });
 
   it("accepts all action types", async () => {
@@ -80,6 +78,6 @@ describe("AuditService", () => {
       await service.record(makeEntry({ action }));
     }
 
-    assert.equal(recorded.length, 6);
+    expect(recorded.length).toBe(6);
   });
 });

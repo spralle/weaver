@@ -1,4 +1,6 @@
 // GitStorageProvider — composes FileSystemStorageProvider for reads, GitManager for batched writes
+
+import { join } from "node:path";
 import type {
   ConfigurationLayerData,
   ConfigurationStorageProvider,
@@ -38,7 +40,6 @@ class GitStorageProvider implements ConfigurationStorageProvider {
     this.gitManager = options.gitManager;
     this.filePath = options.filePath;
 
-    const { join } = require("node:path") as typeof import("node:path"); // SAFETY: require returns the same module type
     const absoluteFilePath = join(
       options.gitManager.localPath,
       options.filePath,

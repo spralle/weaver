@@ -1,5 +1,3 @@
-import { test } from "node:test";
-import assert from "node:assert/strict";
 import { configDeltaSchema } from "@weaver-conf/config-types";
 
 test("configDeltaSchema validates set delta", () => {
@@ -11,7 +9,7 @@ test("configDeltaSchema validates set delta", () => {
     environment: "production",
     timestamp: "2026-05-01T00:00:00Z",
   });
-  assert.equal(result.success, true);
+  expect(result.success).toBe(true);
 });
 
 test("configDeltaSchema validates remove delta with null value", () => {
@@ -23,7 +21,7 @@ test("configDeltaSchema validates remove delta with null value", () => {
     environment: "production",
     timestamp: "2026-05-01T00:00:00Z",
   });
-  assert.equal(result.success, true);
+  expect(result.success).toBe(true);
 });
 
 test("configDeltaSchema rejects invalid action", () => {
@@ -35,5 +33,5 @@ test("configDeltaSchema rejects invalid action", () => {
     environment: "production",
     timestamp: "2026-05-01T00:00:00Z",
   });
-  assert.equal(result.success, false);
+  expect(result.success).toBe(false);
 });

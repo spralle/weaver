@@ -1,5 +1,3 @@
-import { describe, it } from "node:test";
-import assert from "node:assert/strict";
 import { defineViewConfig } from "../dist/index.js";
 
 describe("defineViewConfig", () => {
@@ -14,8 +12,8 @@ describe("defineViewConfig", () => {
       ],
     };
     const result = defineViewConfig(declaration);
-    assert.deepStrictEqual(result, declaration);
-    assert.equal(result, declaration);
+    expect(result).toStrictEqual(declaration);
+    expect(result).toBe(declaration);
   });
 
   it("accepts declaration with all optional fields", () => {
@@ -37,10 +35,10 @@ describe("defineViewConfig", () => {
       ],
     };
     const result = defineViewConfig(declaration);
-    assert.equal(result.viewId, "FullView");
-    assert.equal(result.description, "A fully-specified view config");
-    assert.equal(result.category, "navigation");
-    assert.equal(result.schemas.length, 2);
+    expect(result.viewId).toBe("FullView");
+    expect(result.description).toBe("A fully-specified view config");
+    expect(result.category).toBe("navigation");
+    expect(result.schemas.length).toBe(2);
   });
 
   it("accepts declaration with minimal fields (viewId + schemas only)", () => {
@@ -49,9 +47,9 @@ describe("defineViewConfig", () => {
       schemas: [],
     };
     const result = defineViewConfig(declaration);
-    assert.equal(result.viewId, "MinimalView");
-    assert.deepStrictEqual(result.schemas, []);
-    assert.equal(result.description, undefined);
-    assert.equal(result.category, undefined);
+    expect(result.viewId).toBe("MinimalView");
+    expect(result.schemas).toStrictEqual([]);
+    expect(result.description).toBe(undefined);
+    expect(result.category).toBe(undefined);
   });
 });

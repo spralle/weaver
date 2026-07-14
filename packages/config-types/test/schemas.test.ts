@@ -1,5 +1,3 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
 import {
   configurationContextSchema,
   configurationLayerDataSchema,
@@ -14,7 +12,7 @@ describe("scopeDefinitionSchema", () => {
       id: "org",
       label: "Organization",
     });
-    assert.equal(result.success, true);
+    expect(result.success).toBe(true);
   });
 
   it("accepts optional parentScopeId", () => {
@@ -23,12 +21,12 @@ describe("scopeDefinitionSchema", () => {
       label: "Team",
       parentScopeId: "org",
     });
-    assert.equal(result.success, true);
+    expect(result.success).toBe(true);
   });
 
   it("rejects missing required fields", () => {
     const result = scopeDefinitionSchema.safeParse({ id: "x" });
-    assert.equal(result.success, false);
+    expect(result.success).toBe(false);
   });
 });
 
@@ -38,7 +36,7 @@ describe("scopeInstanceSchema", () => {
       scopeId: "org",
       value: "acme",
     });
-    assert.equal(result.success, true);
+    expect(result.success).toBe(true);
   });
 
   it("rejects non-string value", () => {
@@ -46,7 +44,7 @@ describe("scopeInstanceSchema", () => {
       scopeId: "org",
       value: 123,
     });
-    assert.equal(result.success, false);
+    expect(result.success).toBe(false);
   });
 });
 
@@ -57,7 +55,7 @@ describe("configurationContextSchema", () => {
       userId: "u1",
       deviceId: "d1",
     });
-    assert.equal(result.success, true);
+    expect(result.success).toBe(true);
   });
 
   it("rejects missing userId", () => {
@@ -65,7 +63,7 @@ describe("configurationContextSchema", () => {
       scopePath: [],
       deviceId: "d1",
     });
-    assert.equal(result.success, false);
+    expect(result.success).toBe(false);
   });
 });
 
@@ -75,7 +73,7 @@ describe("configurationLayerEntrySchema", () => {
       layer: "defaults",
       entries: { "app.theme": "dark" },
     });
-    assert.equal(result.success, true);
+    expect(result.success).toBe(true);
   });
 });
 
@@ -85,13 +83,13 @@ describe("configurationLayerDataSchema", () => {
       entries: { key: "value" },
       revision: "abc123",
     });
-    assert.equal(result.success, true);
+    expect(result.success).toBe(true);
   });
 
   it("accepts entries without optional fields", () => {
     const result = configurationLayerDataSchema.safeParse({
       entries: {},
     });
-    assert.equal(result.success, true);
+    expect(result.success).toBe(true);
   });
 });

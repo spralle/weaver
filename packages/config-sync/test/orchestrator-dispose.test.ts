@@ -1,4 +1,3 @@
-import { describe, expect, test } from "bun:test";
 import type {
   ConfigSyncTransport,
   ConfigurationLayerData,
@@ -9,9 +8,23 @@ import { createConfigSyncOrchestrator } from "../src/index.js";
 
 function createMockTransport(): ConfigSyncTransport {
   return {
-    pull: async () => ({ changes: [], cursor: undefined }),
-    push: async () => ({ acknowledged: [], conflicts: [] }),
-    ack: async () => ({}),
+    pull: async () => ({
+      changes: [],
+      cursor: { serverRevision: "rev-0", serverTime: 0 },
+      serverTime: 0,
+    }),
+    push: async (request) => ({
+      requestId: request.requestId,
+      serverRevision: "rev-0",
+      serverTime: 0,
+      results: [],
+    }),
+    ack: async (request) => ({
+      requestId: request.requestId,
+      acked: true,
+      serverRevision: "rev-0",
+      serverTime: 0,
+    }),
   };
 }
 
@@ -22,7 +35,7 @@ function createMockSnapshotCache(): SyncSnapshotCache {
     saveSnapshot: async (s) => {
       snapshot = s;
     },
-    getCursor: async () => undefined,
+    getCursor: async () => ({ serverRevision: "rev-0", serverTime: 0 }),
     setCursor: async () => {},
   };
 }
@@ -34,7 +47,7 @@ function createMockMutationQueue(): SyncMutationQueue {
     markRequestInFlight: async () => {},
     acknowledgeRequest: async () => {},
     releaseRequest: async () => {},
-    getQueueMetadata: async () => ({ size: 0, oldestTimestamp: undefined }),
+    getQueueMetadata: async () => ({ pendingCount: 0, inFlightCount: 0 }),
   };
 }
 
@@ -44,7 +57,11 @@ describe("orchestrator dispose", () => {
     const transport = createMockTransport();
     transport.pull = async () => {
       pullCount++;
-      return { changes: [], cursor: undefined };
+      return {
+        changes: [],
+        cursor: { serverRevision: "rev-0", serverTime: 0 },
+        serverTime: 0,
+      };
     };
 
     const orchestrator = createConfigSyncOrchestrator({

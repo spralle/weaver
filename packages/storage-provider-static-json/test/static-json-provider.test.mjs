@@ -1,5 +1,3 @@
-import test from "node:test";
-import assert from "node:assert/strict";
 import { createStaticJsonStorageProvider } from "../src/static-json-provider.ts";
 
 test("load returns cloned data", async () => {
@@ -10,7 +8,7 @@ test("load returns cloned data", async () => {
     data: original,
   });
   const data = await provider.load();
-  assert.deepEqual(data.entries, { "ghost.app.theme": "dark", "ghost.app.zoom": 5 });
+  expect(data.entries).toEqual({ "ghost.app.theme": "dark", "ghost.app.zoom": 5 });
 });
 
 test("mutation of loaded data does not affect subsequent loads", async () => {
@@ -23,7 +21,7 @@ test("mutation of loaded data does not affect subsequent loads", async () => {
   const data1 = await provider.load();
   data1.entries["ghost.app.theme"] = "changed-by-consumer";
   const data2 = await provider.load();
-  assert.notEqual(data2.entries["ghost.app.theme"], "changed-by-consumer");
+  expect(data2.entries["ghost.app.theme"]).not.toBe("changed-by-consumer");
 });
 
 test("load returns deep clone (nested objects)", async () => {
@@ -36,7 +34,7 @@ test("load returns deep clone (nested objects)", async () => {
   const data1 = await provider.load();
   data1.entries.nested.a = 999;
   const data2 = await provider.load();
-  assert.equal(data2.entries.nested.a, 1);
+  expect(data2.entries.nested.a).toBe(1);
 });
 
 test("write returns failure", async () => {
@@ -46,9 +44,9 @@ test("write returns failure", async () => {
     data: {},
   });
   const result = await provider.write("ghost.app.theme", "light");
-  assert.equal(result.success, false);
-  assert.equal(result.error.code, "READONLY");
-  assert.equal(result.error.message, "StaticJsonStorageProvider is read-only");
+  expect(result.success).toBe(false);
+  expect(result.error.code).toBe("READONLY");
+  expect(result.error.message).toBe("StaticJsonStorageProvider is read-only");
 });
 
 test("remove returns failure", async () => {
@@ -58,9 +56,9 @@ test("remove returns failure", async () => {
     data: { key: "value" },
   });
   const result = await provider.remove("key");
-  assert.equal(result.success, false);
-  assert.equal(result.error.code, "READONLY");
-  assert.equal(result.error.message, "StaticJsonStorageProvider is read-only");
+  expect(result.success).toBe(false);
+  expect(result.error.code).toBe("READONLY");
+  expect(result.error.message).toBe("StaticJsonStorageProvider is read-only");
 });
 
 test("writable is false", () => {
@@ -69,7 +67,7 @@ test("writable is false", () => {
     layer: "core",
     data: {},
   });
-  assert.equal(provider.writable, false);
+  expect(provider.writable).toBe(false);
 });
 
 test("id and layer are set correctly", () => {
@@ -78,6 +76,6 @@ test("id and layer are set correctly", () => {
     layer: "module",
     data: {},
   });
-  assert.equal(provider.id, "my-id");
-  assert.equal(provider.layer, "module");
+  expect(provider.id).toBe("my-id");
+  expect(provider.layer).toBe("module");
 });

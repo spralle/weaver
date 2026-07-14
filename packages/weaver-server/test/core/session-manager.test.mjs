@@ -1,5 +1,3 @@
-import { describe, it } from "node:test";
-import assert from "node:assert/strict";
 import { createSessionManager } from "@weaver-conf/weaver-server";
 
 function mockAuditService() {
@@ -21,11 +19,11 @@ describe("SessionManager", () => {
 
     const session = await mgr.activate({ reason: "hotfix", activatedBy: "admin" });
 
-    assert.ok(session.id);
-    assert.equal(session.activatedBy, "admin");
-    assert.equal(session.reason, "hotfix");
-    assert.ok(session.expiresAt);
-    assert.equal(audit.entries.length, 1);
+    expect(session.id).toBeTruthy();
+    expect(session.activatedBy).toBe("admin");
+    expect(session.reason).toBe("hotfix");
+    expect(session.expiresAt).toBeTruthy();
+    expect(audit.entries.length).toBe(1);
   });
 
   it("deactivate removes session", async () => {
@@ -35,7 +33,7 @@ describe("SessionManager", () => {
     const session = await mgr.activate({ reason: "test", activatedBy: "admin" });
     await mgr.deactivate(session.id, "admin");
 
-    assert.equal(mgr.getSession(session.id), undefined);
+    expect(mgr.getSession(session.id)).toBe(undefined);
   });
 
   it("setOverride records audit with isEmergencyOverride", async () => {
@@ -46,8 +44,8 @@ describe("SessionManager", () => {
     await mgr.setOverride(session.id, "key1", "val1", "admin");
 
     const overrideEntry = audit.entries.find((e) => e.key === "key1");
-    assert.ok(overrideEntry);
-    assert.equal(overrideEntry.isEmergencyOverride, true);
+    expect(overrideEntry).toBeTruthy();
+    expect(overrideEntry.isEmergencyOverride).toBe(true);
   });
 
   it("getSession returns session info", async () => {
@@ -57,7 +55,7 @@ describe("SessionManager", () => {
     const session = await mgr.activate({ reason: "test", activatedBy: "admin" });
     const found = mgr.getSession(session.id);
 
-    assert.deepEqual(found, session);
+    expect(found).toEqual(session);
   });
 
   it("listActiveSessions excludes expired", async () => {
@@ -71,7 +69,7 @@ describe("SessionManager", () => {
     await new Promise((r) => setTimeout(r, 5));
     const active = mgr.listActiveSessions();
 
-    assert.equal(active.length, 0);
+    expect(active.length).toBe(0);
   });
 
   it("follow-up deadline is 24h after activation", async () => {
@@ -82,7 +80,7 @@ describe("SessionManager", () => {
     const activatedAt = new Date(session.activatedAt).getTime();
     const deadline = new Date(session.followUpDeadline).getTime();
 
-    assert.equal(deadline - activatedAt, 24 * 60 * 60_000);
+    expect(deadline - activatedAt).toBe(24 * 60 * 60_000);
     mgr.dispose();
   });
 
@@ -104,8 +102,8 @@ describe("SessionManager", () => {
 
     // Expired session swept, valid session remains
     const active = mgr.listActiveSessions();
-    assert.equal(active.length, 1);
-    assert.equal(active[0].id, valid.id);
+    expect(active.length).toBe(1);
+    expect(active[0].id).toBe(valid.id);
     mgr.dispose();
   });
 

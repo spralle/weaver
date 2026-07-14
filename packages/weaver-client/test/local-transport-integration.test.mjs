@@ -1,4 +1,3 @@
-import { test, expect, describe } from "bun:test";
 import { createWeaverClient } from "../src/client.js";
 import { createLocalTransport } from "../src/local-transport.js";
 
@@ -31,7 +30,7 @@ describe("LocalTransport integration", () => {
     const received = [];
     client.onChange("db.*", (changes) => received.push(...changes));
     transport.pushDelta({ action: "set", key: "db.host", value: "newhost", layer: "platform", environment: "prod", timestamp: "t1" });
-    expect(received).toHaveLength(1);
+    expect(received.length).toBe(1);
     expect(client.get("db.host")).toBe("newhost");
     await client.close();
   });

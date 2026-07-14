@@ -1,5 +1,3 @@
-import { test, describe } from "node:test";
-import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
 import { createWebhookHandler } from "../../src/core/webhook-handler.ts";
 
@@ -23,8 +21,8 @@ describe("WebhookHandler", () => {
     const sig = `sha256=${createHmac("sha256", secret).update(body).digest("hex")}`;
 
     const result = await handler.handleRequest(body, sig);
-    assert.equal(result, true);
-    assert.equal(detector.checkCount, 1);
+    expect(result).toBe(true);
+    expect(detector.checkCount).toBe(1);
   });
 
   test("invalid signature is rejected", async () => {
@@ -36,8 +34,8 @@ describe("WebhookHandler", () => {
 
     const body = "{}";
     const result = await handler.handleRequest(body, "sha256=invalid");
-    assert.equal(result, false);
-    assert.equal(detector.checkCount, 0);
+    expect(result).toBe(false);
+    expect(detector.checkCount).toBe(0);
   });
 
   test("missing signature is rejected when secret configured", async () => {
@@ -48,7 +46,7 @@ describe("WebhookHandler", () => {
     });
 
     const result = await handler.handleRequest("{}");
-    assert.equal(result, false);
+    expect(result).toBe(false);
   });
 
   test("no-secret mode accepts all requests", async () => {
@@ -56,7 +54,7 @@ describe("WebhookHandler", () => {
     const handler = createWebhookHandler({ changeDetector: detector });
 
     const result = await handler.handleRequest("{}");
-    assert.equal(result, true);
-    assert.equal(detector.checkCount, 1);
+    expect(result).toBe(true);
+    expect(detector.checkCount).toBe(1);
   });
 });

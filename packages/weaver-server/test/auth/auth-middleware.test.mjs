@@ -1,5 +1,3 @@
-import { describe, test } from "node:test";
-import assert from "node:assert/strict";
 import { createAuthMiddleware } from "../../src/auth/auth-middleware.ts";
 
 function mockValidator(identity) {
@@ -41,20 +39,19 @@ describe("AuthMiddleware", () => {
       jwtValidator: mockValidator(userIdentity),
     });
     const ctx = await mw.authenticate("valid-token");
-    assert.strictEqual(ctx.identity.userId, "user-42");
-    assert.strictEqual(ctx.isUser, true);
-    assert.strictEqual(ctx.isService, false);
-    assert.strictEqual(ctx.isAdmin, false);
+    expect(ctx.identity.userId).toBe("user-42");
+    expect(ctx.isUser).toBe(true);
+    expect(ctx.isService).toBe(false);
+    expect(ctx.isAdmin).toBe(false);
   });
 
   test("authenticate with missing token throws UNAUTHORIZED", async () => {
     const mw = createAuthMiddleware({
       jwtValidator: mockValidator(userIdentity),
     });
-    await assert.rejects(
-      mw.authenticate(undefined),
-      (err) => err.code === "UNAUTHORIZED",
-    );
+    await expect(mw.authenticate(undefined)).rejects.toMatchObject({
+      code: "UNAUTHORIZED",
+    });
   });
 
   test("authenticate with invalid token throws UNAUTHORIZED", async () => {
@@ -64,10 +61,9 @@ describe("AuthMiddleware", () => {
         message: "Invalid signature",
       }),
     });
-    await assert.rejects(
-      mw.authenticate("bad-token"),
-      (err) => err.code === "UNAUTHORIZED",
-    );
+    await expect(mw.authenticate("bad-token")).rejects.toMatchObject({
+      code: "UNAUTHORIZED",
+    });
   });
 
   test("isService=true for M2M tokens", async () => {
@@ -75,9 +71,9 @@ describe("AuthMiddleware", () => {
       jwtValidator: mockValidator(serviceIdentity),
     });
     const ctx = await mw.authenticate("svc-token");
-    assert.strictEqual(ctx.isService, true);
-    assert.strictEqual(ctx.isAdmin, true);
-    assert.strictEqual(ctx.isUser, false);
+    expect(ctx.isService).toBe(true);
+    expect(ctx.isAdmin).toBe(true);
+    expect(ctx.isUser).toBe(false);
   });
 
   test("requireAdmin with admin role passes", () => {
@@ -90,7 +86,7 @@ describe("AuthMiddleware", () => {
       isService: false,
       isUser: true,
     };
-    assert.doesNotThrow(() => mw.requireAdmin(ctx));
+    expect(() => mw.requireAdmin(ctx)).not.toThrow();
   });
 
   test("requireAdmin without admin role throws FORBIDDEN", () => {
@@ -103,7 +99,7 @@ describe("AuthMiddleware", () => {
       isService: false,
       isUser: true,
     };
-    assert.throws(() => mw.requireAdmin(ctx));
+    expect(() => mw.requireAdmin(ctx)).toThrow();
   });
 
   test("extractToken from Authorization header", () => {
@@ -111,7 +107,7 @@ describe("AuthMiddleware", () => {
       jwtValidator: mockValidator(userIdentity),
     });
     const token = mw.extractToken({ authorization: "Bearer my-jwt-token" });
-    assert.strictEqual(token, "my-jwt-token");
+    expect(token).toBe("my-jwt-token");
   });
 
   test("extractToken returns undefined for missing header", () => {
@@ -119,6 +115,6 @@ describe("AuthMiddleware", () => {
       jwtValidator: mockValidator(userIdentity),
     });
     const token = mw.extractToken({});
-    assert.strictEqual(token, undefined);
+    expect(token).toBe(undefined);
   });
 });

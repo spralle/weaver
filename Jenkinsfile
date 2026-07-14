@@ -21,7 +21,7 @@ pipeline {
         stage('Install dependencies') {
             agent {
                 docker {
-                    image 'oven/bun:1.2.21-alpine'
+                    image 'node:24-alpine'
                     label 'lynx'
                 }
             }
@@ -32,14 +32,15 @@ pipeline {
 
             steps {
                 echo "installing dependencies for build ${env.BRANCH_NAME}-${env.BUILD_ID}"
-                sh 'bun install --frozen-lockfile'
+                sh 'corepack enable'
+                sh 'pnpm install --frozen-lockfile'
             }
         }
 
         stage('Build') {
             agent {
                 docker {
-                    image 'oven/bun:1.2.21-alpine'
+                    image 'node:24-alpine'
                     label 'lynx'
                 }
             }
@@ -49,14 +50,15 @@ pipeline {
             }
 
             steps {
-                sh 'bun run build'
+                sh 'corepack enable'
+                sh 'pnpm run build'
             }
         }
 
         stage('Typecheck') {
             agent {
                 docker {
-                    image 'oven/bun:1.2.21-alpine'
+                    image 'node:24-alpine'
                     label 'lynx'
                 }
             }
@@ -66,14 +68,15 @@ pipeline {
             }
 
             steps {
-                sh 'bun run typecheck'
+                sh 'corepack enable'
+                sh 'pnpm run typecheck'
             }
         }
 
         stage('Lint') {
             agent {
                 docker {
-                    image 'oven/bun:1.2.21-alpine'
+                    image 'node:24-alpine'
                     label 'lynx'
                 }
             }
@@ -83,14 +86,15 @@ pipeline {
             }
 
             steps {
-                sh 'bun run lint'
+                sh 'corepack enable'
+                sh 'pnpm run lint'
             }
         }
 
         stage('Test') {
             agent {
                 docker {
-                    image 'oven/bun:1.2.21-alpine'
+                    image 'node:24-alpine'
                     label 'lynx'
                 }
             }
@@ -100,7 +104,8 @@ pipeline {
             }
 
             steps {
-                sh 'bun run test'
+                sh 'corepack enable'
+                sh 'pnpm run test'
             }
         }
     }

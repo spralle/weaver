@@ -1,4 +1,3 @@
-import { test, expect, describe } from "bun:test";
 
 describe("WeaverTransport interface", () => {
   test("mock transport satisfies interface contract", () => {
@@ -15,16 +14,16 @@ describe("WeaverTransport interface", () => {
       listScopeValues: async () => [],
       close: async () => {},
     };
-    expect(transport.resolveAll).toBeFunction();
-    expect(transport.get).toBeFunction();
-    expect(transport.getNamespace).toBeFunction();
-    expect(transport.inspect).toBeFunction();
-    expect(transport.subscribe).toBeFunction();
-    expect(transport.set).toBeFunction();
-    expect(transport.setMany).toBeFunction();
-    expect(transport.remove).toBeFunction();
-    expect(transport.listScopes).toBeFunction();
-    expect(transport.listScopeValues).toBeFunction();
-    expect(transport.close).toBeFunction();
+    expect(typeof transport.resolveAll).toBe("function");
+    expect(typeof transport.get).toBe("function");
+    expect(typeof transport.getNamespace).toBe("function");
+    expect(typeof transport.inspect).toBe("function");
+    expect(typeof transport.subscribe).toBe("function");
+    expect(typeof transport.set).toBe("function");
+    expect(typeof transport.setMany).toBe("function");
+    expect(typeof transport.remove).toBe("function");
+    expect(typeof transport.listScopes).toBe("function");
+    expect(typeof transport.listScopeValues).toBe("function");
+    expect(typeof transport.close).toBe("function");
   });
 });

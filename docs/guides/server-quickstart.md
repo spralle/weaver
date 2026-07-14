@@ -5,7 +5,7 @@ Run `@weaver-conf/weaver-server` as a standalone configuration microservice.
 ## Installation
 
 ```bash
-bun add @weaver-conf/weaver-server
+pnpm add @weaver-conf/weaver-server
 ```
 
 ## Minimal Server
@@ -18,7 +18,7 @@ import { startWeaverServer } from "@weaver-conf/weaver-server";
 const server = await startWeaverServer({ port: 3399 });
 ```
 
-This starts a `Bun.serve()` HTTP server on port 3399 with in-memory storage. Useful for local development and testing, but not production — see below for persistent storage.
+This starts an HTTP server on port 3399 with in-memory storage. Useful for local development and testing, but not production — see below for persistent storage.
 
 For repository-driven startup, see the [Bootstrap Config Repository guide](./bootstrap-config-repo.md).
 
@@ -143,11 +143,12 @@ curl -X PATCH http://localhost:3399/v1/config \
 ### Docker
 
 ```dockerfile
-FROM oven/bun:1.1-alpine
+FROM node:24-alpine
 
 WORKDIR /app
-COPY package.json bun.lockb ./
-RUN bun install --production
+RUN corepack enable
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile --prod
 
 COPY src ./src
 
@@ -155,7 +156,7 @@ ENV WEAVER_PORT=3399
 ENV WEAVER_ENVIRONMENT=production
 
 EXPOSE 3399
-CMD ["bun", "run", "src/main.ts"]
+CMD ["node", "src/main.ts"]
 ```
 
 ### Graceful Shutdown
@@ -231,5 +232,5 @@ process.on("SIGTERM", async () => {
 ## Next Steps
 
 - [Browser Client Guide](./browser-client.md) — Connect a browser SPA to weaver-server
-- [Backend Client Guide](./backend-client.md) — Connect a Node.js/Bun service to weaver-server
+- [Backend Client Guide](./backend-client.md) — Connect a Node.js service to weaver-server
 - [Bootstrap Config Repository](./bootstrap-config-repo.md) — Start the server from a Git-backed bootstrap repository

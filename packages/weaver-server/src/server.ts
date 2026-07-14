@@ -3,6 +3,7 @@ import type {
   ConfigurationStorageProvider,
   WeaverConfig,
 } from "@weaver-conf/config-types";
+import type { Request, Response } from "express";
 import type { AuthContext, AuthMiddleware } from "./auth/auth-middleware";
 import { createAuthMiddleware } from "./auth/auth-middleware";
 import { createJwtValidator } from "./auth/jwt-validator";
@@ -10,6 +11,7 @@ import { resolveServerBootstrap } from "./bootstrap/server-bootstrap";
 import { createWeaverConfigService } from "./core/config-service";
 import type { HealthEndpoints } from "./health";
 import { createHealthEndpoints } from "./health";
+import { type HttpServer, startHttpServer } from "./http-server";
 import { parseServerEnv } from "./server-env";
 import { createShutdownManager } from "./shutdown";
 import type { AuthGate } from "./transport/auth-gate";
@@ -20,16 +22,6 @@ import type { SSEAdapter } from "./transport/sse-adapter";
 import { createSSEAdapter } from "./transport/sse-adapter";
 import type { SSEMessage } from "./transport/sse-events";
 
-declare const Bun: {
-  serve(options: {
-    port: number;
-    fetch: (req: Request) => Response | Promise<Response>;
-  }): {
-    port: number;
-    stop(): void;
-  };
-};
-type BunServer = ReturnType<typeof Bun.serve>;
 type BootstrapResolver = typeof resolveServerBootstrap;
 export interface WeaverServerOptions {
   port?: number;
@@ -70,73 +62,76 @@ function createRequestHandler(
   sseAdapter: SSEAdapter,
   authMiddleware?: AuthMiddleware,
 ) {
-  return async function handleRequest(req: Request): Promise<Response> {
-    const url = new URL(req.url);
+  return async function handleRequest(
+    req: Request,
+    res: Response,
+  ): Promise<void> {
+    const host = req.get("host") ?? "localhost";
+    const url = new URL(
+      req.originalUrl ?? req.url,
+      `${req.protocol}://${host}`,
+    );
     const method = req.method;
 
     if (url.pathname === "/healthz") {
       const result = health.healthz();
-      return new Response(JSON.stringify(result.body), {
-        status: result.status,
-        headers: { "content-type": "application/json" },
-      });
+      res.status(result.status).json(result.body);
+      return;
     }
 
     if (url.pathname === "/readyz") {
       const result = health.readyz();
-      return new Response(JSON.stringify(result.body), {
-        status: result.status,
-        headers: { "content-type": "application/json" },
-      });
+      res.status(result.status).json(result.body);
+      return;
     }
 
     if (url.pathname === "/v1/events" && method === "GET") {
-      return handleSSE(url, sseAdapter);
+      await handleSSE(url, req, res, sseAdapter);
+      return;
     }
 
     if (url.pathname.startsWith("/v1/")) {
-      return handleRest(req, url, method, restAdapter, authMiddleware);
+      await handleRest(req, res, url, method, restAdapter, authMiddleware);
+      return;
     }
 
-    return new Response(JSON.stringify({ error: "not found" }), {
-      status: 404,
-      headers: { "content-type": "application/json" },
-    });
+    res.status(404).json({ error: "not found" });
   };
 }
 async function handleRest(
   req: Request,
+  res: Response,
   url: URL,
   method: string,
   restAdapter: RestAdapter,
   authMiddleware?: AuthMiddleware,
-): Promise<Response> {
+): Promise<void> {
   const query: Record<string, string> = {};
   url.searchParams.forEach((value, key) => {
     query[key] = value;
   });
 
-  let body: unknown;
-  if (method !== "GET" && method !== "HEAD") {
-    try {
-      body = await req.json();
-    } catch {
-      body = undefined;
-    }
-  }
+  const body = method === "GET" || method === "HEAD" ? undefined : req.body;
 
   const headers: Record<string, string> = {};
-  req.headers.forEach((value, key) => {
-    headers[key] = value;
-  });
+  for (const [key, value] of Object.entries(req.headers)) {
+    if (typeof value === "string") {
+      headers[key] = value;
+      continue;
+    }
+    if (Array.isArray(value)) {
+      headers[key] = value.join(",");
+    }
+  }
 
   const authResult = await authenticateRestRequest(
     method,
     headers,
     authMiddleware,
   );
-  if (authResult instanceof Response) {
-    return authResult;
+  if (isHttpErrorResponse(authResult)) {
+    applyResponse(res, authResult);
+    return;
   }
 
   const restRequest: RestRequest = {
@@ -153,13 +148,19 @@ async function handleRest(
     restRequest,
   );
 
-  return new Response(JSON.stringify(restResponse.body), {
+  applyResponse(res, {
     status: restResponse.status,
+    body: restResponse.body,
     headers: restResponse.headers ?? { "content-type": "application/json" },
   });
 }
 
-async function handleSSE(url: URL, sseAdapter: SSEAdapter): Promise<Response> {
+async function handleSSE(
+  url: URL,
+  req: Request,
+  res: Response,
+  sseAdapter: SSEAdapter,
+): Promise<void> {
   const clientOptions: Record<string, string> = {};
   const prefix = url.searchParams.get("prefix");
   const scope = url.searchParams.get("scope");
@@ -170,41 +171,33 @@ async function handleSSE(url: URL, sseAdapter: SSEAdapter): Promise<Response> {
 
   const client = await sseAdapter.createClient(clientOptions);
 
-  const stream = new ReadableStream({
-    start(controller) {
-      for (const msg of client.messages) {
-        controller.enqueue(new TextEncoder().encode(msg));
-      }
+  res.status(200);
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders?.();
 
-      const originalSend = client.send.bind(client);
-      Object.defineProperty(client, "send", {
-        value(message: SSEMessage) {
-          originalSend(message);
-          const formatted = client.messages[client.messages.length - 1];
-          if (formatted) {
-            try {
-              controller.enqueue(new TextEncoder().encode(formatted));
-            } catch {
-              client.close();
-            }
-          }
-        },
-        writable: true,
-        configurable: true,
-      });
+  for (const msg of client.messages) {
+    res.write(msg);
+  }
+
+  const originalSend = client.send.bind(client);
+  Object.defineProperty(client, "send", {
+    value(message: SSEMessage) {
+      originalSend(message);
+      const formatted = client.messages[client.messages.length - 1];
+      if (!formatted) {
+        return;
+      }
+      res.write(formatted);
     },
-    cancel() {
-      client.close();
-    },
+    writable: true,
+    configurable: true,
   });
 
-  return new Response(stream, {
-    status: 200,
-    headers: {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-      Connection: "keep-alive",
-    },
+  req.on("close", () => {
+    client.close();
+    res.end();
   });
 }
 
@@ -217,18 +210,43 @@ function isWriteMethod(method: string): boolean {
   );
 }
 
-function unauthorized(message: string): Response {
-  return new Response(
-    JSON.stringify({ error: { code: "UNAUTHORIZED", message } }),
-    { status: 401, headers: { "content-type": "application/json" } },
-  );
+interface HttpErrorResponse {
+  status: number;
+  body: { error: { code: string; message: string } };
+  headers: Record<string, string>;
+}
+
+function unauthorized(message: string): HttpErrorResponse {
+  return {
+    status: 401,
+    body: { error: { code: "UNAUTHORIZED", message } },
+    headers: { "content-type": "application/json" },
+  };
+}
+
+function isHttpErrorResponse(
+  value: AuthContext | HttpErrorResponse | undefined,
+): value is HttpErrorResponse {
+  return value !== undefined && "status" in value;
+}
+
+function applyResponse(
+  res: Response,
+  response: { status: number; body: unknown; headers?: Record<string, string> },
+): void {
+  if (response.headers) {
+    for (const [key, value] of Object.entries(response.headers)) {
+      res.setHeader(key, value);
+    }
+  }
+  res.status(response.status).json(response.body);
 }
 
 async function authenticateRestRequest(
   method: string,
   headers: Record<string, string>,
   authMiddleware?: AuthMiddleware,
-): Promise<AuthContext | Response | undefined> {
+): Promise<AuthContext | HttpErrorResponse | undefined> {
   if (!authMiddleware) return undefined;
 
   const token = authMiddleware.extractToken(headers);
@@ -272,7 +290,7 @@ export async function startWeaverServerInternal(
   }
 
   let sseAdapter: SSEAdapter | undefined;
-  let server: BunServer | undefined;
+  let server: HttpServer | undefined;
 
   try {
     let authGate: AuthGate | undefined;
@@ -353,9 +371,9 @@ export async function startWeaverServerInternal(
       authMiddleware,
     );
 
-    server = Bun.serve({
+    server = await startHttpServer({
       port: config.port,
-      fetch: handleRequest,
+      handleRequest,
     });
     const activeSseAdapter = sseAdapter;
     const activeServer = server;
@@ -371,7 +389,7 @@ export async function startWeaverServerInternal(
       await configService.flush();
       activeSseAdapter.stopCheckpointTimer();
       activeSseAdapter.closeAll();
-      activeServer.stop();
+      await activeServer.stop();
       await bootstrapResult.dispose();
     });
 
@@ -393,7 +411,7 @@ export async function startWeaverServerInternal(
     health.setReady(false);
     sseAdapter?.stopCheckpointTimer();
     sseAdapter?.closeAll();
-    server?.stop();
+    await server?.stop();
     await bootstrapResult.dispose();
     throw err;
   }

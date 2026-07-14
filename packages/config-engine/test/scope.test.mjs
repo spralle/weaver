@@ -1,5 +1,3 @@
-import test from "node:test";
-import assert from "node:assert/strict";
 import { buildScopeChain } from "../dist/scope.js";
 
 const hierarchy = {
@@ -12,16 +10,16 @@ const hierarchy = {
 
 test("empty scope path returns success with empty chain", () => {
   const result = buildScopeChain(hierarchy, []);
-  assert.deepEqual(result, { success: true, chain: [] });
+  expect(result).toEqual({ success: true, chain: [] });
 });
 
 test("valid single-level scope path", () => {
   const result = buildScopeChain(hierarchy, [
     { scopeId: "country", value: "NO" },
   ]);
-  assert.equal(result.success, true);
+  expect(result.success).toBe(true);
   if (result.success) {
-    assert.deepEqual(result.chain, [{ scopeId: "country", value: "NO" }]);
+    expect(result.chain).toEqual([{ scopeId: "country", value: "NO" }]);
   }
 });
 
@@ -30,9 +28,9 @@ test("valid multi-level scope path (country -> site)", () => {
     { scopeId: "country", value: "NO" },
     { scopeId: "site", value: "Bergen" },
   ]);
-  assert.equal(result.success, true);
+  expect(result.success).toBe(true);
   if (result.success) {
-    assert.deepEqual(result.chain, [
+    expect(result.chain).toEqual([
       { scopeId: "country", value: "NO" },
       { scopeId: "site", value: "Bergen" },
     ]);
@@ -45,9 +43,9 @@ test("valid three-level scope path", () => {
     { scopeId: "site", value: "Bergen" },
     { scopeId: "department", value: "Operations" },
   ]);
-  assert.equal(result.success, true);
+  expect(result.success).toBe(true);
   if (result.success) {
-    assert.equal(result.chain.length, 3);
+    expect(result.chain.length).toBe(3);
   }
 });
 
@@ -55,9 +53,9 @@ test("unknown scope ID returns error", () => {
   const result = buildScopeChain(hierarchy, [
     { scopeId: "region", value: "Nordic" },
   ]);
-  assert.equal(result.success, false);
+  expect(result.success).toBe(false);
   if (!result.success) {
-    assert.ok(result.error.includes("region"));
+    expect(result.error.includes("region")).toBeTruthy();
   }
 });
 
@@ -67,8 +65,8 @@ test("invalid parent-child ordering returns error", () => {
     { scopeId: "site", value: "Bergen" },
     { scopeId: "country", value: "NO" },
   ]);
-  assert.equal(result.success, false);
+  expect(result.success).toBe(false);
   if (!result.success) {
-    assert.ok(result.error.includes("country"));
+    expect(result.error.includes("country")).toBeTruthy();
   }
 });

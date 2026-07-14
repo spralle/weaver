@@ -1,4 +1,3 @@
-import { describe, expect, mock, test } from "bun:test";
 import { createStateContainer } from "../src/state-container.js";
 
 describe("applyDelta", () => {
@@ -15,7 +14,7 @@ describe("applyDelta", () => {
       layers: [{ id: "a", priority: 0, entries: { x: 1, y: 2 } }],
     });
     container.applyDelta({ removed: ["x"], revision: 5 });
-    expect(container.get("x")).toBeUndefined();
+    expect(container.get("x")).toBe(undefined);
     expect(container.get("y")).toBe(2);
   });
 
@@ -31,9 +30,10 @@ describe("applyDelta", () => {
     const container = createStateContainer({
       layers: [{ id: "a", priority: 0, entries: { x: 1 } }],
     });
-    const fn = mock(() => {});
+    const fn = vi.fn(() => {});
     container.subscribe("x", fn);
     container.applyDelta({ set: { x: 5 }, revision: 3 });
+    expect(fn).toHaveBeenCalledTimes(1);
     expect(fn).toHaveBeenCalledWith(5);
   });
 

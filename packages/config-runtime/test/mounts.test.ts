@@ -1,4 +1,3 @@
-import { describe, expect, test } from "bun:test";
 import {
   buildMountMap,
   resolveMountedNamespace,
@@ -161,6 +160,6 @@ describe("resolveMountedNamespace", () => {
       getValue,
     );
 
-    expect(result.bad).toBeUndefined();
+    expect(result.bad).toBe(undefined);
   });
 });

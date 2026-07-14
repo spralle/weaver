@@ -1,34 +1,32 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
 import { Layers, replaceOnly } from "../src/layer-factories.js";
 import { defineWeaver } from "../src/weaver.js";
 
 describe("Layers factories", () => {
   it("Static creates a persistent static layer", () => {
     const layer = Layers.Static("defaults");
-    assert.equal(layer.name, "defaults");
-    assert.equal(layer.type.id, "static");
-    assert.equal(layer.type.persistent, true);
+    expect(layer.name).toBe("defaults");
+    expect(layer.type.id).toBe("static");
+    expect(layer.type.persistent).toBe(true);
   });
 
   it("Dynamic creates a persistent dynamic layer", () => {
     const layer = Layers.Dynamic("remote");
-    assert.equal(layer.name, "remote");
-    assert.equal(layer.type.id, "dynamic");
-    assert.equal(layer.type.persistent, true);
+    expect(layer.name).toBe("remote");
+    expect(layer.type.id).toBe("dynamic");
+    expect(layer.type.persistent).toBe(true);
   });
 
   it("Personal creates a persistent personal layer", () => {
     const layer = Layers.Personal("user");
-    assert.equal(layer.name, "user");
-    assert.equal(layer.type.id, "personal");
+    expect(layer.name).toBe("user");
+    expect(layer.type.id).toBe("personal");
   });
 
   it("Ephemeral creates a non-persistent layer", () => {
     const layer = Layers.Ephemeral("session");
-    assert.equal(layer.name, "session");
-    assert.equal(layer.type.id, "ephemeral");
-    assert.equal(layer.type.persistent, false);
+    expect(layer.name).toBe("session");
+    expect(layer.type.id).toBe("ephemeral");
+    expect(layer.type.persistent).toBe(false);
   });
 });
 
@@ -40,18 +38,17 @@ describe("defineWeaver", () => {
       Layers.Personal("user"),
     ] as const);
 
-    assert.deepEqual([...config.layerNames], ["defaults", "remote", "user"]);
-    assert.equal(config.getRank("defaults"), 0);
-    assert.equal(config.getRank("remote"), 1);
-    assert.equal(config.getRank("user"), 2);
-    assert.equal(config.getRank("unknown"), -1);
+    expect([...config.layerNames]).toEqual(["defaults", "remote", "user"]);
+    expect(config.getRank("defaults")).toBe(0);
+    expect(config.getRank("remote")).toBe(1);
+    expect(config.getRank("user")).toBe(2);
+    expect(config.getRank("unknown")).toBe(-1);
   });
 
   it("throws on duplicate layer names", () => {
-    assert.throws(
-      () => defineWeaver([Layers.Static("x"), Layers.Static("x")] as const),
-      /Duplicate layer name/,
-    );
+    expect(() =>
+      defineWeaver([Layers.Static("x"), Layers.Static("x")] as const),
+    ).toThrow(/Duplicate layer name/);
   });
 
   it("getLayer returns the definition by name", () => {
@@ -60,7 +57,7 @@ describe("defineWeaver", () => {
       Layers.Dynamic("b"),
     ] as const);
     const layer = config.getLayer("b");
-    assert.equal(layer?.type.id, "dynamic");
+    expect(layer?.type.id).toBe("dynamic");
   });
 
   it("getLayersByType filters correctly", () => {
@@ -70,14 +67,14 @@ describe("defineWeaver", () => {
       Layers.Static("s2"),
     ] as const);
     const statics = config.getLayersByType("static");
-    assert.equal(statics.length, 2);
+    expect(statics.length).toBe(2);
   });
 });
 
 describe("replaceOnly merge", () => {
   it("returns override regardless of base", () => {
-    assert.deepEqual(replaceOnly({ a: 1 }, { b: 2 }), { b: 2 });
-    assert.equal(replaceOnly("old", "new"), "new");
-    assert.equal(replaceOnly(42, null), null);
+    expect(replaceOnly({ a: 1 }, { b: 2 })).toEqual({ b: 2 });
+    expect(replaceOnly("old", "new")).toBe("new");
+    expect(replaceOnly(42, null)).toBe(null);
   });
 });

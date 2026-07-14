@@ -1,4 +1,3 @@
-import { describe, expect, test } from "bun:test";
 import type { SecretReference } from "@weaver-conf/config-types";
 import type { SecretBackend } from "../src/secret-resolver";
 import { createSecretResolver } from "../src/secret-resolver";
@@ -98,7 +97,7 @@ describe("createSecretResolver", () => {
     await resolver.refresh({ something: "else" });
 
     expect(resolver.hasSecret("old")).toBe(false);
-    expect(resolver.getResolved("old")).toBeUndefined();
+    expect(resolver.getResolved("old")).toBe(undefined);
     resolver.dispose();
   });
 
@@ -140,7 +139,7 @@ describe("createSecretResolver", () => {
     // Wait for at least one background refresh
     await new Promise((r) => setTimeout(r, 80));
 
-    expect(resolveCount).toBeGreaterThan(1);
+    expect(resolveCount > 1).toBeTruthy();
     resolver.dispose();
   });
 });

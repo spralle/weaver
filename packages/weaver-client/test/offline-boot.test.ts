@@ -1,5 +1,3 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
 import { createWeaverClient } from "../src/client.js";
 import type { WeaverClientPersistence } from "../src/persistence.js";
 import type { WeaverTransport } from "../src/transport.js";
@@ -74,19 +72,18 @@ describe("Offline Boot", () => {
       offlineBoot: true,
     });
 
-    assert.equal(client.get<string>("app.name"), "cached");
-    assert.equal(client.connected, false);
-    assert.equal(client.revision, "rev-1");
+    expect(client.get<string>("app.name")).toBe("cached");
+    expect(client.connected).toBe(false);
+    expect(client.revision).toBe("rev-1");
   });
 
   it("throws if transport fails AND no cache exists", async () => {
     const persistence = createMemoryPersistence();
     const transport = createFailingTransport();
 
-    await assert.rejects(
-      () => createWeaverClient({ transport, persistence, offlineBoot: true }),
-      /Network unavailable/,
-    );
+    await expect(
+      createWeaverClient({ transport, persistence, offlineBoot: true }),
+    ).rejects.toThrow(/Network unavailable/);
   });
 
   it("throws if offlineBoot is disabled even with cache", async () => {
@@ -94,15 +91,13 @@ describe("Offline Boot", () => {
     const persistence = createMemoryPersistence(cached);
     const transport = createFailingTransport();
 
-    await assert.rejects(
-      () =>
-        createWeaverClient({
-          transport,
-          persistence,
-          offlineBoot: false,
-        }),
-      /Network unavailable/,
-    );
+    await expect(
+      createWeaverClient({
+        transport,
+        persistence,
+        offlineBoot: false,
+      }),
+    ).rejects.toThrow(/Network unavailable/);
   });
 
   it("staleSince is set from monitor (null initially when fresh)", async () => {
@@ -117,6 +112,6 @@ describe("Offline Boot", () => {
     });
 
     // staleSince comes from the monitor — initially null since maxAge hasn't elapsed
-    assert.equal(client.staleSince, null);
+    expect(client.staleSince).toBe(null);
   });
 });

@@ -1,14 +1,12 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
-import { defineWeaver } from "@weaver-conf/config-types";
+import { defineWeaver, Layers } from "@weaver-conf/config-types";
 import type { AuthConfig } from "../src/auth.js";
 import { withAuth } from "../src/auth.js";
 
 const weaverConfig = defineWeaver([
-  { name: "core", type: { id: "static" } },
-  { name: "app", type: { id: "static" } },
-  { name: "user", type: { id: "dynamic" } },
-  { name: "session", type: { id: "ephemeral" } },
+  Layers.Static("core"),
+  Layers.Static("app"),
+  Layers.Dynamic("user"),
+  Layers.Ephemeral("session"),
 ]);
 
 const authConfig: AuthConfig = {
@@ -34,58 +32,54 @@ describe("withAuth", () => {
   describe("canRead", () => {
     it("allows public visibility for any role", () => {
       const ctx = { userId: "u1", roles: ["user"] as const };
-      assert.equal(
+      expect(
         auth.canRead(ctx, "k", {
           type: "string",
           "x-weaver": { visibility: "public" },
         }),
-        true,
-      );
+      ).toBe(true);
     });
 
     it("denies admin visibility without admin role", () => {
       const ctx = { userId: "u1", roles: ["user"] as const };
-      assert.equal(
+      expect(
         auth.canRead(ctx, "k", {
           type: "string",
           "x-weaver": { visibility: "admin" },
         }),
-        false,
-      );
+      ).toBe(false);
     });
 
     it("allows admin visibility with admin role", () => {
       const ctx = { userId: "u1", roles: ["admin"] as const };
-      assert.equal(
+      expect(
         auth.canRead(ctx, "k", {
           type: "string",
           "x-weaver": { visibility: "admin" },
         }),
-        true,
-      );
+      ).toBe(true);
     });
 
     it("denies internal visibility always", () => {
       const ctx = { userId: "u1", roles: ["admin"] as const };
-      assert.equal(
+      expect(
         auth.canRead(ctx, "k", {
           type: "string",
           "x-weaver": { visibility: "internal" },
         }),
-        false,
-      );
+      ).toBe(false);
     });
   });
 
   describe("canWrite", () => {
     it("denies write to layer without matching role", () => {
       const ctx = { userId: "u1", roles: ["user"] as const };
-      assert.equal(auth.canWrite(ctx, "core", "k", undefined), false);
+      expect(auth.canWrite(ctx, "core", "k", undefined)).toBe(false);
     });
 
     it("allows write to layer with matching role", () => {
       const ctx = { userId: "u1", roles: ["admin"] as const };
-      assert.equal(auth.canWrite(ctx, "core", "k", undefined), true);
+      expect(auth.canWrite(ctx, "core", "k", undefined)).toBe(true);
     });
 
     it("denies write when writeRestriction not met", () => {
@@ -94,7 +88,7 @@ describe("withAuth", () => {
         type: "string" as const,
         "x-weaver": { writeRestriction: ["admin"] },
       };
-      assert.equal(auth.canWrite(ctx, "app", "k", schema), false);
+      expect(auth.canWrite(ctx, "app", "k", schema)).toBe(false);
     });
 
     it("blocks session write for blocked sessionMode property", () => {
@@ -103,7 +97,7 @@ describe("withAuth", () => {
         type: "string" as const,
         "x-weaver": { sessionMode: "blocked" as const },
       };
-      assert.equal(auth.canWrite(ctx, "session", "k", schema), false);
+      expect(auth.canWrite(ctx, "session", "k", schema)).toBe(false);
     });
 
     it("allows restricted sessionMode with elevated mode", () => {
@@ -116,7 +110,7 @@ describe("withAuth", () => {
         type: "string" as const,
         "x-weaver": { sessionMode: "restricted" as const },
       };
-      assert.equal(auth.canWrite(ctx, "session", "k", schema), true);
+      expect(auth.canWrite(ctx, "session", "k", schema)).toBe(true);
     });
   });
 
@@ -141,8 +135,8 @@ describe("withAuth", () => {
         ],
       ]);
       const result = auth.filterVisibleKeys(ctx, entries, schemaMap);
-      assert.equal(result.pub, "yes");
-      assert.equal(result.secret, undefined);
+      expect(result.pub).toBe("yes");
+      expect(result.secret).toBe(undefined);
     });
   });
 });

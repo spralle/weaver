@@ -1,5 +1,3 @@
-import { test } from "node:test";
-import assert from "node:assert/strict";
 import {
   createWeaverError,
   weaverErrorSchema,
@@ -10,16 +8,16 @@ import {
 
 test("createWeaverError returns correct structure", () => {
   const err = createWeaverError("NOT_FOUND", "key missing", { key: "foo" });
-  assert.equal(err.code, "NOT_FOUND");
-  assert.equal(err.message, "key missing");
-  assert.deepEqual(err.details, { key: "foo" });
+  expect(err.code).toBe("NOT_FOUND");
+  expect(err.message).toBe("key missing");
+  expect(err.details).toEqual({ key: "foo" });
 });
 
 test("createWeaverError omits details when not provided", () => {
   const err = createWeaverError("UNAUTHORIZED", "bad token");
-  assert.equal(err.code, "UNAUTHORIZED");
-  assert.equal(err.message, "bad token");
-  assert.equal(err.details, undefined);
+  expect(err.code).toBe("UNAUTHORIZED");
+  expect(err.message).toBe("bad token");
+  expect(err.details).toBe(undefined);
 });
 
 test("weaverErrorSchema validates correctly", () => {
@@ -27,7 +25,7 @@ test("weaverErrorSchema validates correctly", () => {
     code: "FORBIDDEN",
     message: "denied",
   });
-  assert.equal(result.success, true);
+  expect(result.success).toBe(true);
 });
 
 test("weaverErrorSchema rejects invalid code", () => {
@@ -35,18 +33,18 @@ test("weaverErrorSchema rejects invalid code", () => {
     code: "INVALID_CODE",
     message: "test",
   });
-  assert.equal(result.success, false);
+  expect(result.success).toBe(false);
 });
 
 test("error codes include SCOPE_NOT_FOUND and SCOPE_NOT_LOADED", () => {
-  assert.ok(weaverErrorCodes.includes("SCOPE_NOT_FOUND"));
-  assert.ok(weaverErrorCodes.includes("SCOPE_NOT_LOADED"));
+  expect(weaverErrorCodes.includes("SCOPE_NOT_FOUND")).toBeTruthy();
+  expect(weaverErrorCodes.includes("SCOPE_NOT_LOADED")).toBeTruthy();
 });
 
 test("httpStatusForError returns correct status for each code", () => {
   for (const code of weaverErrorCodes) {
     const status = httpStatusForError(code);
-    assert.equal(status, HTTP_STATUS_MAP[code]);
-    assert.equal(typeof status, "number");
+    expect(status).toBe(HTTP_STATUS_MAP[code]);
+    expect(typeof status).toBe("number");
   }
 });

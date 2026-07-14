@@ -18,18 +18,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
+          cache: pnpm
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: pnpm/action-setup@v4
         with:
-          bun-version: "1.2.21"
+          version: 11.13.0
+          run_install: false
 
-      - run: bun install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile
 
-      - run: bun run build --filter='!@weaver-conf/demo'
+      - run: pnpm exec turbo build --filter='!@weaver-conf/demo'
 
       - name: Typecheck
-        run: bun run typecheck --filter='!@weaver-conf/demo'
+        run: pnpm exec turbo typecheck --filter='!@weaver-conf/demo'
 
-      - run: bun run lint --filter='!@weaver-conf/demo'
+      - run: pnpm exec turbo lint --filter='!@weaver-conf/demo'
 
-      - run: bun run test --filter='!@weaver-conf/demo'
+      - run: pnpm exec turbo test --filter='!@weaver-conf/demo'

@@ -1,5 +1,3 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
 import type { SecretProvider } from "../src/secret-provider.js";
 import { createSecretResolutionService } from "../src/secret-resolution-service.js";
 
@@ -36,7 +34,7 @@ describe("SecretResolutionService", () => {
       provider: "vault",
       uri: "db/password",
     });
-    assert.equal(val, "s3cret");
+    expect(val).toBe("s3cret");
   });
 
   it("returns error for unregistered provider", async () => {
@@ -46,7 +44,7 @@ describe("SecretResolutionService", () => {
       provider: "nope",
       uri: "x",
     });
-    assert.equal(result.ok, false);
+    expect(result.ok).toBe(false);
   });
 
   it("caches resolved secrets", async () => {
@@ -74,7 +72,7 @@ describe("SecretResolutionService", () => {
     };
     await svc.resolve(ref);
     await svc.resolve(ref);
-    assert.equal(callCount, 1);
+    expect(callCount).toBe(1);
   });
 
   it("resolveAll handles mixed success and failure", async () => {
@@ -90,11 +88,14 @@ describe("SecretResolutionService", () => {
       plain: "not-a-secret",
     };
     const result = await svc.resolveAll(entries);
-    assert.equal(result.resolved.get("good"), "val-a");
-    assert.equal(result.failures.length, 1);
+    expect(result.resolved.get("good")).toBe("val-a");
+    expect(result.failures.length).toBe(1);
     const failure = result.failures[0];
-    assert.ok(failure);
-    assert.equal(failure.key, "bad");
+    expect(failure).toBeTruthy();
+    if (!failure) {
+      throw new Error("Expected failure entry");
+    }
+    expect(failure.key).toBe("bad");
   });
 
   it("store delegates to provider", async () => {
@@ -102,8 +103,8 @@ describe("SecretResolutionService", () => {
     const svc = createSecretResolutionService();
     svc.registerProvider(mockProvider("vault", secrets));
     const result = await svc.store("vault", "new/key", "new-val");
-    assert.equal(result.version, "v2");
-    assert.equal(secrets["new/key"], "new-val");
+    expect(result.version).toBe("v2");
+    expect(secrets["new/key"]).toBe("new-val");
   });
 
   it("delete removes from provider and invalidates cache", async () => {
@@ -111,12 +112,12 @@ describe("SecretResolutionService", () => {
     const svc = createSecretResolutionService();
     svc.registerProvider(mockProvider("vault", secrets));
     await svc.delete("vault", "k");
-    assert.equal(secrets.k, undefined);
+    expect(secrets.k).toBe(undefined);
   });
 
   it("throws for store/delete on unregistered provider", async () => {
     const svc = createSecretResolutionService();
-    await assert.rejects(() => svc.store("nope", "u", "v"));
-    await assert.rejects(() => svc.delete("nope", "u"));
+    await expect(svc.store("nope", "u", "v")).rejects.toThrow();
+    await expect(svc.delete("nope", "u")).rejects.toThrow();
   });
 });

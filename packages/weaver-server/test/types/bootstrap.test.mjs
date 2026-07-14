@@ -1,5 +1,3 @@
-import { test } from "node:test";
-import assert from "node:assert/strict";
 import { bootstrapConfigSchema } from "../../src/types/bootstrap.ts";
 
 test("bootstrapConfigSchema validates valid config", () => {
@@ -10,7 +8,7 @@ test("bootstrapConfigSchema validates valid config", () => {
     ],
     mongodb: { uri: "mongodb://localhost:27017" },
   });
-  assert.equal(result.success, true);
+  expect(result.success).toBe(true);
 });
 
 test("bootstrapConfigSchema rejects when mongodb layer present but no mongodb config", () => {
@@ -19,7 +17,7 @@ test("bootstrapConfigSchema rejects when mongodb layer present but no mongodb co
       { id: "overrides", provider: "mongodb", collection: "configs" },
     ],
   });
-  assert.equal(result.success, false);
+  expect(result.success).toBe(false);
 });
 
 test("bootstrapConfigSchema allows no mongodb config when no mongodb layers", () => {
@@ -29,5 +27,5 @@ test("bootstrapConfigSchema allows no mongodb config when no mongodb layers", ()
       { id: "mem", provider: "memory" },
     ],
   });
-  assert.equal(result.success, true);
+  expect(result.success).toBe(true);
 });

@@ -1,5 +1,3 @@
-import test from "node:test";
-import assert from "node:assert/strict";
 import { createInMemoryStorageProvider } from "../src/in-memory-provider.ts";
 
 test("constructs with default empty entries", async () => {
@@ -8,7 +6,7 @@ test("constructs with default empty entries", async () => {
     layer: "session",
   });
   const data = await provider.load();
-  assert.deepEqual(data.entries, {});
+  expect(data.entries).toEqual({});
 });
 
 test("constructs with initial entries", async () => {
@@ -18,7 +16,7 @@ test("constructs with initial entries", async () => {
     initialEntries: { "ghost.app.theme": "dark" },
   });
   const data = await provider.load();
-  assert.deepEqual(data.entries, { "ghost.app.theme": "dark" });
+  expect(data.entries).toEqual({ "ghost.app.theme": "dark" });
 });
 
 test("load returns a snapshot (not a live reference)", async () => {
@@ -30,7 +28,7 @@ test("load returns a snapshot (not a live reference)", async () => {
   const data1 = await provider.load();
   data1.entries.key = "mutated";
   const data2 = await provider.load();
-  assert.equal(data2.entries.key, "value");
+  expect(data2.entries.key).toBe("value");
 });
 
 test("write adds entries", async () => {
@@ -39,9 +37,9 @@ test("write adds entries", async () => {
     layer: "session",
   });
   const result = await provider.write("ghost.app.zoom", 5);
-  assert.equal(result.success, true);
+  expect(result.success).toBe(true);
   const data = await provider.load();
-  assert.equal(data.entries["ghost.app.zoom"], 5);
+  expect(data.entries["ghost.app.zoom"]).toBe(5);
 });
 
 test("write overwrites existing entries", async () => {
@@ -52,7 +50,7 @@ test("write overwrites existing entries", async () => {
   });
   await provider.write("key", "new");
   const data = await provider.load();
-  assert.equal(data.entries.key, "new");
+  expect(data.entries.key).toBe("new");
 });
 
 test("remove deletes entries", async () => {
@@ -62,10 +60,10 @@ test("remove deletes entries", async () => {
     initialEntries: { a: 1, b: 2 },
   });
   const result = await provider.remove("a");
-  assert.equal(result.success, true);
+  expect(result.success).toBe(true);
   const data = await provider.load();
-  assert.equal(data.entries.a, undefined);
-  assert.equal(data.entries.b, 2);
+  expect(data.entries.a).toBe(undefined);
+  expect(data.entries.b).toBe(2);
 });
 
 test("remove on non-existent key succeeds", async () => {
@@ -74,7 +72,7 @@ test("remove on non-existent key succeeds", async () => {
     layer: "session",
   });
   const result = await provider.remove("missing");
-  assert.equal(result.success, true);
+  expect(result.success).toBe(true);
 });
 
 test("writable is true", () => {
@@ -82,7 +80,7 @@ test("writable is true", () => {
     id: "mem-8",
     layer: "session",
   });
-  assert.equal(provider.writable, true);
+  expect(provider.writable).toBe(true);
 });
 
 test("id and layer are set correctly", () => {
@@ -90,6 +88,6 @@ test("id and layer are set correctly", () => {
     id: "test-id",
     layer: "device",
   });
-  assert.equal(provider.id, "test-id");
-  assert.equal(provider.layer, "device");
+  expect(provider.id).toBe("test-id");
+  expect(provider.layer).toBe("device");
 });

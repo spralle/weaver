@@ -1,5 +1,3 @@
-import { test, describe } from "node:test";
-import assert from "node:assert/strict";
 import {
   createPersistentSchemaRegistry,
   createSchemaRegistry,
@@ -63,9 +61,9 @@ describe("SchemaRegistry", () => {
       environment: "dev",
     });
 
-    assert.equal(result.success, true);
-    assert.equal(result.isNewSchema, true);
-    assert.equal(result.hasBreakingChanges, false);
+    expect(result.success).toBe(true);
+    expect(result.isNewSchema).toBe(true);
+    expect(result.hasBreakingChanges).toBe(false);
   });
 
   test("register unchanged schema is idempotent", async () => {
@@ -76,9 +74,9 @@ describe("SchemaRegistry", () => {
     await registry.register({ serviceId: "svc", declaration, environment: "dev" });
     const result = await registry.register({ serviceId: "svc", declaration, environment: "dev" });
 
-    assert.equal(result.success, true);
-    assert.equal(result.isNewSchema, false);
-    assert.equal(result.hasBreakingChanges, false);
+    expect(result.success).toBe(true);
+    expect(result.isNewSchema).toBe(false);
+    expect(result.hasBreakingChanges).toBe(false);
   });
 
   test("register with removed property detects breaking change", async () => {
@@ -97,9 +95,9 @@ describe("SchemaRegistry", () => {
       environment: "dev",
     });
 
-    assert.equal(result.success, true);
-    assert.equal(result.hasBreakingChanges, true);
-    assert.ok(result.breakingChanges?.some((c) => c.includes("host")));
+    expect(result.success).toBe(true);
+    expect(result.hasBreakingChanges).toBe(true);
+    expect(result.breakingChanges?.some((c) => c.includes("host"))).toBeTruthy();
   });
 
   test("getSchema returns registered schema", async () => {
@@ -110,7 +108,7 @@ describe("SchemaRegistry", () => {
     await registry.register({ serviceId: "svc", declaration, environment: "dev" });
     const schema = await registry.getSchema("svc", "dev");
 
-    assert.deepEqual(schema, declaration);
+    expect(schema).toEqual(declaration);
   });
 
   test("getSchema returns null for unknown service", async () => {
@@ -118,7 +116,7 @@ describe("SchemaRegistry", () => {
     const registry = createSchemaRegistry(opts);
 
     const schema = await registry.getSchema("unknown", "dev");
-    assert.equal(schema, null);
+    expect(schema).toBe(null);
   });
 
   test("persistent registry writes schemas into configured layer and key", async () => {
@@ -139,8 +137,8 @@ describe("SchemaRegistry", () => {
       environment: "dev",
     });
 
-    assert.equal(result.success, true);
-    assert.deepEqual(await configService.get("registry.schemas"), {
+    expect(result.success).toBe(true);
+    expect(await configService.get("registry.schemas")).toEqual({
       billing: {
         dev: { type: "object", properties: { enabled: { type: "boolean" } } },
       },
@@ -164,7 +162,7 @@ describe("SchemaRegistry", () => {
 
     const registry = await createPersistentSchemaRegistry({ configService });
 
-    assert.deepEqual(await registry.getSchema("billing", "dev"), {
+    expect(await registry.getSchema("billing", "dev")).toEqual({
       type: "object",
       properties: { limit: { type: "number" } },
     });
@@ -182,7 +180,7 @@ describe("SchemaRegistry", () => {
 
     const registry = await createPersistentSchemaRegistry({ configService });
 
-    assert.deepEqual(registry.listAll(), { "svc:prod": { type: "string" } });
+    expect(registry.listAll()).toEqual({ "svc:prod": { type: "string" } });
   });
 
   test("persistent registry throws for invalid persisted root", async () => {
@@ -191,10 +189,7 @@ describe("SchemaRegistry", () => {
       environment: "dev",
     });
 
-    await assert.rejects(
-      createPersistentSchemaRegistry({ configService }),
-      /Persisted schema registry must be an object/,
-    );
+    await expect(createPersistentSchemaRegistry({ configService })).rejects.toThrow(/Persisted schema registry must be an object/);
   });
 
   test("write failure returns failed result without updating memory", async () => {
@@ -210,8 +205,8 @@ describe("SchemaRegistry", () => {
       environment: "dev",
     });
 
-    assert.equal(result.success, false);
-    assert.equal(await registry.getSchema("svc", "dev"), null);
-    assert.deepEqual(registry.listAll(), {});
+    expect(result.success).toBe(false);
+    expect(await registry.getSchema("svc", "dev")).toBe(null);
+    expect(registry.listAll()).toEqual({});
   });
 });

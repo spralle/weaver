@@ -5,7 +5,7 @@
 ## Installation
 
 ```bash
-bun add @weaver-conf/config-engine
+pnpm add @weaver-conf/config-engine
 ```
 
 ## Overview

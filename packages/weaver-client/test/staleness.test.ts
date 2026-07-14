@@ -1,5 +1,3 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
 import { createStalenessMonitor } from "../src/staleness.js";
 
 describe("StalenessMonitor", () => {
@@ -8,8 +6,8 @@ describe("StalenessMonitor", () => {
       maxAge: 1000,
       checkInterval: 500,
     });
-    assert.equal(monitor.isStale, false);
-    assert.equal(monitor.staleSince, null);
+    expect(monitor.isStale).toBe(false);
+    expect(monitor.staleSince).toBe(null);
     monitor.dispose();
   });
 
@@ -21,8 +19,8 @@ describe("StalenessMonitor", () => {
 
     // Wait for staleness to trigger
     await new Promise((r) => setTimeout(r, 60));
-    assert.equal(monitor.isStale, true);
-    assert.ok(monitor.staleSince !== null);
+    expect(monitor.isStale).toBe(true);
+    expect(monitor.staleSince !== null).toBeTruthy();
     monitor.dispose();
   });
 
@@ -36,7 +34,7 @@ describe("StalenessMonitor", () => {
     monitor.onStalenessChange((isStale) => calls.push(isStale));
 
     await new Promise((r) => setTimeout(r, 60));
-    assert.deepEqual(calls, [true]);
+    expect(calls).toEqual([true]);
     monitor.dispose();
   });
 
@@ -47,11 +45,11 @@ describe("StalenessMonitor", () => {
     });
 
     await new Promise((r) => setTimeout(r, 60));
-    assert.equal(monitor.isStale, true);
+    expect(monitor.isStale).toBe(true);
 
     monitor.recordSync();
-    assert.equal(monitor.isStale, false);
-    assert.equal(monitor.staleSince, null);
+    expect(monitor.isStale).toBe(false);
+    expect(monitor.staleSince).toBe(null);
     monitor.dispose();
   });
 
@@ -66,8 +64,8 @@ describe("StalenessMonitor", () => {
     monitor.dispose();
 
     await new Promise((r) => setTimeout(r, 60));
-    assert.deepEqual(calls, []);
-    assert.equal(monitor.isStale, false);
+    expect(calls).toEqual([]);
+    expect(monitor.isStale).toBe(false);
   });
 
   it("unsubscribe removes listener", async () => {
@@ -81,7 +79,7 @@ describe("StalenessMonitor", () => {
     unsub();
 
     await new Promise((r) => setTimeout(r, 60));
-    assert.deepEqual(calls, []);
+    expect(calls).toEqual([]);
     monitor.dispose();
   });
 });
