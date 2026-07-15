@@ -148,10 +148,11 @@ FROM node:24-alpine
 WORKDIR /app
 RUN corepack enable
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile --prod
+RUN pnpm install --frozen-lockfile
 
 COPY src ./src
 RUN pnpm run build
+RUN pnpm prune --prod
 
 ENV WEAVER_PORT=3399
 ENV WEAVER_ENVIRONMENT=production
