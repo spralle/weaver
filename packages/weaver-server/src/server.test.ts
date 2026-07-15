@@ -87,6 +87,29 @@ describe("Weaver server auth gate", () => {
   });
 });
 
+describe("Weaver server error handling", () => {
+  it("returns a 400 JSON response for malformed request JSON", async () => {
+    const server = await startWeaverServer({ port: 0 });
+
+    try {
+      const response = await fetch(
+        `http://localhost:${server.port}/v1/config/services.billing.currency`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: "{",
+        },
+      );
+      const body = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(body).toEqual({ error: "invalid request body" });
+    } finally {
+      await server.close();
+    }
+  });
+});
+
 describe("Weaver server bootstrap", () => {
   it("uses bootstrap providers from a configured Git repository", async () => {
     const { repoPath, rootPath } = await createBootstrapRepo();
