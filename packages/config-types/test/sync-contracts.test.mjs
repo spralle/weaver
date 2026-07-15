@@ -1,7 +1,7 @@
 
 import {
   syncQueueMetadataSchema,
-} from "../dist/index.js";
+} from "../src";
 
 test("syncQueueMetadataSchema accepts queue counters", () => {
   const result = syncQueueMetadataSchema.safeParse({

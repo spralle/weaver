@@ -1,4 +1,4 @@
-import { defineWeaver, Layers } from "../dist/index.js";
+import { defineWeaver, Layers } from "../src";
 
 describe("defineWeaver", () => {
   it("returns WeaverConfig with correct layerNames", () => {

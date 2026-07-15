@@ -1,4 +1,4 @@
-import { Layers, replaceOnly } from "../dist/index.js";
+import { Layers, replaceOnly } from "../src";
 
 describe("Layers factories", () => {
   describe("Layers.Static", () => {

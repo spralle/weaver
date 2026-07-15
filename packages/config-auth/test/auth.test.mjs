@@ -1,4 +1,4 @@
-import { withAuth } from "../dist/index.js";
+import { withAuth } from "../src";
 import { defineWeaver, Layers } from "@weaver-conf/config-types";
 
 // --- Test WeaverConfig and AuthConfig ---

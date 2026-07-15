@@ -1,4 +1,4 @@
-import { createAuthGate } from "../../dist/transport/auth-gate.js";
+import { createAuthGate } from "../../src/transport/auth-gate";
 
 const mockAuthFunctions = {
   canRead(accessCtx, _key, schema) {

@@ -1,4 +1,4 @@
-import { defineViewConfig } from "../dist/index.js";
+import { defineViewConfig } from "../src";
 
 describe("defineViewConfig", () => {
   it("returns its input unchanged", () => {

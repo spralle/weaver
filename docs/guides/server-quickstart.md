@@ -151,12 +151,13 @@ COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile --prod
 
 COPY src ./src
+RUN pnpm run build
 
 ENV WEAVER_PORT=3399
 ENV WEAVER_ENVIRONMENT=production
 
 EXPOSE 3399
-CMD ["node", "src/main.ts"]
+CMD ["node", "dist/main.js"]
 ```
 
 ### Graceful Shutdown
