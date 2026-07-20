@@ -1,23 +1,21 @@
-import { describe, it } from "node:test";
-import assert from "node:assert/strict";
-import { Layers, replaceOnly } from "../dist/index.js";
+import { Layers, replaceOnly } from "../src";
 
 describe("Layers factories", () => {
   describe("Layers.Static", () => {
     it("returns a LayerDefinition with correct name and type.id", () => {
       const layer = Layers.Static("core");
-      assert.equal(layer.name, "core");
-      assert.equal(layer.type.id, "static");
-      assert.equal(layer.type.persistent, true);
-      assert.deepStrictEqual(layer.config, {});
+      expect(layer.name).toBe("core");
+      expect(layer.type.id).toBe("static");
+      expect(layer.type.persistent).toBe(true);
+      expect(layer.config).toStrictEqual({});
     });
 
     it("accepts optional config", () => {
       const merge = (_b, o) => o;
       const layer = Layers.Static("app", { merge });
-      assert.equal(layer.name, "app");
-      assert.equal(layer.type.id, "static");
-      assert.deepStrictEqual(layer.config, { merge });
+      expect(layer.name).toBe("app");
+      expect(layer.type.id).toBe("static");
+      expect(layer.config).toStrictEqual({ merge });
     });
   });
 
@@ -28,37 +26,37 @@ describe("Layers factories", () => {
         { id: "office", label: "Office", parentScopeId: "region" },
       ];
       const layer = Layers.Dynamic("org", { scopes });
-      assert.equal(layer.name, "org");
-      assert.equal(layer.type.id, "dynamic");
-      assert.equal(layer.type.persistent, true);
-      assert.deepStrictEqual(layer.config, { scopes });
+      expect(layer.name).toBe("org");
+      expect(layer.type.id).toBe("dynamic");
+      expect(layer.type.persistent).toBe(true);
+      expect(layer.config).toStrictEqual({ scopes });
     });
 
     it("returns correct definition without config", () => {
       const layer = Layers.Dynamic("features");
-      assert.equal(layer.name, "features");
-      assert.equal(layer.type.id, "dynamic");
-      assert.deepStrictEqual(layer.config, {});
+      expect(layer.name).toBe("features");
+      expect(layer.type.id).toBe("dynamic");
+      expect(layer.config).toStrictEqual({});
     });
   });
 
   describe("Layers.Personal", () => {
     it("returns correct definition", () => {
       const layer = Layers.Personal("user");
-      assert.equal(layer.name, "user");
-      assert.equal(layer.type.id, "personal");
-      assert.equal(layer.type.persistent, true);
-      assert.deepStrictEqual(layer.config, {});
+      expect(layer.name).toBe("user");
+      expect(layer.type.id).toBe("personal");
+      expect(layer.type.persistent).toBe(true);
+      expect(layer.config).toStrictEqual({});
     });
   });
 
   describe("Layers.Ephemeral", () => {
     it("returns correct definition with persistent=false", () => {
       const layer = Layers.Ephemeral("session");
-      assert.equal(layer.name, "session");
-      assert.equal(layer.type.id, "ephemeral");
-      assert.equal(layer.type.persistent, false);
-      assert.deepStrictEqual(layer.config, {});
+      expect(layer.name).toBe("session");
+      expect(layer.type.id).toBe("ephemeral");
+      expect(layer.type.persistent).toBe(false);
+      expect(layer.config).toStrictEqual({});
     });
   });
 
@@ -81,10 +79,10 @@ describe("Layers factories", () => {
         config: { endpoint: "https://api.example.com" },
       };
 
-      assert.equal(layer.name, "cloud");
-      assert.equal(layer.type.id, "remote");
-      assert.equal(layer.type.persistent, true);
-      assert.deepStrictEqual(layer.config, {
+      expect(layer.name).toBe("cloud");
+      expect(layer.type.id).toBe("remote");
+      expect(layer.type.persistent).toBe(true);
+      expect(layer.config).toStrictEqual({
         endpoint: "https://api.example.com",
       });
 
@@ -92,19 +90,19 @@ describe("Layers factories", () => {
         /** @type {any} */ ({}),
         layer.config,
       );
-      assert.deepStrictEqual(resolver.resolve({}), []);
+      expect(resolver.resolve({})).toStrictEqual([]);
     });
   });
 });
 
 describe("replaceOnly merge function", () => {
   it("returns override value regardless of base", () => {
-    assert.equal(replaceOnly("base", "override"), "override");
+    expect(replaceOnly("base", "override")).toBe("override");
     const obj = { b: 2 };
-    assert.equal(replaceOnly({ a: 1 }, obj), obj);
-    assert.deepStrictEqual(replaceOnly({ a: 1 }, { b: 2 }), { b: 2 });
-    assert.equal(replaceOnly(42, null), null);
-    assert.equal(replaceOnly("something", undefined), undefined);
+    expect(replaceOnly({ a: 1 }, obj)).toBe(obj);
+    expect(replaceOnly({ a: 1 }, { b: 2 })).toStrictEqual({ b: 2 });
+    expect(replaceOnly(42, null)).toBe(null);
+    expect(replaceOnly("something", undefined)).toBe(undefined);
   });
 });
 
@@ -113,45 +111,45 @@ describe("default merge function (via LayerType)", () => {
   const defaultMerge = Layers.Static("test").type.defaultMerge;
 
   it("null clears value (returns undefined)", () => {
-    assert.equal(defaultMerge("anything", null), undefined);
-    assert.equal(defaultMerge({ a: 1 }, null), undefined);
+    expect(defaultMerge("anything", null)).toBe(undefined);
+    expect(defaultMerge({ a: 1 }, null)).toBe(undefined);
   });
 
   it("undefined base returns override", () => {
-    assert.equal(defaultMerge(undefined, "value"), "value");
-    assert.equal(defaultMerge(undefined, 42), 42);
+    expect(defaultMerge(undefined, "value")).toBe("value");
+    expect(defaultMerge(undefined, 42)).toBe(42);
   });
 
   it("undefined override returns base", () => {
-    assert.equal(defaultMerge("base", undefined), "base");
-    assert.equal(defaultMerge(42, undefined), 42);
+    expect(defaultMerge("base", undefined)).toBe("base");
+    expect(defaultMerge(42, undefined)).toBe(42);
   });
 
   it("deep merges plain objects", () => {
     const base = { a: 1, b: { c: 2, d: 3 } };
     const override = { b: { c: 99 }, e: 5 };
     const result = defaultMerge(base, override);
-    assert.deepStrictEqual(result, { a: 1, b: { c: 99, d: 3 }, e: 5 });
+    expect(result).toStrictEqual({ a: 1, b: { c: 99, d: 3 }, e: 5 });
   });
 
   it("arrays replace (no deep merge on arrays)", () => {
     const base = { items: [1, 2, 3] };
     const override = { items: [4, 5] };
     const result = defaultMerge(base, override);
-    assert.deepStrictEqual(result, { items: [4, 5] });
+    expect(result).toStrictEqual({ items: [4, 5] });
   });
 
   it("scalar override replaces scalar base", () => {
-    assert.equal(defaultMerge(1, 2), 2);
-    assert.equal(defaultMerge("a", "b"), "b");
-    assert.equal(defaultMerge(true, false), false);
+    expect(defaultMerge(1, 2)).toBe(2);
+    expect(defaultMerge("a", "b")).toBe("b");
+    expect(defaultMerge(true, false)).toBe(false);
   });
 
   it("object override replaces scalar base", () => {
-    assert.deepStrictEqual(defaultMerge(42, { a: 1 }), { a: 1 });
+    expect(defaultMerge(42, { a: 1 })).toStrictEqual({ a: 1 });
   });
 
   it("scalar override replaces object base", () => {
-    assert.equal(defaultMerge({ a: 1 }, "string"), "string");
+    expect(defaultMerge({ a: 1 }, "string")).toBe("string");
   });
 });

@@ -1,5 +1,3 @@
-import test from "node:test";
-import assert from "node:assert/strict";
 import { mkdtemp, writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
@@ -31,7 +29,7 @@ test("load() delegates to FileSystemStorageProvider", async () => {
   });
 
   const data = await provider.load();
-  assert.deepEqual(data.entries, { foo: "bar" });
+  expect(data.entries).toEqual({ foo: "bar" });
 });
 
 test("write() is local-only — no git calls happen", async () => {
@@ -48,8 +46,8 @@ test("write() is local-only — no git calls happen", async () => {
   });
 
   const result = await provider.write("key1", "value1");
-  assert.equal(result.success, true);
-  assert.equal(gitManager.calls.length, 0);
+  expect(result.success).toBe(true);
+  expect(gitManager.calls.length).toBe(0);
 });
 
 test("write() marks provider as dirty", async () => {
@@ -65,9 +63,9 @@ test("write() marks provider as dirty", async () => {
     filePath: "config.json",
   });
 
-  assert.equal(provider.dirty, false);
+  expect(provider.dirty).toBe(false);
   await provider.write("key1", "value1");
-  assert.equal(provider.dirty, true);
+  expect(provider.dirty).toBe(true);
 });
 
 test("flush() calls gitManager.commitAndPush() with dirty files", async () => {
@@ -86,11 +84,11 @@ test("flush() calls gitManager.commitAndPush() with dirty files", async () => {
   await provider.write("key1", "value1");
   await provider.flush();
 
-  assert.equal(gitManager.calls.length, 1);
-  assert.equal(gitManager.calls[0][0], "commitAndPush");
-  assert.equal(gitManager.calls[0][1], "config: set key1");
-  assert.deepEqual(gitManager.calls[0][2], ["config.json"]);
-  assert.equal(provider.dirty, false);
+  expect(gitManager.calls.length).toBe(1);
+  expect(gitManager.calls[0][0]).toBe("commitAndPush");
+  expect(gitManager.calls[0][1]).toBe("config: set key1");
+  expect(gitManager.calls[0][2]).toEqual(["config.json"]);
+  expect(provider.dirty).toBe(false);
 });
 
 test("flush() on clean provider is no-op", async () => {
@@ -107,7 +105,7 @@ test("flush() on clean provider is no-op", async () => {
   });
 
   await provider.flush();
-  assert.equal(gitManager.calls.length, 0);
+  expect(gitManager.calls.length).toBe(0);
 });
 
 test("flush() builds batch commit message for multiple changes", async () => {
@@ -127,7 +125,7 @@ test("flush() builds batch commit message for multiple changes", async () => {
   await provider.write("b", 2);
   await provider.flush();
 
-  assert.equal(gitManager.calls[0][1], "config: 2 changes in defaults");
+  expect(gitManager.calls[0][1]).toBe("config: 2 changes in defaults");
 });
 
 test("remove() is local-only, marks dirty", async () => {
@@ -144,9 +142,9 @@ test("remove() is local-only, marks dirty", async () => {
   });
 
   const result = await provider.remove("key1");
-  assert.equal(result.success, true);
-  assert.equal(provider.dirty, true);
-  assert.equal(gitManager.calls.length, 0);
+  expect(result.success).toBe(true);
+  expect(provider.dirty).toBe(true);
+  expect(gitManager.calls.length).toBe(0);
 });
 
 test("refresh() calls gitManager.refresh()", async () => {
@@ -163,8 +161,8 @@ test("refresh() calls gitManager.refresh()", async () => {
   });
 
   await provider.refresh();
-  assert.equal(gitManager.calls.length, 1);
-  assert.deepEqual(gitManager.calls[0], ["refresh"]);
+  expect(gitManager.calls.length).toBe(1);
+  expect(gitManager.calls[0]).toEqual(["refresh"]);
 });
 
 test("read-only provider rejects writes", async () => {
@@ -182,6 +180,6 @@ test("read-only provider rejects writes", async () => {
   });
 
   const result = await provider.write("x", 1);
-  assert.equal(result.success, false);
-  assert.equal(gitManager.calls.length, 0);
+  expect(result.success).toBe(false);
+  expect(gitManager.calls.length).toBe(0);
 });

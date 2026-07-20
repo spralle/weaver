@@ -1,6 +1,4 @@
-import test from "node:test";
-import assert from "node:assert/strict";
-import { withAuth } from "../dist/index.js";
+import { withAuth } from "../src";
 import { defineWeaver, Layers } from "@weaver-conf/config-types";
 
 // --- Test WeaverConfig and AuthConfig ---
@@ -41,17 +39,17 @@ const testAuth = withAuth({
 
 test("canRead: public visibility allows all roles", () => {
   const ctx = { userId: "u1", tenantId: "t1", roles: ["user"] };
-  assert.equal(testAuth.canRead(ctx, "ghost.app.theme", { type: "string", "x-weaver": { visibility: "public" } }), true);
+  expect(testAuth.canRead(ctx, "ghost.app.theme", { type: "string", "x-weaver": { visibility: "public" } })).toBe(true);
 });
 
 test("canRead: no schema allows read", () => {
   const ctx = { userId: "u1", tenantId: "t1", roles: ["user"] };
-  assert.equal(testAuth.canRead(ctx, "ghost.app.theme", undefined), true);
+  expect(testAuth.canRead(ctx, "ghost.app.theme", undefined)).toBe(true);
 });
 
 test("canRead: missing visibility defaults to public", () => {
   const ctx = { userId: "u1", tenantId: "t1", roles: ["user"] };
-  assert.equal(testAuth.canRead(ctx, "ghost.app.theme", { type: "string" }), true);
+  expect(testAuth.canRead(ctx, "ghost.app.theme", { type: "string" })).toBe(true);
 });
 
 test("canRead: admin visibility requires admin+ roles", () => {
@@ -61,24 +59,24 @@ test("canRead: admin visibility requires admin+ roles", () => {
   const supportCtx = { userId: "u4", tenantId: "t1", roles: ["support"] };
 
   const schema = { type: "string", "x-weaver": { visibility: "admin" } };
-  assert.equal(testAuth.canRead(adminCtx, "k", schema), true);
-  assert.equal(testAuth.canRead(opsCtx, "k", schema), true);
-  assert.equal(testAuth.canRead(supportCtx, "k", schema), true);
-  assert.equal(testAuth.canRead(userCtx, "k", schema), false);
+  expect(testAuth.canRead(adminCtx, "k", schema)).toBe(true);
+  expect(testAuth.canRead(opsCtx, "k", schema)).toBe(true);
+  expect(testAuth.canRead(supportCtx, "k", schema)).toBe(true);
+  expect(testAuth.canRead(userCtx, "k", schema)).toBe(false);
 });
 
 test("canRead: platform visibility requires platform-ops", () => {
   const opsCtx = { userId: "u1", tenantId: "t1", roles: ["platform-ops"] };
   const adminCtx = { userId: "u2", tenantId: "t1", roles: ["tenant-admin"] };
   const schema = { type: "string", "x-weaver": { visibility: "platform" } };
-  assert.equal(testAuth.canRead(opsCtx, "k", schema), true);
-  assert.equal(testAuth.canRead(adminCtx, "k", schema), false);
+  expect(testAuth.canRead(opsCtx, "k", schema)).toBe(true);
+  expect(testAuth.canRead(adminCtx, "k", schema)).toBe(false);
 });
 
 test("canRead: internal visibility denies all", () => {
   const opsCtx = { userId: "u1", tenantId: "t1", roles: ["platform-ops"] };
   const schema = { type: "string", "x-weaver": { visibility: "internal" } };
-  assert.equal(testAuth.canRead(opsCtx, "k", schema), false);
+  expect(testAuth.canRead(opsCtx, "k", schema)).toBe(false);
 });
 
 // --- canWrite tests ---
@@ -87,13 +85,13 @@ test("canWrite: respects layer write policies", () => {
   // core layer only allows "system"
   const systemCtx = { userId: "u1", tenantId: "t1", roles: ["system"] };
   const userCtx = { userId: "u2", tenantId: "t1", roles: ["user"] };
-  assert.equal(testAuth.canWrite(systemCtx, "core", "k", undefined), true);
-  assert.equal(testAuth.canWrite(userCtx, "core", "k", undefined), false);
+  expect(testAuth.canWrite(systemCtx, "core", "k", undefined)).toBe(true);
+  expect(testAuth.canWrite(userCtx, "core", "k", undefined)).toBe(false);
 });
 
 test("canWrite: user can write to user layer", () => {
   const userCtx = { userId: "u1", tenantId: "t1", roles: ["user"] };
-  assert.equal(testAuth.canWrite(userCtx, "user", "k", undefined), true);
+  expect(testAuth.canWrite(userCtx, "user", "k", undefined)).toBe(true);
 });
 
 test("canWrite: respects key writeRestriction", () => {
@@ -104,9 +102,9 @@ test("canWrite: respects key writeRestriction", () => {
     "x-weaver": { writeRestriction: ["platform-ops"] },
   };
   // tenant-admin can write to tenant layer, but writeRestriction blocks them
-  assert.equal(testAuth.canWrite(adminCtx, "tenant", "k", schema), false);
+  expect(testAuth.canWrite(adminCtx, "tenant", "k", schema)).toBe(false);
   // user can't even write to tenant layer
-  assert.equal(testAuth.canWrite(userCtx, "tenant", "k", schema), false);
+  expect(testAuth.canWrite(userCtx, "tenant", "k", schema)).toBe(false);
 });
 
 test("canWrite: respects maxOverrideLayer ceiling", () => {
@@ -116,7 +114,7 @@ test("canWrite: respects maxOverrideLayer ceiling", () => {
     "x-weaver": { maxOverrideLayer: "tenant" },
   };
   // user layer is above tenant, should be denied
-  assert.equal(testAuth.canWrite(userCtx, "user", "k", schema), false);
+  expect(testAuth.canWrite(userCtx, "user", "k", schema)).toBe(false);
 });
 
 test("canWrite: emergency override bypasses ceiling", () => {
@@ -131,17 +129,17 @@ test("canWrite: emergency override bypasses ceiling", () => {
     "x-weaver": { maxOverrideLayer: "tenant" },
   };
   // emergency override should bypass the ceiling
-  assert.equal(testAuth.canWrite(userCtx, "user", "k", schema), true);
+  expect(testAuth.canWrite(userCtx, "user", "k", schema)).toBe(true);
 });
 
 test("canWrite: dynamic scope layers allow scope-admin", () => {
   const scopeAdminCtx = { userId: "u1", tenantId: "t1", roles: ["scope-admin"] };
-  assert.equal(testAuth.canWrite(scopeAdminCtx, "country:NO", "k", undefined), true);
+  expect(testAuth.canWrite(scopeAdminCtx, "country:NO", "k", undefined)).toBe(true);
 });
 
 test("canWrite: dynamic scope layers deny regular user", () => {
   const userCtx = { userId: "u1", tenantId: "t1", roles: ["user"] };
-  assert.equal(testAuth.canWrite(userCtx, "country:NO", "k", undefined), false);
+  expect(testAuth.canWrite(userCtx, "country:NO", "k", undefined)).toBe(false);
 });
 
 // --- filterVisibleKeys tests ---
@@ -160,10 +158,10 @@ test("filterVisibleKeys: returns only readable keys", () => {
   ]);
 
   const result = testAuth.filterVisibleKeys(ctx, entries, schemaMap);
-  assert.ok("ghost.app.theme" in result);
-  assert.ok(!("ghost.app.secret" in result));
-  assert.ok("ghost.app.visible" in result);
-  assert.equal(Object.keys(result).length, 2);
+  expect("ghost.app.theme" in result).toBeTruthy();
+  expect(!("ghost.app.secret" in result)).toBeTruthy();
+  expect("ghost.app.visible" in result).toBeTruthy();
+  expect(Object.keys(result).length).toBe(2);
 });
 
 test("filterVisibleKeys: keys without schema are visible", () => {
@@ -172,7 +170,7 @@ test("filterVisibleKeys: keys without schema are visible", () => {
   const schemaMap = new Map();
 
   const result = testAuth.filterVisibleKeys(ctx, entries, schemaMap);
-  assert.ok("ghost.app.unknown" in result);
+  expect("ghost.app.unknown" in result).toBeTruthy();
 });
 
 // --- session-mode tests (moved from config-engine) ---
@@ -195,72 +193,72 @@ const godModeCtx = (overrides = {}) => ({
 
 test("session-mode: allowed (explicit) permits session layer write", () => {
   const schema = { type: "string", "x-weaver": { sessionMode: "allowed" } };
-  assert.equal(testAuth.canWrite(sessionCtx(), "session", "ghost.app.theme", schema), true);
+  expect(testAuth.canWrite(sessionCtx(), "session", "ghost.app.theme", schema)).toBe(true);
 });
 
 test("session-mode: undefined (default) permits session layer write", () => {
   const schema = { type: "string" };
-  assert.equal(testAuth.canWrite(sessionCtx(), "session", "ghost.app.theme", schema), true);
+  expect(testAuth.canWrite(sessionCtx(), "session", "ghost.app.theme", schema)).toBe(true);
 });
 
 test("session-mode: no schema permits session layer write", () => {
-  assert.equal(testAuth.canWrite(sessionCtx(), "session", "ghost.app.theme", undefined), true);
+  expect(testAuth.canWrite(sessionCtx(), "session", "ghost.app.theme", undefined)).toBe(true);
 });
 
 test("session-mode: blocked rejects session layer write unconditionally", () => {
   const schema = { type: "string", "x-weaver": { sessionMode: "blocked" } };
-  assert.equal(testAuth.canWrite(sessionCtx(), "session", "ghost.app.theme", schema), false);
+  expect(testAuth.canWrite(sessionCtx(), "session", "ghost.app.theme", schema)).toBe(false);
 });
 
 test("session-mode: blocked rejects even with god-mode", () => {
   const schema = { type: "string", "x-weaver": { sessionMode: "blocked" } };
-  assert.equal(testAuth.canWrite(godModeCtx(), "session", "ghost.app.theme", schema), false);
+  expect(testAuth.canWrite(godModeCtx(), "session", "ghost.app.theme", schema)).toBe(false);
 });
 
 test("session-mode: restricted rejects session write without god-mode", () => {
   const schema = { type: "string", "x-weaver": { sessionMode: "restricted" } };
-  assert.equal(testAuth.canWrite(sessionCtx(), "session", "ghost.app.theme", schema), false);
+  expect(testAuth.canWrite(sessionCtx(), "session", "ghost.app.theme", schema)).toBe(false);
 });
 
 test("session-mode: restricted allows session write with god-mode", () => {
   const schema = { type: "string", "x-weaver": { sessionMode: "restricted" } };
-  assert.equal(testAuth.canWrite(godModeCtx(), "session", "ghost.app.theme", schema), true);
+  expect(testAuth.canWrite(godModeCtx(), "session", "ghost.app.theme", schema)).toBe(true);
 });
 
 test("session-mode: restricted rejects with non-god-mode session type", () => {
   const schema = { type: "string", "x-weaver": { sessionMode: "restricted" } };
   const ctx = sessionCtx({ sessionMode: "debug" });
-  assert.equal(testAuth.canWrite(ctx, "session", "ghost.app.theme", schema), false);
+  expect(testAuth.canWrite(ctx, "session", "ghost.app.theme", schema)).toBe(false);
 });
 
 test("session-mode: blocked key can still be written to tenant layer", () => {
   const schema = { type: "string", "x-weaver": { sessionMode: "blocked" } };
   const ctx = { userId: "u1", tenantId: "t1", roles: ["tenant-admin"] };
-  assert.equal(testAuth.canWrite(ctx, "tenant", "ghost.app.theme", schema), true);
+  expect(testAuth.canWrite(ctx, "tenant", "ghost.app.theme", schema)).toBe(true);
 });
 
 test("session-mode: restricted key can be written to user layer without god-mode", () => {
   const schema = { type: "string", "x-weaver": { sessionMode: "restricted" } };
   const ctx = { userId: "u1", tenantId: "t1", roles: ["user"] };
-  assert.equal(testAuth.canWrite(ctx, "user", "ghost.app.theme", schema), true);
+  expect(testAuth.canWrite(ctx, "user", "ghost.app.theme", schema)).toBe(true);
 });
 
 test("session-mode: existing layer policy still works", () => {
   const systemCtx = { userId: "u1", tenantId: "t1", roles: ["system"] };
   const userCtx = { userId: "u2", tenantId: "t1", roles: ["user"] };
-  assert.equal(testAuth.canWrite(systemCtx, "core", "k", undefined), true);
-  assert.equal(testAuth.canWrite(userCtx, "core", "k", undefined), false);
+  expect(testAuth.canWrite(systemCtx, "core", "k", undefined)).toBe(true);
+  expect(testAuth.canWrite(userCtx, "core", "k", undefined)).toBe(false);
 });
 
 test("session-mode: writeRestriction still works at session layer", () => {
   const ctx = sessionCtx();
   const schema = { type: "string", "x-weaver": { writeRestriction: ["tenant-admin"] } };
   // platform-ops has session layer access but not writeRestriction role
-  assert.equal(testAuth.canWrite(ctx, "session", "k", schema), false);
+  expect(testAuth.canWrite(ctx, "session", "k", schema)).toBe(false);
 });
 
 test("session-mode: maxOverrideLayer still works", () => {
   const userCtx = { userId: "u1", tenantId: "t1", roles: ["user"] };
   const schema = { type: "number", "x-weaver": { maxOverrideLayer: "tenant" } };
-  assert.equal(testAuth.canWrite(userCtx, "user", "k", schema), false);
+  expect(testAuth.canWrite(userCtx, "user", "k", schema)).toBe(false);
 });

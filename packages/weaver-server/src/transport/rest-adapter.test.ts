@@ -1,5 +1,3 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
 import type { WeaverConfigService } from "../core/config-service";
 import type { ScopeManager } from "../core/scope-manager";
 import { createRestAdapter } from "./rest-adapter";
@@ -41,9 +39,9 @@ describe("REST body validation", () => {
       body: { notValue: 42 },
       headers: {},
     });
-    assert.equal(res.status, 400);
+    expect(res.status).toBe(400);
     const body = res.body as { error: { code: string } };
-    assert.equal(body.error.code, "VALIDATION_ERROR");
+    expect(body.error.code).toBe("VALIDATION_ERROR");
   });
 
   it("PUT /v1/config/key accepts body with value field", async () => {
@@ -54,7 +52,7 @@ describe("REST body validation", () => {
       body: { value: "hello" },
       headers: {},
     });
-    assert.equal(res.status, 200);
+    expect(res.status).toBe(200);
   });
 
   it("PATCH /v1/config rejects body without entries", async () => {
@@ -65,7 +63,7 @@ describe("REST body validation", () => {
       body: { notEntries: true },
       headers: {},
     });
-    assert.equal(res.status, 400);
+    expect(res.status).toBe(400);
   });
 
   it("PATCH /v1/config accepts body with entries object", async () => {
@@ -76,7 +74,7 @@ describe("REST body validation", () => {
       body: { entries: { key1: "val1" } },
       headers: {},
     });
-    assert.equal(res.status, 200);
+    expect(res.status).toBe(200);
   });
 
   it("POST /v1/admin/scopes/:scopeId rejects body without value", async () => {
@@ -104,7 +102,7 @@ describe("REST body validation", () => {
       body: { notValue: true },
       headers: {},
     });
-    assert.equal(res.status, 400);
+    expect(res.status).toBe(400);
   });
 
   it("POST /v1/admin/scopes/:scopeId accepts valid body", async () => {
@@ -132,6 +130,6 @@ describe("REST body validation", () => {
       body: { value: "us-east-1" },
       headers: {},
     });
-    assert.equal(res.status, 201);
+    expect(res.status).toBe(201);
   });
 });

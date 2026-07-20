@@ -105,9 +105,9 @@ Each configuration property can declare schema metadata:
 ## Development
 
 ```bash
-bun install
-bun run build
-bun run test
+pnpm install
+pnpm run build
+pnpm run test
 ```
 
 ## License

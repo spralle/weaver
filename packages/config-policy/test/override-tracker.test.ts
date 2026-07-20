@@ -1,5 +1,3 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
 import { createInMemoryOverrideTracker } from "../src/memory-override-tracker.js";
 
 describe("InMemoryOverrideTracker", () => {
@@ -18,8 +16,8 @@ describe("InMemoryOverrideTracker", () => {
       createdAt: "2025-01-01T00:00:00.000Z",
       createdBy: "admin",
     });
-    assert.equal(record.id, "ov-1");
-    assert.equal(record.followUpDeadline, "2025-01-01T00:01:00.000Z");
+    expect(record.id).toBe("ov-1");
+    expect(record.followUpDeadline).toBe("2025-01-01T00:01:00.000Z");
   });
 
   it("lists active records (not regularized)", async () => {
@@ -36,7 +34,7 @@ describe("InMemoryOverrideTracker", () => {
       createdBy: "admin",
     });
     const active = await tracker.listActive();
-    assert.equal(active.length, 1);
+    expect(active.length).toBe(1);
   });
 
   it("regularize marks record and removes from active", async () => {
@@ -53,17 +51,17 @@ describe("InMemoryOverrideTracker", () => {
       createdBy: "admin",
     });
     const result = await tracker.regularize("ov-1", "ops");
-    assert.ok(result);
-    assert.ok(result.regularizedAt);
-    assert.equal(result.regularizedBy, "ops");
+    expect(result).toBeTruthy();
+    expect(result.regularizedAt).toBeTruthy();
+    expect(result.regularizedBy).toBe("ops");
     const active = await tracker.listActive();
-    assert.equal(active.length, 0);
+    expect(active.length).toBe(0);
   });
 
   it("regularize returns undefined for unknown id", async () => {
     const tracker = createInMemoryOverrideTracker();
     const result = await tracker.regularize("nope", "ops");
-    assert.equal(result, undefined);
+    expect(result).toBe(undefined);
   });
 
   it("listOverdue returns records past deadline", async () => {
@@ -80,6 +78,6 @@ describe("InMemoryOverrideTracker", () => {
       createdBy: "admin",
     });
     const overdue = await tracker.listOverdue("2025-01-01T00:00:00.000Z");
-    assert.equal(overdue.length, 1);
+    expect(overdue.length).toBe(1);
   });
 });

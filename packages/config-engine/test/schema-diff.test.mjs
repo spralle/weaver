@@ -1,5 +1,3 @@
-import { describe, it } from "node:test";
-import assert from "node:assert/strict";
 import {
   detectBreakingChanges,
   diffSchemaKeys,
@@ -12,46 +10,46 @@ describe("schema-diff", () => {
   describe("getSchemaProperties", () => {
     it("extracts keys from flat object", () => {
       const props = getSchemaProperties({ foo: { type: "string" }, bar: { type: "number" } });
-      assert.deepEqual(props, new Set(["foo", "bar"]));
+      expect(props).toEqual(new Set(["foo", "bar"]));
     });
 
     it("extracts keys from properties wrapper", () => {
       const props = getSchemaProperties({ properties: { a: { type: "string" }, b: { type: "boolean" } } });
-      assert.deepEqual(props, new Set(["a", "b"]));
+      expect(props).toEqual(new Set(["a", "b"]));
     });
 
     it("returns empty set for empty object", () => {
-      assert.deepEqual(getSchemaProperties({}), new Set());
+      expect(getSchemaProperties({})).toEqual(new Set());
     });
   });
 
   describe("getSchemaPropertyType", () => {
     it("reads type from properties wrapper", () => {
       const schema = { properties: { name: { type: "string" } } };
-      assert.equal(getSchemaPropertyType(schema, "name"), "string");
+      expect(getSchemaPropertyType(schema, "name")).toBe("string");
     });
 
     it("reads type from properties-wrapped schema", () => {
       const schema = { type: "object", properties: { name: { type: "string" } } };
-      assert.equal(getSchemaPropertyType(schema, "name"), "string");
+      expect(getSchemaPropertyType(schema, "name")).toBe("string");
     });
 
     it("returns undefined for missing property", () => {
-      assert.equal(getSchemaPropertyType({ properties: { a: { type: "string" } } }, "b"), undefined);
+      expect(getSchemaPropertyType({ properties: { a: { type: "string" } } }, "b")).toBe(undefined);
     });
   });
 
   describe("schemasEqual", () => {
     it("returns true for identical schemas", () => {
-      assert.equal(schemasEqual({ a: 1 }, { a: 1 }), true);
+      expect(schemasEqual({ a: 1 }, { a: 1 })).toBe(true);
     });
 
     it("returns false for different schemas", () => {
-      assert.equal(schemasEqual({ a: 1 }, { a: 2 }), false);
+      expect(schemasEqual({ a: 1 }, { a: 2 })).toBe(false);
     });
 
     it("is order-insensitive (structural equality)", () => {
-      assert.equal(schemasEqual({ a: 1, b: 2 }, { b: 2, a: 1 }), true);
+      expect(schemasEqual({ a: 1, b: 2 }, { b: 2, a: 1 })).toBe(true);
     });
   });
 
@@ -60,30 +58,30 @@ describe("schema-diff", () => {
       const existing = { properties: { name: { type: "string" }, age: { type: "number" } } };
       const incoming = { properties: { name: { type: "string" } } };
       const changes = detectBreakingChanges(existing, incoming);
-      assert.equal(changes.length, 1);
-      assert.equal(changes[0].type, "removed-property");
-      assert.equal(changes[0].property, "age");
+      expect(changes.length).toBe(1);
+      expect(changes[0].type).toBe("removed-property");
+      expect(changes[0].property).toBe("age");
     });
 
     it("detects type changes", () => {
       const existing = { properties: { name: { type: "string" } } };
       const incoming = { properties: { name: { type: "number" } } };
       const changes = detectBreakingChanges(existing, incoming);
-      assert.equal(changes.length, 1);
-      assert.equal(changes[0].type, "type-changed");
-      assert.equal(changes[0].property, "name");
+      expect(changes.length).toBe(1);
+      expect(changes[0].type).toBe("type-changed");
+      expect(changes[0].property).toBe("name");
     });
 
     it("returns empty array for compatible changes (added properties)", () => {
       const existing = { properties: { name: { type: "string" } } };
       const incoming = { properties: { name: { type: "string" }, age: { type: "number" } } };
       const changes = detectBreakingChanges(existing, incoming);
-      assert.equal(changes.length, 0);
+      expect(changes.length).toBe(0);
     });
 
     it("returns empty for identical schemas", () => {
       const schema = { properties: { x: { type: "boolean" } } };
-      assert.deepEqual(detectBreakingChanges(schema, schema), []);
+      expect(detectBreakingChanges(schema, schema)).toEqual([]);
     });
   });
 
@@ -92,15 +90,15 @@ describe("schema-diff", () => {
       const existing = { properties: { a: { type: "string" }, b: { type: "string" } } };
       const incoming = { properties: { b: { type: "string" }, c: { type: "string" } } };
       const { added, removed } = diffSchemaKeys(existing, incoming);
-      assert.deepEqual(added, new Set(["c"]));
-      assert.deepEqual(removed, new Set(["a"]));
+      expect(added).toEqual(new Set(["c"]));
+      expect(removed).toEqual(new Set(["a"]));
     });
 
     it("returns empty sets for identical schemas", () => {
       const schema = { properties: { x: { type: "number" } } };
       const { added, removed } = diffSchemaKeys(schema, schema);
-      assert.equal(added.size, 0);
-      assert.equal(removed.size, 0);
+      expect(added.size).toBe(0);
+      expect(removed.size).toBe(0);
     });
   });
 });

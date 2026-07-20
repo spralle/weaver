@@ -1,5 +1,3 @@
-import { describe, it, mock } from "node:test";
-import assert from "node:assert/strict";
 import { createStdoutAuditSink, createMongoAuditSink } from "@weaver-conf/weaver-server";
 
 function makeEntry() {
@@ -23,9 +21,9 @@ describe("StdoutAuditSink", () => {
 
     try {
       await sink.record(makeEntry());
-      assert.equal(written.length, 1);
+      expect(written.length).toBe(1);
       const parsed = JSON.parse(written[0].trim());
-      assert.equal(parsed.actor, "user1");
+      expect(parsed.actor).toBe("user1");
     } finally {
       process.stdout.write = originalWrite;
     }
@@ -40,7 +38,7 @@ describe("MongoAuditSink", () => {
 
     await sink.record(makeEntry());
 
-    assert.equal(inserted.length, 1);
-    assert.equal(inserted[0].actor, "user1");
+    expect(inserted.length).toBe(1);
+    expect(inserted[0].actor).toBe("user1");
   });
 });

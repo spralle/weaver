@@ -1,5 +1,3 @@
-import { describe, it } from "node:test";
-import assert from "node:assert/strict";
 
 const { createHttpTransport } = await import("../src/http-transport.js");
 
@@ -29,9 +27,9 @@ describe("HttpTransport", () => {
     });
     const transport = createHttpTransport({ baseUrl: "http://localhost:3399", fetch });
     const result = await transport.resolveAll();
-    assert.deepEqual(result, snapshot);
-    assert.equal(calls.length, 1);
-    assert.ok(calls[0].url.includes("/v1/config"));
+    expect(result).toEqual(snapshot);
+    expect(calls.length).toBe(1);
+    expect(calls[0].url.includes("/v1/config")).toBeTruthy();
   });
 
   it("get makes GET /v1/config/{keyPath}", async () => {
@@ -40,7 +38,7 @@ describe("HttpTransport", () => {
     });
     const transport = createHttpTransport({ baseUrl: "http://localhost:3399", fetch });
     const value = await transport.get("db.host");
-    assert.equal(value, "localhost");
+    expect(value).toBe("localhost");
   });
 
   it("set makes PUT /v1/config/{keyPath} with value body", async () => {
@@ -49,9 +47,9 @@ describe("HttpTransport", () => {
     });
     const transport = createHttpTransport({ baseUrl: "http://localhost:3399", fetch });
     const result = await transport.set("db.host", "newhost");
-    assert.equal(result.success, true);
+    expect(result.success).toBe(true);
     const sentBody = JSON.parse(calls[0].init.body);
-    assert.deepEqual(sentBody, { value: "newhost" });
+    expect(sentBody).toEqual({ value: "newhost" });
   });
 
   it("set with ifRevision sends If-Match header", async () => {
@@ -60,7 +58,7 @@ describe("HttpTransport", () => {
     });
     const transport = createHttpTransport({ baseUrl: "http://localhost:3399", fetch });
     await transport.set("key", "val", { ifRevision: "rev-1" });
-    assert.equal(calls[0].init.headers["If-Match"], '"rev-1"');
+    expect(calls[0].init.headers["If-Match"]).toBe('"rev-1"');
   });
 
   it("remove makes DELETE /v1/config/{keyPath}", async () => {
@@ -69,7 +67,7 @@ describe("HttpTransport", () => {
     });
     const transport = createHttpTransport({ baseUrl: "http://localhost:3399", fetch });
     await transport.remove("old.key");
-    assert.equal(calls[0].init.method, "DELETE");
+    expect(calls[0].init.method).toBe("DELETE");
   });
 
   it("setMany makes PATCH /v1/config", async () => {
@@ -78,9 +76,9 @@ describe("HttpTransport", () => {
     });
     const transport = createHttpTransport({ baseUrl: "http://localhost:3399", fetch });
     const result = await transport.setMany({ a: 1, b: 2 });
-    assert.equal(result.success, true);
+    expect(result.success).toBe(true);
     const sentBody = JSON.parse(calls[0].init.body);
-    assert.deepEqual(sentBody, { entries: { a: 1, b: 2 } });
+    expect(sentBody).toEqual({ entries: { a: 1, b: 2 } });
   });
 
   it("listScopes makes GET /v1/scopes", async () => {
@@ -90,7 +88,7 @@ describe("HttpTransport", () => {
     });
     const transport = createHttpTransport({ baseUrl: "http://localhost:3399", fetch });
     const result = await transport.listScopes();
-    assert.deepEqual(result, defs);
+    expect(result).toEqual(defs);
   });
 
   it("listScopeValues makes GET /v1/scopes/:scopeId", async () => {
@@ -99,7 +97,7 @@ describe("HttpTransport", () => {
     });
     const transport = createHttpTransport({ baseUrl: "http://localhost:3399", fetch });
     const values = await transport.listScopeValues("region");
-    assert.deepEqual(values, ["us", "eu"]);
+    expect(values).toEqual(["us", "eu"]);
   });
 
   it("inspect makes GET /v1/config/{keyPath}?inspect", async () => {
@@ -109,8 +107,8 @@ describe("HttpTransport", () => {
     });
     const transport = createHttpTransport({ baseUrl: "http://localhost:3399", fetch });
     const result = await transport.inspect("db.host");
-    assert.deepEqual(result, inspection);
-    assert.ok(calls[0].url.includes("inspect"));
+    expect(result).toEqual(inspection);
+    expect(calls[0].url.includes("inspect")).toBeTruthy();
   });
 
   it("includes Authorization header when token provided", async () => {
@@ -119,7 +117,7 @@ describe("HttpTransport", () => {
     });
     const transport = createHttpTransport({ baseUrl: "http://localhost:3399", fetch, token: "jwt-123" });
     await transport.resolveAll();
-    assert.equal(calls[0].init.headers["Authorization"], "Bearer jwt-123");
+    expect(calls[0].init.headers["Authorization"]).toBe("Bearer jwt-123");
   });
 
   it("close is safe to call", async () => {
@@ -136,7 +134,7 @@ describe("HttpTransport", () => {
     });
     const transport = createHttpTransport({ baseUrl: "http://localhost:3399", fetch });
     const result = await transport.set("key", "val");
-    assert.equal(result.success, false);
-    assert.equal(result.error?.code, "VALIDATION_ERROR");
+    expect(result.success).toBe(false);
+    expect(result.error?.code).toBe("VALIDATION_ERROR");
   });
 });

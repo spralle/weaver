@@ -5,7 +5,7 @@
 ## Installation
 
 ```bash
-bun add @weaver-conf/config-policy
+pnpm add @weaver-conf/config-policy
 ```
 
 ## Overview

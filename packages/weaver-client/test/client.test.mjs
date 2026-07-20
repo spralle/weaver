@@ -1,4 +1,3 @@
-import { test, expect, describe } from "bun:test";
 import { createWeaverClient } from "../src/client.js";
 
 function createMockSnapshot() {
@@ -58,7 +57,7 @@ describe("createWeaverClient", () => {
     const { transport } = createMockTransport();
     const client = await createWeaverClient({ transport });
     expect(client.get("db.port")).toBe(5432);
-    expect(client.get("nonexistent")).toBeUndefined();
+    expect(client.get("nonexistent")).toBe(undefined);
     await client.close();
   });
 
@@ -86,10 +85,10 @@ describe("createWeaverClient", () => {
     const received = [];
     client.onChange("db.*", (changes) => received.push(...changes));
     pushDelta({ action: "set", key: "db.host", value: "newhost", layer: "platform", environment: "prod", timestamp: "t1" });
-    expect(received).toHaveLength(1);
+    expect(received.length).toBe(1);
     expect(received[0].value).toBe("newhost");
     pushDelta({ action: "set", key: "cache.ttl", value: 600, layer: "platform", environment: "prod", timestamp: "t2" });
-    expect(received).toHaveLength(1);
+    expect(received.length).toBe(1);
     await client.close();
   });
 
@@ -97,7 +96,7 @@ describe("createWeaverClient", () => {
     const { transport } = createMockTransport();
     const client = await createWeaverClient({ transport, scopeLoading: "lazy" });
     const scopeA = [{ scopeId: "tenant", value: "tenant-a" }];
-    expect(client.get("feature.x", scopeA)).toBeUndefined();
+    expect(client.get("feature.x", scopeA)).toBe(undefined);
     await client.preloadScope(scopeA);
     expect(client.get("feature.x", scopeA)).toBe(true);
     await client.close();

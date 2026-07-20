@@ -1,5 +1,3 @@
-import assert from "node:assert/strict";
-import { beforeEach, describe, it } from "node:test";
 import {
   clearRegexCache,
   getCachedRegex,
@@ -11,35 +9,35 @@ describe("getCachedRegex", () => {
 
   it("returns a RegExp for the given pattern", () => {
     const re = getCachedRegex("foo");
-    assert.ok(re instanceof RegExp);
-    assert.ok(re.test("foo"));
+    expect(re instanceof RegExp).toBeTruthy();
+    expect(re.test("foo")).toBeTruthy();
   });
 
   it("returns the same instance on repeated calls", () => {
     const a = getCachedRegex("bar", "i");
     const b = getCachedRegex("bar", "i");
-    assert.strictEqual(a, b);
+    expect(a).toBe(b);
   });
 
   it("returns different instances for different flags", () => {
     const a = getCachedRegex("baz", "i");
     const b = getCachedRegex("baz", "g");
-    assert.notStrictEqual(a, b);
+    expect(a).not.toBe(b);
   });
 });
 
 describe("isSafePattern", () => {
   it("accepts simple patterns", () => {
-    assert.equal(isSafePattern("^foo$"), true);
-    assert.equal(isSafePattern("[a-z]+"), true);
+    expect(isSafePattern("^foo$")).toBe(true);
+    expect(isSafePattern("[a-z]+")).toBe(true);
   });
 
   it("rejects patterns over 200 chars", () => {
-    assert.equal(isSafePattern("a".repeat(201)), false);
+    expect(isSafePattern("a".repeat(201))).toBe(false);
   });
 
   it("rejects nested quantifiers", () => {
-    assert.equal(isSafePattern("(a+)+"), false);
-    assert.equal(isSafePattern("(a*)*"), false);
+    expect(isSafePattern("(a+)+")).toBe(false);
+    expect(isSafePattern("(a*)*")).toBe(false);
   });
 });

@@ -16,23 +16,26 @@ jobs:
     if: github.repository == 'surikaterna/weaver'
     steps:
       - uses: actions/checkout@v5
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: "1.2.21"
 
-      - uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.13.0
+          run_install: false
+
+      - uses: actions/setup-node@v5
         with:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
+          cache: pnpm
 
-      - run: bun install --frozen-lockfile
-      - run: bun run build
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
 
       - name: Create Release Pull Request
         id: changesets
         uses: changesets/action@v1
         with:
-          version: bunx changeset version
+          version: pnpm changeset version
           title: "chore: version packages"
           commit: "chore: version packages"
         env:
@@ -43,7 +46,7 @@ jobs:
         run: |
           echo "registry=https://registry.npmjs.org/" > "$NPM_CONFIG_USERCONFIG"
           unset NODE_AUTH_TOKEN
-          npx changeset publish
+          pnpm changeset publish
         env:
           NODE_AUTH_TOKEN: ""
           NPM_CONFIG_PROVENANCE: "true"

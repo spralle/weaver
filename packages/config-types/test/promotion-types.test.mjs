@@ -1,5 +1,3 @@
-import test from "node:test";
-import assert from "node:assert/strict";
 import {
   configAuditEntrySchema,
   emergencyOverrideRecordSchema,
@@ -21,7 +19,7 @@ test("configAuditEntrySchema validates a valid entry", () => {
     isEmergencyOverride: false,
   };
   const result = configAuditEntrySchema.safeParse(entry);
-  assert.equal(result.success, true);
+  expect(result.success).toBe(true);
 });
 
 test("configAuditEntrySchema validates plugin-management action types", () => {
@@ -45,7 +43,7 @@ test("configAuditEntrySchema validates plugin-management action types", () => {
     };
 
     const result = configAuditEntrySchema.safeParse(entry);
-    assert.equal(result.success, true);
+    expect(result.success).toBe(true);
   }
 });
 
@@ -60,7 +58,7 @@ test("configAuditEntrySchema rejects entry missing required field", () => {
     // missing isEmergencyOverride
   };
   const result = configAuditEntrySchema.safeParse(entry);
-  assert.equal(result.success, false);
+  expect(result.success).toBe(false);
 });
 
 test("configAuditEntrySchema rejects unknown action values", () => {
@@ -75,7 +73,7 @@ test("configAuditEntrySchema rejects unknown action values", () => {
   };
 
   const result = configAuditEntrySchema.safeParse(entry);
-  assert.equal(result.success, false);
+  expect(result.success).toBe(false);
 });
 
 test("emergencyOverrideRecordSchema validates a valid record", () => {
@@ -90,7 +88,7 @@ test("emergencyOverrideRecordSchema validates a valid record", () => {
     followUpDeadline: "2026-04-14T12:00:00Z",
   };
   const result = emergencyOverrideRecordSchema.safeParse(record);
-  assert.equal(result.success, true);
+  expect(result.success).toBe(true);
 });
 
 test("emergencyOverrideRecordSchema validates record with regularized fields", () => {
@@ -107,7 +105,7 @@ test("emergencyOverrideRecordSchema validates record with regularized fields", (
     regularizedBy: "senior-ops",
   };
   const result = emergencyOverrideRecordSchema.safeParse(record);
-  assert.equal(result.success, true);
+  expect(result.success).toBe(true);
 });
 
 test("promotionRequestSchema validates a valid request", () => {
@@ -124,7 +122,7 @@ test("promotionRequestSchema validates a valid request", () => {
     changePolicy: "staging-gate",
   };
   const result = promotionRequestSchema.safeParse(request);
-  assert.equal(result.success, true);
+  expect(result.success).toBe(true);
 });
 
 test("promotionRequestSchema rejects invalid status", () => {
@@ -141,5 +139,5 @@ test("promotionRequestSchema rejects invalid status", () => {
     changePolicy: "staging-gate",
   };
   const result = promotionRequestSchema.safeParse(request);
-  assert.equal(result.success, false);
+  expect(result.success).toBe(false);
 });

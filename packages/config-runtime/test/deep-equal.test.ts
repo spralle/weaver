@@ -1,4 +1,3 @@
-import { describe, expect, test } from "bun:test";
 import { createStateContainer } from "../src/state-container.js";
 
 describe("deep equality diffing", () => {

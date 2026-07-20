@@ -1,11 +1,11 @@
 # Backend Client Guide
 
-Use `@weaver-conf/weaver-client` in a Node.js or Bun backend service for typed, resilient configuration access.
+Use `@weaver-conf/weaver-client` in a Node.js backend service for typed, resilient configuration access.
 
 ## Installation
 
 ```bash
-bun add @weaver-conf/weaver-client
+pnpm add @weaver-conf/weaver-client
 ```
 
 ## Create the Client
@@ -142,7 +142,7 @@ Changes arrive via SSE from weaver-server. Your service stays in sync without po
 Close the client when your service shuts down:
 
 ```typescript
-const server = Bun.serve({ /* ... */ });
+const server = createServer({ /* ... */ });
 
 process.on("SIGTERM", async () => {
   // Stop accepting new requests
@@ -213,7 +213,7 @@ await billingNs.set("retryMax", 5);
 ### Integration Test Pattern
 
 ```typescript
-import { describe, it, beforeEach, afterEach } from "node:test";
+import { describe, it, beforeEach, afterEach, expect } from "vitest";
 import { createWeaverClient, createLocalTransport } from "@weaver-conf/weaver-client";
 
 describe("BillingService", () => {
@@ -234,7 +234,7 @@ describe("BillingService", () => {
   it("respects retryMax from config", async () => {
     const svc = new BillingService(client);
     // retryMax is 3 from initialData
-    assert.strictEqual(svc.getMaxRetries(), 3);
+    expect(svc.getMaxRetries()).toBe(3);
   });
 
   it("reacts to config changes", async () => {

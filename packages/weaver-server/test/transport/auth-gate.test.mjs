@@ -1,6 +1,4 @@
-import test from "node:test";
-import assert from "node:assert/strict";
-import { createAuthGate } from "../../dist/transport/auth-gate.js";
+import { createAuthGate } from "../../src/transport/auth-gate";
 
 const mockAuthFunctions = {
   canRead(accessCtx, _key, schema) {
@@ -40,15 +38,15 @@ test("toAccessContext maps AuthContext correctly", () => {
     isUser: true,
   };
   const accessCtx = gate.toAccessContext(authCtx);
-  assert.equal(accessCtx.userId, "user-1");
-  assert.deepEqual(accessCtx.roles, ["admin", "viewer"]);
+  expect(accessCtx.userId).toBe("user-1");
+  expect(accessCtx.roles).toEqual(["admin", "viewer"]);
 });
 
 test("gateRead returns null when access is allowed", () => {
   const gate = createAuthGate({ authFunctions: mockAuthFunctions, mapContext });
   const accessCtx = { userId: "u1", roles: ["admin"], sessionMode: undefined };
   const result = gate.gateRead(accessCtx, "some.key", undefined);
-  assert.equal(result, null);
+  expect(result).toBe(null);
 });
 
 test("gateRead returns 403 when access is denied", () => {
@@ -56,23 +54,23 @@ test("gateRead returns 403 when access is denied", () => {
   const accessCtx = { userId: "u1", roles: ["viewer"], sessionMode: undefined };
   const schema = { "x-weaver": { visibility: "internal" } };
   const result = gate.gateRead(accessCtx, "secret.key", schema);
-  assert.notEqual(result, null);
-  assert.equal(result.status, 403);
+  expect(result).not.toBe(null);
+  expect(result.status).toBe(403);
 });
 
 test("gateWrite returns null when write is allowed", () => {
   const gate = createAuthGate({ authFunctions: mockAuthFunctions, mapContext });
   const accessCtx = { userId: "u1", roles: ["admin"], sessionMode: undefined };
   const result = gate.gateWrite(accessCtx, "platform", "some.key", undefined);
-  assert.equal(result, null);
+  expect(result).toBe(null);
 });
 
 test("gateWrite returns 403 when write is denied", () => {
   const gate = createAuthGate({ authFunctions: mockAuthFunctions, mapContext });
   const accessCtx = { userId: "u1", roles: ["viewer"], sessionMode: undefined };
   const result = gate.gateWrite(accessCtx, "platform", "some.key", undefined);
-  assert.notEqual(result, null);
-  assert.equal(result.status, 403);
+  expect(result).not.toBe(null);
+  expect(result.status).toBe(403);
 });
 
 test("filterVisible removes non-visible keys", () => {
@@ -82,6 +80,6 @@ test("filterVisible removes non-visible keys", () => {
   const schemaMap = new Map();
   schemaMap.set("secret.key", { "x-weaver": { visibility: "internal" } });
   const result = gate.filterVisible(accessCtx, entries, schemaMap);
-  assert.equal(result["public.key"], "val1");
-  assert.equal(result["secret.key"], undefined);
+  expect(result["public.key"]).toBe("val1");
+  expect(result["secret.key"]).toBe(undefined);
 });

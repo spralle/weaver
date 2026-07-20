@@ -1,4 +1,4 @@
-#!/usr/bin/env bun
+#!/usr/bin/env node
 import { startWeaverServer } from "./server";
 
 type ShutdownSignal = "SIGINT" | "SIGTERM";

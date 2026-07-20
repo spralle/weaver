@@ -1,9 +1,7 @@
-import test from "node:test";
-import assert from "node:assert/strict";
 
 import {
   syncQueueMetadataSchema,
-} from "../dist/index.js";
+} from "../src";
 
 test("syncQueueMetadataSchema accepts queue counters", () => {
   const result = syncQueueMetadataSchema.safeParse({
@@ -13,5 +11,5 @@ test("syncQueueMetadataSchema accepts queue counters", () => {
     newestQueuedAt: 1713123450000,
   });
 
-  assert.equal(result.success, true);
+  expect(result.success).toBe(true);
 });

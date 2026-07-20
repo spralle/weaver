@@ -1,5 +1,3 @@
-import test from "node:test";
-import assert from "node:assert/strict";
 import { createOverrideSessionProvider } from "../src/override-session-provider.ts";
 
 // Fake timer that allows manual triggering of scheduled callbacks
@@ -46,13 +44,13 @@ test("activate creates session with correct metadata", () => {
 
   const session = controller.activate({ reason: "debugging" });
 
-  assert.ok(session.id, "session should have an id");
-  assert.ok(session.activatedAt, "session should have activatedAt");
-  assert.ok(session.expiresAt, "session should have expiresAt");
-  assert.equal(session.activatedBy, "system");
-  assert.equal(session.reason, "debugging");
-  assert.equal(session.isActive, true);
-  assert.deepEqual(session.overrides, {});
+  expect(session.id).toBeTruthy();
+  expect(session.activatedAt).toBeTruthy();
+  expect(session.expiresAt).toBeTruthy();
+  expect(session.activatedBy).toBe("system");
+  expect(session.reason).toBe("debugging");
+  expect(session.isActive).toBe(true);
+  expect(session.overrides).toEqual({});
 
   controller.dispose();
 });
@@ -64,9 +62,8 @@ test("activate rejects when session already active", () => {
 
   controller.activate({ reason: "first" });
 
-  assert.throws(
-    () => controller.activate({ reason: "second" }),
-    { message: "Session already active" },
+  expect(() => controller.activate({ reason: "second" })).toThrow(
+    "Session already active",
   );
 
   controller.dispose();
@@ -84,14 +81,14 @@ test("deactivate clears overrides and returns count", async () => {
 
   const result = controller.deactivate();
 
-  assert.equal(result.overridesCleared, 2);
-  assert.ok(result.sessionId, "should have sessionId");
-  assert.ok(result.deactivatedAt, "should have deactivatedAt");
-  assert.equal(result.auditRecorded, true);
+  expect(result.overridesCleared).toBe(2);
+  expect(result.sessionId).toBeTruthy();
+  expect(result.deactivatedAt).toBeTruthy();
+  expect(result.auditRecorded).toBe(true);
 
   // Storage should be empty after deactivation
   const data = await controller.provider.load();
-  assert.deepEqual(data.entries, {});
+  expect(data.entries).toEqual({});
 });
 
 test("deactivate rejects when no active session", () => {
@@ -99,10 +96,7 @@ test("deactivate rejects when no active session", () => {
     timer: createFakeTimer().impl,
   });
 
-  assert.throws(
-    () => controller.deactivate(),
-    { message: "No active session" },
-  );
+  expect(() => controller.deactivate()).toThrow("No active session");
 });
 
 test("extend resets timer and updates expiresAt", () => {
@@ -119,8 +113,8 @@ test("extend resets timer and updates expiresAt", () => {
   const extended = controller.extend(120_000);
   const extendedExpires = new Date(extended.expiresAt).getTime();
 
-  assert.ok(extendedExpires > originalExpires, "expiresAt should be later after extend");
-  assert.equal(extended.id, original.id, "session id should remain the same");
+  expect(extendedExpires > originalExpires).toBeTruthy();
+  expect(extended.id).toBe(original.id);
 
   controller.dispose();
 });
@@ -130,10 +124,7 @@ test("extend rejects when no active session", () => {
     timer: createFakeTimer().impl,
   });
 
-  assert.throws(
-    () => controller.extend(),
-    { message: "No active session" },
-  );
+  expect(() => controller.extend()).toThrow("No active session");
 });
 
 test("provider implements ConfigurationStorageProvider (read/write/remove)", async () => {
@@ -146,24 +137,24 @@ test("provider implements ConfigurationStorageProvider (read/write/remove)", asy
   const { provider } = controller;
 
   // Verify provider interface — defaults
-  assert.equal(provider.id, "override-session");
-  assert.equal(provider.layer, "session");
-  assert.equal(provider.writable, true);
+  expect(provider.id).toBe("override-session");
+  expect(provider.layer).toBe("session");
+  expect(provider.writable).toBe(true);
 
   // Write
   const writeResult = await provider.write("ghost.app.theme", "dark");
-  assert.equal(writeResult.success, true);
+  expect(writeResult.success).toBe(true);
 
   // Read
   const data = await provider.load();
-  assert.equal(data.entries["ghost.app.theme"], "dark");
+  expect(data.entries["ghost.app.theme"]).toBe("dark");
 
   // Remove
   const removeResult = await provider.remove("ghost.app.theme");
-  assert.equal(removeResult.success, true);
+  expect(removeResult.success).toBe(true);
 
   const dataAfter = await provider.load();
-  assert.equal(dataAfter.entries["ghost.app.theme"], undefined);
+  expect(dataAfter.entries["ghost.app.theme"]).toBe(undefined);
 
   controller.dispose();
 });
@@ -180,13 +171,13 @@ test("session overrides are cleared on deactivate", async () => {
 
   // Session should track overrides
   const session = controller.getSession();
-  assert.deepEqual(session.overrides, { a: 1, b: 2, c: 3 });
+  expect(session.overrides).toEqual({ a: 1, b: 2, c: 3 });
 
   controller.deactivate();
 
   // Provider storage should be empty
   const data = await controller.provider.load();
-  assert.deepEqual(data.entries, {});
+  expect(data.entries).toEqual({});
 });
 
 test("auto-expire triggers deactivation after timer fires", async () => {
@@ -201,22 +192,22 @@ test("auto-expire triggers deactivation after timer fires", async () => {
   controller.activate({ reason: "test" });
   await controller.provider.write("key", "value");
 
-  assert.equal(controller.isActive(), true);
+  expect(controller.isActive()).toBe(true);
 
   // Fire the expiration timer
   fakeTimer.fire();
 
-  assert.equal(controller.isActive(), false);
-  assert.equal(controller.getSession(), null);
+  expect(controller.isActive()).toBe(false);
+  expect(controller.getSession()).toBe(null);
 
   // Storage should be cleared
   const data = await controller.provider.load();
-  assert.deepEqual(data.entries, {});
+  expect(data.entries).toEqual({});
 
   // Should have emitted expire audit
   const expireEvent = auditLog.find((e) => e.action === "expire");
-  assert.ok(expireEvent, "should have emitted expire audit event");
-  assert.equal(expireEvent.details.overridesCleared, 1);
+  expect(expireEvent).toBeTruthy();
+  expect(expireEvent.details.overridesCleared).toBe(1);
 });
 
 test("audit events emitted for activate/deactivate/extend/expire", async () => {
@@ -230,26 +221,26 @@ test("audit events emitted for activate/deactivate/extend/expire", async () => {
 
   // activate
   controller.activate({ reason: "audit-test" });
-  assert.equal(auditLog.length, 1);
-  assert.equal(auditLog[0].action, "activate");
-  assert.ok(auditLog[0].sessionId);
-  assert.ok(auditLog[0].timestamp);
+  expect(auditLog.length).toBe(1);
+  expect(auditLog[0].action).toBe("activate");
+  expect(auditLog[0].sessionId).toBeTruthy();
+  expect(auditLog[0].timestamp).toBeTruthy();
 
   // extend
   controller.extend(10_000);
-  assert.equal(auditLog.length, 2);
-  assert.equal(auditLog[1].action, "extend");
+  expect(auditLog.length).toBe(2);
+  expect(auditLog[1].action).toBe("extend");
 
   // deactivate
   controller.deactivate();
-  assert.equal(auditLog.length, 3);
-  assert.equal(auditLog[2].action, "deactivate");
+  expect(auditLog.length).toBe(3);
+  expect(auditLog[2].action).toBe("deactivate");
 
   // Re-activate then expire
   controller.activate({ reason: "expire-test" });
   fakeTimer.fire();
-  assert.equal(auditLog.length, 5); // +activate, +expire
-  assert.equal(auditLog[4].action, "expire");
+  expect(auditLog.length).toBe(5); // +activate, +expire
+  expect(auditLog[4].action).toBe("expire");
 });
 
 test("dispose clears timer and deactivates", async () => {
@@ -265,16 +256,16 @@ test("dispose clears timer and deactivates", async () => {
 
   controller.dispose();
 
-  assert.equal(controller.isActive(), false);
-  assert.equal(controller.getSession(), null);
+  expect(controller.isActive()).toBe(false);
+  expect(controller.getSession()).toBe(null);
 
   // Should have emitted deactivate audit
   const deactivateEvent = auditLog.find((e) => e.action === "deactivate");
-  assert.ok(deactivateEvent, "dispose should emit deactivate audit");
+  expect(deactivateEvent).toBeTruthy();
 
   // Timer should not fire after dispose (fire should be no-op)
   fakeTimer.fire();
-  assert.equal(controller.isActive(), false);
+  expect(controller.isActive()).toBe(false);
 });
 
 test("custom durationMs in activation request", () => {
@@ -286,7 +277,7 @@ test("custom durationMs in activation request", () => {
 
   controller.activate({ reason: "custom", durationMs: 30_000 });
 
-  assert.equal(fakeTimer.scheduledMs, 30_000);
+  expect(fakeTimer.scheduledMs).toBe(30_000);
 
   controller.dispose();
 });
@@ -296,14 +287,14 @@ test("getSession returns null when no session, returns session when active", () 
     timer: createFakeTimer().impl,
   });
 
-  assert.equal(controller.getSession(), null);
+  expect(controller.getSession()).toBe(null);
 
   controller.activate({ reason: "test" });
 
   const session = controller.getSession();
-  assert.ok(session !== null);
-  assert.equal(session.reason, "test");
-  assert.equal(session.isActive, true);
+  expect(session !== null).toBeTruthy();
+  expect(session.reason).toBe("test");
+  expect(session.isActive).toBe(true);
 
   controller.dispose();
 });
@@ -316,7 +307,7 @@ test("default duration is 4 hours", () => {
 
   controller.activate({ reason: "test" });
 
-  assert.equal(fakeTimer.scheduledMs, 4 * 60 * 60 * 1000);
+  expect(fakeTimer.scheduledMs).toBe(4 * 60 * 60 * 1000);
 
   controller.dispose();
 });
@@ -329,7 +320,7 @@ test("deactivate returns auditRecorded false when no onAudit", () => {
   controller.activate({ reason: "test" });
   const result = controller.deactivate();
 
-  assert.equal(result.auditRecorded, false);
+  expect(result.auditRecorded).toBe(false);
 });
 
 test("provider load returns snapshot (not live reference)", async () => {
@@ -344,7 +335,7 @@ test("provider load returns snapshot (not live reference)", async () => {
   data1.entries.key = "mutated";
 
   const data2 = await controller.provider.load();
-  assert.equal(data2.entries.key, "value");
+  expect(data2.entries.key).toBe("value");
 
   controller.dispose();
 });
@@ -357,11 +348,11 @@ test("extend without duration uses current duration", () => {
   });
 
   controller.activate({ reason: "test", durationMs: 30_000 });
-  assert.equal(fakeTimer.scheduledMs, 30_000);
+  expect(fakeTimer.scheduledMs).toBe(30_000);
 
   // Extend without specifying duration should use the current (30s)
   controller.extend();
-  assert.equal(fakeTimer.scheduledMs, 30_000);
+  expect(fakeTimer.scheduledMs).toBe(30_000);
 
   controller.dispose();
 });
@@ -376,8 +367,8 @@ test("custom layer and id options", () => {
   controller.activate({ reason: "test" });
 
   const { provider } = controller;
-  assert.equal(provider.id, "my-session-provider");
-  assert.equal(provider.layer, "custom-session");
+  expect(provider.id).toBe("my-session-provider");
+  expect(provider.layer).toBe("custom-session");
 
   controller.dispose();
 });

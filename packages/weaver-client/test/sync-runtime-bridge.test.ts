@@ -1,4 +1,3 @@
-import { describe, expect, test } from "bun:test";
 import { createStateContainer } from "@weaver-conf/config-runtime";
 import { createSyncRuntimeBridge } from "../src/sync-runtime-bridge.js";
 
@@ -163,6 +162,6 @@ describe("sync-runtime-bridge", () => {
     });
 
     // Should not have updated
-    expect(container.get("theme")).toBeUndefined();
+    expect(container.get("theme")).toBe(undefined);
   });
 });

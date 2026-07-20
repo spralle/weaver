@@ -1,7 +1,6 @@
 {
   "name": "@weaver-conf/storage-provider-local-storage",
   "version": "0.1.0",
-  "private": true,
   "description": "Browser localStorage storage provider for Weaver",
   "license": "MIT",
   "repository": {
@@ -22,7 +21,7 @@
   "scripts": {
     "build": "tsup",
     "typecheck": "tsc --noEmit",
-    "test": "bun test",
+    "test": "vitest run",
     "lint": "biome check ."
   },
   "dependencies": {

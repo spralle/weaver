@@ -1,5 +1,3 @@
-import test from "node:test";
-import assert from "node:assert/strict";
 import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
 import { mkdir, writeFile, rm } from "node:fs/promises";
@@ -39,10 +37,10 @@ test("onExternalChange fires when file is modified externally", async () => {
     // Wait for debounce + processing
     await sleep(300);
 
-    assert.equal(received.length, 1);
+    expect(received.length).toBe(1);
     const changes = received[0];
-    assert.ok(changes.some((c) => c.key === "b" && c.newValue === 99));
-    assert.ok(changes.some((c) => c.key === "c" && c.newValue === 3));
+    expect(changes.some((c) => c.key === "b" && c.newValue === 99)).toBeTruthy();
+    expect(changes.some((c) => c.key === "c" && c.newValue === 3)).toBeTruthy();
 
     unsubscribe();
   } finally {
@@ -81,9 +79,9 @@ test("onExternalChange debounces rapid writes", async () => {
     await sleep(300);
 
     // Should have at most 1-2 callbacks (debounced), final value is 4
-    assert.ok(received.length <= 2, `Expected <=2 callbacks, got ${received.length}`);
+    expect(received.length <= 2).toBeTruthy();
     const lastChanges = received[received.length - 1];
-    assert.ok(lastChanges.some((c) => c.key === "x" && c.newValue === 4));
+    expect(lastChanges.some((c) => c.key === "x" && c.newValue === 4)).toBeTruthy();
 
     unsubscribe();
   } finally {
@@ -117,7 +115,7 @@ test("dispose() stops watching", async () => {
     await writeFile(filePath, JSON.stringify({ v: 999 }));
     await sleep(200);
 
-    assert.equal(received.length, 0);
+    expect(received.length).toBe(0);
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
@@ -148,7 +146,7 @@ test("onExternalChange does not fire when no keys actually changed", async () =>
     await writeFile(filePath, JSON.stringify({ a: 1 }));
     await sleep(200);
 
-    assert.equal(received.length, 0);
+    expect(received.length).toBe(0);
     unsubscribe();
   } finally {
     await rm(dir, { recursive: true, force: true });

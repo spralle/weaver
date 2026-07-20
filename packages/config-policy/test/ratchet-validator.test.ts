@@ -1,5 +1,3 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
 import type {
   RatchetLayerSnapshot,
   RatchetRule,
@@ -31,8 +29,8 @@ describe("validateOneWayRatchet", () => {
       DEFAULT_PLUGIN_MANAGEMENT_RATCHET_RULES,
       { layerOrder },
     );
-    assert.equal(result.violations.length, 0);
-    assert.equal(result.blocked.length, 0);
+    expect(result.violations.length).toBe(0);
+    expect(result.blocked.length).toBe(0);
   });
 
   it("reports violation when value loosens", () => {
@@ -45,8 +43,8 @@ describe("validateOneWayRatchet", () => {
       DEFAULT_PLUGIN_MANAGEMENT_RATCHET_RULES,
       { layerOrder },
     );
-    assert.equal(result.violations.length, 1);
-    assert.equal(result.violations[0]?.transition, "loosened");
+    expect(result.violations.length).toBe(1);
+    expect(result.violations[0]?.transition).toBe("loosened");
   });
 
   it("reports blocked for unknown values in ordered rule", () => {
@@ -59,7 +57,7 @@ describe("validateOneWayRatchet", () => {
       DEFAULT_PLUGIN_MANAGEMENT_RATCHET_RULES,
       { layerOrder },
     );
-    assert.equal(result.blocked.length, 1);
+    expect(result.blocked.length).toBe(1);
   });
 
   it("handles custom ratchet rules", () => {
@@ -79,8 +77,8 @@ describe("validateOneWayRatchet", () => {
       { layer: "app", values: { maxRetries: 3 } },
     ];
     const result = validateOneWayRatchet(layers, [customRule], { layerOrder });
-    assert.equal(result.violations.length, 0);
-    assert.equal(result.evaluations[0]?.transition, "tightened");
+    expect(result.violations.length).toBe(0);
+    expect(result.evaluations[0]?.transition).toBe("tightened");
   });
 
   it("sticky blocked propagates to subsequent layers", () => {
@@ -97,7 +95,7 @@ describe("validateOneWayRatchet", () => {
         stickyBlocked: true,
       },
     );
-    assert.equal(result.blocked.length, 2);
+    expect(result.blocked.length).toBe(2);
   });
 
   it("equal transitions are not violations", () => {
@@ -110,7 +108,7 @@ describe("validateOneWayRatchet", () => {
       DEFAULT_PLUGIN_MANAGEMENT_RATCHET_RULES,
       { layerOrder },
     );
-    assert.equal(result.violations.length, 0);
-    assert.equal(result.evaluations[0]?.transition, "equal");
+    expect(result.violations.length).toBe(0);
+    expect(result.evaluations[0]?.transition).toBe("equal");
   });
 });

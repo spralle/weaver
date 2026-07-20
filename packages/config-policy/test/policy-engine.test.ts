@@ -1,5 +1,3 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
 import type { ConfigurationPropertySchema } from "@weaver-conf/config-types";
 import type { PolicyEvaluationContext } from "../src/policy-engine.js";
 import { evaluateChangePolicy } from "../src/policy-engine.js";
@@ -28,7 +26,7 @@ describe("evaluateChangePolicy", () => {
       "app",
       denyWrite,
     );
-    assert.equal(result.outcome, "denied");
+    expect(result.outcome).toBe("denied");
   });
 
   it("allows direct-allowed policy", () => {
@@ -38,7 +36,7 @@ describe("evaluateChangePolicy", () => {
       "app",
       allowWrite,
     );
-    assert.equal(result.outcome, "allowed");
+    expect(result.outcome).toBe("allowed");
   });
 
   it("defaults to direct-allowed when no policy set", () => {
@@ -49,7 +47,7 @@ describe("evaluateChangePolicy", () => {
       "app",
       allowWrite,
     );
-    assert.equal(result.outcome, "allowed");
+    expect(result.outcome).toBe("allowed");
   });
 
   it("requires promotion for staging-gate", () => {
@@ -59,7 +57,7 @@ describe("evaluateChangePolicy", () => {
       "app",
       allowWrite,
     );
-    assert.equal(result.outcome, "requires-promotion");
+    expect(result.outcome).toBe("requires-promotion");
   });
 
   it("requires promotion for full-pipeline", () => {
@@ -69,7 +67,7 @@ describe("evaluateChangePolicy", () => {
       "app",
       allowWrite,
     );
-    assert.equal(result.outcome, "requires-promotion");
+    expect(result.outcome).toBe("requires-promotion");
   });
 
   it("requires emergency auth when no override reason", () => {
@@ -79,7 +77,7 @@ describe("evaluateChangePolicy", () => {
       "app",
       allowWrite,
     );
-    assert.equal(result.outcome, "requires-emergency-auth");
+    expect(result.outcome).toBe("requires-emergency-auth");
   });
 
   it("allows emergency-override with proper session and reason", () => {
@@ -93,7 +91,7 @@ describe("evaluateChangePolicy", () => {
       "app",
       allowWrite,
     );
-    assert.equal(result.outcome, "allowed");
+    expect(result.outcome).toBe("allowed");
   });
 
   it("denies emergency-override with empty reason", () => {
@@ -107,6 +105,6 @@ describe("evaluateChangePolicy", () => {
       "app",
       allowWrite,
     );
-    assert.equal(result.outcome, "requires-emergency-auth");
+    expect(result.outcome).toBe("requires-emergency-auth");
   });
 });

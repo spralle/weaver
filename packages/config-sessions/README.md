@@ -5,7 +5,7 @@
 ## Installation
 
 ```bash
-bun add @weaver-conf/config-sessions
+pnpm add @weaver-conf/config-sessions
 ```
 
 ## Overview

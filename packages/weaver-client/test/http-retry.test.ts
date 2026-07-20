@@ -1,5 +1,3 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
 import { fetchWithRetry } from "../src/http-retry.js";
 
 function createMockFetch(
@@ -34,8 +32,8 @@ describe("fetchWithRetry", () => {
       {},
       { ...baseOpts, fetchFn: mock.fn },
     );
-    assert.equal(res.status, 200);
-    assert.equal(mock.callCount, 1);
+    expect(res.status).toBe(200);
+    expect(mock.callCount).toBe(1);
   });
 
   it("does not retry on 400", async () => {
@@ -45,8 +43,8 @@ describe("fetchWithRetry", () => {
       {},
       { ...baseOpts, fetchFn: mock.fn },
     );
-    assert.equal(res.status, 400);
-    assert.equal(mock.callCount, 1);
+    expect(res.status).toBe(400);
+    expect(mock.callCount).toBe(1);
   });
 
   it("retries on 503 then succeeds", async () => {
@@ -56,8 +54,8 @@ describe("fetchWithRetry", () => {
       {},
       { ...baseOpts, fetchFn: mock.fn },
     );
-    assert.equal(res.status, 200);
-    assert.equal(mock.callCount, 2);
+    expect(res.status).toBe(200);
+    expect(mock.callCount).toBe(2);
   });
 
   it("retries on network error then succeeds", async () => {
@@ -67,8 +65,8 @@ describe("fetchWithRetry", () => {
       {},
       { ...baseOpts, fetchFn: mock.fn },
     );
-    assert.equal(res.status, 200);
-    assert.equal(mock.callCount, 2);
+    expect(res.status).toBe(200);
+    expect(mock.callCount).toBe(2);
   });
 
   it("throws after exhausting retries on network error", async () => {
@@ -77,10 +75,10 @@ describe("fetchWithRetry", () => {
       "network-error",
       "network-error",
     ]);
-    await assert.rejects(() =>
+    await expect(
       fetchWithRetry("http://x", {}, { ...baseOpts, fetchFn: mock.fn }),
-    );
-    assert.equal(mock.callCount, 3);
+    ).rejects.toThrow();
+    expect(mock.callCount).toBe(3);
   });
 
   it("calls onError on each failed attempt", async () => {
@@ -91,6 +89,6 @@ describe("fetchWithRetry", () => {
       {},
       { ...baseOpts, fetchFn: mock.fn, onError: (e) => errors.push(e) },
     );
-    assert.equal(errors.length, 1);
+    expect(errors.length).toBe(1);
   });
 });

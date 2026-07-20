@@ -1,5 +1,3 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
 import { z } from "zod";
 import { defineNamespace } from "../src/namespace.js";
 import {
@@ -16,12 +14,12 @@ describe("zodShapeToJsonSchema", () => {
       active: z.boolean(),
     };
     const result = zodShapeToJsonSchema(shape);
-    assert.deepEqual(result.properties, {
+    expect(result.properties).toEqual({
       name: { type: "string" },
       age: { type: "number" },
       active: { type: "boolean" },
     });
-    assert.deepEqual(result.required, ["name", "age", "active"]);
+    expect(result.required).toEqual(["name", "age", "active"]);
   });
 
   it("handles optional fields", () => {
@@ -30,22 +28,22 @@ describe("zodShapeToJsonSchema", () => {
       nickname: z.optional(z.string()),
     };
     const result = zodShapeToJsonSchema(shape);
-    assert.deepEqual(result.required, ["name"]);
+    expect(result.required).toEqual(["name"]);
   });
 
   it("handles array type", () => {
     const shape = { tags: z.array(z.string()) };
     const result = zodShapeToJsonSchema(shape);
     const props = result.properties as Record<string, Record<string, unknown>>;
-    assert.equal(props.tags.type, "array");
+    expect(props.tags.type).toBe("array");
   });
 
   it("handles enum type", () => {
     const shape = { level: z.enum(["low", "medium", "high"]) };
     const result = zodShapeToJsonSchema(shape);
     const props = result.properties as Record<string, Record<string, unknown>>;
-    assert.equal(props.level.type, "string");
-    assert.deepEqual(props.level.enum, ["low", "medium", "high"]);
+    expect(props.level.type).toBe("string");
+    expect(props.level.enum).toEqual(["low", "medium", "high"]);
   });
 });
 
@@ -65,10 +63,10 @@ describe("registerNamespaces", () => {
     ];
 
     const result = await registerNamespaces(defs, transport);
-    assert.deepEqual(result.registered, ["editor", "theme"]);
-    assert.equal(result.skipped.length, 0);
-    assert.equal(result.errors.length, 0);
-    assert.equal(registered.length, 2);
+    expect(result.registered).toEqual(["editor", "theme"]);
+    expect(result.skipped.length).toBe(0);
+    expect(result.errors.length).toBe(0);
+    expect(registered.length).toBe(2);
   });
 
   it("gracefully handles transport without registerSchema", async () => {
@@ -76,8 +74,8 @@ describe("registerNamespaces", () => {
     const defs = [defineNamespace("editor", { fontSize: z.number() })];
 
     const result = await registerNamespaces(defs, transport);
-    assert.deepEqual(result.skipped, ["editor"]);
-    assert.equal(result.registered.length, 0);
+    expect(result.skipped).toEqual(["editor"]);
+    expect(result.registered.length).toBe(0);
   });
 
   it("reports errors per-namespace without aborting", async () => {
@@ -96,9 +94,9 @@ describe("registerNamespaces", () => {
     ];
 
     const result = await registerNamespaces(defs, transport);
-    assert.deepEqual(result.registered, ["good", "also-good"]);
-    assert.equal(result.errors.length, 1);
-    assert.equal(result.errors[0].namespace, "bad");
-    assert.equal(callCount, 3);
+    expect(result.registered).toEqual(["good", "also-good"]);
+    expect(result.errors.length).toBe(1);
+    expect(result.errors[0].namespace).toBe("bad");
+    expect(callCount).toBe(3);
   });
 });

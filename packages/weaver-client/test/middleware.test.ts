@@ -1,5 +1,3 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
 import { type TransportMiddleware, withMiddleware } from "../src/middleware.js";
 import type { WeaverTransport } from "../src/transport.js";
 
@@ -52,8 +50,8 @@ describe("withMiddleware", () => {
     };
     const wrapped = withMiddleware(createMockTransport(), mw);
     const result = await wrapped.get("foo");
-    assert.equal(result, "value-foo");
-    assert.deepEqual(calls, ["before:foo", "after:foo:value-foo"]);
+    expect(result).toBe("value-foo");
+    expect(calls).toEqual(["before:foo", "after:foo:value-foo"]);
   });
 
   it("fires onBeforeSet and onAfterSet", async () => {
@@ -68,7 +66,7 @@ describe("withMiddleware", () => {
     };
     const wrapped = withMiddleware(createMockTransport(), mw);
     await wrapped.set("k", "v");
-    assert.deepEqual(calls, ["before:k:v", "after:k:true"]);
+    expect(calls).toEqual(["before:k:v", "after:k:true"]);
   });
 
   it("fires onDelta on subscribe", () => {
@@ -87,9 +85,9 @@ describe("withMiddleware", () => {
     const wrapped = withMiddleware(transport, mw);
     const handler = (_d: unknown) => {};
     wrapped.subscribe(handler);
-    assert.ok(capturedHandler);
+    expect(capturedHandler).toBeTruthy();
     capturedHandler({ key: "x", value: 1 });
-    assert.equal(deltas.length, 1);
+    expect(deltas.length).toBe(1);
   });
 
   it("fires onError on failure", async () => {
@@ -104,7 +102,7 @@ describe("withMiddleware", () => {
       throw new Error("fail");
     };
     const wrapped = withMiddleware(transport, mw);
-    await assert.rejects(() => wrapped.get("x"));
-    assert.equal(errors.length, 1);
+    await expect(wrapped.get("x")).rejects.toThrow();
+    expect(errors.length).toBe(1);
   });
 });

@@ -1,5 +1,3 @@
-import { describe, test } from "node:test";
-import assert from "node:assert/strict";
 import { createJwtValidator } from "../../src/auth/jwt-validator.ts";
 
 const SECRET = "test-secret-key-for-hmac-256";
@@ -39,9 +37,9 @@ describe("JwtValidator", () => {
       exp: Math.floor(Date.now() / 1000) + 3600,
     });
     const identity = await validator.validate(token);
-    assert.strictEqual(identity.userId, "user-123");
-    assert.deepStrictEqual(identity.roles, ["editor"]);
-    assert.deepStrictEqual(identity.scopes, ["read", "write"]);
+    expect(identity.userId).toBe("user-123");
+    expect(identity.roles).toStrictEqual(["editor"]);
+    expect(identity.scopes).toStrictEqual(["read", "write"]);
   });
 
   test("M2M token extracts serviceId", async () => {
@@ -50,8 +48,8 @@ describe("JwtValidator", () => {
       exp: Math.floor(Date.now() / 1000) + 3600,
     });
     const identity = await validator.validate(token);
-    assert.strictEqual(identity.serviceId, "svc-deploy");
-    assert.strictEqual(identity.userId, undefined);
+    expect(identity.serviceId).toBe("svc-deploy");
+    expect(identity.userId).toBe(undefined);
   });
 
   test("expired token throws UNAUTHORIZED", async () => {
@@ -59,10 +57,10 @@ describe("JwtValidator", () => {
       sub: "user-1",
       exp: Math.floor(Date.now() / 1000) - 100,
     });
-    await assert.rejects(
-      validator.validate(token),
-      (err) => err.code === "UNAUTHORIZED" && err.message === "Token expired",
-    );
+    await expect(validator.validate(token)).rejects.toMatchObject({
+      code: "UNAUTHORIZED",
+      message: "Token expired",
+    });
   });
 
   test("invalid signature throws UNAUTHORIZED", async () => {
@@ -70,10 +68,10 @@ describe("JwtValidator", () => {
       { sub: "user-1", exp: Math.floor(Date.now() / 1000) + 3600 },
       "wrong-secret",
     );
-    await assert.rejects(
-      validator.validate(token),
-      (err) => err.code === "UNAUTHORIZED" && err.message === "Invalid signature",
-    );
+    await expect(validator.validate(token)).rejects.toMatchObject({
+      code: "UNAUTHORIZED",
+      message: "Invalid signature",
+    });
   });
 
   test("invalid issuer throws UNAUTHORIZED", async () => {
@@ -86,16 +84,15 @@ describe("JwtValidator", () => {
       iss: "wrong-issuer",
       exp: Math.floor(Date.now() / 1000) + 3600,
     });
-    await assert.rejects(
-      v.validate(token),
-      (err) => err.code === "UNAUTHORIZED" && err.message === "Invalid issuer",
-    );
+    await expect(v.validate(token)).rejects.toMatchObject({
+      code: "UNAUTHORIZED",
+      message: "Invalid issuer",
+    });
   });
 
   test("malformed token throws UNAUTHORIZED", async () => {
-    await assert.rejects(
-      validator.validate("not.a.valid-token"),
-      (err) => err.code === "UNAUTHORIZED",
-    );
+    await expect(validator.validate("not.a.valid-token")).rejects.toMatchObject({
+      code: "UNAUTHORIZED",
+    });
   });
 });

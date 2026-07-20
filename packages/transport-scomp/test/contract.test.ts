@@ -1,4 +1,3 @@
-import { describe, expect, it } from "bun:test";
 import { createScompTransport, WeaverConfig } from "../src/index";
 
 describe("transport-scomp", () => {

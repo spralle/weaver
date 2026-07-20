@@ -1,4 +1,3 @@
-import { describe, expect, test } from "bun:test";
 import { deepMerge } from "@weaver-conf/config-engine";
 import type {
   LayerType,
@@ -135,7 +134,7 @@ describe("createScopeResolver", () => {
 
     // After invalidation, must re-resolve
     resolver.getForScope("x", []);
-    expect(callCount).toBeGreaterThan(firstCount);
+    expect(callCount > firstCount).toBeTruthy();
   });
 
   test("buildScopedStack returns correct layer order", () => {
@@ -153,7 +152,7 @@ describe("createScopeResolver", () => {
     const scopePath: ScopeInstance[] = [{ scopeId: "region", value: "us" }];
     const stack = resolver.buildScopedStack(scopePath);
 
-    expect(stack.layers).toHaveLength(3);
+    expect(stack.layers.length).toBe(3);
     expect(stack.layers[0]?.layer).toBe("defaults");
     expect(stack.layers[1]?.layer).toBe("env");
     expect(stack.layers[2]?.layer).toBe("region:us");
@@ -163,7 +162,7 @@ describe("createScopeResolver", () => {
 describe("createScopeCache", () => {
   test("get returns undefined on miss", () => {
     const cache = createScopeCache(10);
-    expect(cache.get("unknown")).toBeUndefined();
+    expect(cache.get("unknown")).toBe(undefined);
   });
 
   test("set and get round-trip", () => {
@@ -178,7 +177,7 @@ describe("createScopeCache", () => {
     cache.set("b", { x: 2 });
     cache.set("c", { x: 3 }); // Should evict "a"
 
-    expect(cache.get("a")).toBeUndefined();
+    expect(cache.get("a")).toBe(undefined);
     expect(cache.get("b")).toEqual({ x: 2 });
     expect(cache.get("c")).toEqual({ x: 3 });
   });
@@ -195,7 +194,7 @@ describe("createScopeCache", () => {
     cache.set("c", { x: 3 });
 
     expect(cache.get("a")).toEqual({ x: 1 });
-    expect(cache.get("b")).toBeUndefined();
+    expect(cache.get("b")).toBe(undefined);
     expect(cache.get("c")).toEqual({ x: 3 });
   });
 
@@ -205,7 +204,7 @@ describe("createScopeCache", () => {
     cache.set("b", { x: 2 });
     cache.clear();
 
-    expect(cache.get("a")).toBeUndefined();
-    expect(cache.get("b")).toBeUndefined();
+    expect(cache.get("a")).toBe(undefined);
+    expect(cache.get("b")).toBe(undefined);
   });
 });

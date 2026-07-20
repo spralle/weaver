@@ -1,5 +1,3 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
 import {
   createInstanceClient,
   type InstanceClientDeps,
@@ -43,34 +41,34 @@ describe("createInstanceClient", () => {
       editor: { instances: { vim: { theme: "dark" } }, theme: "light" },
     };
     const client = createInstanceClient("editor", "vim", makeDeps(state));
-    assert.equal(client.get("theme"), "dark");
+    expect(client.get("theme")).toBe("dark");
   });
 
   it("get() falls back to base path when no override", () => {
     const state = { editor: { instances: { vim: {} }, theme: "light" } };
     const client = createInstanceClient("editor", "vim", makeDeps(state));
-    assert.equal(client.get("theme"), "light");
+    expect(client.get("theme")).toBe("light");
   });
 
   it("get() returns undefined when neither exists", () => {
     const state = { editor: { instances: { vim: {} } } };
     const client = createInstanceClient("editor", "vim", makeDeps(state));
-    assert.equal(client.get("missing"), undefined);
+    expect(client.get("missing")).toBe(undefined);
   });
 
   it("getOrDefault() returns default when missing", () => {
     const state = { editor: { instances: { vim: {} } } };
     const client = createInstanceClient("editor", "vim", makeDeps(state));
-    assert.equal(client.getOrDefault("missing", 42), 42);
+    expect(client.getOrDefault("missing", 42)).toBe(42);
   });
 
   it("set() writes to instance path", async () => {
     const deps = makeDeps({});
     const client = createInstanceClient("editor", "vim", deps);
     await client.set("theme", "dark");
-    assert.equal(deps.calls.set.length, 1);
-    assert.equal(deps.calls.set[0][0], "editor.instances.vim.theme");
-    assert.equal(deps.calls.set[0][1], "dark");
+    expect(deps.calls.set.length).toBe(1);
+    expect(deps.calls.set[0][0]).toBe("editor.instances.vim.theme");
+    expect(deps.calls.set[0][1]).toBe("dark");
   });
 
   it("set() uses defaultWriteLayer", async () => {
@@ -98,15 +96,15 @@ describe("createInstanceClient", () => {
     };
     const client = createInstanceClient("editor", "vim", deps);
     await client.set("theme", "dark");
-    assert.deepEqual(calls.set[0][2], { layer: "user" });
+    expect(calls.set[0][2]).toEqual({ layer: "user" });
   });
 
   it("reset() removes the entire instance prefix", async () => {
     const deps = makeDeps({});
     const client = createInstanceClient("editor", "vim", deps);
     await client.reset();
-    assert.equal(deps.calls.remove.length, 1);
-    assert.equal(deps.calls.remove[0][0], "editor.instances.vim");
+    expect(deps.calls.remove.length).toBe(1);
+    expect(deps.calls.remove[0][0]).toBe("editor.instances.vim");
   });
 
   it("onChange subscribes to instance-prefixed pattern", () => {
@@ -114,6 +112,6 @@ describe("createInstanceClient", () => {
     const handler = () => {};
     const client = createInstanceClient("editor", "vim", deps);
     client.onChange("theme", handler);
-    assert.equal(deps.calls.onChange[0][0], "editor.instances.vim.theme");
+    expect(deps.calls.onChange[0][0]).toBe("editor.instances.vim.theme");
   });
 });

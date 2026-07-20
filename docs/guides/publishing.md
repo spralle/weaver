@@ -45,7 +45,7 @@ Do not add a long-lived `NPM_TOKEN` unless trusted publishing is unavailable for
 
 On pushes to `main`, the workflow:
 
-1. installs dependencies with Bun,
+1. installs dependencies with pnpm,
 2. builds the monorepo,
 3. creates/updates the Changesets release PR when changesets exist, or
 4. runs `npx changeset publish` through trusted publishing when the release PR has been merged.

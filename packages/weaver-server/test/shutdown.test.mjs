@@ -1,5 +1,3 @@
-import { describe, it } from "node:test";
-import assert from "node:assert/strict";
 import { createShutdownManager } from "@weaver-conf/weaver-server";
 
 describe("ShutdownManager", () => {
@@ -11,16 +9,16 @@ describe("ShutdownManager", () => {
 
     await mgr.shutdown();
 
-    assert.deepEqual(order, [1, 2]);
+    expect(order).toEqual([1, 2]);
   });
 
   it("isShuttingDown flag is set", async () => {
     const mgr = createShutdownManager();
-    assert.equal(mgr.isShuttingDown, false);
+    expect(mgr.isShuttingDown).toBe(false);
 
     await mgr.shutdown();
 
-    assert.equal(mgr.isShuttingDown, true);
+    expect(mgr.isShuttingDown).toBe(true);
   });
 
   it("multiple handlers execute", async () => {
@@ -32,7 +30,7 @@ describe("ShutdownManager", () => {
 
     await mgr.shutdown();
 
-    assert.equal(results.length, 3);
+    expect(results.length).toBe(3);
   });
 
   it("timeout forces completion", async () => {
@@ -45,6 +43,6 @@ describe("ShutdownManager", () => {
     await mgr.shutdown();
     const elapsed = Date.now() - start;
 
-    assert.ok(elapsed < 1000, `Expected fast timeout, got ${elapsed}ms`);
+    expect(elapsed < 1000).toBeTruthy();
   });
 });

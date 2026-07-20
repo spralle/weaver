@@ -1,15 +1,13 @@
-import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { after, before, describe, it } from "node:test";
 import { createFileSystemStorageProvider } from "../src/fs-provider.js";
 
 let testDir: string;
 let filePath: string;
 
-before(async () => {
+beforeAll(async () => {
   testDir = join(tmpdir(), `weaver-fs-${randomUUID()}`);
   await mkdir(testDir, { recursive: true });
   filePath = join(testDir, "config.json");
@@ -20,7 +18,7 @@ before(async () => {
   );
 });
 
-after(async () => {
+afterAll(async () => {
   await rm(testDir, { recursive: true, force: true });
 });
 
@@ -33,8 +31,8 @@ describe("FileSystemStorageProvider", () => {
       writable: true,
     });
     const data = await provider.load();
-    assert.equal(data.entries["app.name"], "test");
-    assert.equal(data.entries["app.port"], 3000);
+    expect(data.entries["app.name"]).toBe("test");
+    expect(data.entries["app.port"]).toBe(3000);
   });
 
   it("writes a key and persists it", async () => {
@@ -44,11 +42,11 @@ describe("FileSystemStorageProvider", () => {
       filePath,
       writable: true,
     });
-    assert.equal(typeof provider.write, "function");
+    expect(typeof provider.write).toBe("function");
     const result = await provider.write("app.new", "hello");
-    assert.equal(result.success, true);
+    expect(result.success).toBe(true);
     const data = await provider.load();
-    assert.equal((data.entries.app as Record<string, unknown>)?.new, "hello");
+    expect((data.entries.app as Record<string, unknown>)?.new).toBe("hello");
   });
 
   it("removes a key", async () => {
@@ -58,16 +56,13 @@ describe("FileSystemStorageProvider", () => {
       filePath,
       writable: true,
     });
-    assert.equal(typeof provider.write, "function");
-    assert.equal(typeof provider.remove, "function");
+    expect(typeof provider.write).toBe("function");
+    expect(typeof provider.remove).toBe("function");
     await provider.write("temp.val", "x");
     const result = await provider.remove("temp.val");
-    assert.equal(result.success, true);
+    expect(result.success).toBe(true);
     const data = await provider.load();
-    assert.equal(
-      (data.entries.temp as Record<string, unknown>)?.val,
-      undefined,
-    );
+    expect((data.entries.temp as Record<string, unknown>)?.val).toBe(undefined);
   });
 
   it("reports writable status from options", () => {
@@ -77,6 +72,6 @@ describe("FileSystemStorageProvider", () => {
       filePath,
       writable: false,
     });
-    assert.equal(provider.writable, false);
+    expect(provider.writable).toBe(false);
   });
 });

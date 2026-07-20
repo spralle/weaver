@@ -1,5 +1,3 @@
-import test from "node:test";
-import assert from "node:assert/strict";
 import { validateChangePolicies } from "../dist/index.js";
 
 /** Helper to create a ComposedSchemaEntry */
@@ -12,10 +10,10 @@ test("security-sensitive key with direct-allowed produces error", () => {
     entry("app.auth.apiKey", { type: "string", "x-weaver": { changePolicy: "direct-allowed" } }),
   ]);
   const violations = validateChangePolicies(schemas);
-  assert.equal(violations.length, 1);
-  assert.equal(violations[0].severity, "error");
-  assert.equal(violations[0].key, "app.auth.apiKey");
-  assert.equal(violations[0].suggestedPolicy, "full-pipeline");
+  expect(violations.length).toBe(1);
+  expect(violations[0].severity).toBe("error");
+  expect(violations[0].key).toBe("app.auth.apiKey");
+  expect(violations[0].suggestedPolicy).toBe("full-pipeline");
 });
 
 test("security-sensitive key with full-pipeline produces no violation", () => {
@@ -23,7 +21,7 @@ test("security-sensitive key with full-pipeline produces no violation", () => {
     entry("app.auth.password", { type: "string", "x-weaver": { changePolicy: "full-pipeline" } }),
   ]);
   const violations = validateChangePolicies(schemas);
-  assert.equal(violations.length, 0);
+  expect(violations.length).toBe(0);
 });
 
 test("internal visibility with direct-allowed produces warning", () => {
@@ -37,10 +35,10 @@ test("internal visibility with direct-allowed produces warning", () => {
     }),
   ]);
   const violations = validateChangePolicies(schemas);
-  assert.equal(violations.length, 1);
-  assert.equal(violations[0].severity, "warning");
-  assert.equal(violations[0].key, "app.core.debugLevel");
-  assert.equal(violations[0].suggestedPolicy, "staging-gate");
+  expect(violations.length).toBe(1);
+  expect(violations[0].severity).toBe("warning");
+  expect(violations[0].key).toBe("app.core.debugLevel");
+  expect(violations[0].suggestedPolicy).toBe("staging-gate");
 });
 
 test("restart-required with direct-allowed produces warning", () => {
@@ -54,10 +52,10 @@ test("restart-required with direct-allowed produces warning", () => {
     }),
   ]);
   const violations = validateChangePolicies(schemas);
-  assert.equal(violations.length, 1);
-  assert.equal(violations[0].severity, "warning");
-  assert.equal(violations[0].key, "app.server.port");
-  assert.equal(violations[0].suggestedPolicy, "staging-gate");
+  expect(violations.length).toBe(1);
+  expect(violations[0].severity).toBe("warning");
+  expect(violations[0].key).toBe("app.server.port");
+  expect(violations[0].suggestedPolicy).toBe("staging-gate");
 });
 
 test("normal key with direct-allowed produces no violation", () => {
@@ -65,13 +63,13 @@ test("normal key with direct-allowed produces no violation", () => {
     entry("app.ui.theme", { type: "string", "x-weaver": { changePolicy: "direct-allowed" } }),
   ]);
   const violations = validateChangePolicies(schemas);
-  assert.equal(violations.length, 0);
+  expect(violations.length).toBe(0);
 });
 
 test("empty schema map produces no violations", () => {
   const schemas = new Map();
   const violations = validateChangePolicies(schemas);
-  assert.equal(violations.length, 0);
+  expect(violations.length).toBe(0);
 });
 
 test("security-sensitive key with staging-gate produces no violation", () => {
@@ -79,7 +77,7 @@ test("security-sensitive key with staging-gate produces no violation", () => {
     entry("app.db.credential", { type: "string", "x-weaver": { changePolicy: "staging-gate" } }),
   ]);
   const violations = validateChangePolicies(schemas);
-  assert.equal(violations.length, 0);
+  expect(violations.length).toBe(0);
 });
 
 test("multiple violations from one schema map", () => {
@@ -104,8 +102,8 @@ test("multiple violations from one schema map", () => {
   const violations = validateChangePolicies(schemas);
   const errors = violations.filter((v) => v.severity === "error");
   const warnings = violations.filter((v) => v.severity === "warning");
-  assert.equal(errors.length, 1); // secret
-  assert.equal(warnings.length, 2); // internal + restart-required
+  expect(errors.length).toBe(1); // secret
+  expect(warnings.length).toBe(2); // internal + restart-required
 });
 
 test("sensitive + public visibility produces error", () => {
@@ -117,8 +115,8 @@ test("sensitive + public visibility produces error", () => {
   ]);
   const violations = validateChangePolicies(schemas);
   const match = violations.find((v) => v.violation.includes("Sensitive key"));
-  assert.ok(match);
-  assert.equal(match.severity, "error");
+  expect(match).toBeTruthy();
+  expect(match.severity).toBe("error");
 });
 
 test("sensitive + admin visibility produces no sensitive-public violation", () => {
@@ -130,7 +128,7 @@ test("sensitive + admin visibility produces no sensitive-public violation", () =
   ]);
   const violations = validateChangePolicies(schemas);
   const match = violations.find((v) => v.violation.includes("Sensitive key"));
-  assert.equal(match, undefined);
+  expect(match).toBe(undefined);
 });
 
 test("sensitive + internal visibility produces no sensitive-public violation", () => {
@@ -142,7 +140,7 @@ test("sensitive + internal visibility produces no sensitive-public violation", (
   ]);
   const violations = validateChangePolicies(schemas);
   const match = violations.find((v) => v.violation.includes("Sensitive key"));
-  assert.equal(match, undefined);
+  expect(match).toBe(undefined);
 });
 
 test("sensitive + platform visibility produces no sensitive-public violation", () => {
@@ -154,7 +152,7 @@ test("sensitive + platform visibility produces no sensitive-public violation", (
   ]);
   const violations = validateChangePolicies(schemas);
   const match = violations.find((v) => v.violation.includes("Sensitive key"));
-  assert.equal(match, undefined);
+  expect(match).toBe(undefined);
 });
 
 test("not sensitive + public visibility produces no sensitive-public violation", () => {
@@ -166,7 +164,7 @@ test("not sensitive + public visibility produces no sensitive-public violation",
   ]);
   const violations = validateChangePolicies(schemas);
   const match = violations.find((v) => v.violation.includes("Sensitive key"));
-  assert.equal(match, undefined);
+  expect(match).toBe(undefined);
 });
 
 test("key with no explicit changePolicy defaults to direct-allowed for check", () => {
@@ -174,7 +172,7 @@ test("key with no explicit changePolicy defaults to direct-allowed for check", (
     entry("app.auth.token", { type: "string" }), // no changePolicy → defaults to direct-allowed
   ]);
   const violations = validateChangePolicies(schemas);
-  assert.equal(violations.length, 1);
-  assert.equal(violations[0].severity, "error");
-  assert.equal(violations[0].currentPolicy, "direct-allowed");
+  expect(violations.length).toBe(1);
+  expect(violations[0].severity).toBe("error");
+  expect(violations[0].currentPolicy).toBe("direct-allowed");
 });

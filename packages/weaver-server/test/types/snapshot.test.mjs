@@ -1,5 +1,3 @@
-import { test } from "node:test";
-import assert from "node:assert/strict";
 import { configSnapshotSchema } from "@weaver-conf/config-types";
 
 test("configSnapshotSchema validates valid snapshot", () => {
@@ -9,7 +7,7 @@ test("configSnapshotSchema validates valid snapshot", () => {
     revision: "abc123",
     timestamp: "2026-05-01T00:00:00Z",
   });
-  assert.equal(result.success, true);
+  expect(result.success).toBe(true);
 });
 
 test("configSnapshotSchema validates snapshot with scopes", () => {
@@ -22,7 +20,7 @@ test("configSnapshotSchema validates snapshot with scopes", () => {
     revision: "def456",
     timestamp: "2026-05-01T00:00:00Z",
   });
-  assert.equal(result.success, true);
+  expect(result.success).toBe(true);
 });
 
 test("configSnapshotSchema allows optional timestamp", () => {
@@ -31,5 +29,5 @@ test("configSnapshotSchema allows optional timestamp", () => {
     scopes: {},
     revision: "rev1",
   });
-  assert.equal(result.success, true);
+  expect(result.success).toBe(true);
 });

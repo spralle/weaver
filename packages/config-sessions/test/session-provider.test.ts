@@ -1,5 +1,3 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
 import { createOverrideSessionProvider } from "../src/override-session-provider.js";
 
 function createTestProvider() {
@@ -22,70 +20,70 @@ describe("OverrideSessionProvider", () => {
       activatedBy: "admin",
       reason: "test",
     });
-    assert.ok(session.id);
-    assert.equal(session.activatedBy, "admin");
-    assert.equal(session.isActive, true);
-    assert.equal(controller.isActive(), true);
+    expect(session.id).toBeTruthy();
+    expect(session.activatedBy).toBe("admin");
+    expect(session.isActive).toBe(true);
+    expect(controller.isActive()).toBe(true);
   });
 
   it("throws when activating while session already active", () => {
     const { controller } = createTestProvider();
     controller.activate({ activatedBy: "admin", reason: "test" });
-    assert.throws(() =>
+    expect(() =>
       controller.activate({ activatedBy: "admin", reason: "again" }),
-    );
+    ).toThrow();
   });
 
   it("deactivates a session and clears overrides", () => {
     const { controller } = createTestProvider();
     controller.activate({ activatedBy: "admin", reason: "test" });
     const result = controller.deactivate();
-    assert.ok(result.sessionId);
-    assert.equal(result.overridesCleared, 0);
-    assert.equal(controller.isActive(), false);
+    expect(result.sessionId).toBeTruthy();
+    expect(result.overridesCleared).toBe(0);
+    expect(controller.isActive()).toBe(false);
   });
 
   it("throws when deactivating with no active session", () => {
     const { controller } = createTestProvider();
-    assert.throws(() => controller.deactivate());
+    expect(() => controller.deactivate()).toThrow();
   });
 
   it("extends a session", () => {
     const { controller } = createTestProvider();
     controller.activate({ activatedBy: "admin", reason: "test" });
     const extended = controller.extend(20_000);
-    assert.ok(extended.expiresAt);
+    expect(extended.expiresAt).toBeTruthy();
   });
 
   it("provider write/load tracks overrides", async () => {
     const { controller } = createTestProvider();
     controller.activate({ activatedBy: "admin", reason: "test" });
     const provider = controller.provider;
-    assert.equal(typeof provider.write, "function");
+    expect(typeof provider.write).toBe("function");
     await provider.write("feature.x", true);
     const data = await provider.load();
-    assert.equal(data.entries["feature.x"], true);
+    expect(data.entries["feature.x"]).toBe(true);
   });
 
   it("provider remove clears override", async () => {
     const { controller } = createTestProvider();
     controller.activate({ activatedBy: "admin", reason: "test" });
-    assert.equal(typeof controller.provider.write, "function");
-    assert.equal(typeof controller.provider.remove, "function");
+    expect(typeof controller.provider.write).toBe("function");
+    expect(typeof controller.provider.remove).toBe("function");
     await controller.provider.write("k", "v");
     await controller.provider.remove("k");
     const data = await controller.provider.load();
-    assert.equal(data.entries.k, undefined);
+    expect(data.entries.k).toBe(undefined);
   });
 
   it("deactivate reports correct overridesCleared count", async () => {
     const { controller } = createTestProvider();
     controller.activate({ activatedBy: "admin", reason: "test" });
-    assert.equal(typeof controller.provider.write, "function");
+    expect(typeof controller.provider.write).toBe("function");
     await controller.provider.write("a", 1);
     await controller.provider.write("b", 2);
     const result = controller.deactivate();
-    assert.equal(result.overridesCleared, 2);
+    expect(result.overridesCleared).toBe(2);
   });
 
   it("emits audit events", () => {
@@ -93,16 +91,17 @@ describe("OverrideSessionProvider", () => {
     controller.activate({ activatedBy: "admin", reason: "test" });
     controller.extend();
     controller.deactivate();
-    assert.deepEqual(
-      audits.map((a) => a.action),
-      ["activate", "extend", "deactivate"],
-    );
+    expect(audits.map((a) => a.action)).toEqual([
+      "activate",
+      "extend",
+      "deactivate",
+    ]);
   });
 
   it("dispose cleans up", () => {
     const { controller } = createTestProvider();
     controller.activate({ activatedBy: "admin", reason: "test" });
     controller.dispose();
-    assert.equal(controller.isActive(), false);
+    expect(controller.isActive()).toBe(false);
   });
 });
