@@ -1,5 +1,3 @@
-import test from "node:test";
-import assert from "node:assert/strict";
 import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
 import { rm } from "node:fs/promises";
@@ -35,9 +33,9 @@ test("create() adds record with followUpDeadline = createdAt + 24h", async () =>
 
   try {
     const record = await tracker.create(makeRecord());
-    assert.equal(record.id, "override-1");
-    assert.equal(record.followUpDeadline, "2026-04-14T12:00:00.000Z");
-    assert.equal(record.regularizedAt, undefined);
+    expect(record.id).toBe("override-1");
+    expect(record.followUpDeadline).toBe("2026-04-14T12:00:00.000Z");
+    expect(record.regularizedAt).toBe(undefined);
   } finally {
     await rm(join(filePath, ".."), { recursive: true, force: true });
   }
@@ -48,7 +46,7 @@ test("create() respects configurable followUpDeadlineMs", async () => {
   const tracker = createInMemoryOverrideTracker({ followUpDeadlineMs: oneHourMs });
 
   const record = await tracker.create(makeRecord());
-  assert.equal(record.followUpDeadline, "2026-04-13T13:00:00.000Z");
+  expect(record.followUpDeadline).toBe("2026-04-13T13:00:00.000Z");
 });
 
 test("listActive() returns only non-regularized records", async () => {
@@ -61,8 +59,8 @@ test("listActive() returns only non-regularized records", async () => {
     await tracker.regularize("o-1", "senior-ops");
 
     const active = await tracker.listActive();
-    assert.equal(active.length, 1);
-    assert.equal(active[0].id, "o-2");
+    expect(active.length).toBe(1);
+    expect(active[0].id).toBe("o-2");
   } finally {
     await rm(join(filePath, ".."), { recursive: true, force: true });
   }
@@ -76,11 +74,11 @@ test("regularize() sets regularizedAt and regularizedBy", async () => {
     await tracker.create(makeRecord());
     const result = await tracker.regularize("override-1", "senior-ops");
 
-    assert.ok(result !== undefined);
-    assert.equal(result.regularizedBy, "senior-ops");
-    assert.ok(result.regularizedAt !== undefined);
+    expect(result !== undefined).toBeTruthy();
+    expect(result.regularizedBy).toBe("senior-ops");
+    expect(result.regularizedAt !== undefined).toBeTruthy();
     // Verify it's a valid ISO date
-    assert.ok(!isNaN(new Date(result.regularizedAt).getTime()));
+    expect(!isNaN(new Date(result.regularizedAt).getTime())).toBeTruthy();
   } finally {
     await rm(join(filePath, ".."), { recursive: true, force: true });
   }
@@ -107,8 +105,8 @@ test("listOverdue() returns records past deadline", async () => {
     );
 
     const overdue = await tracker.listOverdue("2026-04-13T12:00:00.000Z");
-    assert.equal(overdue.length, 1);
-    assert.equal(overdue[0].id, "o-old");
+    expect(overdue.length).toBe(1);
+    expect(overdue[0].id).toBe("o-old");
   } finally {
     await rm(join(filePath, ".."), { recursive: true, force: true });
   }
@@ -128,7 +126,7 @@ test("listOverdue() excludes already-regularized records", async () => {
     await tracker.regularize("o-old", "senior-ops");
 
     const overdue = await tracker.listOverdue("2026-04-13T12:00:00.000Z");
-    assert.equal(overdue.length, 0);
+    expect(overdue.length).toBe(0);
   } finally {
     await rm(join(filePath, ".."), { recursive: true, force: true });
   }
@@ -139,13 +137,13 @@ test("handle empty/missing file gracefully", async () => {
   const tracker = createFileSystemOverrideTracker(filePath);
 
   const active = await tracker.listActive();
-  assert.deepEqual(active, []);
+  expect(active).toEqual([]);
 
   const overdue = await tracker.listOverdue();
-  assert.deepEqual(overdue, []);
+  expect(overdue).toEqual([]);
 
   const result = await tracker.regularize("nonexistent", "someone");
-  assert.equal(result, undefined);
+  expect(result).toBe(undefined);
 });
 
 test("InMemoryOverrideTracker works identically", async () => {
@@ -153,24 +151,24 @@ test("InMemoryOverrideTracker works identically", async () => {
 
   // create with followUpDeadline
   const record = await tracker.create(makeRecord());
-  assert.equal(record.followUpDeadline, "2026-04-14T12:00:00.000Z");
+  expect(record.followUpDeadline).toBe("2026-04-14T12:00:00.000Z");
 
   // listActive
   let active = await tracker.listActive();
-  assert.equal(active.length, 1);
+  expect(active.length).toBe(1);
 
   // regularize
   const regularized = await tracker.regularize("override-1", "senior-ops");
-  assert.ok(regularized !== undefined);
-  assert.equal(regularized.regularizedBy, "senior-ops");
+  expect(regularized !== undefined).toBeTruthy();
+  expect(regularized.regularizedBy).toBe("senior-ops");
 
   // listActive after regularize
   active = await tracker.listActive();
-  assert.equal(active.length, 0);
+  expect(active.length).toBe(0);
 
   // regularize nonexistent
   const missing = await tracker.regularize("nonexistent", "someone");
-  assert.equal(missing, undefined);
+  expect(missing).toBe(undefined);
 
   // listOverdue with an overdue record
   await tracker.create(
@@ -180,8 +178,8 @@ test("InMemoryOverrideTracker works identically", async () => {
     }),
   );
   const overdue = await tracker.listOverdue("2026-04-13T12:00:00.000Z");
-  assert.equal(overdue.length, 1);
-  assert.equal(overdue[0].id, "o-overdue");
+  expect(overdue.length).toBe(1);
+  expect(overdue[0].id).toBe("o-overdue");
 });
 
 test("fs-override-tracker respects configurable followUpDeadlineMs", async () => {
@@ -191,7 +189,7 @@ test("fs-override-tracker respects configurable followUpDeadlineMs", async () =>
 
   try {
     const record = await tracker.create(makeRecord());
-    assert.equal(record.followUpDeadline, "2026-04-13T14:00:00.000Z");
+    expect(record.followUpDeadline).toBe("2026-04-13T14:00:00.000Z");
   } finally {
     await rm(join(filePath, ".."), { recursive: true, force: true });
   }

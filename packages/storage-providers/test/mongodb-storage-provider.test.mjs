@@ -1,5 +1,3 @@
-import test from "node:test";
-import assert from "node:assert/strict";
 import { createMongoDBStorageProvider } from "../src/mongodb-storage-provider.ts";
 
 function createMockCollection() {
@@ -51,7 +49,7 @@ test("load() returns entries from collection", async () => {
   });
 
   const data = await provider.load();
-  assert.deepEqual(data.entries, { theme: "dark", lang: "en" });
+  expect(data.entries).toEqual({ theme: "dark", lang: "en" });
 });
 
 test("write() upserts document", async () => {
@@ -64,14 +62,14 @@ test("write() upserts document", async () => {
   });
 
   const result = await provider.write("theme", "light");
-  assert.equal(result.success, true);
-  assert.equal(col.docs.length, 1);
-  assert.equal(col.docs[0].value, "light");
+  expect(result.success).toBe(true);
+  expect(col.docs.length).toBe(1);
+  expect(col.docs[0].value).toBe("light");
 
   // Upsert overwrites
   await provider.write("theme", "dark");
-  assert.equal(col.docs.length, 1);
-  assert.equal(col.docs[0].value, "dark");
+  expect(col.docs.length).toBe(1);
+  expect(col.docs[0].value).toBe("dark");
 });
 
 test("remove() deletes document", async () => {
@@ -86,8 +84,8 @@ test("remove() deletes document", async () => {
   });
 
   const result = await provider.remove("theme");
-  assert.equal(result.success, true);
-  assert.equal(col.docs.length, 0);
+  expect(result.success).toBe(true);
+  expect(col.docs.length).toBe(0);
 });
 
 test("read-only provider rejects writes", async () => {
@@ -101,7 +99,7 @@ test("read-only provider rejects writes", async () => {
   });
 
   const result = await provider.write("x", 1);
-  assert.equal(result.success, false);
+  expect(result.success).toBe(false);
 });
 
 test("load() throws with descriptive error when collection fails", async () => {
@@ -119,14 +117,8 @@ test("load() throws with descriptive error when collection fails", async () => {
     logger: { info() {}, warn() {}, error() {}, debug() {} },
   });
 
-  await assert.rejects(
-    () => provider.load(),
-    (err) => {
-      assert.match(err.message, /MongoDB load failed/);
-      assert.match(err.message, /connection timed out/);
-      return true;
-    },
-  );
+  await expect(provider.load()).rejects.toThrow(/MongoDB load failed/);
+  await expect(provider.load()).rejects.toThrow(/connection timed out/);
 });
 
 test("write() returns error result when collection fails", async () => {
@@ -141,6 +133,6 @@ test("write() returns error result when collection fails", async () => {
   });
 
   const result = await provider.write("key", "val");
-  assert.equal(result.success, false);
-  assert.match(result.error.message, /write timeout/);
+  expect(result.success).toBe(false);
+  expect(result.error.message).toMatch(/write timeout/);
 });

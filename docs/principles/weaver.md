@@ -4,7 +4,7 @@ Extends the universal and TypeScript principles with weaver-specific rules.
 
 ## Principles
 
-- **Bun runtime**: Use `bun` as the package manager and script runner. Do not use `npm run` or `yarn`.
+- **PNPM runtime**: Use `pnpm` as the package manager and script runner. Do not use `npm run` or `yarn`.
 - **Turborepo orchestration**: Use `turbo` for cross-package builds, tests, and typechecks. Do not bypass Turborepo with manual per-package scripts.
 - **Package boundaries**: Each package owns one clear domain. Do not introduce cross-cutting runtime dependencies that violate the existing dependency graph.
 - **Dependency direction**: Dependencies flow upward from leaf packages (`config-types`) to composite packages (`weaver-server`). Never create circular or downward dependencies.
@@ -17,5 +17,5 @@ Extends the universal and TypeScript principles with weaver-specific rules.
 
 - [ ] Package boundaries and dependency direction preserved.
 - [ ] Zod schemas exist for new/changed public types.
-- [ ] `bun run build` and `bun run typecheck` pass.
+- [ ] `pnpm run build` and `pnpm run typecheck` pass.
 - [ ] Changeset included (or justified why not).

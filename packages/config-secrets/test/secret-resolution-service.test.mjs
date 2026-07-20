@@ -1,5 +1,3 @@
-import test from "node:test";
-import assert from "node:assert/strict";
 import { createSecretResolutionService } from "../dist/index.js";
 
 function createMockProvider(name, secrets = {}) {
@@ -25,7 +23,7 @@ function createMockProvider(name, secrets = {}) {
 
 test("SecretResolutionService can be instantiated", () => {
   const svc = createSecretResolutionService();
-  assert.ok(svc);
+  expect(svc).toBeTruthy();
 });
 
 test("registerProvider works", () => {
@@ -33,7 +31,7 @@ test("registerProvider works", () => {
   const provider = createMockProvider("test");
   svc.registerProvider(provider);
   // No throw means success
-  assert.ok(true);
+  expect(true).toBeTruthy();
 });
 
 test("resolve with a mock provider returns the value", async () => {
@@ -45,7 +43,7 @@ test("resolve with a mock provider returns the value", async () => {
     provider: "test",
     uri: "my-secret",
   });
-  assert.equal(value, "s3cr3t");
+  expect(value).toBe("s3cr3t");
 });
 
 test("resolveAll scans entries and resolves secret references", async () => {
@@ -57,8 +55,8 @@ test("resolveAll scans entries and resolves secret references", async () => {
     dbPassword: { _weaver: "secret-ref", provider: "test", uri: "db-pass" },
   });
 
-  assert.equal(results.resolved.size, 1);
-  assert.equal(results.resolved.get("dbPassword"), "hunter2");
+  expect(results.resolved.size).toBe(1);
+  expect(results.resolved.get("dbPassword")).toBe("hunter2");
 });
 
 test("cache is used on second resolve (mock provider called once)", async () => {
@@ -81,7 +79,7 @@ test("cache is used on second resolve (mock provider called once)", async () => 
   await svc.resolve(ref);
   await svc.resolve(ref);
 
-  assert.equal(callCount, 1);
+  expect(callCount).toBe(1);
 });
 
 // --- Provider management ---
@@ -92,15 +90,12 @@ test("registerProvider() with duplicate name overwrites previous", async () => {
   svc.registerProvider(createMockProvider("test", { "k": "new" }));
 
   const val = await svc.resolve({ _weaver: "secret-ref", provider: "test", uri: "k" });
-  assert.equal(val, "new");
+  expect(val).toBe("new");
 });
 
 test("resolve() with unknown provider throws", async () => {
   const svc = createSecretResolutionService();
-  await assert.rejects(
-    () => svc.resolve({ _weaver: "secret-ref", provider: "nope", uri: "x" }),
-    /not registered/,
-  );
+  await expect(svc.resolve({ _weaver: "secret-ref", provider: "nope", uri: "x" })).rejects.toThrow(/not registered/);
 });
 
 test("resolve() with provider that throws returns error", async () => {
@@ -112,10 +107,7 @@ test("resolve() with provider that throws returns error", async () => {
     async delete() {},
     async healthCheck() { return { healthy: false, latencyMs: 0 }; },
   });
-  await assert.rejects(
-    () => svc.resolve({ _weaver: "secret-ref", provider: "failing", uri: "x" }),
-    /vault down/,
-  );
+  await expect(svc.resolve({ _weaver: "secret-ref", provider: "failing", uri: "x" })).rejects.toThrow(/vault down/);
 });
 
 // --- Resolution ---
@@ -131,8 +123,8 @@ test("resolveAll() with mixed entries only resolves secret refs", async () => {
     nested: { foo: "bar" },
   });
 
-  assert.equal(results.resolved.size, 1);
-  assert.equal(results.resolved.get("secret"), "secret1");
+  expect(results.resolved.size).toBe(1);
+  expect(results.resolved.get("secret")).toBe("secret1");
 });
 
 test("resolveAll() with multiple providers routes correctly", async () => {
@@ -145,14 +137,14 @@ test("resolveAll() with multiple providers routes correctly", async () => {
     k2: { _weaver: "secret-ref", provider: "azure", uri: "b" },
   });
 
-  assert.equal(results.resolved.get("k1"), "aws-val");
-  assert.equal(results.resolved.get("k2"), "azure-val");
+  expect(results.resolved.get("k1")).toBe("aws-val");
+  expect(results.resolved.get("k2")).toBe("azure-val");
 });
 
 test("resolveAll() with empty entries returns empty map", async () => {
   const svc = createSecretResolutionService();
   const results = await svc.resolveAll({});
-  assert.equal(results.resolved.size, 0);
+  expect(results.resolved.size).toBe(0);
 });
 
 // --- Store/delete ---
@@ -169,9 +161,9 @@ test("store() calls provider.store() with correct args", async () => {
   });
 
   const result = await svc.store("test", "my-key", "my-value");
-  assert.equal(storedUri, "my-key");
-  assert.equal(storedValue, "my-value");
-  assert.equal(result.version, "v2");
+  expect(storedUri).toBe("my-key");
+  expect(storedValue).toBe("my-value");
+  expect(result.version).toBe("v2");
 });
 
 test("delete() calls provider.delete() with correct args", async () => {
@@ -186,23 +178,17 @@ test("delete() calls provider.delete() with correct args", async () => {
   });
 
   await svc.delete("test", "del-key");
-  assert.equal(deletedUri, "del-key");
+  expect(deletedUri).toBe("del-key");
 });
 
 test("store() with unknown provider throws", async () => {
   const svc = createSecretResolutionService();
-  await assert.rejects(
-    () => svc.store("nope", "k", "v"),
-    /not registered/,
-  );
+  await expect(svc.store("nope", "k", "v")).rejects.toThrow(/not registered/);
 });
 
 test("delete() with unknown provider throws", async () => {
   const svc = createSecretResolutionService();
-  await assert.rejects(
-    () => svc.delete("nope", "k"),
-    /not registered/,
-  );
+  await expect(svc.delete("nope", "k")).rejects.toThrow(/not registered/);
 });
 
 // --- Cache invalidation ---
@@ -220,11 +206,11 @@ test("invalidate() removes cached value, next resolve() calls provider again", a
 
   const ref = { _weaver: "secret-ref", provider: "test", uri: "x" };
   await svc.resolve(ref);
-  assert.equal(callCount, 1);
+  expect(callCount).toBe(1);
 
   svc.invalidate("test:x:");
   await svc.resolve(ref);
-  assert.equal(callCount, 2);
+  expect(callCount).toBe(2);
 });
 
 // --- Audit logging ---
@@ -236,10 +222,10 @@ test("when SecretAuditLog is provided, resolve() logs the access", async () => {
   svc.registerProvider(createMockProvider("test", { "k": "v" }));
 
   await svc.resolve({ _weaver: "secret-ref", provider: "test", uri: "k" });
-  assert.equal(logs.length, 1);
-  assert.equal(logs[0].action, "resolve");
-  assert.equal(logs[0].provider, "test");
-  assert.equal(logs[0].success, true);
+  expect(logs.length).toBe(1);
+  expect(logs[0].action).toBe("resolve");
+  expect(logs[0].provider).toBe("test");
+  expect(logs[0].success).toBe(true);
 });
 
 test("when SecretAuditLog is provided, store() logs the operation", async () => {
@@ -249,14 +235,14 @@ test("when SecretAuditLog is provided, store() logs the operation", async () => 
   svc.registerProvider(createMockProvider("test", {}));
 
   await svc.store("test", "k", "v");
-  assert.equal(logs.length, 1);
-  assert.equal(logs[0].action, "store");
-  assert.equal(logs[0].success, true);
+  expect(logs.length).toBe(1);
+  expect(logs[0].action).toBe("store");
+  expect(logs[0].success).toBe(true);
 });
 
 test("when no audit log provided, operations still work", async () => {
   const svc = createSecretResolutionService();
   svc.registerProvider(createMockProvider("test", { "k": "v" }));
   const val = await svc.resolve({ _weaver: "secret-ref", provider: "test", uri: "k" });
-  assert.equal(val, "v");
+  expect(val).toBe("v");
 });

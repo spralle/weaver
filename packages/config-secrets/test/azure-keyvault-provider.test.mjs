@@ -1,5 +1,3 @@
-import test from "node:test";
-import assert from "node:assert/strict";
 import { createAzureKeyVaultProvider } from "../dist/index.js";
 
 function createMockSecretClient(secretStore = new Map()) {
@@ -50,17 +48,14 @@ test("resolve() returns the secret value from vault", async () => {
   const { provider } = createProviderWithMock(store);
 
   const result = await provider.resolve({ _weaver: "secret-ref", provider: "azure-keyvault", uri: "my-secret" });
-  assert.equal(result.value, "s3cr3t");
-  assert.equal(result.version, "v1");
+  expect(result.value).toBe("s3cr3t");
+  expect(result.version).toBe("v1");
 });
 
 test("resolve() with non-existent secret throws", async () => {
   const { provider } = createProviderWithMock(new Map());
 
-  await assert.rejects(
-    () => provider.resolve({ _weaver: "secret-ref", provider: "azure-keyvault", uri: "missing" }),
-    /not found/,
-  );
+  await expect(provider.resolve({ _weaver: "secret-ref", provider: "azure-keyvault", uri: "missing" })).rejects.toThrow(/not found/);
 });
 
 test("store() persists the value", async () => {
@@ -68,9 +63,9 @@ test("store() persists the value", async () => {
   const { provider } = createProviderWithMock(store);
 
   const result = await provider.store("new-key", "new-value");
-  assert.equal(store.get("new-key"), "new-value");
-  assert.equal(result.uri, "new-key");
-  assert.equal(result.version, "v1");
+  expect(store.get("new-key")).toBe("new-value");
+  expect(result.uri).toBe("new-key");
+  expect(result.version).toBe("v1");
 });
 
 test("delete() removes the value from vault", async () => {
@@ -78,7 +73,7 @@ test("delete() removes the value from vault", async () => {
   const { provider } = createProviderWithMock(store);
 
   await provider.delete("del-key");
-  assert.equal(store.has("del-key"), false);
+  expect(store.has("del-key")).toBe(false);
 });
 
 test("healthCheck() succeeds when vault is reachable (404 is healthy)", async () => {
@@ -86,7 +81,7 @@ test("healthCheck() succeeds when vault is reachable (404 is healthy)", async ()
   const { provider } = createProviderWithMock(new Map());
 
   const health = await provider.healthCheck();
-  assert.equal(health.healthy, true);
+  expect(health.healthy).toBe(true);
 });
 
 test("healthCheck() fails when vault is unreachable", async () => {
@@ -95,8 +90,8 @@ test("healthCheck() fails when vault is unreachable", async () => {
   mockClient.getSecret = async () => { throw new Error("network timeout"); };
 
   const health = await provider.healthCheck();
-  assert.equal(health.healthy, false);
-  assert.match(health.message, /network timeout/);
+  expect(health.healthy).toBe(false);
+  expect(health.message).toMatch(/network timeout/);
 });
 
 test("secretPrefix option prepends prefix to secret names", async () => {
@@ -104,7 +99,7 @@ test("secretPrefix option prepends prefix to secret names", async () => {
   const { provider } = createProviderWithMock(store, { secretPrefix: "myapp" });
 
   const result = await provider.resolve({ _weaver: "secret-ref", provider: "azure-keyvault", uri: "my-secret" });
-  assert.equal(result.value, "prefixed-val");
+  expect(result.value).toBe("prefixed-val");
 });
 
 test("secretPrefix applies to store operations", async () => {
@@ -112,8 +107,8 @@ test("secretPrefix applies to store operations", async () => {
   const { provider } = createProviderWithMock(store, { secretPrefix: "pfx" });
 
   await provider.store("key1", "val1");
-  assert.equal(store.has("pfx-key1"), true);
-  assert.equal(store.get("pfx-key1"), "val1");
+  expect(store.has("pfx-key1")).toBe(true);
+  expect(store.get("pfx-key1")).toBe("val1");
 });
 
 test("secretPrefix applies to delete operations", async () => {
@@ -121,5 +116,5 @@ test("secretPrefix applies to delete operations", async () => {
   const { provider } = createProviderWithMock(store, { secretPrefix: "pfx" });
 
   await provider.delete("key1");
-  assert.equal(store.has("pfx-key1"), false);
+  expect(store.has("pfx-key1")).toBe(false);
 });

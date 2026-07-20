@@ -1,5 +1,3 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
 import { createInMemoryStorageProvider } from "@weaver-conf/storage-providers";
 import { createWeaverConfigService } from "../src/core/config-service.js";
 
@@ -19,39 +17,39 @@ describe("WeaverConfigService", () => {
   it("resolves all entries", async () => {
     const svc = await makeService({ "app.name": "weaver", "app.port": 8080 });
     const snapshot = await svc.resolveAll();
-    assert.equal(snapshot.entries["app.name"], "weaver");
-    assert.equal(snapshot.entries["app.port"], 8080);
-    assert.ok(snapshot.revision);
+    expect(snapshot.entries["app.name"]).toBe("weaver");
+    expect(snapshot.entries["app.port"]).toBe(8080);
+    expect(snapshot.revision).toBeTruthy();
   });
 
   it("gets a single key", async () => {
     const svc = await makeService({ db: { host: "localhost" } });
     const val = await svc.get("db.host");
-    assert.equal(val, "localhost");
+    expect(val).toBe("localhost");
   });
 
   it("returns undefined for missing key", async () => {
     const svc = await makeService({});
     const val = await svc.get("missing.key");
-    assert.equal(val, undefined);
+    expect(val).toBe(undefined);
   });
 
   it("sets a value and updates revision", async () => {
     const svc = await makeService({});
     const oldRev = svc.revision;
     const result = await svc.set("app", "new.key", "value");
-    assert.equal(result.success, true);
+    expect(result.success).toBe(true);
     const val = await svc.get("new.key");
-    assert.equal(val, "value");
-    assert.notEqual(svc.revision, oldRev);
+    expect(val).toBe("value");
+    expect(svc.revision).not.toBe(oldRev);
   });
 
   it("removes a value", async () => {
     const svc = await makeService({ "rm.key": "gone" });
     const result = await svc.remove("app", "rm.key");
-    assert.equal(result.success, true);
+    expect(result.success).toBe(true);
     const val = await svc.get("rm.key");
-    assert.equal(val, undefined);
+    expect(val).toBe(undefined);
   });
 
   it("fires delta on set", async () => {
@@ -59,7 +57,7 @@ describe("WeaverConfigService", () => {
     const deltas: unknown[] = [];
     svc.onDelta((d) => deltas.push(d));
     await svc.set("app", "x", 1);
-    assert.equal(deltas.length, 1);
+    expect(deltas.length).toBe(1);
   });
 
   it("rejects write with stale revision", async () => {
@@ -67,7 +65,7 @@ describe("WeaverConfigService", () => {
     const result = await svc.set("app", "k", "v", {
       expectedRevision: "stale-rev",
     });
-    assert.equal(result.success, false);
+    expect(result.success).toBe(false);
   });
 
   it("handles degraded providers gracefully", async () => {
@@ -88,9 +86,9 @@ describe("WeaverConfigService", () => {
       providers: [badProvider, goodProvider],
       environment: "test",
     });
-    assert.deepEqual(svc.degradedProviders, ["bad"]);
+    expect(svc.degradedProviders).toEqual(["bad"]);
     const val = await svc.get("k");
-    assert.equal(val, "v");
+    expect(val).toBe("v");
   });
 
   it("getNamespace returns nested object at prefix", async () => {
@@ -99,7 +97,7 @@ describe("WeaverConfigService", () => {
       db: { host: "x" },
     });
     const ns = await svc.getNamespace("app");
-    assert.equal(ns.name, "w");
-    assert.equal(ns.port, 3000);
+    expect(ns.name).toBe("w");
+    expect(ns.port).toBe(3000);
   });
 });

@@ -1,4 +1,3 @@
-import { describe, expect, mock, test } from "bun:test";
 import { createStateContainer } from "../src/state-container.js";
 
 describe("snapshot and hydrate", () => {
@@ -28,13 +27,14 @@ describe("snapshot and hydrate", () => {
     const container = createStateContainer({
       layers: [{ id: "a", priority: 0, entries: { x: 1 } }],
     });
-    const fn = mock(() => {});
+    const fn = vi.fn(() => {});
     container.subscribe("x", fn);
     container.hydrate({
       resolved: { x: 99 },
       provenance: { x: "b" },
       revision: 5,
     });
+    expect(fn).toHaveBeenCalledTimes(1);
     expect(fn).toHaveBeenCalledWith(99);
   });
 

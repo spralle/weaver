@@ -1,4 +1,3 @@
-import { test, expect, describe } from "bun:test";
 import { createWeaverClient } from "../src/client.js";
 
 function createDelayedTransport(snapshot, delayMs) {

@@ -1,5 +1,3 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
 import { createWeaverClient } from "../src/client.js";
 import type { ClientSchemaRegistry } from "../src/schema-registry.js";
 import type { WeaverTransport } from "../src/transport.js";
@@ -25,7 +23,7 @@ describe("validateOnRead", () => {
     const result = validateOnRead("key", 42, registry, {
       warnOnMismatch: true,
     });
-    assert.equal(result, 42);
+    expect(result).toBe(42);
   });
 
   it("returns value but warns on invalid", () => {
@@ -41,16 +39,16 @@ describe("validateOnRead", () => {
       warnOnMismatch: true,
       logger,
     });
-    assert.equal(result, "bad");
-    assert.equal(warns.length, 1);
-    assert.ok(warns[0].includes("bad type"));
+    expect(result).toBe("bad");
+    expect(warns.length).toBe(1);
+    expect(warns[0].includes("bad type")).toBeTruthy();
   });
 
   it("returns value as-is when no registry", () => {
     const result = validateOnRead("key", "hello", undefined, {
       warnOnMismatch: true,
     });
-    assert.equal(result, "hello");
+    expect(result).toBe("hello");
   });
 
   it("suppresses warnings when warnOnMismatch is false", () => {
@@ -66,8 +64,8 @@ describe("validateOnRead", () => {
       warnOnMismatch: false,
       logger,
     });
-    assert.equal(result, "val");
-    assert.equal(warns.length, 0);
+    expect(result).toBe("val");
+    expect(warns.length).toBe(0);
   });
 });
 
@@ -75,7 +73,7 @@ describe("validateOnWrite", () => {
   it("returns valid for valid value", () => {
     const registry = createMockRegistry({ validate: () => ({ valid: true }) });
     const result = validateOnWrite("key", 42, registry);
-    assert.deepEqual(result, { valid: true });
+    expect(result).toEqual({ valid: true });
   });
 
   it("returns invalid for bad value", () => {
@@ -84,8 +82,8 @@ describe("validateOnWrite", () => {
       validate: () => ({ valid: false, errors }),
     });
     const result = validateOnWrite("key", "bad", registry);
-    assert.equal(result.valid, false);
-    assert.deepEqual(result.errors, errors);
+    expect(result.valid).toBe(false);
+    expect(result.errors).toEqual(errors);
   });
 });
 
@@ -138,9 +136,9 @@ describe("client validation integration", () => {
 
     const client = await createWeaverClient({ transport, schemas: true });
     const result = await client.set("app.port", "not-a-number");
-    assert.equal(result.success, false);
-    assert.equal(result.error?.code, "VALIDATION_ERROR");
-    assert.equal(transportCalled, false);
+    expect(result.success).toBe(false);
+    expect(result.error?.code).toBe("VALIDATION_ERROR");
+    expect(transportCalled).toBe(false);
   });
 
   it("set() allows valid value through to transport", async () => {
@@ -157,8 +155,8 @@ describe("client validation integration", () => {
 
     const client = await createWeaverClient({ transport, schemas: true });
     const result = await client.set("app.port", 8080);
-    assert.equal(result.success, true);
-    assert.equal(transportCalled, true);
+    expect(result.success).toBe(true);
+    expect(transportCalled).toBe(true);
   });
 
   it("validate() returns ValidationResult", async () => {
@@ -169,9 +167,9 @@ describe("client validation integration", () => {
 
     const client = await createWeaverClient({ transport, schemas: true });
     const valid = client.validate("app.name", "hello");
-    assert.equal(valid.valid, true);
+    expect(valid.valid).toBe(true);
     const invalid = client.validate("app.name", 123);
-    assert.equal(invalid.valid, false);
+    expect(invalid.valid).toBe(false);
   });
 
   it("isSensitive() returns correct boolean", async () => {
@@ -185,15 +183,15 @@ describe("client validation integration", () => {
     });
 
     const client = await createWeaverClient({ transport, schemas: true });
-    assert.equal(client.isSensitive("db.password"), true);
-    assert.equal(client.isSensitive("app.name"), false);
+    expect(client.isSensitive("db.password")).toBe(true);
+    expect(client.isSensitive("app.name")).toBe(false);
   });
 
   it("works without schemas option", async () => {
     const transport = createMockTransport();
     const client = await createWeaverClient({ transport });
     // validate/isSensitive still work, just return defaults
-    assert.deepEqual(client.validate("any", "val"), { valid: true });
-    assert.equal(client.isSensitive("any"), false);
+    expect(client.validate("any", "val")).toEqual({ valid: true });
+    expect(client.isSensitive("any")).toBe(false);
   });
 });

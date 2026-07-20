@@ -1,5 +1,3 @@
-import test from "node:test";
-import assert from "node:assert/strict";
 import { evaluateChangePolicy } from "../dist/index.js";
 import { withAuth } from "@weaver-conf/config-auth";
 import { defineWeaver, Layers } from "@weaver-conf/config-types";
@@ -61,7 +59,7 @@ test("direct-allowed policy returns allowed", () => {
     "app",
     testAuth.canWrite,
   );
-  assert.deepEqual(result, { outcome: "allowed" });
+  expect(result).toEqual({ outcome: "allowed" });
 });
 
 test("staging-gate policy returns requires-promotion", () => {
@@ -71,8 +69,8 @@ test("staging-gate policy returns requires-promotion", () => {
     "app",
     testAuth.canWrite,
   );
-  assert.equal(result.outcome, "requires-promotion");
-  assert.ok(result.message.includes("staging"));
+  expect(result.outcome).toBe("requires-promotion");
+  expect(result.message.includes("staging")).toBeTruthy();
 });
 
 test("full-pipeline policy returns requires-promotion", () => {
@@ -82,8 +80,8 @@ test("full-pipeline policy returns requires-promotion", () => {
     "app",
     testAuth.canWrite,
   );
-  assert.equal(result.outcome, "requires-promotion");
-  assert.ok(result.message.includes("CI/CD"));
+  expect(result.outcome).toBe("requires-promotion");
+  expect(result.message.includes("CI/CD")).toBeTruthy();
 });
 
 test("emergency-override without session flag returns requires-emergency-auth", () => {
@@ -93,8 +91,8 @@ test("emergency-override without session flag returns requires-emergency-auth", 
     "app",
     testAuth.canWrite,
   );
-  assert.equal(result.outcome, "requires-emergency-auth");
-  assert.ok(result.message.includes("emergency"));
+  expect(result.outcome).toBe("requires-emergency-auth");
+  expect(result.message.includes("emergency")).toBeTruthy();
 });
 
 test("emergency-override with session flag and reason returns allowed", () => {
@@ -107,7 +105,7 @@ test("emergency-override with session flag and reason returns allowed", () => {
     "app",
     testAuth.canWrite,
   );
-  assert.deepEqual(result, { outcome: "allowed" });
+  expect(result).toEqual({ outcome: "allowed" });
 });
 
 test("canWrite denied returns denied outcome", () => {
@@ -118,8 +116,8 @@ test("canWrite denied returns denied outcome", () => {
     "core",
     testAuth.canWrite,
   );
-  assert.equal(result.outcome, "denied");
-  assert.ok(result.reason.includes("denied"));
+  expect(result.outcome).toBe("denied");
+  expect(result.reason.includes("denied")).toBeTruthy();
 });
 
 test("missing changePolicy defaults to direct-allowed", () => {
@@ -129,7 +127,7 @@ test("missing changePolicy defaults to direct-allowed", () => {
     "app",
     testAuth.canWrite,
   );
-  assert.deepEqual(result, { outcome: "allowed" });
+  expect(result).toEqual({ outcome: "allowed" });
 });
 
 test("emergency-override without reason returns requires-emergency-auth", () => {
@@ -139,7 +137,7 @@ test("emergency-override without reason returns requires-emergency-auth", () => 
     "app",
     testAuth.canWrite,
   );
-  assert.equal(result.outcome, "requires-emergency-auth");
+  expect(result.outcome).toBe("requires-emergency-auth");
 });
 
 test("emergency-override with empty reason returns requires-emergency-auth", () => {
@@ -149,5 +147,5 @@ test("emergency-override with empty reason returns requires-emergency-auth", () 
     "app",
     testAuth.canWrite,
   );
-  assert.equal(result.outcome, "requires-emergency-auth");
+  expect(result.outcome).toBe("requires-emergency-auth");
 });

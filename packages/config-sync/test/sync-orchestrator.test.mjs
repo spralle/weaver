@@ -1,5 +1,3 @@
-import assert from "node:assert/strict";
-import test from "node:test";
 
 import { createConfigSyncOrchestrator, MemoryDurableConfigCacheAdapter } from "../dist/index.js";
 
@@ -67,10 +65,10 @@ test("offline boot reads cache snapshot without network", async () => {
   orchestrator.setOnline(false);
   const snapshot = await orchestrator.load();
 
-  assert.equal(snapshot.entries["ghost.theme"], "dark");
-  assert.equal(harness.pushes.length, 0);
-  assert.equal(harness.pulls.length, 0);
-  assert.equal(orchestrator.getSyncState().status, "offline");
+  expect(snapshot.entries["ghost.theme"]).toBe("dark");
+  expect(harness.pushes.length).toBe(0);
+  expect(harness.pulls.length).toBe(0);
+  expect(orchestrator.getSyncState().status).toBe("offline");
 });
 
 test("reconnect flushes queued writes then pulls", async () => {
@@ -85,7 +83,7 @@ test("reconnect flushes queued writes then pulls", async () => {
   orchestrator.setOnline(false);
   await orchestrator.load();
   await orchestrator.write("ghost.theme", "dark");
-  assert.equal((await cache.getQueueMetadata()).pendingCount, 1);
+  expect((await cache.getQueueMetadata()).pendingCount).toBe(1);
 
   harness.pullQueue.push({
     cursor: { serverRevision: "rev-2", serverTime: 300 },
@@ -96,12 +94,12 @@ test("reconnect flushes queued writes then pulls", async () => {
   orchestrator.setOnline(true);
   const result = await orchestrator.sync();
 
-  assert.equal(result.pushed, 1);
-  assert.equal(result.pulled, 0);
-  assert.equal(harness.pushes.length, 1);
-  assert.equal(harness.acks.length, 1);
-  assert.equal((await cache.getQueueMetadata()).pendingCount, 0);
-  assert.equal(orchestrator.getSyncState().status, "synced");
+  expect(result.pushed).toBe(1);
+  expect(result.pulled).toBe(0);
+  expect(harness.pushes.length).toBe(1);
+  expect(harness.acks.length).toBe(1);
+  expect((await cache.getQueueMetadata()).pendingCount).toBe(0);
+  expect(orchestrator.getSyncState().status).toBe("synced");
 });
 
 test("conflict path surfaces conflict state and server value", async () => {
@@ -146,9 +144,9 @@ test("conflict path surfaces conflict state and server value", async () => {
 
   orchestrator.setOnline(true);
   const result = await orchestrator.sync();
-  assert.equal(result.conflicts.length, 1);
-  assert.equal(result.conflicts[0].key, "ghost.mode");
-  assert.equal(orchestrator.getSyncState().status, "conflict");
+  expect(result.conflicts.length).toBe(1);
+  expect(result.conflicts[0].key).toBe("ghost.mode");
+  expect(orchestrator.getSyncState().status).toBe("conflict");
 });
 
 test("lww-fallback requeues mutation after conflict", async () => {
@@ -199,8 +197,8 @@ test("lww-fallback requeues mutation after conflict", async () => {
   orchestrator.setOnline(true);
   await orchestrator.sync();
   const after = await cache.peekQueuedMutations(10);
-  assert.equal(after.length, 1);
-  assert.equal(after[0].baseRevision, "rev-22");
+  expect(after.length).toBe(1);
+  expect(after[0].baseRevision).toBe("rev-22");
 });
 
 test("retryable error keeps queue and schedules retry", async () => {
@@ -227,13 +225,13 @@ test("retryable error keeps queue and schedules retry", async () => {
   const queue = await cache.getQueueMetadata();
   const diagnostics = orchestrator.getDiagnostics();
 
-  assert.equal(queue.pendingCount, 1);
-  assert.equal(orchestrator.getSyncState().status, "error");
-  assert.equal(diagnostics.pendingCount, 1);
-  assert.equal("retryAttempt" in diagnostics, false);
-  assert.equal("retryScheduledAt" in diagnostics, false);
-  assert.equal("queue" in diagnostics, false);
-  assert.deepEqual(diagnostics.lastError, {
+  expect(queue.pendingCount).toBe(1);
+  expect(orchestrator.getSyncState().status).toBe("error");
+  expect(diagnostics.pendingCount).toBe(1);
+  expect("retryAttempt" in diagnostics).toBe(false);
+  expect("retryScheduledAt" in diagnostics).toBe(false);
+  expect("queue" in diagnostics).toBe(false);
+  expect(diagnostics.lastError).toEqual({
     code: "network",
     message: "offline",
     retryable: true,
@@ -267,9 +265,9 @@ test("tenant isolation via separate orchestrator instances with separate caches"
   const queueA = await cacheA.peekQueuedMutations(10);
   const queueB = await cacheB.peekQueuedMutations(10);
 
-  assert.equal(queueA.length, 1);
-  assert.equal(queueB.length, 1);
-  assert.notEqual(queueA[0].mutationId, queueB[0].mutationId);
+  expect(queueA.length).toBe(1);
+  expect(queueB.length).toBe(1);
+  expect(queueA[0].mutationId).not.toBe(queueB[0].mutationId);
 });
 
 // --- Error classification (tested indirectly via orchestrator behavior) ---
@@ -295,7 +293,7 @@ test("error classification: SyncErrorMetadata object passes through unchanged", 
   orchestrator.setOnline(true);
   await new Promise((r) => setTimeout(r, 0));
   const diag = orchestrator.getDiagnostics();
-  assert.deepEqual(diag.lastError, { code: "server", message: "server error", retryable: true });
+  expect(diag.lastError).toEqual({ code: "server", message: "server error", retryable: true });
 });
 
 test("error classification: plain Error gets code unknown and retryable false", async () => {
@@ -316,7 +314,7 @@ test("error classification: plain Error gets code unknown and retryable false", 
   orchestrator.setOnline(true);
   await new Promise((r) => setTimeout(r, 0));
   const diag = orchestrator.getDiagnostics();
-  assert.deepEqual(diag.lastError, { code: "unknown", message: "something broke", retryable: false });
+  expect(diag.lastError).toEqual({ code: "unknown", message: "something broke", retryable: false });
 });
 
 test("error classification: error with syncError property is unwrapped", async () => {
@@ -339,7 +337,7 @@ test("error classification: error with syncError property is unwrapped", async (
   orchestrator.setOnline(true);
   await new Promise((r) => setTimeout(r, 0));
   const diag = orchestrator.getDiagnostics();
-  assert.deepEqual(diag.lastError, { code: "timeout", message: "timed out", retryable: true });
+  expect(diag.lastError).toEqual({ code: "timeout", message: "timed out", retryable: true });
 });
 
 // --- Batch push behavior ---
@@ -370,8 +368,8 @@ test("batch push sends multiple batches when queue exceeds batchSize", async () 
   orchestrator.setOnline(true);
   const result = await orchestrator.sync();
 
-  assert.equal(result.pushed, 4);
-  assert.ok(harness.pushes.length >= 2, `expected >= 2 pushes, got ${harness.pushes.length}`);
+  expect(result.pushed).toBe(4);
+  expect(harness.pushes.length >= 2).toBeTruthy();
 });
 
 // --- Remove operation ---
@@ -392,11 +390,11 @@ test("remove() creates a remove mutation and deletes key from snapshot", async (
 
   const queued = await cache.peekQueuedMutations(10);
   const removeMutation = queued.find((m) => m.operation === "remove");
-  assert.ok(removeMutation, "expected a remove mutation in queue");
-  assert.equal(removeMutation.key, "ghost.theme");
+  expect(removeMutation).toBeTruthy();
+  expect(removeMutation.key).toBe("ghost.theme");
 
   const snapshot = await cache.loadSnapshot();
-  assert.equal(snapshot.entries["ghost.theme"], undefined);
+  expect(snapshot.entries["ghost.theme"]).toBe(undefined);
 });
 
 // --- Online/offline transitions ---
@@ -422,8 +420,8 @@ test("offline to online triggers sync", async () => {
 
   orchestrator.setOnline(true);
   const result = await orchestrator.sync();
-  assert.equal(result.pushed, 1);
-  assert.equal(orchestrator.getSyncState().status, "synced");
+  expect(result.pushed).toBe(1);
+  expect(orchestrator.getSyncState().status).toBe("synced");
 });
 
 test("going offline sets status to offline and clears retry", async () => {
@@ -437,11 +435,11 @@ test("going offline sets status to offline and clears retry", async () => {
 
   orchestrator.setOnline(false);
   await orchestrator.load();
-  assert.equal(orchestrator.getSyncState().status, "offline");
+  expect(orchestrator.getSyncState().status).toBe("offline");
 
   // Going offline again is idempotent
   orchestrator.setOnline(false);
-  assert.equal(orchestrator.getSyncState().status, "offline");
+  expect(orchestrator.getSyncState().status).toBe("offline");
 });
 
 test("double setOnline(false) is idempotent", async () => {
@@ -457,9 +455,9 @@ test("double setOnline(false) is idempotent", async () => {
   await orchestrator.load();
   orchestrator.setOnline(false);
   orchestrator.setOnline(false);
-  assert.equal(orchestrator.getSyncState().status, "offline");
-  assert.equal(harness.pushes.length, 0);
-  assert.equal(harness.pulls.length, 0);
+  expect(orchestrator.getSyncState().status).toBe("offline");
+  expect(harness.pushes.length).toBe(0);
+  expect(harness.pulls.length).toBe(0);
 });
 
 // --- Diagnostics and state listeners ---
@@ -479,7 +477,7 @@ test("onSyncStateChange listener fires on state transitions", async () => {
   orchestrator.setOnline(false);
   await orchestrator.load();
 
-  assert.ok(states.includes("offline"), `expected offline in states: ${JSON.stringify(states)}`);
+  expect(states.includes("offline")).toBeTruthy();
 });
 
 test("onDiagnosticsChange listener fires on diagnostics updates", async () => {
@@ -498,7 +496,7 @@ test("onDiagnosticsChange listener fires on diagnostics updates", async () => {
   await orchestrator.load();
   await orchestrator.write("ghost.key", "val");
 
-  assert.ok(diagnosticsLog.length > 0, "expected diagnostics change events");
+  expect(diagnosticsLog.length > 0).toBeTruthy();
 });
 
 test("unsubscribe from listeners stops notifications", async () => {
@@ -522,7 +520,7 @@ test("unsubscribe from listeners stops notifications", async () => {
   // After unsub, no new states should be added
   // Allow any triggered sync to settle
   await new Promise((r) => setTimeout(r, 50));
-  assert.equal(states.length, countAfterOffline, "listener should not fire after unsubscribe");
+  expect(states.length).toBe(countAfterOffline);
 });
 
 // --- Pull with server changes ---
@@ -549,10 +547,10 @@ test("pullChanges applies server-side changes to snapshot", async () => {
 
   orchestrator.setOnline(true);
   const result = await orchestrator.sync();
-  assert.equal(result.pulled, 1);
+  expect(result.pulled).toBe(1);
 
   const snapshot = await cache.loadSnapshot();
-  assert.equal(snapshot.entries["server.key"], "server-value");
+  expect(snapshot.entries["server.key"]).toBe("server-value");
 });
 
 // --- getPendingWrites ---
@@ -571,8 +569,8 @@ test("getPendingWrites contains written key before sync", async () => {
   await orchestrator.write("ghost.pending", "value");
 
   const pending = orchestrator.getPendingWrites();
-  assert.equal(pending.has("ghost.pending"), true);
-  assert.equal(pending.get("ghost.pending"), "value");
+  expect(pending.has("ghost.pending")).toBe(true);
+  expect(pending.get("ghost.pending")).toBe("value");
 });
 
 test("getPendingWrites is cleared after successful sync", async () => {
@@ -598,8 +596,8 @@ test("getPendingWrites is cleared after successful sync", async () => {
   await orchestrator.sync();
 
   const pending = orchestrator.getPendingWrites();
-  assert.equal(pending.has("ghost.pending"), false);
-  assert.equal(pending.size, 0);
+  expect(pending.has("ghost.pending")).toBe(false);
+  expect(pending.size).toBe(0);
 });
 
 // --- Pull error handling ---
@@ -626,10 +624,10 @@ test("pullChanges error sets error state and schedules retry for retryable error
   orchestrator.setOnline(true);
   const result = await orchestrator.sync();
 
-  assert.equal(result.pulled, 0);
-  assert.equal(orchestrator.getSyncState().status, "error");
+  expect(result.pulled).toBe(0);
+  expect(orchestrator.getSyncState().status).toBe("error");
   const diag = orchestrator.getDiagnostics();
-  assert.deepEqual(diag.lastError, { code: "network", message: "connection refused", retryable: true });
+  expect(diag.lastError).toEqual({ code: "network", message: "connection refused", retryable: true });
 
   // Restore pull for cleanup
   harness.transport.pull = originalPull;
@@ -652,10 +650,10 @@ test("pullChanges non-retryable error sets error state without scheduling retry"
   orchestrator.setOnline(true);
   const result = await orchestrator.sync();
 
-  assert.equal(result.pulled, 0);
-  assert.equal(orchestrator.getSyncState().status, "error");
+  expect(result.pulled).toBe(0);
+  expect(orchestrator.getSyncState().status).toBe("error");
   const diag = orchestrator.getDiagnostics();
-  assert.deepEqual(diag.lastError, { code: "unknown", message: "fatal parse error", retryable: false });
+  expect(diag.lastError).toEqual({ code: "unknown", message: "fatal parse error", retryable: false });
 });
 
 test("onSnapshotChange fires after successful pull with changes", async () => {
@@ -683,7 +681,7 @@ test("onSnapshotChange fires after successful pull with changes", async () => {
   orchestrator.setOnline(true);
   await orchestrator.sync();
 
-  assert.equal(snapshots.length, 1);
-  assert.equal(snapshots[0].entries["theme"], "dark");
-  assert.equal(snapshots[0].revision, "rev-2");
+  expect(snapshots.length).toBe(1);
+  expect(snapshots[0].entries["theme"]).toBe("dark");
+  expect(snapshots[0].revision).toBe("rev-2");
 });

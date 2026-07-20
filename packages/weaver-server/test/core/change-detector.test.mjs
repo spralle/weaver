@@ -1,5 +1,3 @@
-import { test, describe } from "node:test";
-import assert from "node:assert/strict";
 import { createChangeDetector } from "../../src/core/change-detector.ts";
 
 function createMockConfigService() {
@@ -20,7 +18,7 @@ describe("ChangeDetector", () => {
     });
 
     await detector.triggerCheck();
-    assert.equal(svc.refreshCount, 1);
+    expect(svc.refreshCount).toBe(1);
   });
 
   test("start/stop manages polling", async () => {
@@ -35,7 +33,7 @@ describe("ChangeDetector", () => {
     detector.stop();
 
     // Should have polled at least once
-    assert.ok(svc.refreshCount >= 1);
+    expect(svc.refreshCount >= 1).toBeTruthy();
   });
 
   test("stop prevents further polling", async () => {
@@ -48,6 +46,6 @@ describe("ChangeDetector", () => {
     detector.start();
     detector.stop();
     await new Promise((r) => setTimeout(r, 100));
-    assert.equal(svc.refreshCount, 0);
+    expect(svc.refreshCount).toBe(0);
   });
 });

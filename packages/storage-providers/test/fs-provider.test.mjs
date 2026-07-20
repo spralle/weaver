@@ -1,5 +1,3 @@
-import test from "node:test";
-import assert from "node:assert/strict";
 import { tmpdir } from "node:os";
 import { randomUUID } from "node:crypto";
 import { mkdir, writeFile, readFile, rm } from "node:fs/promises";
@@ -24,8 +22,8 @@ test("load() reads valid JSON file", async () => {
       filePath,
     });
     const data = await provider.load();
-    assert.deepEqual(data.entries, { theme: "dark", fontSize: 14 });
-    assert.equal(typeof data.revision, "string");
+    expect(data.entries).toEqual({ theme: "dark", fontSize: 14 });
+    expect(typeof data.revision).toBe("string");
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
@@ -47,7 +45,7 @@ test("load() merges environment overlay", async () => {
       environmentOverlayPath: overlayPath,
     });
     const data = await provider.load();
-    assert.deepEqual(data.entries, { a: 1, b: { c: 20, d: 3 }, e: 5 });
+    expect(data.entries).toEqual({ a: 1, b: { c: 20, d: 3 }, e: 5 });
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
@@ -63,8 +61,8 @@ test("load() returns empty entries for missing file", async () => {
     filePath,
   });
   const data = await provider.load();
-  assert.deepEqual(data.entries, {});
-  assert.equal(data.revision, undefined);
+  expect(data.entries).toEqual({});
+  expect(data.revision).toBe(undefined);
 });
 
 test("load() returns empty entries for invalid JSON with console.warn", async () => {
@@ -87,9 +85,9 @@ test("load() returns empty entries for invalid JSON with console.warn", async ()
 
     console.warn = originalWarn;
 
-    assert.deepEqual(data.entries, {});
-    assert.equal(warnings.length, 1);
-    assert.ok(warnings[0].includes(filePath));
+    expect(data.entries).toEqual({});
+    expect(warnings.length).toBe(1);
+    expect(warnings[0].includes(filePath)).toBeTruthy();
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
@@ -108,11 +106,11 @@ test("write() creates file and writes key", async () => {
       writable: true,
     });
     const result = await provider.write("theme", "light");
-    assert.equal(result.success, true);
-    assert.equal(typeof result.revision, "string");
+    expect(result.success).toBe(true);
+    expect(typeof result.revision).toBe("string");
 
     const raw = JSON.parse(await readFile(filePath, "utf-8"));
-    assert.deepEqual(raw, { theme: "light" });
+    expect(raw).toEqual({ theme: "light" });
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
@@ -129,9 +127,9 @@ test("write() on read-only provider returns failure", async () => {
     writable: false,
   });
   const result = await provider.write("key", "value");
-  assert.equal(result.success, false);
-  assert.equal(result.error.code, "READONLY");
-  assert.equal(result.error.message, "Provider is read-only");
+  expect(result.success).toBe(false);
+  expect(result.error.code).toBe("READONLY");
+  expect(result.error.message).toBe("Provider is read-only");
 });
 
 test("remove() removes key from file", async () => {
@@ -148,10 +146,10 @@ test("remove() removes key from file", async () => {
       writable: true,
     });
     const result = await provider.remove("b");
-    assert.equal(result.success, true);
+    expect(result.success).toBe(true);
 
     const raw = JSON.parse(await readFile(filePath, "utf-8"));
-    assert.deepEqual(raw, { a: 1, c: 3 });
+    expect(raw).toEqual({ a: 1, c: 3 });
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
@@ -170,10 +168,10 @@ test("write() creates parent directory if needed", async () => {
       writable: true,
     });
     const result = await provider.write("key", "value");
-    assert.equal(result.success, true);
+    expect(result.success).toBe(true);
 
     const raw = JSON.parse(await readFile(filePath, "utf-8"));
-    assert.deepEqual(raw, { key: "value" });
+    expect(raw).toEqual({ key: "value" });
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
@@ -189,9 +187,9 @@ test("remove() on read-only provider returns failure", async () => {
     filePath,
   });
   const result = await provider.remove("key");
-  assert.equal(result.success, false);
-  assert.equal(result.error.code, "READONLY");
-  assert.equal(result.error.message, "Provider is read-only");
+  expect(result.success).toBe(false);
+  expect(result.error.code).toBe("READONLY");
+  expect(result.error.message).toBe("Provider is read-only");
 });
 
 test("writable defaults to false", () => {
@@ -200,5 +198,5 @@ test("writable defaults to false", () => {
     layer: "core",
     filePath: "/tmp/nonexistent.json",
   });
-  assert.equal(provider.writable, false);
+  expect(provider.writable).toBe(false);
 });

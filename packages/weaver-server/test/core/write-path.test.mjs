@@ -1,5 +1,3 @@
-import { test, describe } from "node:test";
-import assert from "node:assert/strict";
 import { createWeaverConfigService } from "../../src/core/config-service.ts";
 
 function createTestProvider(id, layer, entries, writable = true) {
@@ -31,8 +29,8 @@ describe("WeaverConfigService write path", () => {
     });
 
     const result = await svc.set("platform", "key", "new");
-    assert.equal(result.success, true);
-    assert.equal(await svc.get("key"), "new");
+    expect(result.success).toBe(true);
+    expect(await svc.get("key")).toBe("new");
   });
 
   test("remove removes key and updates merged state", async () => {
@@ -43,8 +41,8 @@ describe("WeaverConfigService write path", () => {
     });
 
     const result = await svc.remove("platform", "key");
-    assert.equal(result.success, true);
-    assert.equal(await svc.get("key"), undefined);
+    expect(result.success).toBe(true);
+    expect(await svc.get("key")).toBe(undefined);
   });
 
   test("set on read-only provider returns error", async () => {
@@ -55,9 +53,9 @@ describe("WeaverConfigService write path", () => {
     });
 
     const result = await svc.set("platform", "key", "val");
-    assert.equal(result.success, false);
-    assert.equal(result.error?.code, "READONLY");
-    assert.ok(result.error?.message.includes("read-only"));
+    expect(result.success).toBe(false);
+    expect(result.error?.code).toBe("READONLY");
+    expect(result.error?.message.includes("read-only")).toBeTruthy();
   });
 
   test("onDelta fires after successful write", async () => {
@@ -71,11 +69,11 @@ describe("WeaverConfigService write path", () => {
     svc.onDelta((d) => deltas.push(d));
 
     await svc.set("platform", "foo", "bar");
-    assert.equal(deltas.length, 1);
-    assert.equal(deltas[0].action, "set");
-    assert.equal(deltas[0].key, "foo");
-    assert.equal(deltas[0].value, "bar");
-    assert.equal(deltas[0].layer, "platform");
+    expect(deltas.length).toBe(1);
+    expect(deltas[0].action).toBe("set");
+    expect(deltas[0].key).toBe("foo");
+    expect(deltas[0].value).toBe("bar");
+    expect(deltas[0].layer).toBe("platform");
   });
 
   test("delta has correct action for remove", async () => {
@@ -89,9 +87,9 @@ describe("WeaverConfigService write path", () => {
     svc.onDelta((d) => deltas.push(d));
 
     await svc.remove("platform", "x");
-    assert.equal(deltas[0].action, "remove");
-    assert.equal(deltas[0].key, "x");
-    assert.equal(deltas[0].value, null);
+    expect(deltas[0].action).toBe("remove");
+    expect(deltas[0].key).toBe("x");
+    expect(deltas[0].value).toBe(null);
   });
 
   test("size warning for large values", async () => {
@@ -109,6 +107,6 @@ describe("WeaverConfigService write path", () => {
     await svc.set("platform", "big", bigValue);
 
     console.warn = origWarn;
-    assert.ok(warnings.some((w) => w.includes("exceeds 1MB")));
+    expect(warnings.some((w) => w.includes("exceeds 1MB"))).toBeTruthy();
   });
 });

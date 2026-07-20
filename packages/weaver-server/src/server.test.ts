@@ -1,8 +1,6 @@
-import assert from "node:assert/strict";
 import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { describe, it } from "node:test";
 import { createInMemoryStorageProvider } from "./providers/index";
 import { startWeaverServer, startWeaverServerInternal } from "./server";
 
@@ -47,11 +45,13 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function readEnvelopeValue(body: unknown): unknown {
-  assert.ok(isRecord(body));
-  assert.ok("data" in body);
+  if (!isRecord(body) || !("data" in body)) {
+    throw new Error("Invalid response envelope");
+  }
   const data = body.data;
-  assert.ok(isRecord(data));
-  assert.ok("value" in data);
+  if (!isRecord(data) || !("value" in data)) {
+    throw new Error("Invalid response envelope data");
+  }
   return data.value;
 }
 
@@ -69,7 +69,7 @@ describe("Weaver server auth gate", () => {
       const readResponse = await fetch(
         `http://localhost:${server.port}/v1/config/test/key`,
       );
-      assert.equal(readResponse.status, 200);
+      expect(readResponse.status).toBe(200);
 
       const writeResponse = await fetch(
         `http://localhost:${server.port}/v1/config/test/key`,
@@ -80,7 +80,30 @@ describe("Weaver server auth gate", () => {
         },
       );
 
-      assert.equal(writeResponse.status, 401);
+      expect(writeResponse.status).toBe(401);
+    } finally {
+      await server.close();
+    }
+  });
+});
+
+describe("Weaver server error handling", () => {
+  it("returns a 400 JSON response for malformed request JSON", async () => {
+    const server = await startWeaverServer({ port: 0 });
+
+    try {
+      const response = await fetch(
+        `http://localhost:${server.port}/v1/config/services.billing.currency`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: "{",
+        },
+      );
+      const body = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(body).toEqual({ error: "invalid request body" });
     } finally {
       await server.close();
     }
@@ -103,8 +126,8 @@ describe("Weaver server bootstrap", () => {
       );
       const body = await response.json();
 
-      assert.equal(response.status, 200);
-      assert.equal(readEnvelopeValue(body), "Bootstrapped Weaver");
+      expect(response.status).toBe(200);
+      expect(readEnvelopeValue(body)).toBe("Bootstrapped Weaver");
     } finally {
       await server.close();
       await removeBootstrapClone(environment);
@@ -132,8 +155,8 @@ describe("Weaver server bootstrap", () => {
       );
       const body = await response.json();
 
-      assert.equal(response.status, 200);
-      assert.equal(readEnvelopeValue(body), "Explicit Provider");
+      expect(response.status).toBe(200);
+      expect(readEnvelopeValue(body)).toBe("Explicit Provider");
     } finally {
       await server.close();
     }
@@ -147,34 +170,29 @@ describe("Weaver server bootstrap", () => {
         `http://localhost:${server.port}/v1/config/app/name`,
       );
 
-      assert.equal(response.status, 200);
-      assert.equal(server.isReady, true);
+      expect(response.status).toBe(200);
+      expect(server.isReady).toBe(true);
     } finally {
       await server.close();
     }
   });
 
   it("cleans up when startup fails after config service creation", async () => {
-    const server = await startWeaverServer({ port: 0 });
     let disposeCalled = false;
 
-    try {
-      await assert.rejects(
-        startWeaverServerInternal({ port: server.port }, async () => ({
-          providers: [
-            createInMemoryStorageProvider({
-              id: "conflict",
-              layer: "platform",
-            }),
-          ],
-          dispose: async () => {
-            disposeCalled = true;
-          },
-        })),
-      );
-      assert.equal(disposeCalled, true);
-    } finally {
-      await server.close();
-    }
+    await expect(
+      startWeaverServerInternal({ port: -1 }, async () => ({
+        providers: [
+          createInMemoryStorageProvider({
+            id: "conflict",
+            layer: "platform",
+          }),
+        ],
+        dispose: async () => {
+          disposeCalled = true;
+        },
+      })),
+    ).rejects.toThrow();
+    expect(disposeCalled).toBe(true);
   });
 });

@@ -1,5 +1,3 @@
-import { test, describe } from "node:test";
-import assert from "node:assert/strict";
 import { createWeaverConfigService } from "../../src/core/config-service.ts";
 import { deepSet, deepRemove } from "@weaver-conf/config-engine";
 
@@ -33,10 +31,10 @@ describe("WeaverConfigService read path", () => {
     });
 
     const snapshot = await svc.resolveAll();
-    assert.equal(snapshot.entries.app.name, "test");
-    assert.ok(snapshot.revision);
-    assert.ok(snapshot.timestamp);
-    assert.deepEqual(snapshot.scopes, {});
+    expect(snapshot.entries.app.name).toBe("test");
+    expect(snapshot.revision).toBeTruthy();
+    expect(snapshot.timestamp).toBeTruthy();
+    expect(snapshot.scopes).toEqual({});
   });
 
   test("get returns correct value via dot-path traversal", async () => {
@@ -47,7 +45,7 @@ describe("WeaverConfigService read path", () => {
     });
 
     const val = await svc.get("db.host");
-    assert.equal(val, "localhost");
+    expect(val).toBe("localhost");
   });
 
   test("getNamespace returns subtree", async () => {
@@ -61,9 +59,9 @@ describe("WeaverConfigService read path", () => {
     });
 
     const ns = await svc.getNamespace("db");
-    assert.equal(ns.host, "localhost");
-    assert.equal(ns.port, 5432);
-    assert.equal(ns.ttl, undefined);
+    expect(ns.host).toBe("localhost");
+    expect(ns.port).toBe(5432);
+    expect(ns.ttl).toBe(undefined);
   });
 
   test("inspect returns provenance", async () => {
@@ -75,11 +73,11 @@ describe("WeaverConfigService read path", () => {
     });
 
     const info = await svc.inspect("app.name");
-    assert.equal(info.key, "app.name");
-    assert.equal(info.effectiveValue, "override");
-    assert.equal(info.effectiveLayer, "platform");
-    assert.equal(info.layerValues["defaults"], "base");
-    assert.equal(info.layerValues["platform"], "override");
+    expect(info.key).toBe("app.name");
+    expect(info.effectiveValue).toBe("override");
+    expect(info.effectiveLayer).toBe("platform");
+    expect(info.layerValues["defaults"]).toBe("base");
+    expect(info.layerValues["platform"]).toBe("override");
   });
 
   test("multi-scope: platform + scoped providers grouped correctly", async () => {
@@ -93,9 +91,9 @@ describe("WeaverConfigService read path", () => {
     });
 
     const snapshot = await svc.resolveAll();
-    assert.equal(snapshot.entries.app.name, "test");
-    assert.equal(snapshot.scopes["tenant:acme"]["theme"], "dark");
-    assert.equal(snapshot.scopes["tenant:globex"]["theme"], "light");
+    expect(snapshot.entries.app.name).toBe("test");
+    expect(snapshot.scopes["tenant:acme"]["theme"]).toBe("dark");
+    expect(snapshot.scopes["tenant:globex"]["theme"]).toBe("light");
   });
 
   test("get with scopePath merges scope over platform", async () => {
@@ -108,7 +106,7 @@ describe("WeaverConfigService read path", () => {
     });
 
     const val = await svc.get("theme", { scopePath: [{ scopeId: "tenant", value: "acme" }] });
-    assert.equal(val, "dark");
+    expect(val).toBe("dark");
   });
 
   test("reloadProvider picks up changes", async () => {
@@ -118,12 +116,12 @@ describe("WeaverConfigService read path", () => {
       environment: "dev",
     });
 
-    assert.equal(await svc.get("key"), "old");
+    expect(await svc.get("key")).toBe("old");
 
     provider._setData({ key: "new" });
     await svc.reloadProvider("p1");
 
-    assert.equal(await svc.get("key"), "new");
+    expect(await svc.get("key")).toBe("new");
   });
 
   test("revision changes after reload", async () => {
@@ -138,7 +136,7 @@ describe("WeaverConfigService read path", () => {
     await svc.reloadProvider("p1");
     const rev2 = svc.revision;
 
-    assert.notEqual(rev1, rev2);
+    expect(rev1).not.toBe(rev2);
   });
 
   test("setMany writes multiple entries in one batch", async () => {
@@ -152,8 +150,8 @@ describe("WeaverConfigService read path", () => {
       "db.host": "localhost",
       "db.port": 5432,
     });
-    assert.equal(result.success, true);
-    assert.equal(await svc.get("db.host"), "localhost");
-    assert.equal(await svc.get("db.port"), 5432);
+    expect(result.success).toBe(true);
+    expect(await svc.get("db.host")).toBe("localhost");
+    expect(await svc.get("db.port")).toBe(5432);
   });
 });

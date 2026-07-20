@@ -1,13 +1,11 @@
-import { describe, it } from "node:test";
-import assert from "node:assert/strict";
 import { startWeaverServer } from "@weaver-conf/weaver-server";
 
 describe("WeaverServer", () => {
   it("starts and reports isReady", async () => {
     const server = await startWeaverServer({ port: 0 });
     try {
-      assert.ok(server.port > 0);
-      assert.equal(server.isReady, true);
+      expect(server.port > 0).toBeTruthy();
+      expect(server.isReady).toBe(true);
     } finally {
       await server.close();
     }
@@ -16,16 +14,16 @@ describe("WeaverServer", () => {
   it("close triggers shutdown", async () => {
     const server = await startWeaverServer({ port: 0 });
     await server.close();
-    assert.equal(server.isReady, false);
+    expect(server.isReady).toBe(false);
   });
 
   it("healthz endpoint responds", async () => {
     const server = await startWeaverServer({ port: 0 });
     try {
       const res = await fetch(`http://localhost:${server.port}/healthz`);
-      assert.equal(res.status, 200);
+      expect(res.status).toBe(200);
       const body = await res.json();
-      assert.equal(body.status, "ok");
+      expect(body.status).toBe("ok");
     } finally {
       await server.close();
     }
@@ -35,10 +33,10 @@ describe("WeaverServer", () => {
     const server = await startWeaverServer({ port: 0 });
     try {
       const res = await fetch(`http://localhost:${server.port}/v1/config`);
-      assert.equal(res.status, 200);
+      expect(res.status).toBe(200);
       const body = await res.json();
-      assert.ok(body.data !== undefined);
-      assert.ok(body.meta !== undefined);
+      expect(body.data !== undefined).toBeTruthy();
+      expect(body.meta !== undefined).toBeTruthy();
     } finally {
       await server.close();
     }
@@ -48,8 +46,8 @@ describe("WeaverServer", () => {
     const server = await startWeaverServer({ port: 0 });
     try {
       const res = await fetch(`http://localhost:${server.port}/v1/events`);
-      assert.equal(res.status, 200);
-      assert.equal(res.headers.get("content-type"), "text/event-stream");
+      expect(res.status).toBe(200);
+      expect(res.headers.get("content-type")).toBe("text/event-stream");
     } finally {
       await server.close();
     }
@@ -59,7 +57,7 @@ describe("WeaverServer", () => {
     const server = await startWeaverServer({ port: 0 });
     try {
       const res = await fetch(`http://localhost:${server.port}/unknown`);
-      assert.equal(res.status, 404);
+      expect(res.status).toBe(404);
     } finally {
       await server.close();
     }

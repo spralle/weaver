@@ -1,5 +1,3 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
 import { z } from "zod";
 import { defineNamespace } from "../src/namespace.js";
 import {
@@ -48,8 +46,8 @@ describe("createTypedNamespaceClient", () => {
       testNamespace,
       createMockDeps(state),
     );
-    assert.equal(client.get("fontSize"), 14);
-    assert.equal(client.get("theme"), "dark");
+    expect(client.get("fontSize")).toBe(14);
+    expect(client.get("theme")).toBe("dark");
   });
 
   it("get() returns undefined when key not in state", () => {
@@ -58,7 +56,7 @@ describe("createTypedNamespaceClient", () => {
       testNamespace,
       createMockDeps(state),
     );
-    assert.equal(client.get("fontSize"), undefined);
+    expect(client.get("fontSize")).toBe(undefined);
   });
 
   it("get() returns undefined when value fails Zod validation", () => {
@@ -67,8 +65,8 @@ describe("createTypedNamespaceClient", () => {
       testNamespace,
       createMockDeps(state),
     );
-    assert.equal(client.get("fontSize"), undefined);
-    assert.equal(client.get("theme"), undefined);
+    expect(client.get("fontSize")).toBe(undefined);
+    expect(client.get("theme")).toBe(undefined);
   });
 
   it("getOrDefault() returns default when missing", () => {
@@ -77,7 +75,7 @@ describe("createTypedNamespaceClient", () => {
       testNamespace,
       createMockDeps(state),
     );
-    assert.equal(client.getOrDefault("fontSize", 16), 16);
+    expect(client.getOrDefault("fontSize", 16)).toBe(16);
   });
 
   it("getOrDefault() returns value when present", () => {
@@ -86,7 +84,7 @@ describe("createTypedNamespaceClient", () => {
       testNamespace,
       createMockDeps(state),
     );
-    assert.equal(client.getOrDefault("fontSize", 16), 12);
+    expect(client.getOrDefault("fontSize", 16)).toBe(12);
   });
 
   it("getAll() returns all valid namespace entries", () => {
@@ -96,7 +94,7 @@ describe("createTypedNamespaceClient", () => {
       createMockDeps(state),
     );
     const all = client.getAll();
-    assert.deepEqual(all, { fontSize: 14, theme: "light", wordWrap: false });
+    expect(all).toEqual({ fontSize: 14, theme: "light", wordWrap: false });
   });
 
   it("getAll() skips invalid entries", () => {
@@ -106,7 +104,7 @@ describe("createTypedNamespaceClient", () => {
       createMockDeps(state),
     );
     const all = client.getAll();
-    assert.deepEqual(all, { fontSize: 14 });
+    expect(all).toEqual({ fontSize: 14 });
   });
 
   it("set() succeeds with valid value", async () => {
@@ -116,7 +114,7 @@ describe("createTypedNamespaceClient", () => {
       createMockDeps(state),
     );
     const result = await client.set("fontSize", 20);
-    assert.equal(result.success, true);
+    expect(result.success).toBe(true);
   });
 
   it("set() returns VALIDATION_ERROR for invalid value", async () => {
@@ -127,8 +125,8 @@ describe("createTypedNamespaceClient", () => {
     );
     // @ts-expect-error - intentionally passing invalid value for test
     const result = await client.set("fontSize", "not-a-number");
-    assert.equal(result.success, false);
-    assert.equal(result.error?.code, "VALIDATION_ERROR");
+    expect(result.success).toBe(false);
+    expect(result.error?.code).toBe("VALIDATION_ERROR");
   });
 
   it("withScope() returns client reading from scope state", () => {
@@ -144,7 +142,7 @@ describe("createTypedNamespaceClient", () => {
     };
     const client = createTypedNamespaceClient(testNamespace, deps);
     const scoped = client.withScope([{ scope: "project", value: "myapp" }]);
-    assert.equal(scoped.get("fontSize"), 18);
+    expect(scoped.get("fontSize")).toBe(18);
   });
 
   it("instance() reads from instance path with base fallback", () => {
@@ -161,8 +159,8 @@ describe("createTypedNamespaceClient", () => {
     );
     const inst = client.instance("panel1");
     // Instance override
-    assert.equal(inst.get("fontSize"), 20);
+    expect(inst.get("fontSize")).toBe(20);
     // Falls back to base
-    assert.equal(inst.get("theme"), "dark");
+    expect(inst.get("theme")).toBe("dark");
   });
 });

@@ -1,5 +1,3 @@
-import { test, describe } from "node:test";
-import assert from "node:assert/strict";
 import { createWeaverConfigService } from "../../src/core/config-service.ts";
 import { createRestAdapter } from "../../src/transport/rest-adapter.ts";
 import { deepSet, deepRemove } from "@weaver-conf/config-engine";
@@ -34,129 +32,128 @@ function req(overrides = {}) {
 }
 
 function assertEnvelope(body) {
-  assert.ok(body.data !== undefined, "response must have data field");
-  assert.ok(body.meta, "response must have meta field");
-  assert.ok(body.meta.revision, "meta must have revision");
-  assert.ok(body.meta.timestamp, "meta must have timestamp");
+  expect(body.data !== undefined).toBeTruthy();
+  expect(body.meta).toBeTruthy();
+  expect(body.meta.revision).toBeTruthy();
+  expect(body.meta.timestamp).toBeTruthy();
 }
 
 function assertETag(res) {
-  assert.ok(res.headers?.["ETag"], "response must have ETag header");
-  assert.ok(res.headers["ETag"].startsWith('"'), "ETag must be quoted");
+  expect(res.headers?.["ETag"]).toBeTruthy();
+  expect(res.headers["ETag"].startsWith('"')).toBeTruthy();
 }
 
 function assertCacheControl(res) {
-  assert.equal(res.headers?.["Cache-Control"], "no-cache");
+  expect(res.headers?.["Cache-Control"]).toBe("no-cache");
 }
 
 function assertV1Headers(res) {
   assertETag(res);
   assertCacheControl(res);
-  assert.equal(res.headers["Content-Type"], "application/json");
+  expect(res.headers["Content-Type"]).toBe("application/json");
 }
 
 describe("RestAdapter v1", () => {
   test("GET /v1/config returns snapshot in envelope", async () => {
     const { adapter } = await setup();
     const res = await adapter.handleRequest("GET", "/v1/config", req());
-    assert.equal(res.status, 200);
+    expect(res.status).toBe(200);
     assertEnvelope(res.body);
     assertV1Headers(res);
-    assert.equal(res.body.data.entries.app.name, "test");
+    expect(res.body.data.entries.app.name).toBe("test");
   });
 
   test("GET /v1/config with ?scope= passes scope", async () => {
     const { adapter } = await setup();
     const res = await adapter.handleRequest("GET", "/v1/config", req({ query: { scope: "tenant:acme" } }));
-    assert.equal(res.status, 200);
+    expect(res.status).toBe(200);
     assertEnvelope(res.body);
   });
 
   test("GET /v1/config/app/name returns value via path segments", async () => {
     const { adapter } = await setup();
     const res = await adapter.handleRequest("GET", "/v1/config/app/name", req());
-    assert.equal(res.status, 200);
+    expect(res.status).toBe(200);
     assertEnvelope(res.body);
     assertV1Headers(res);
-    assert.equal(res.body.data.key, "app.name");
-    assert.equal(res.body.data.value, "test");
+    expect(res.body.data.key).toBe("app.name");
+    expect(res.body.data.value).toBe("test");
   });
 
   test("GET /v1/config/app/name?inspect returns inspection", async () => {
     const { adapter } = await setup();
     const res = await adapter.handleRequest("GET", "/v1/config/app/name", req({ query: { inspect: "" } }));
-    assert.equal(res.status, 200);
+    expect(res.status).toBe(200);
     assertEnvelope(res.body);
-    assert.equal(res.body.data.key, "app.name");
-    assert.ok(res.body.data.layerValues);
+    expect(res.body.data.key).toBe("app.name");
+    expect(res.body.data.layerValues).toBeTruthy();
   });
 
   test("PUT /v1/config/new/key sets value", async () => {
     const { adapter } = await setup();
     const res = await adapter.handleRequest("PUT", "/v1/config/new/key", req({ body: { value: 42 }, query: { layer: "platform" } }));
-    assert.equal(res.status, 200);
+    expect(res.status).toBe(200);
     assertEnvelope(res.body);
     assertV1Headers(res);
-    assert.equal(res.body.data.success, true);
+    expect(res.body.data.success).toBe(true);
   });
 
   test("PUT /v1/config/new/key defaults layer to platform", async () => {
     const { adapter } = await setup();
     const res = await adapter.handleRequest("PUT", "/v1/config/new/key", req({ body: { value: 42 } }));
-    assert.equal(res.status, 200);
-    assert.equal(res.body.data.success, true);
+    expect(res.status).toBe(200);
+    expect(res.body.data.success).toBe(true);
   });
 
   test("DELETE /v1/config/app/name removes value", async () => {
     const { adapter } = await setup();
     const res = await adapter.handleRequest("DELETE", "/v1/config/app/name", req({ query: { layer: "platform" } }));
-    assert.equal(res.status, 200);
+    expect(res.status).toBe(200);
     assertEnvelope(res.body);
     assertV1Headers(res);
-    assert.equal(res.body.data.success, true);
+    expect(res.body.data.success).toBe(true);
   });
 
   test("GET /v1/config/db returns subtree as value", async () => {
     const { adapter } = await setup();
     const res = await adapter.handleRequest("GET", "/v1/config/db", req());
-    assert.equal(res.status, 200);
-    assert.equal(res.body.data.key, "db");
-    assert.deepEqual(res.body.data.value, { host: "localhost" });
+    expect(res.status).toBe(200);
+    expect(res.body.data.key).toBe("db");
+    expect(res.body.data.value).toEqual({ host: "localhost" });
   });
 
   test("404 for unknown routes has envelope", async () => {
     const { adapter } = await setup();
     const res = await adapter.handleRequest("GET", "/api/unknown", req());
-    assert.equal(res.status, 404);
+    expect(res.status).toBe(404);
     assertEnvelope(res.body);
-    assert.equal(res.body.data, null);
-    assert.ok(res.body.error);
+    expect(res.body.data).toBe(null);
+    expect(res.body.error).toBeTruthy();
     assertV1Headers(res);
   });
 
   test("error responses use envelope with error field", async () => {
     const { adapter } = await setup();
     const res = await adapter.handleRequest("PUT", "/v1/config/key", req({ body: { value: 1 }, query: { layer: "nope" } }));
-    assert.equal(res.status, 400);
+    expect(res.status).toBe(400);
     assertEnvelope(res.body);
-    assert.ok(res.body.error);
-    assert.equal(res.body.error.code, "VALIDATION_ERROR");
+    expect(res.body.error).toBeTruthy();
+    expect(res.body.error.code).toBe("VALIDATION_ERROR");
   });
 
   test("CORS headers when configured", async () => {
     const { adapter } = await setup({ corsOrigins: ["http://localhost:3000"] });
     const res = await adapter.handleRequest("GET", "/v1/config", req());
-    assert.ok(res.headers["Access-Control-Allow-Origin"]);
+    expect(res.headers["Access-Control-Allow-Origin"]).toBeTruthy();
   });
 
   test("scope routes return envelope", async () => {
     const { adapter } = await setup();
     const res = await adapter.handleRequest("GET", "/v1/scopes", req());
-    assert.equal(res.status, 200);
+    expect(res.status).toBe(200);
     assertEnvelope(res.body);
     assertV1Headers(res);
   });
-
 
   test("ETag header present on all responses", async () => {
     const { adapter } = await setup();
@@ -176,9 +173,9 @@ describe("RestAdapter v1", () => {
     const res = await adapter.handleRequest("PATCH", "/v1/config", req({
       body: { entries: { "db.host": "newhost", "db.port": 5432 } },
     }));
-    assert.equal(res.status, 200);
-    assert.equal(res.body.data.success, true);
-    assert.equal(res.body.data.written, 2);
+    expect(res.status).toBe(200);
+    expect(res.body.data.success).toBe(true);
+    expect(res.body.data.written).toBe(2);
   });
 
   test("PATCH /v1/config returns 400 when entries missing", async () => {
@@ -186,6 +183,6 @@ describe("RestAdapter v1", () => {
     const res = await adapter.handleRequest("PATCH", "/v1/config", req({
       body: {},
     }));
-    assert.equal(res.status, 400);
+    expect(res.status).toBe(400);
   });
 });

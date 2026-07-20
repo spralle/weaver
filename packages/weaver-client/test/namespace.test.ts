@@ -1,5 +1,3 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
 import { z } from "zod";
 import {
   defineNamespace,
@@ -14,7 +12,7 @@ describe("defineNamespace", () => {
       host: z.string(),
       port: z.number(),
     });
-    assert.equal(def.prefix, "database");
+    expect(def.prefix).toBe("database");
   });
 
   it("creates a valid ZodObject schema", () => {
@@ -24,7 +22,7 @@ describe("defineNamespace", () => {
     });
     // Verify it can parse valid data
     const result = def.schema.parse({ host: "localhost", port: 5432 });
-    assert.deepEqual(result, { host: "localhost", port: 5432 });
+    expect(result).toEqual({ host: "localhost", port: 5432 });
   });
 
   it("rejects invalid data via schema", () => {
@@ -32,7 +30,7 @@ describe("defineNamespace", () => {
       host: z.string(),
       port: z.number(),
     });
-    assert.throws(() => def.schema.parse({ host: 123, port: "bad" }));
+    expect(() => def.schema.parse({ host: 123, port: "bad" })).toThrow();
   });
 
   it("supports nested shapes", () => {
@@ -42,7 +40,7 @@ describe("defineNamespace", () => {
     const result = def.schema.parse({
       connection: { host: "localhost", port: 5432 },
     });
-    assert.deepEqual(result, { connection: { host: "localhost", port: 5432 } });
+    expect(result).toEqual({ connection: { host: "localhost", port: 5432 } });
   });
 });
 
@@ -93,6 +91,6 @@ describe("TypedNamespaceClient type inference", () => {
       void inst.reset();
     };
 
-    assert.ok(true);
+    expect(true).toBeTruthy();
   });
 });

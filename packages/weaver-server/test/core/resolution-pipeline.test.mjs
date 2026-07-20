@@ -1,5 +1,3 @@
-import { test, describe } from "node:test";
-import assert from "node:assert/strict";
 import { createWeaverConfigService } from "../../src/core/config-service.ts";
 import { deepSet, deepRemove } from "@weaver-conf/config-engine";
 
@@ -36,7 +34,7 @@ describe("Resolution pipeline", () => {
     });
 
     const value = await svc.get("myservice.db");
-    assert.equal(value, "postgres://host/db");
+    expect(value).toBe("postgres://host/db");
   });
 
   test("get() resolves SecretReference transparently", async () => {
@@ -54,7 +52,7 @@ describe("Resolution pipeline", () => {
     });
 
     const value = await svc.get("database.password");
-    assert.equal(value, "s3cr3t");
+    expect(value).toBe("s3cr3t");
   });
 
   test("get() resolves mount -> secret chain", async () => {
@@ -73,7 +71,7 @@ describe("Resolution pipeline", () => {
     });
 
     const value = await svc.get("app.apiKey");
-    assert.equal(value, "api-key-value");
+    expect(value).toBe("api-key-value");
   });
 
   test("getNamespace() resolves markers within namespace", async () => {
@@ -96,9 +94,9 @@ describe("Resolution pipeline", () => {
     });
 
     const ns = await svc.getNamespace("db");
-    assert.equal(ns.host, "localhost");
-    assert.equal(ns.password, "secret123");
-    assert.equal(ns.port, 5432);
+    expect(ns.host).toBe("localhost");
+    expect(ns.password).toBe("secret123");
+    expect(ns.port).toBe(5432);
   });
 
   test("resolveAll() returns clean entries (no markers)", async () => {
@@ -116,7 +114,7 @@ describe("Resolution pipeline", () => {
     });
 
     const snapshot = await svc.resolveAll();
-    assert.equal(snapshot.entries.key, "resolved");
+    expect(snapshot.entries.key).toBe("resolved");
   });
 
   test("without secretBackend, SecretReference markers pass through", async () => {
@@ -130,7 +128,7 @@ describe("Resolution pipeline", () => {
     });
 
     const value = await svc.get("key");
-    assert.deepEqual(value, { _weaver: "secret-ref", provider: "vault", uri: "x" });
+    expect(value).toEqual({ _weaver: "secret-ref", provider: "vault", uri: "x" });
   });
 
   test("mount cycle returns undefined gracefully", async () => {
@@ -145,7 +143,7 @@ describe("Resolution pipeline", () => {
     });
 
     const value = await svc.get("a");
-    assert.equal(value, undefined);
+    expect(value).toBe(undefined);
   });
 
   test("mount map rebuilds after set", async () => {
@@ -159,10 +157,10 @@ describe("Resolution pipeline", () => {
       environment: "dev",
     });
 
-    assert.equal(await svc.get("app.ref"), "original");
+    expect(await svc.get("app.ref")).toBe("original");
 
     await svc.set("platform", "shared.value", "updated");
-    assert.equal(await svc.get("app.ref"), "updated");
+    expect(await svc.get("app.ref")).toBe("updated");
   });
 
   test("resolveEntries handles nested objects without markers", async () => {
@@ -178,6 +176,6 @@ describe("Resolution pipeline", () => {
     });
 
     const ns = await svc.getNamespace("app");
-    assert.deepEqual(ns, { nested: { deep: { value: 42 } } });
+    expect(ns).toEqual({ nested: { deep: { value: 42 } } });
   });
 });

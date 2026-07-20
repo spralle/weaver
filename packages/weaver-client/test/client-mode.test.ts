@@ -1,5 +1,3 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
 import { createWeaverClient } from "../src/client.js";
 import type { WeaverClientPersistence } from "../src/persistence.js";
 import type { WeaverTransport } from "../src/transport.js";
@@ -105,8 +103,8 @@ describe("ClientMode", () => {
       transport: createSuccessTransport(),
     });
 
-    assert.equal(client.mode, "live");
-    assert.equal(client.connected, true);
+    expect(client.mode).toBe("live");
+    expect(client.connected).toBe(true);
   });
 
   it("mode is 'cached' when transport fails but cache exists", async () => {
@@ -119,9 +117,9 @@ describe("ClientMode", () => {
       offlineBoot: true,
     });
 
-    assert.equal(client.mode, "cached");
-    assert.equal(client.connected, false);
-    assert.notEqual(client.revision, "");
+    expect(client.mode).toBe("cached");
+    expect(client.connected).toBe(false);
+    expect(client.revision).not.toBe("");
   });
 
   it("mode transitions from 'live' to 'cached' after close", async () => {
@@ -131,11 +129,11 @@ describe("ClientMode", () => {
       persistence,
     });
 
-    assert.equal(client.mode, "live");
+    expect(client.mode).toBe("live");
 
     await client.close();
 
     // After close, connected=false but revision still set → cached
-    assert.equal(client.mode, "cached");
+    expect(client.mode).toBe("cached");
   });
 });

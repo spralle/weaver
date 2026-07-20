@@ -1,5 +1,3 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
 import { z } from "zod";
 import { createWeaverClient } from "../src/client.js";
 import { defineNamespace } from "../src/namespace.js";
@@ -73,11 +71,11 @@ describe("Integration: WeaverClient full flow", () => {
     });
 
     const editor = client.namespace(editorNs);
-    assert.equal(editor.get("fontSize"), 14);
-    assert.equal(editor.get("theme"), "dark");
+    expect(editor.get("fontSize")).toBe(14);
+    expect(editor.get("theme")).toBe("dark");
 
     const result = await editor.set("fontSize", 16);
-    assert.equal(result.success, true);
+    expect(result.success).toBe(true);
 
     await client.close();
   });
@@ -87,8 +85,8 @@ describe("Integration: WeaverClient full flow", () => {
     const client = await createWeaverClient({ transport });
 
     const editor = client.namespace("editor");
-    assert.equal(editor.get("fontSize"), 14);
-    assert.deepEqual(editor.getAll(), { fontSize: 14 });
+    expect(editor.get("fontSize")).toBe(14);
+    expect(editor.getAll()).toEqual({ fontSize: 14 });
 
     await client.close();
   });
@@ -106,8 +104,8 @@ describe("Integration: WeaverClient full flow", () => {
     const defs = [defineNamespace("editor", { fontSize: z.number() })];
     const result = await client.registerNamespaces(defs);
 
-    assert.deepEqual(result.registered, ["editor"]);
-    assert.deepEqual(registered, ["editor"]);
+    expect(result.registered).toEqual(["editor"]);
+    expect(registered).toEqual(["editor"]);
 
     await client.close();
   });
@@ -123,7 +121,7 @@ describe("Integration: WeaverClient full flow", () => {
       });
 
     const client = await createWeaverClient({ transport, schemas: true });
-    assert.equal(client.pendingRestart, false);
+    expect(client.pendingRestart).toBe(false);
 
     let restartFired = false;
     client.onRestartRequired(() => {
@@ -140,8 +138,8 @@ describe("Integration: WeaverClient full flow", () => {
       },
     ]);
 
-    assert.equal(client.pendingRestart, true);
-    assert.equal(restartFired, true);
+    expect(client.pendingRestart).toBe(true);
+    expect(restartFired).toBe(true);
 
     await client.close();
   });

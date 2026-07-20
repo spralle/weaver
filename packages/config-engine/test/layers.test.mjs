@@ -1,5 +1,3 @@
-import test from "node:test";
-import assert from "node:assert/strict";
 import {
   resolveConfiguration,
   inspectKey,
@@ -16,8 +14,8 @@ test("resolves with single layer", () => {
     ],
   };
   const result = resolveConfiguration(stack);
-  assert.deepEqual(result.entries, { "ghost.app.theme": "dark" });
-  assert.equal(result.provenance.get("ghost.app.theme"), "core");
+  expect(result.entries).toEqual({ "ghost.app.theme": "dark" });
+  expect(result.provenance.get("ghost.app.theme")).toBe("core");
 });
 
 test("deep merges multiple layers in priority order", () => {
@@ -28,8 +26,8 @@ test("deep merges multiple layers in priority order", () => {
     ],
   };
   const result = resolveConfiguration(stack);
-  assert.equal(result.entries["ghost.app.theme"], "dark");
-  assert.equal(result.entries["ghost.app.lang"], "en");
+  expect(result.entries["ghost.app.theme"]).toBe("dark");
+  expect(result.entries["ghost.app.lang"]).toBe("en");
 });
 
 test("last layer wins for conflicting keys", () => {
@@ -41,8 +39,8 @@ test("last layer wins for conflicting keys", () => {
     ],
   };
   const result = resolveConfiguration(stack);
-  assert.equal(result.entries["ghost.app.zoom"], 5);
-  assert.equal(result.provenance.get("ghost.app.zoom"), "user");
+  expect(result.entries["ghost.app.zoom"]).toBe(5);
+  expect(result.provenance.get("ghost.app.zoom")).toBe("user");
 });
 
 test("empty layers are skipped", () => {
@@ -54,7 +52,7 @@ test("empty layers are skipped", () => {
     ],
   };
   const result = resolveConfiguration(stack);
-  assert.deepEqual(result.entries, {
+  expect(result.entries).toEqual({
     "ghost.app.theme": "light",
     "ghost.app.lang": "no",
   });
@@ -69,9 +67,9 @@ test("provenance tracks which layer set each key", () => {
     ],
   };
   const result = resolveConfiguration(stack);
-  assert.equal(result.provenance.get("ghost.app.a"), "core");
-  assert.equal(result.provenance.get("ghost.app.b"), "tenant");
-  assert.equal(result.provenance.get("ghost.app.c"), "user");
+  expect(result.provenance.get("ghost.app.a")).toBe("core");
+  expect(result.provenance.get("ghost.app.b")).toBe("tenant");
+  expect(result.provenance.get("ghost.app.c")).toBe("user");
 });
 
 test("inspectKey returns per-layer values", () => {
@@ -83,9 +81,9 @@ test("inspectKey returns per-layer values", () => {
     ],
   };
   const result = inspectKey(stack, "ghost.app.zoom");
-  assert.equal(result.layerValues.core, 1);
-  assert.equal(result.layerValues.tenant, 3);
-  assert.equal(result.layerValues.user, 5);
+  expect(result.layerValues.core).toBe(1);
+  expect(result.layerValues.tenant).toBe(3);
+  expect(result.layerValues.user).toBe(5);
 });
 
 test("inspectKey shows correct effectiveValue and effectiveLayer", () => {
@@ -97,9 +95,9 @@ test("inspectKey shows correct effectiveValue and effectiveLayer", () => {
     ],
   };
   const result = inspectKey(stack, "ghost.app.zoom");
-  assert.equal(result.effectiveValue, 10);
-  assert.equal(result.effectiveLayer, "tenant");
-  assert.equal(result.key, "ghost.app.zoom");
+  expect(result.effectiveValue).toBe(10);
+  expect(result.effectiveLayer).toBe("tenant");
+  expect(result.key).toBe("ghost.app.zoom");
 });
 
 test("inspectKey handles dynamic scope layers", () => {
@@ -110,9 +108,9 @@ test("inspectKey handles dynamic scope layers", () => {
     ],
   };
   const result = inspectKey(stack, "ghost.app.zoom");
-  assert.equal(result.effectiveValue, 3);
-  assert.equal(result.effectiveLayer, "country:NO");
-  assert.equal(result.layerValues["country:NO"], 3);
+  expect(result.effectiveValue).toBe(3);
+  expect(result.effectiveLayer).toBe("country:NO");
+  expect(result.layerValues["country:NO"]).toBe(3);
 });
 
 test("inspectKey returns undefined for missing key", () => {
@@ -122,8 +120,8 @@ test("inspectKey returns undefined for missing key", () => {
     ],
   };
   const result = inspectKey(stack, "ghost.app.nonexistent");
-  assert.equal(result.effectiveValue, undefined);
-  assert.equal(result.effectiveLayer, undefined);
+  expect(result.effectiveValue).toBe(undefined);
+  expect(result.effectiveLayer).toBe(undefined);
 });
 
 test("resolveConfigurationWithCeiling respects maxOverrideLayer", () => {
@@ -139,7 +137,7 @@ test("resolveConfigurationWithCeiling respects maxOverrideLayer", () => {
   ]);
   const result = resolveConfigurationWithCeiling(stack, schemaMap, false, getRank);
   // user layer should be ignored because maxOverrideLayer is tenant
-  assert.equal(result.entries["ghost.app.zoom"], 5);
+  expect(result.entries["ghost.app.zoom"]).toBe(5);
 });
 
 test("resolveConfigurationWithCeiling emergency override bypasses ceiling", () => {
@@ -155,7 +153,7 @@ test("resolveConfigurationWithCeiling emergency override bypasses ceiling", () =
   ]);
   const result = resolveConfigurationWithCeiling(stack, schemaMap, true, getRank);
   // Emergency override: user layer should NOT be ignored
-  assert.equal(result.entries["ghost.app.zoom"], 10);
+  expect(result.entries["ghost.app.zoom"]).toBe(10);
 });
 
 test("uses per-layer merge function when provided", () => {
@@ -168,7 +166,7 @@ test("uses per-layer merge function when provided", () => {
   };
   const result = resolveConfiguration(stack);
   // shallowReplace spreads top-level keys, so nested is replaced entirely
-  assert.deepEqual(result.entries, { nested: { b: 3 } });
+  expect(result.entries).toEqual({ nested: { b: 3 } });
 });
 
 test("resolveConfigurationWithCeiling allows keys without schema", () => {
@@ -180,5 +178,5 @@ test("resolveConfigurationWithCeiling allows keys without schema", () => {
   };
   const schemaMap = new Map();
   const result = resolveConfigurationWithCeiling(stack, schemaMap, false, getRank);
-  assert.equal(result.entries["ghost.app.zoom"], 10);
+  expect(result.entries["ghost.app.zoom"]).toBe(10);
 });

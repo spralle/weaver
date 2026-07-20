@@ -1,37 +1,35 @@
-import test from "node:test";
-import assert from "node:assert/strict";
 import { SecretCache } from "../dist/index.js";
 
 test("SecretCache can be instantiated", () => {
   const cache = new SecretCache();
-  assert.equal(cache.size(), 0);
+  expect(cache.size()).toBe(0);
 });
 
 test("get() returns undefined for unknown key", () => {
   const cache = new SecretCache();
-  assert.equal(cache.get("unknown"), undefined);
+  expect(cache.get("unknown")).toBe(undefined);
 });
 
 test("set() + get() round-trips", () => {
   const cache = new SecretCache();
   cache.set("key1", "secret-value", "v1");
   const entry = cache.get("key1");
-  assert.equal(entry?.value, "secret-value");
-  assert.equal(entry?.version, "v1");
+  expect(entry?.value).toBe("secret-value");
+  expect(entry?.version).toBe("v1");
 });
 
 test("expired entries return undefined", async () => {
   const cache = new SecretCache({ defaultTtlMs: 10 });
   cache.set("key1", "value");
   await new Promise((r) => setTimeout(r, 20));
-  assert.equal(cache.get("key1"), undefined);
+  expect(cache.get("key1")).toBe(undefined);
 });
 
 test("invalidate() removes an entry", () => {
   const cache = new SecretCache();
   cache.set("key1", "value");
   cache.invalidate("key1");
-  assert.equal(cache.get("key1"), undefined);
+  expect(cache.get("key1")).toBe(undefined);
 });
 
 test("invalidateAll() clears everything", () => {
@@ -39,7 +37,7 @@ test("invalidateAll() clears everything", () => {
   cache.set("a", "1");
   cache.set("b", "2");
   cache.invalidateAll();
-  assert.equal(cache.size(), 0);
+  expect(cache.size()).toBe(0);
 });
 
 test("size() returns correct count", () => {
@@ -47,7 +45,7 @@ test("size() returns correct count", () => {
   cache.set("a", "1");
   cache.set("b", "2");
   cache.set("c", "3");
-  assert.equal(cache.size(), 3);
+  expect(cache.size()).toBe(3);
 });
 
 // --- TTL behavior ---
@@ -56,14 +54,14 @@ test("TTL=0 means entry expires immediately", () => {
   const cache = new SecretCache({ defaultTtlMs: 0 });
   cache.set("key1", "value");
   // expiresAt = now + 0, so Date.now() >= expiresAt is true immediately
-  assert.equal(cache.get("key1"), undefined);
+  expect(cache.get("key1")).toBe(undefined);
 });
 
 test("very short TTL (1ms) entry expires after delay", async () => {
   const cache = new SecretCache({ defaultTtlMs: 1 });
   cache.set("key1", "value");
   await new Promise((r) => setTimeout(r, 10));
-  assert.equal(cache.get("key1"), undefined);
+  expect(cache.get("key1")).toBe(undefined);
 });
 
 test("custom TTL per entry overrides default cache TTL", async () => {
@@ -71,9 +69,9 @@ test("custom TTL per entry overrides default cache TTL", async () => {
   cache.set("short", "val1");
   cache.set("long", "val2", undefined, 5000);
   await new Promise((r) => setTimeout(r, 15));
-  assert.equal(cache.get("short"), undefined);
-  assert.notEqual(cache.get("long"), undefined);
-  assert.equal(cache.get("long")?.value, "val2");
+  expect(cache.get("short")).toBe(undefined);
+  expect(cache.get("long")).not.toBe(undefined);
+  expect(cache.get("long")?.value).toBe("val2");
 });
 
 // --- Edge cases ---
@@ -82,7 +80,7 @@ test("set() with same key overwrites previous value", () => {
   const cache = new SecretCache();
   cache.set("key1", "old");
   cache.set("key1", "new");
-  assert.equal(cache.get("key1")?.value, "new");
+  expect(cache.get("key1")?.value).toBe("new");
 });
 
 test("set() with same key resets TTL timer", async () => {
@@ -92,19 +90,19 @@ test("set() with same key resets TTL timer", async () => {
   cache.set("key1", "val2");
   await new Promise((r) => setTimeout(r, 60));
   // Should still be alive since TTL was reset (100ms from second set)
-  assert.notEqual(cache.get("key1"), undefined);
+  expect(cache.get("key1")).not.toBe(undefined);
 });
 
 test("get() after invalidate() returns undefined", () => {
   const cache = new SecretCache();
   cache.set("key1", "value");
   cache.invalidate("key1");
-  assert.equal(cache.get("key1"), undefined);
+  expect(cache.get("key1")).toBe(undefined);
 });
 
 test("invalidateAll() with empty cache does not throw", () => {
   const cache = new SecretCache();
-  assert.doesNotThrow(() => cache.invalidateAll());
+  expect(() => cache.invalidateAll()).not.toThrow();
 });
 
 test("size() returns 0 after invalidateAll()", () => {
@@ -112,7 +110,7 @@ test("size() returns 0 after invalidateAll()", () => {
   cache.set("a", "1");
   cache.set("b", "2");
   cache.invalidateAll();
-  assert.equal(cache.size(), 0);
+  expect(cache.size()).toBe(0);
 });
 
 test("set() then get() for multiple different keys", () => {
@@ -120,9 +118,9 @@ test("set() then get() for multiple different keys", () => {
   cache.set("k1", "v1");
   cache.set("k2", "v2");
   cache.set("k3", "v3");
-  assert.equal(cache.get("k1")?.value, "v1");
-  assert.equal(cache.get("k2")?.value, "v2");
-  assert.equal(cache.get("k3")?.value, "v3");
+  expect(cache.get("k1")?.value).toBe("v1");
+  expect(cache.get("k2")?.value).toBe("v2");
+  expect(cache.get("k3")?.value).toBe("v3");
 });
 
 test("large number of entries (100+) still works", () => {
@@ -130,7 +128,7 @@ test("large number of entries (100+) still works", () => {
   for (let i = 0; i < 150; i++) {
     cache.set(`key-${i}`, `val-${i}`);
   }
-  assert.equal(cache.size(), 150);
-  assert.equal(cache.get("key-0")?.value, "val-0");
-  assert.equal(cache.get("key-149")?.value, "val-149");
+  expect(cache.size()).toBe(150);
+  expect(cache.get("key-0")?.value).toBe("val-0");
+  expect(cache.get("key-149")?.value).toBe("val-149");
 });

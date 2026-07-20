@@ -5,7 +5,7 @@ Use `@weaver-conf/weaver-client` in a browser single-page application for typed,
 ## Installation
 
 ```bash
-bun add @weaver-conf/weaver-client
+pnpm add @weaver-conf/weaver-client
 ```
 
 ## Define Namespaces

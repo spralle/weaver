@@ -1,5 +1,3 @@
-import test from "node:test";
-import assert from "node:assert/strict";
 import {
   DEFAULT_PLUGIN_MANAGEMENT_RATCHET_RULES,
   validateOneWayRatchet,
@@ -17,9 +15,9 @@ test("reports violation when higher-priority layer loosens policy", () => {
     { layerOrder: testLayerOrder },
   );
 
-  assert.equal(result.violations.length, 1);
-  assert.equal(result.violations[0].field, "changePolicy");
-  assert.equal(result.violations[0].transition, "loosened");
+  expect(result.violations.length).toBe(1);
+  expect(result.violations[0].field).toBe("changePolicy");
+  expect(result.violations[0].transition).toBe("loosened");
 });
 
 test("allows equal and tightening transitions", () => {
@@ -51,13 +49,13 @@ test("allows equal and tightening transitions", () => {
     { layerOrder: testLayerOrder },
   );
 
-  assert.equal(result.violations.length, 0);
-  assert.equal(result.blocked.length, 0);
+  expect(result.violations.length).toBe(0);
+  expect(result.blocked.length).toBe(0);
 
   const transitions = result.evaluations
     .filter((entry) => entry.field === "changePolicy")
     .map((entry) => entry.transition);
-  assert.deepEqual(transitions, ["tightened", "tightened"]);
+  expect(transitions).toEqual(["tightened", "tightened"]);
 });
 
 test("handles ordering gaps by comparing nearest defined values", () => {
@@ -73,15 +71,15 @@ test("handles ordering gaps by comparing nearest defined values", () => {
     { layerOrder: testLayerOrder },
   );
 
-  assert.equal(result.violations.length, 0);
+  expect(result.violations.length).toBe(0);
   const changePolicyEvaluations = result.evaluations.filter(
     (entry) => entry.field === "changePolicy",
   );
-  assert.equal(changePolicyEvaluations.length, 2);
-  assert.equal(changePolicyEvaluations[0].fromLayer, "core");
-  assert.equal(changePolicyEvaluations[0].toLayer, "scope");
-  assert.equal(changePolicyEvaluations[1].fromLayer, "scope");
-  assert.equal(changePolicyEvaluations[1].toLayer, "session");
+  expect(changePolicyEvaluations.length).toBe(2);
+  expect(changePolicyEvaluations[0].fromLayer).toBe("core");
+  expect(changePolicyEvaluations[0].toLayer).toBe("scope");
+  expect(changePolicyEvaluations[1].fromLayer).toBe("scope");
+  expect(changePolicyEvaluations[1].toLayer).toBe("session");
 });
 
 test("blocked semantics are sticky by default", () => {
@@ -98,10 +96,10 @@ test("blocked semantics are sticky by default", () => {
   const changePolicyEvaluations = result.evaluations.filter(
     (entry) => entry.field === "changePolicy",
   );
-  assert.equal(changePolicyEvaluations.length, 2);
-  assert.equal(changePolicyEvaluations[0].transition, "blocked");
-  assert.equal(changePolicyEvaluations[1].transition, "blocked");
-  assert.equal(result.blocked.length, 2);
+  expect(changePolicyEvaluations.length).toBe(2);
+  expect(changePolicyEvaluations[0].transition).toBe("blocked");
+  expect(changePolicyEvaluations[1].transition).toBe("blocked");
+  expect(result.blocked.length).toBe(2);
 });
 
 test("blocked semantics can be non-sticky when configured", () => {
@@ -118,12 +116,12 @@ test("blocked semantics can be non-sticky when configured", () => {
   const changePolicyEvaluations = result.evaluations.filter(
     (entry) => entry.field === "changePolicy",
   );
-  assert.equal(changePolicyEvaluations.length, 2);
-  assert.equal(changePolicyEvaluations[0].transition, "blocked");
-  assert.equal(changePolicyEvaluations[1].transition, "tightened");
-  assert.equal(changePolicyEvaluations[1].fromLayer, "core");
-  assert.equal(changePolicyEvaluations[1].toLayer, "user");
-  assert.equal(result.blocked.length, 1);
+  expect(changePolicyEvaluations.length).toBe(2);
+  expect(changePolicyEvaluations[0].transition).toBe("blocked");
+  expect(changePolicyEvaluations[1].transition).toBe("tightened");
+  expect(changePolicyEvaluations[1].fromLayer).toBe("core");
+  expect(changePolicyEvaluations[1].toLayer).toBe("user");
+  expect(result.blocked.length).toBe(1);
 });
 
 test("maxOverrideLayer default rule enforces tighter ceiling", () => {
@@ -140,8 +138,8 @@ test("maxOverrideLayer default rule enforces tighter ceiling", () => {
   const maxOverrideEvaluations = result.evaluations.filter(
     (entry) => entry.field === "maxOverrideLayer",
   );
-  assert.equal(maxOverrideEvaluations[0].transition, "tightened");
-  assert.equal(maxOverrideEvaluations[1].transition, "loosened");
-  assert.equal(result.violations.length, 1);
-  assert.equal(result.violations[0].field, "maxOverrideLayer");
+  expect(maxOverrideEvaluations[0].transition).toBe("tightened");
+  expect(maxOverrideEvaluations[1].transition).toBe("loosened");
+  expect(result.violations.length).toBe(1);
+  expect(result.violations[0].field).toBe("maxOverrideLayer");
 });

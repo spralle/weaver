@@ -1,5 +1,3 @@
-import test from "node:test";
-import assert from "node:assert/strict";
 
 import {
   propertySessionModeSchema,
@@ -16,28 +14,28 @@ import {
 test("propertySessionModeSchema accepts valid values", () => {
   for (const mode of ["allowed", "restricted", "blocked"]) {
     const result = propertySessionModeSchema.safeParse(mode);
-    assert.equal(result.success, true, `Expected "${mode}" to be valid`);
+    expect(result.success).toBe(true);
   }
 });
 
 test("propertySessionModeSchema rejects invalid values", () => {
   for (const bad of ["", 42, null]) {
     const result = propertySessionModeSchema.safeParse(bad);
-    assert.equal(result.success, false, `Expected ${JSON.stringify(bad)} to be rejected`);
+    expect(result.success).toBe(false);
   }
 });
 
 test("sessionTypeSchema accepts any string value", () => {
   for (const t of ["debug", "god-mode", "preview", "support", "custom-type", "anything"]) {
     const result = sessionTypeSchema.safeParse(t);
-    assert.equal(result.success, true, `Expected "${t}" to be valid`);
+    expect(result.success).toBe(true);
   }
 });
 
 test("sessionTypeSchema rejects non-string values", () => {
   for (const bad of [42, null, true, undefined, {}]) {
     const result = sessionTypeSchema.safeParse(bad);
-    assert.equal(result.success, false, `Expected ${JSON.stringify(bad)} to be rejected`);
+    expect(result.success).toBe(false);
   }
 });
 
@@ -45,7 +43,7 @@ test("sessionModeSchema is an alias for sessionTypeSchema", () => {
   // Deprecated alias should still work
   for (const t of ["debug", "god-mode", "preview", "support"]) {
     const result = sessionModeSchema.safeParse(t);
-    assert.equal(result.success, true, `Expected "${t}" to be valid via sessionModeSchema`);
+    expect(result.success).toBe(true);
   }
 });
 
@@ -56,27 +54,27 @@ test("configurationPropertySchemaSchema accepts sessionMode field", () => {
     "x-weaver": { sessionMode: "allowed" },
   };
   const result = configurationPropertySchemaSchema.safeParse(schema);
-  assert.equal(result.success, true);
+  expect(result.success).toBe(true);
 });
 
 test("configurationPropertySchemaSchema accepts all sessionMode values", () => {
   for (const mode of ["allowed", "restricted", "blocked"]) {
     const schema = { type: "boolean", "x-weaver": { sessionMode: mode } };
     const result = configurationPropertySchemaSchema.safeParse(schema);
-    assert.equal(result.success, true, `Expected sessionMode "${mode}" to be accepted`);
+    expect(result.success).toBe(true);
   }
 });
 
 test("configurationPropertySchemaSchema rejects invalid sessionMode", () => {
   const schema = { type: "string", "x-weaver": { sessionMode: "invalid" } };
   const result = configurationPropertySchemaSchema.safeParse(schema);
-  assert.equal(result.success, false);
+  expect(result.success).toBe(false);
 });
 
 test("configurationPropertySchemaSchema works without sessionMode", () => {
   const schema = { type: "string", default: "value" };
   const result = configurationPropertySchemaSchema.safeParse(schema);
-  assert.equal(result.success, true);
+  expect(result.success).toBe(true);
 });
 
 // --- OverrideSession ---
@@ -96,8 +94,8 @@ test("overrideSessionSchema accepts a valid session", () => {
   };
 
   const result = overrideSessionSchema.safeParse(session);
-  assert.equal(result.success, true);
-  assert.deepEqual(result.data, session);
+  expect(result.success).toBe(true);
+  expect(result.data).toEqual(session);
 });
 
 test("overrideSessionSchema accepts session with empty overrides", () => {
@@ -112,7 +110,7 @@ test("overrideSessionSchema accepts session with empty overrides", () => {
   };
 
   const result = overrideSessionSchema.safeParse(session);
-  assert.equal(result.success, true);
+  expect(result.success).toBe(true);
 });
 
 test("overrideSessionSchema rejects missing required fields", () => {
@@ -128,7 +126,7 @@ test("overrideSessionSchema rejects missing required fields", () => {
 
   for (const { field, data } of cases) {
     const result = overrideSessionSchema.safeParse(data);
-    assert.equal(result.success, false, `Expected rejection when missing "${field}"`);
+    expect(result.success).toBe(false);
   }
 });
 
@@ -145,7 +143,7 @@ test("overrideSessionSchema rejects extra properties (strict)", () => {
   };
 
   const result = overrideSessionSchema.safeParse(session);
-  assert.equal(result.success, false);
+  expect(result.success).toBe(false);
 });
 
 // --- SessionActivationRequest ---
@@ -153,15 +151,15 @@ test("overrideSessionSchema rejects extra properties (strict)", () => {
 test("sessionActivationRequestSchema accepts minimal request", () => {
   const request = { reason: "Investigating incident #99" };
   const result = sessionActivationRequestSchema.safeParse(request);
-  assert.equal(result.success, true);
-  assert.equal(result.data.reason, "Investigating incident #99");
+  expect(result.success).toBe(true);
+  expect(result.data.reason).toBe("Investigating incident #99");
 });
 
 test("sessionActivationRequestSchema accepts request with durationMs", () => {
   const request = { reason: "Quick debug", durationMs: 1800000 };
   const result = sessionActivationRequestSchema.safeParse(request);
-  assert.equal(result.success, true);
-  assert.equal(result.data.durationMs, 1800000);
+  expect(result.success).toBe(true);
+  expect(result.data.durationMs).toBe(1800000);
 });
 
 test("sessionActivationRequestSchema accepts request with elevatedAuth", () => {
@@ -170,8 +168,8 @@ test("sessionActivationRequestSchema accepts request with elevatedAuth", () => {
     elevatedAuth: { token: "jwt-abc-123", method: "yubikey" },
   };
   const result = sessionActivationRequestSchema.safeParse(request);
-  assert.equal(result.success, true);
-  assert.deepEqual(result.data.elevatedAuth, { token: "jwt-abc-123", method: "yubikey" });
+  expect(result.success).toBe(true);
+  expect(result.data.elevatedAuth).toEqual({ token: "jwt-abc-123", method: "yubikey" });
 });
 
 test("sessionActivationRequestSchema accepts full request", () => {
@@ -181,12 +179,12 @@ test("sessionActivationRequestSchema accepts full request", () => {
     elevatedAuth: { token: "token-xyz", method: "mfa" },
   };
   const result = sessionActivationRequestSchema.safeParse(request);
-  assert.equal(result.success, true);
+  expect(result.success).toBe(true);
 });
 
 test("sessionActivationRequestSchema rejects missing reason", () => {
   const result = sessionActivationRequestSchema.safeParse({});
-  assert.equal(result.success, false);
+  expect(result.success).toBe(false);
 });
 
 test("sessionActivationRequestSchema rejects invalid elevatedAuth shape", () => {
@@ -195,7 +193,7 @@ test("sessionActivationRequestSchema rejects invalid elevatedAuth shape", () => 
     elevatedAuth: { token: "abc" }, // missing method
   };
   const result = sessionActivationRequestSchema.safeParse(request);
-  assert.equal(result.success, false);
+  expect(result.success).toBe(false);
 });
 
 test("sessionActivationRequestSchema rejects extra properties on elevatedAuth (strict)", () => {
@@ -204,7 +202,7 @@ test("sessionActivationRequestSchema rejects extra properties on elevatedAuth (s
     elevatedAuth: { token: "abc", method: "key", extra: true },
   };
   const result = sessionActivationRequestSchema.safeParse(request);
-  assert.equal(result.success, false);
+  expect(result.success).toBe(false);
 });
 
 // --- SessionDeactivationResult ---
@@ -218,8 +216,8 @@ test("sessionDeactivationResultSchema accepts a valid result", () => {
   };
 
   const result = sessionDeactivationResultSchema.safeParse(deactivation);
-  assert.equal(result.success, true);
-  assert.deepEqual(result.data, deactivation);
+  expect(result.success).toBe(true);
+  expect(result.data).toEqual(deactivation);
 });
 
 test("sessionDeactivationResultSchema accepts zero overrides cleared", () => {
@@ -231,7 +229,7 @@ test("sessionDeactivationResultSchema accepts zero overrides cleared", () => {
   };
 
   const result = sessionDeactivationResultSchema.safeParse(deactivation);
-  assert.equal(result.success, true);
+  expect(result.success).toBe(true);
 });
 
 test("sessionDeactivationResultSchema rejects missing required fields", () => {
@@ -244,7 +242,7 @@ test("sessionDeactivationResultSchema rejects missing required fields", () => {
 
   for (const { field, data } of cases) {
     const result = sessionDeactivationResultSchema.safeParse(data);
-    assert.equal(result.success, false, `Expected rejection when missing "${field}"`);
+    expect(result.success).toBe(false);
   }
 });
 
@@ -258,7 +256,7 @@ test("sessionDeactivationResultSchema rejects extra properties (strict)", () => 
   };
 
   const result = sessionDeactivationResultSchema.safeParse(deactivation);
-  assert.equal(result.success, false);
+  expect(result.success).toBe(false);
 });
 
 // --- Round-trip tests ---
@@ -275,10 +273,10 @@ test("OverrideSession round-trip: construct, validate, check fields", () => {
   };
 
   const parsed = overrideSessionSchema.parse(input);
-  assert.equal(parsed.id, "rt-session-1");
-  assert.equal(parsed.activatedBy, "operator-1");
-  assert.equal(parsed.isActive, true);
-  assert.deepEqual(parsed.overrides, { "ghost.perf.tracing": true });
+  expect(parsed.id).toBe("rt-session-1");
+  expect(parsed.activatedBy).toBe("operator-1");
+  expect(parsed.isActive).toBe(true);
+  expect(parsed.overrides).toEqual({ "ghost.perf.tracing": true });
 });
 
 test("SessionActivationRequest round-trip: construct, validate, check fields", () => {
@@ -289,10 +287,10 @@ test("SessionActivationRequest round-trip: construct, validate, check fields", (
   };
 
   const parsed = sessionActivationRequestSchema.parse(input);
-  assert.equal(parsed.reason, "Escalation #1234");
-  assert.equal(parsed.durationMs, 3600000);
-  assert.equal(parsed.elevatedAuth?.token, "secure-token");
-  assert.equal(parsed.elevatedAuth?.method, "hardware-key");
+  expect(parsed.reason).toBe("Escalation #1234");
+  expect(parsed.durationMs).toBe(3600000);
+  expect(parsed.elevatedAuth?.token).toBe("secure-token");
+  expect(parsed.elevatedAuth?.method).toBe("hardware-key");
 });
 
 test("SessionDeactivationResult round-trip: construct, validate, check fields", () => {
@@ -304,14 +302,14 @@ test("SessionDeactivationResult round-trip: construct, validate, check fields", 
   };
 
   const parsed = sessionDeactivationResultSchema.parse(input);
-  assert.equal(parsed.sessionId, "rt-session-1");
-  assert.equal(parsed.overridesCleared, 12);
-  assert.equal(parsed.auditRecorded, true);
+  expect(parsed.sessionId).toBe("rt-session-1");
+  expect(parsed.overridesCleared).toBe(12);
+  expect(parsed.auditRecorded).toBe(true);
 });
 
 test("PropertySessionMode round-trip: parse and verify identity", () => {
   for (const mode of ["allowed", "restricted", "blocked"]) {
     const parsed = propertySessionModeSchema.parse(mode);
-    assert.equal(parsed, mode);
+    expect(parsed).toBe(mode);
   }
 });

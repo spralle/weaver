@@ -10,7 +10,7 @@ Setup workflow:
 - `git fetch origin main`
 - `bd worktree create worktrees/<descriptive-name> --branch feature/<descriptive-name>`
 - `cd worktrees/<descriptive-name>`
-- `bun install`
+- `pnpm install`
 
 Before coding in a worktree, verify Beads context:
 - `bd context --json`

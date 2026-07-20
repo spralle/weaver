@@ -5,7 +5,7 @@
 ## Installation
 
 ```bash
-bun add @weaver-conf/config-types
+pnpm add @weaver-conf/config-types
 ```
 
 ## Overview

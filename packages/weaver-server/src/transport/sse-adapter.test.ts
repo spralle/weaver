@@ -1,5 +1,3 @@
-import assert from "node:assert/strict";
-import { beforeEach, describe, it } from "node:test";
 import type { WeaverConfigService } from "../core/config-service";
 import type { ConfigDelta } from "../types/index";
 import type { SSEAdapter } from "./sse-adapter";
@@ -71,12 +69,14 @@ function parseMessages(client: {
   return client.messages.map((raw) => {
     const eventMatch = raw.match(/^event: (.+)$/m);
     const dataMatch = raw.match(/^data: (.+)$/m);
-    assert.ok(eventMatch, "expected event field in SSE message");
-    assert.ok(dataMatch, "expected data field in SSE message");
+    if (!eventMatch || !dataMatch) {
+      throw new Error("Malformed SSE message");
+    }
     const event = eventMatch[1];
     const data = dataMatch[1];
-    assert.ok(event, "expected event value in SSE message");
-    assert.ok(data, "expected data value in SSE message");
+    if (!event || !data) {
+      throw new Error("Malformed SSE event payload");
+    }
     return {
       event,
       data: JSON.parse(data) as Record<string, unknown>,
@@ -86,13 +86,15 @@ function parseMessages(client: {
 
 function msg(msgs: ParsedMessage[], idx: number): ParsedMessage {
   const m = msgs[idx];
-  assert.ok(m, `expected message at index ${idx}`);
+  if (!m) {
+    throw new Error(`expected message at index ${idx}`);
+  }
   return m;
 }
 
 function expectRecord(value: unknown): Record<string, unknown> {
-  assert.equal(typeof value, "object");
-  assert.notEqual(value, null);
+  expect(typeof value).toBe("object");
+  expect(value).not.toBe(null);
   return value as Record<string, unknown>;
 }
 
@@ -108,24 +110,24 @@ describe("SSEAdapter", () => {
   it("sends snapshot event on client creation", async () => {
     const client = await adapter.createClient();
     const msgs = parseMessages(client);
-    assert.equal(msgs.length, 1);
-    assert.equal(msg(msgs, 0).event, "snapshot");
-    assert.deepEqual(msg(msgs, 0).data.entries, {
+    expect(msgs.length).toBe(1);
+    expect(msg(msgs, 0).event).toBe("snapshot");
+    expect(msg(msgs, 0).data.entries).toEqual({
       "app.name": "test",
       "app.port": 3000,
       "db.host": "localhost",
     });
-    assert.equal(msg(msgs, 0).data.revision, "rev-1");
+    expect(msg(msgs, 0).data.revision).toBe("rev-1");
     client.close();
   });
 
   it("filters snapshot entries by prefix", async () => {
     const client = await adapter.createClient({ prefix: "app" });
     const msgs = parseMessages(client);
-    assert.equal(msg(msgs, 0).event, "snapshot");
+    expect(msg(msgs, 0).event).toBe("snapshot");
     const entries = expectRecord(msg(msgs, 0).data.entries);
-    assert.deepEqual(Object.keys(entries).sort(), ["app.name", "app.port"]);
-    assert.equal(entries["db.host"], undefined);
+    expect(Object.keys(entries).sort()).toEqual(["app.name", "app.port"]);
+    expect(entries["db.host"]).toBe(undefined);
     client.close();
   });
 
@@ -134,11 +136,11 @@ describe("SSEAdapter", () => {
     mock.setRevision("rev-2");
     mock.emitDelta(makeDelta({ key: "app.name", value: "newval" }));
     const msgs = parseMessages(client);
-    assert.equal(msgs.length, 2); // snapshot + change
-    assert.equal(msg(msgs, 1).event, "change");
-    assert.equal(msg(msgs, 1).data.key, "app.name");
-    assert.equal(msg(msgs, 1).data.value, "newval");
-    assert.equal(msg(msgs, 1).data.revision, "rev-2");
+    expect(msgs.length).toBe(2); // snapshot + change
+    expect(msg(msgs, 1).event).toBe("change");
+    expect(msg(msgs, 1).data.key).toBe("app.name");
+    expect(msg(msgs, 1).data.value).toBe("newval");
+    expect(msg(msgs, 1).data.revision).toBe("rev-2");
     client.close();
   });
 
@@ -148,9 +150,9 @@ describe("SSEAdapter", () => {
     mock.emitDelta(makeDelta({ key: "db.host", value: "newhost" }));
     const msgs = parseMessages(client);
     // snapshot + 1 matching change (app.name filtered out)
-    assert.equal(msgs.length, 2);
-    assert.equal(msg(msgs, 1).event, "change");
-    assert.equal(msg(msgs, 1).data.key, "db.host");
+    expect(msgs.length).toBe(2);
+    expect(msg(msgs, 1).event).toBe("change");
+    expect(msg(msgs, 1).data.key).toBe("db.host");
     client.close();
   });
 
@@ -170,9 +172,9 @@ describe("SSEAdapter", () => {
     const checkpoints1 = msgs1.filter((m) => m.event === "checkpoint");
     const checkpoints2 = msgs2.filter((m) => m.event === "checkpoint");
 
-    assert.ok(checkpoints1.length >= 1, "client1 should receive checkpoints");
-    assert.ok(checkpoints2.length >= 1, "client2 should receive checkpoints");
-    assert.equal(msg(checkpoints1, 0).data.revision, "rev-5");
+    expect(checkpoints1.length >= 1).toBeTruthy();
+    expect(checkpoints2.length >= 1).toBeTruthy();
+    expect(msg(checkpoints1, 0).data.revision).toBe("rev-5");
 
     client1.close();
     client2.close();
@@ -180,26 +182,26 @@ describe("SSEAdapter", () => {
 
   it("removes client and stops receiving events", async () => {
     const client = await adapter.createClient();
-    assert.equal(adapter.clientCount, 1);
+    expect(adapter.clientCount).toBe(1);
     adapter.removeClient(client);
-    assert.equal(adapter.clientCount, 0);
+    expect(adapter.clientCount).toBe(0);
 
     mock.emitDelta(makeDelta());
     const msgs = parseMessages(client);
     // Only the initial snapshot, no change events after removal
-    assert.equal(msgs.length, 1);
+    expect(msgs.length).toBe(1);
   });
 
   it("closeAll disconnects all clients", async () => {
     const client1 = await adapter.createClient();
     const client2 = await adapter.createClient();
-    assert.equal(adapter.clientCount, 2);
+    expect(adapter.clientCount).toBe(2);
     adapter.closeAll();
-    assert.equal(adapter.clientCount, 0);
+    expect(adapter.clientCount).toBe(0);
 
     mock.emitDelta(makeDelta());
-    assert.equal(parseMessages(client1).length, 1); // only snapshot
-    assert.equal(parseMessages(client2).length, 1); // only snapshot
+    expect(parseMessages(client1).length).toBe(1); // only snapshot
+    expect(parseMessages(client2).length).toBe(1); // only snapshot
   });
 
   it("multiple clients with different filters receive correct events", async () => {
@@ -213,12 +215,12 @@ describe("SSEAdapter", () => {
     const dbMsgs = parseMessages(dbClient);
 
     // appClient: snapshot + app.name change
-    assert.equal(appMsgs.length, 2);
-    assert.equal(msg(appMsgs, 1).data.key, "app.name");
+    expect(appMsgs.length).toBe(2);
+    expect(msg(appMsgs, 1).data.key).toBe("app.name");
 
     // dbClient: snapshot + db.host change
-    assert.equal(dbMsgs.length, 2);
-    assert.equal(msg(dbMsgs, 1).data.key, "db.host");
+    expect(dbMsgs.length).toBe(2);
+    expect(msg(dbMsgs, 1).data.key).toBe("db.host");
 
     appClient.close();
     dbClient.close();
@@ -227,8 +229,8 @@ describe("SSEAdapter", () => {
   it("client with since parameter still gets snapshot (v1)", async () => {
     const client = await adapter.createClient({ since: "rev-42" });
     const msgs = parseMessages(client);
-    assert.equal(msgs.length, 1);
-    assert.equal(msg(msgs, 0).event, "snapshot");
+    expect(msgs.length).toBe(1);
+    expect(msg(msgs, 0).event).toBe("snapshot");
     client.close();
   });
 
@@ -243,13 +245,16 @@ describe("SSEAdapter", () => {
       mock.emitDelta(makeDelta({ key: "app.name", value: `v${i}` }));
     }
     // Buffer should be capped at 5
-    assert.equal(client.messages.length, 5);
+    expect(client.messages.length).toBe(5);
     // Oldest messages (snapshot + early changes) should be evicted
     const msgs = parseMessages(client);
     // Last message should be the most recent change
     const last = msgs.at(-1);
-    assert.ok(last);
-    assert.equal(last.data.value, "v5");
+    expect(last).toBeTruthy();
+    if (!last) {
+      throw new Error("Expected last SSE message");
+    }
+    expect(last.data.value).toBe("v5");
     client.close();
   });
 });

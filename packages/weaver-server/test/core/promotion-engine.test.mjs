@@ -1,5 +1,3 @@
-import { test, describe } from "node:test";
-import assert from "node:assert/strict";
 import { createPromotionEngine } from "../../src/core/promotion-engine.ts";
 import { createWeaverConfigService } from "../../src/core/config-service.ts";
 import { deepSet, deepRemove } from "@weaver-conf/config-engine";
@@ -41,8 +39,8 @@ describe("PromotionEngine", () => {
       actor: "admin",
     });
 
-    assert.equal(result.success, true);
-    assert.equal(result.method, "direct");
+    expect(result.success).toBe(true);
+    expect(result.method).toBe("direct");
   });
 
   test("promote returns NOT_FOUND for missing key", async () => {
@@ -61,8 +59,8 @@ describe("PromotionEngine", () => {
       actor: "admin",
     });
 
-    assert.equal(result.success, false);
-    assert.equal(result.error?.code, "NOT_FOUND");
+    expect(result.success).toBe(false);
+    expect(result.error?.code).toBe("NOT_FOUND");
   });
 
   test("promote rejects non-promotable layers", async () => {
@@ -81,8 +79,8 @@ describe("PromotionEngine", () => {
       actor: "admin",
     });
 
-    assert.equal(result.success, false);
-    assert.equal(result.error?.code, "POLICY_VIOLATION");
+    expect(result.success).toBe(false);
+    expect(result.error?.code).toBe("POLICY_VIOLATION");
   });
 
   test("direct promotion method writes value", async () => {
@@ -101,9 +99,9 @@ describe("PromotionEngine", () => {
       actor: "admin",
     });
 
-    assert.equal(result.success, true);
-    assert.equal(result.method, "direct");
+    expect(result.success).toBe(true);
+    expect(result.method).toBe("direct");
     const val = await configService.get("feature.flag");
-    assert.equal(val, true);
+    expect(val).toBe(true);
   });
 });

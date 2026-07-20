@@ -1,4 +1,3 @@
-import { test, expect, describe } from "bun:test";
 import { createFileSystemPersistence } from "../src/fs-persistence.js";
 import { mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
@@ -45,7 +44,7 @@ describe("FileSystemPersistence", () => {
     try {
       const p = createFileSystemPersistence({ directory: dir });
       const loaded = await p.load("nonexistent");
-      expect(loaded).toBeNull();
+      expect(loaded).toBe(null);
     } finally {
       rmSync(dir, { recursive: true });
     }

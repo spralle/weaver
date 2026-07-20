@@ -1,5 +1,3 @@
-import test from "node:test";
-import assert from "node:assert/strict";
 import { createLocalStorageProvider } from "../src/local-storage-provider.ts";
 
 /**
@@ -39,7 +37,7 @@ test("load returns empty entries for empty storage", async () => {
     storage,
   });
   const data = await provider.load();
-  assert.deepEqual(data.entries, {});
+  expect(data.entries).toEqual({});
 });
 
 test("load returns existing data from storage", async () => {
@@ -52,7 +50,7 @@ test("load returns existing data from storage", async () => {
     storage,
   });
   const data = await provider.load();
-  assert.deepEqual(data.entries, { theme: "dark" });
+  expect(data.entries).toEqual({ theme: "dark" });
 });
 
 test("load handles corrupt JSON gracefully", async () => {
@@ -65,7 +63,7 @@ test("load handles corrupt JSON gracefully", async () => {
     storage,
   });
   const data = await provider.load();
-  assert.deepEqual(data.entries, {});
+  expect(data.entries).toEqual({});
 });
 
 test("load handles non-object JSON gracefully", async () => {
@@ -78,7 +76,7 @@ test("load handles non-object JSON gracefully", async () => {
     storage,
   });
   const data = await provider.load();
-  assert.deepEqual(data.entries, {});
+  expect(data.entries).toEqual({});
 });
 
 test("write adds entry and persists", async () => {
@@ -90,9 +88,9 @@ test("write adds entry and persists", async () => {
     storage,
   });
   const result = await provider.write("theme", "light");
-  assert.equal(result.success, true);
+  expect(result.success).toBe(true);
   const data = await provider.load();
-  assert.equal(data.entries.theme, "light");
+  expect(data.entries.theme).toBe("light");
 });
 
 test("write persists across load calls", async () => {
@@ -113,8 +111,8 @@ test("write persists across load calls", async () => {
     storage,
   });
   const data = await provider2.load();
-  assert.equal(data.entries.a, 1);
-  assert.equal(data.entries.b, 2);
+  expect(data.entries.a).toBe(1);
+  expect(data.entries.b).toBe(2);
 });
 
 test("write handles QuotaExceededError", async () => {
@@ -135,8 +133,8 @@ test("write handles QuotaExceededError", async () => {
     storage,
   });
   const result = await provider.write("key", "value");
-  assert.equal(result.success, false);
-  assert.ok(result.error);
+  expect(result.success).toBe(false);
+  expect(result.error).toBeTruthy();
 });
 
 test("remove deletes entry", async () => {
@@ -149,10 +147,10 @@ test("remove deletes entry", async () => {
     storage,
   });
   const result = await provider.remove("a");
-  assert.equal(result.success, true);
+  expect(result.success).toBe(true);
   const data = await provider.load();
-  assert.equal(data.entries.a, undefined);
-  assert.equal(data.entries.b, 2);
+  expect(data.entries.a).toBe(undefined);
+  expect(data.entries.b).toBe(2);
 });
 
 test("writable is true", () => {
@@ -163,7 +161,7 @@ test("writable is true", () => {
     storageKey: "weaver-config",
     storage,
   });
-  assert.equal(provider.writable, true);
+  expect(provider.writable).toBe(true);
 });
 
 test("onExternalChange returns cleanup function in Node", () => {
@@ -175,6 +173,6 @@ test("onExternalChange returns cleanup function in Node", () => {
     storage,
   });
   const cleanup = provider.onExternalChange(() => {});
-  assert.equal(typeof cleanup, "function");
+  expect(typeof cleanup).toBe("function");
   cleanup();
 });

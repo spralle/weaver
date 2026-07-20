@@ -24,7 +24,7 @@ Use this location for:
 
 ## Running tests
 
-Both patterns are discovered and executed by `bun test`.
+Both patterns are discovered and executed by `pnpm run test`.
 
 ## Guidance for new tests
 

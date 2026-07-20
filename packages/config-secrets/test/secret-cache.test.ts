@@ -1,5 +1,3 @@
-import assert from "node:assert/strict";
-import { describe, it } from "node:test";
 import { createSecretCache, SecretCache } from "../src/secret-cache.js";
 
 describe("SecretCache", () => {
@@ -7,14 +5,17 @@ describe("SecretCache", () => {
     const cache = createSecretCache();
     cache.set("key1", "secret-value", "v1");
     const entry = cache.get("key1");
-    assert.ok(entry);
-    assert.equal(entry.value, "secret-value");
-    assert.equal(entry.version, "v1");
+    expect(entry).toBeTruthy();
+    if (!entry) {
+      throw new Error("Expected cache entry");
+    }
+    expect(entry.value).toBe("secret-value");
+    expect(entry.version).toBe("v1");
   });
 
   it("returns undefined for missing key", () => {
     const cache = createSecretCache();
-    assert.equal(cache.get("missing"), undefined);
+    expect(cache.get("missing")).toBe(undefined);
   });
 
   it("expires entries after TTL", () => {
@@ -25,7 +26,7 @@ describe("SecretCache", () => {
     while (Date.now() - start < 5) {
       /* spin */
     }
-    assert.equal(cache.get("key1"), undefined);
+    expect(cache.get("key1")).toBe(undefined);
   });
 
   it("evicts oldest entry when maxEntries exceeded", () => {
@@ -33,17 +34,17 @@ describe("SecretCache", () => {
     cache.set("a", "1");
     cache.set("b", "2");
     cache.set("c", "3");
-    assert.equal(cache.get("a"), undefined);
-    assert.ok(cache.get("b"));
-    assert.ok(cache.get("c"));
-    assert.equal(cache.size(), 2);
+    expect(cache.get("a")).toBe(undefined);
+    expect(cache.get("b")).toBeTruthy();
+    expect(cache.get("c")).toBeTruthy();
+    expect(cache.size()).toBe(2);
   });
 
   it("invalidate removes a single key", () => {
     const cache = createSecretCache();
     cache.set("k", "v");
     cache.invalidate("k");
-    assert.equal(cache.get("k"), undefined);
+    expect(cache.get("k")).toBe(undefined);
   });
 
   it("invalidateAll clears everything", () => {
@@ -51,7 +52,7 @@ describe("SecretCache", () => {
     cache.set("a", "1");
     cache.set("b", "2");
     cache.invalidateAll();
-    assert.equal(cache.size(), 0);
+    expect(cache.size()).toBe(0);
   });
 
   it("custom TTL per entry overrides default", () => {
@@ -61,6 +62,6 @@ describe("SecretCache", () => {
     while (Date.now() - start < 5) {
       /* spin */
     }
-    assert.equal(cache.get("short"), undefined);
+    expect(cache.get("short")).toBe(undefined);
   });
 });

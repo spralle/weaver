@@ -1,5 +1,3 @@
-import assert from "node:assert/strict";
-import { afterEach, beforeEach, describe, it } from "node:test";
 import type { WeaverClient } from "../src/client.js";
 import { createWeaverClient } from "../src/client.js";
 import type { LocalTransport } from "../src/local-transport.js";
@@ -32,15 +30,15 @@ describe("client↔server integration (local transport round-trip)", () => {
 
   it("should set and get a value round-trip", async () => {
     const result = await client.set("app.name", "Weaver");
-    assert.equal(result.success, true);
+    expect(result.success).toBe(true);
 
     const value = client.get<string>("app.name");
-    assert.equal(value, "Weaver");
+    expect(value).toBe("Weaver");
   });
 
   it("should get namespace values", () => {
     const ns = client.getNamespace("database");
-    assert.deepEqual(ns, { host: "localhost", port: 5432 });
+    expect(ns).toEqual({ host: "localhost", port: 5432 });
   });
 
   it("should reflect writes after delta notification", async () => {
@@ -56,7 +54,7 @@ describe("client↔server integration (local transport round-trip)", () => {
     });
 
     const value = client.get<string>("cache.redis.host");
-    assert.equal(value, "redis.local");
+    expect(value).toBe("redis.local");
   });
 
   it("should receive change deltas via subscription", () => {
@@ -74,27 +72,27 @@ describe("client↔server integration (local transport round-trip)", () => {
     };
     transport.pushDelta(delta);
 
-    assert.equal(received.length, 1);
-    assert.equal(received[0].key, "app.name");
-    assert.equal(received[0].value, "Updated");
+    expect(received.length).toBe(1);
+    expect(received[0].key).toBe("app.name");
+    expect(received[0].value).toBe("Updated");
   });
 
   it("should remove a value", async () => {
     const result = await client.remove("app.name");
-    assert.equal(result.success, true);
+    expect(result.success).toBe(true);
 
     const value = client.get("app.name");
-    assert.equal(value, undefined);
+    expect(value).toBe(undefined);
   });
 
   it("should report connected mode after boot", () => {
-    assert.equal(client.mode, "live");
-    assert.equal(client.connected, true);
+    expect(client.mode).toBe("live");
+    expect(client.connected).toBe(true);
   });
 
   it("should transition to disconnected on close", async () => {
     await client.close();
-    assert.equal(client.connected, false);
+    expect(client.connected).toBe(false);
     // Re-assign so afterEach doesn't double-close
     client = await createWeaverClient({
       transport: createLocalTransport({
@@ -113,7 +111,7 @@ describe("client↔server integration (local transport round-trip)", () => {
       "feature.a": true,
       "feature.b": false,
     });
-    assert.equal(result.success, true);
-    assert.ok(result.revision);
+    expect(result.success).toBe(true);
+    expect(result.revision).toBeTruthy();
   });
 });
