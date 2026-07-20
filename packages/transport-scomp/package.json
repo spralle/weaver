@@ -1,6 +1,6 @@
 {
   "name": "@weaver-conf/transport-scomp",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Shared SCOMP contract and client transport for Weaver configuration",
   "license": "MIT",
   "repository": {

@@ -1,5 +1,15 @@
 # @weaver-conf/storage-provider-static-json
 
+## 1.0.1
+
+### Patch Changes
+
+- [#145](https://github.com/surikaterna/weaver/pull/145) [`aea9c0c`](https://github.com/surikaterna/weaver/commit/aea9c0c38d49a75290bba0f562c249a3ccf85811) Thanks [@kennyek](https://github.com/kennyek)! - Replace bun with pnpm, vitest, and express.
+
+- Updated dependencies [[`aea9c0c`](https://github.com/surikaterna/weaver/commit/aea9c0c38d49a75290bba0f562c249a3ccf85811), [`53cfa8b`](https://github.com/surikaterna/weaver/commit/53cfa8b63597ef5e8fd285bc536b85f5eaf74fa6)]:
+  - @weaver-conf/config-engine@1.0.1
+  - @weaver-conf/config-types@1.0.1
+
 ## 1.0.0
 
 ### Major Changes
