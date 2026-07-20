@@ -39,11 +39,7 @@ jobs:
           title: "chore: version packages"
           commit: "chore: version packages"
         env:
-          # Repo/org policy can prevent the default GITHUB_TOKEN from creating
-          # release PRs. Configure CHANGESETS_TOKEN as a fine-grained PAT or
-          # GitHub App installation token with Contents: write and
-          # Pull requests: write for this repository.
-          GITHUB_TOKEN: ${{ secrets.CHANGESETS_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish to npm via Trusted Publishing
         if: steps.changesets.outputs.hasChangesets == 'false'

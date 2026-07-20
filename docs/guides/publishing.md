@@ -2,29 +2,23 @@
 
 Weaver uses Changesets to publish packages from the `Publish` GitHub Actions workflow.
 
-## Required GitHub secret
+## GitHub token
 
-Configure this repository secret:
+The workflow uses the default `GITHUB_TOKEN` for `changesets/action` to create and update release pull requests:
 
-- `CHANGESETS_TOKEN` — GitHub token used by `changesets/action` to create and update release pull requests.
+- `GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}`
 
-`CHANGESETS_TOKEN` must be either:
-
-- a fine-grained personal access token scoped to this repository, or
-- an already-minted GitHub App installation token.
-
-Required GitHub permissions:
+Workflow permissions:
 
 - Contents: read/write
 - Pull requests: read/write
+- ID token: write
 
-Do not use the default `GITHUB_TOKEN` for release PR creation when repository or organization policy disables "GitHub Actions can create and approve pull requests". In that configuration, GitHub returns:
+Repository settings must allow GitHub Actions to create pull requests. If that policy is disabled, release PR creation fails with:
 
 ```text
 GitHub Actions is not permitted to create or approve pull requests.
 ```
-
-The workflow deliberately reads `CHANGESETS_TOKEN` into the `GITHUB_TOKEN` environment variable because `changesets/action` expects that environment name.
 
 ## npm trusted publishing
 
@@ -54,16 +48,14 @@ On pushes to `main`, the workflow:
 1. installs dependencies with pnpm,
 2. builds the monorepo,
 3. creates/updates the Changesets release PR when changesets exist, or
-4. runs a separate `npm publish --access public --workspaces --if-present` step through trusted publishing when the release PR has been merged.
+4. runs `npx changeset publish` through trusted publishing when the release PR has been merged.
 
 The workflow uses `actions/checkout@v5` to avoid Node.js 20 action-runtime deprecation warnings.
 
-## Relation to scheman
+## Relation to scomp
 
-The release workflow follows the same trusted-publishing structure as `../scheman`:
+The release workflow follows the same trusted-publishing structure as `../scomp`:
 
 1. `changesets/action` is responsible for version PR creation only.
-2. npm publishing happens in a separate `npm publish --access public --workspaces --if-present` step.
+2. npm publishing happens in a separate `npx changeset publish` step.
 3. `actions/setup-node` configures the npm registry before publishing.
-
-Weaver differs only in using `CHANGESETS_TOKEN` for the Changesets step because this repository policy prevents the default `GITHUB_TOKEN` from creating pull requests.
