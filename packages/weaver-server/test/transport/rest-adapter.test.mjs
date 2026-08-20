@@ -143,8 +143,33 @@ describe("RestAdapter v1", () => {
 
   test("CORS headers when configured", async () => {
     const { adapter } = await setup({ corsOrigins: ["http://localhost:3000"] });
-    const res = await adapter.handleRequest("GET", "/v1/config", req());
-    expect(res.headers["Access-Control-Allow-Origin"]).toBeTruthy();
+    const res = await adapter.handleRequest(
+      "GET",
+      "/v1/config",
+      req({ headers: { origin: "http://localhost:3000" } }),
+    );
+    expect(res.headers["Access-Control-Allow-Origin"]).toBe(
+      "http://localhost:3000",
+    );
+  });
+
+  test("OPTIONS responds with CORS headers", async () => {
+    const { adapter } = await setup({ corsOrigins: ["*"] });
+    const res = await adapter.handleRequest(
+      "OPTIONS",
+      "/v1/config",
+      req({
+        headers: {
+          origin: "http://localhost:3000",
+          "access-control-request-headers": "Authorization, Content-Type",
+        },
+      }),
+    );
+    expect(res.status).toBe(204);
+    expect(res.headers["Access-Control-Allow-Origin"]).toBe("*");
+    expect(res.headers["Access-Control-Allow-Headers"]).toBe(
+      "Authorization, Content-Type",
+    );
   });
 
   test("scope routes return envelope", async () => {

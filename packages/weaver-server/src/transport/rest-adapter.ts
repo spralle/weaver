@@ -82,6 +82,28 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
     path: string,
     req: RestRequest,
   ): Promise<RestResponse> {
+    if (method === "OPTIONS") {
+      const rev = configService.revision;
+      const responseHeaders = v1Headers(rev);
+
+      if (corsOrigins?.length) {
+        Object.assign(
+          responseHeaders,
+          corsHeaders(
+            corsOrigins,
+            req.headers.origin,
+            req.headers["access-control-request-headers"],
+          ),
+        );
+      }
+
+      return {
+        status: 204,
+        body: null,
+        headers: responseHeaders,
+      };
+    }
+
     const match = findRoute(method, path);
     if (!match) {
       const rev = configService.revision;
@@ -103,7 +125,10 @@ export function createRestAdapter(options: RestAdapterOptions): RestAdapter {
     try {
       const response = await match.route.handler(fullReq);
       if (corsOrigins?.length) {
-        response.headers = { ...response.headers, ...corsHeaders(corsOrigins) };
+        response.headers = {
+          ...response.headers,
+          ...corsHeaders(corsOrigins, req.headers.origin),
+        };
       }
       return response;
     } catch (err: unknown) {

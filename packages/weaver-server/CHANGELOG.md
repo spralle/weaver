@@ -1,5 +1,11 @@
 # @weaver-conf/weaver-server
 
+## 0.1.1
+
+### Patch Changes
+
+- Fix CORS handling in weaver-server.
+
 ## 1.0.1
 
 ### Patch Changes
