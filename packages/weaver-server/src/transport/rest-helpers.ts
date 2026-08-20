@@ -41,11 +41,34 @@ export function matchPath(
   return params;
 }
 
-export function corsHeaders(origins: string[]): Record<string, string> {
+const defaultCorsMethods = "GET, POST, PUT, PATCH, DELETE, OPTIONS";
+const defaultCorsHeaders = "Content-Type, Authorization";
+
+export function corsHeaders(
+  origins: string[],
+  requestOrigin?: string,
+  requestHeaders?: string,
+): Record<string, string> {
+  const normalizedOrigin = requestOrigin?.trim();
+  const allowAnyOrigin = origins.includes("*");
+
+  if (allowAnyOrigin) {
+    return {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": defaultCorsMethods,
+      "Access-Control-Allow-Headers": requestHeaders ?? defaultCorsHeaders,
+    };
+  }
+
+  if (!normalizedOrigin || !origins.includes(normalizedOrigin)) {
+    return {};
+  }
+
   return {
-    "Access-Control-Allow-Origin": origins.join(", "),
-    "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Origin": normalizedOrigin,
+    Vary: "Origin",
+    "Access-Control-Allow-Methods": defaultCorsMethods,
+    "Access-Control-Allow-Headers": requestHeaders ?? defaultCorsHeaders,
   };
 }
 

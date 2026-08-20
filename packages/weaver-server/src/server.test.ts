@@ -110,6 +110,80 @@ describe("Weaver server error handling", () => {
   });
 });
 
+describe("Weaver server CORS", () => {
+  it("echoes a matching configured origin on GET requests", async () => {
+    const server = await startWeaverServer({
+      port: 0,
+      corsOrigins: ["http://localhost:3390"],
+      providers: [
+        createInMemoryStorageProvider({
+          id: "test",
+          layer: "platform",
+          initialEntries: { app: { name: "Weaver" } },
+        }),
+      ],
+    });
+
+    try {
+      const response = await fetch(
+        `http://localhost:${server.port}/v1/config`,
+        {
+          headers: {
+            Origin: "http://localhost:3390",
+          },
+        },
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get("access-control-allow-origin")).toBe(
+        "http://localhost:3390",
+      );
+      expect(response.headers.get("vary")).toBe("Origin");
+    } finally {
+      await server.close();
+    }
+  });
+
+  it("returns wildcard CORS headers for OPTIONS when '*' is configured", async () => {
+    const server = await startWeaverServer({
+      port: 0,
+      corsOrigins: ["*"],
+      providers: [
+        createInMemoryStorageProvider({
+          id: "test",
+          layer: "platform",
+          initialEntries: { app: { name: "Weaver" } },
+        }),
+      ],
+    });
+
+    try {
+      const response = await fetch(
+        `http://localhost:${server.port}/v1/config`,
+        {
+          method: "OPTIONS",
+          headers: {
+            Origin: "http://localhost:3390",
+            "Access-Control-Request-Method": "GET",
+            "Access-Control-Request-Headers": "Authorization, Content-Type",
+          },
+        },
+      );
+
+      expect(response.status).toBe(204);
+      expect(response.headers.get("access-control-allow-origin")).toBe("*");
+      expect(response.headers.get("access-control-allow-methods")).toContain(
+        "OPTIONS",
+      );
+      expect(response.headers.get("access-control-allow-headers")).toBe(
+        "Authorization, Content-Type",
+      );
+    } finally {
+      await server.close();
+    }
+  });
+});
+
 describe("Weaver server bootstrap", () => {
   it("uses bootstrap providers from a configured Git repository", async () => {
     const { repoPath, rootPath } = await createBootstrapRepo();
