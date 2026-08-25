@@ -8,14 +8,6 @@
   - @weaver-conf/config-types@0.1.1
   - @weaver-conf/config-engine@0.1.1
 
-## 0.1.1
-
-### Patch Changes
-
-- Updated dependencies [[`f2abae4`](https://github.com/spralle/weaver/commit/f2abae4c382dab04bb7e6cf7bb9b96df7cd783f4), [`f2abae4`](https://github.com/spralle/weaver/commit/f2abae4c382dab04bb7e6cf7bb9b96df7cd783f4)]:
-  - @weaver-conf/config-types@1.0.0
-  - @weaver-conf/config-engine@1.0.0
-
 ## 0.1.0
 
 ### Minor Changes
