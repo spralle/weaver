@@ -39,7 +39,7 @@ test("write adds entries", async () => {
   const result = await provider.write("ghost.app.zoom", 5);
   expect(result.success).toBe(true);
   const data = await provider.load();
-  expect(data.entries["ghost.app.zoom"]).toBe(5);
+  expect(data.entries.ghost.app.zoom).toBe(5);
 });
 
 test("write overwrites existing entries", async () => {

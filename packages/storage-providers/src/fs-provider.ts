@@ -70,8 +70,16 @@ export class FileSystemStorageProvider implements ConfigurationStorageProvider {
   }
 
   async load(): Promise<ConfigurationLayerData> {
-    let entries = await this.readJsonFile(this.filePath);
-    const revision = await this.getRevision(this.filePath);
+    return this.loadLayer(this.layer);
+  }
+
+  async loadLayer(layer: string): Promise<ConfigurationLayerData> {
+    const path =
+      layer === this.layer
+        ? this.filePath
+        : `${this.filePath}.${encodeURIComponent(layer)}.json`;
+    let entries = await this.readJsonFile(path);
+    const revision = await this.getRevision(path);
 
     if (this.envOverlayPath) {
       const overlay = await this.readJsonFile(this.envOverlayPath);
@@ -86,6 +94,14 @@ export class FileSystemStorageProvider implements ConfigurationStorageProvider {
   }
 
   async write(key: string, value: unknown): Promise<WriteResult> {
+    return this.writeLayer(this.layer, key, value);
+  }
+
+  async writeLayer(
+    layer: string,
+    key: string,
+    value: unknown,
+  ): Promise<WriteResult> {
     if (!this.writable) {
       return {
         success: false,
@@ -94,17 +110,26 @@ export class FileSystemStorageProvider implements ConfigurationStorageProvider {
     }
     validateStorageKey(key);
 
-    const entries = await this.readJsonFile(this.filePath);
+    const path =
+      layer === this.layer
+        ? this.filePath
+        : `${this.filePath}.${encodeURIComponent(layer)}.json`;
+
+    const entries = await this.readJsonFile(path);
     deepSet(entries, key, value);
-    await this.atomicWrite(this.filePath, entries);
+    await this.atomicWrite(path, entries);
 
     this.snapshot = JSON.parse(JSON.stringify(entries));
 
-    const revision = await this.getRevision(this.filePath);
+    const revision = await this.getRevision(path);
     return { success: true, revision };
   }
 
   async remove(key: string): Promise<WriteResult> {
+    return this.removeLayer(this.layer, key);
+  }
+
+  async removeLayer(layer: string, key: string): Promise<WriteResult> {
     if (!this.writable) {
       return {
         success: false,
@@ -113,13 +138,18 @@ export class FileSystemStorageProvider implements ConfigurationStorageProvider {
     }
     validateStorageKey(key);
 
-    const entries = await this.readJsonFile(this.filePath);
+    const path =
+      layer === this.layer
+        ? this.filePath
+        : `${this.filePath}.${encodeURIComponent(layer)}.json`;
+
+    const entries = await this.readJsonFile(path);
     deepRemove(entries, key);
-    await this.atomicWrite(this.filePath, entries);
+    await this.atomicWrite(path, entries);
 
     this.snapshot = JSON.parse(JSON.stringify(entries));
 
-    const revision = await this.getRevision(this.filePath);
+    const revision = await this.getRevision(path);
     return { success: true, revision };
   }
 

@@ -86,7 +86,7 @@ test("flush() calls gitManager.commitAndPush() with dirty files", async () => {
 
   expect(gitManager.calls.length).toBe(1);
   expect(gitManager.calls[0][0]).toBe("commitAndPush");
-  expect(gitManager.calls[0][1]).toBe("config: set key1");
+  expect(gitManager.calls[0][1]).toBe("config: set defaults:key1");
   expect(gitManager.calls[0][2]).toEqual(["config.json"]);
   expect(provider.dirty).toBe(false);
 });

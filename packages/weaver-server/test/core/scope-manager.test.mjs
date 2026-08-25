@@ -87,4 +87,57 @@ describe("ScopeManager", () => {
     expect(result.success).toBe(false);
     expect(result.error?.code).toBe("VALIDATION_ERROR");
   });
+
+  test("provision persists marker via base scoped provider", async () => {
+    const writes = [];
+    const scopedEntries = new Map();
+    const tenantBaseProvider = {
+      id: "tenant-base",
+      layer: "tenant",
+      writable: true,
+      async load() {
+        return { entries: {} };
+      },
+      async loadLayer(layer) {
+        return { entries: { ...(scopedEntries.get(layer) ?? {}) } };
+      },
+      async write(_key, _value) {
+        return { success: true };
+      },
+      async writeLayer(layer, key, value) {
+        writes.push([layer, key, value]);
+        const entries = { ...(scopedEntries.get(layer) ?? {}) };
+        entries[key] = value;
+        scopedEntries.set(layer, entries);
+        return { success: true };
+      },
+      async remove(_key) {
+        return { success: true };
+      },
+      async removeLayer(layer, key) {
+        const entries = { ...(scopedEntries.get(layer) ?? {}) };
+        delete entries[key];
+        scopedEntries.set(layer, entries);
+        return { success: true };
+      },
+    };
+
+    const configService = await createWeaverConfigService({
+      providers: [createTestProvider("p1", "platform", {}), tenantBaseProvider],
+      environment: "dev",
+    });
+    const schemaRegistry = createSchemaRegistry({ configService });
+    const sm = createScopeManager({ configService, schemaRegistry });
+
+    const result = await sm.provision({
+      scopeId: "tenant",
+      value: "acme",
+      actor: "admin",
+    });
+
+    expect(result.success).toBe(true);
+    expect(writes).toEqual([
+      ["tenant:acme", "_weaver.scope.tenant", "acme"],
+    ]);
+  });
 });

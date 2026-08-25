@@ -269,4 +269,84 @@ describe("Weaver server bootstrap", () => {
     ).rejects.toThrow();
     expect(disposeCalled).toBe(true);
   });
+
+  it("routes tenant:<id> writes to matching scoped providers", async () => {
+    const server = await startWeaverServer({
+      port: 0,
+      providers: [
+        createInMemoryStorageProvider({
+          id: "platform",
+          layer: "platform",
+          initialEntries: { app: { theme: "light" } },
+        }),
+        createInMemoryStorageProvider({
+          id: "tenant-surikat",
+          layer: "tenant:surikat",
+          initialEntries: {},
+        }),
+      ],
+    });
+
+    try {
+      const writeResponse = await fetch(
+        `http://localhost:${server.port}/v1/config/app/theme?layer=tenant:surikat`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ value: "dark" }),
+        },
+      );
+      expect(writeResponse.status).toBe(200);
+
+      const scopedReadResponse = await fetch(
+        `http://localhost:${server.port}/v1/config/app/theme?scope=tenant:surikat`,
+      );
+      const scopedBody = await scopedReadResponse.json();
+
+      expect(scopedReadResponse.status).toBe(200);
+      expect(readEnvelopeValue(scopedBody)).toBe("dark");
+    } finally {
+      await server.close();
+    }
+  });
+
+  it("supports tenant:<id> writes without predeclared tenant provider", async () => {
+    const server = await startWeaverServer({
+      port: 0,
+      providers: [
+        createInMemoryStorageProvider({
+          id: "platform",
+          layer: "platform",
+          initialEntries: { app: { theme: "light" } },
+        }),
+        createInMemoryStorageProvider({
+          id: "tenant-base",
+          layer: "tenant",
+          initialEntries: {},
+        }),
+      ],
+    });
+
+    try {
+      const writeResponse = await fetch(
+        `http://localhost:${server.port}/v1/config/app/theme?layer=tenant:surikat`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ value: "dark" }),
+        },
+      );
+      expect(writeResponse.status).toBe(200);
+
+      const scopedReadResponse = await fetch(
+        `http://localhost:${server.port}/v1/config/app/theme?scope=tenant:surikat`,
+      );
+      const scopedBody = await scopedReadResponse.json();
+
+      expect(scopedReadResponse.status).toBe(200);
+      expect(readEnvelopeValue(scopedBody)).toBe("dark");
+    } finally {
+      await server.close();
+    }
+  });
 });
