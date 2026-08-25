@@ -58,6 +58,12 @@ export function getEquivalentScopeLayers(layer: string): string[] {
   ];
 }
 
+export function normalizeScopeLayer(layer: string): string {
+  const parsed = parseScopeLayer(layer);
+  if (!parsed) return layer;
+  return formatColonScopeLayer(parsed.scopeId, parsed.value);
+}
+
 export function buildScopePathString(scopePath: ScopeInstance[]): string {
   return formatScopePath(scopePath);
 }

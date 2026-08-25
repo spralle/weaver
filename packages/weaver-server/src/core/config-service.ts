@@ -25,6 +25,7 @@ import {
   getEquivalentScopeLayers,
   isSameScopeLayer,
   isScopedLayer,
+  normalizeScopeLayer,
   parseScopeLayer,
 } from "./scope-utils";
 
@@ -395,7 +396,11 @@ export async function createWeaverConfigService(
       let result: WriteResult;
       if (isDynamicScopedLayer) {
         if (hasScopedLayerIo(provider)) {
-          result = await provider.writeLayer(layer, key, value);
+          result = await provider.writeLayer(
+            normalizeScopeLayer(layer),
+            key,
+            value,
+          );
         } else {
           return {
             success: false,
@@ -482,7 +487,7 @@ export async function createWeaverConfigService(
       let result: WriteResult;
       if (isDynamicScopedLayer) {
         if (hasScopedLayerIo(provider)) {
-          result = await provider.removeLayer(layer, key);
+          result = await provider.removeLayer(normalizeScopeLayer(layer), key);
         } else {
           return {
             success: false,

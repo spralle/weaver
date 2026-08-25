@@ -78,18 +78,16 @@ export function createScopeManager(options: ScopeManagerOptions): ScopeManager {
 
       const scopeLayer = `${scopeId}:${value}`;
       const provider = configService.providers.find(
-        (p) => p.layer === scopeLayer || isSameScopeLayer(p.layer, scopeLayer),
+        (p) =>
+          p.layer === scopeLayer ||
+          isSameScopeLayer(p.layer, scopeLayer) ||
+          p.layer === scopeId,
       );
       if (provider) {
-        await configService.set(
-          provider.layer,
-          `_weaver.scope.${scopeId}`,
-          value,
-          {
-            environment: "default",
-            actor,
-          },
-        );
+        await configService.set(scopeLayer, `_weaver.scope.${scopeId}`, value, {
+          environment: "default",
+          actor,
+        });
       }
 
       if (!activeScopes.has(scopeId)) {
