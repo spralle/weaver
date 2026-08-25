@@ -1,26 +1,22 @@
 import type { ScopeInstance } from "@weaver-conf/config-types";
 import { formatScopePath } from "@weaver-conf/config-types";
 
-const BRACKET_SCOPE_LAYER_PATTERN = /^([^[\]:]+)\[key=([^\]]+)\]$/;
-
 export interface ParsedScopeLayer {
   scopeId: string;
   value: string;
 }
 
 export function parseScopeLayer(layer: string): ParsedScopeLayer | null {
-  const bracketMatch = BRACKET_SCOPE_LAYER_PATTERN.exec(layer);
-  if (bracketMatch) {
-    const [, scopeId, value] = bracketMatch;
-    if (!scopeId || !value) return null;
-    return { scopeId, value };
-  }
-
   const colonIdx = layer.indexOf(":");
-  if (colonIdx === -1) return null;
+  if (colonIdx <= 0 || colonIdx === layer.length - 1) return null;
+
+  const scopeId = layer.slice(0, colonIdx);
+  const value = layer.slice(colonIdx + 1);
+  if (!scopeId || !value) return null;
+
   return {
-    scopeId: layer.slice(0, colonIdx),
-    value: layer.slice(colonIdx + 1),
+    scopeId,
+    value,
   };
 }
 
@@ -38,24 +34,8 @@ export function isSameScopeLayer(left: string, right: string): boolean {
   );
 }
 
-export function formatBracketScopeLayer(
-  scopeId: string,
-  value: string,
-): string {
-  return `${scopeId}[key=${value}]`;
-}
-
 export function formatColonScopeLayer(scopeId: string, value: string): string {
   return `${scopeId}:${value}`;
-}
-
-export function getEquivalentScopeLayers(layer: string): string[] {
-  const parsed = parseScopeLayer(layer);
-  if (!parsed) return [layer];
-  return [
-    formatColonScopeLayer(parsed.scopeId, parsed.value),
-    formatBracketScopeLayer(parsed.scopeId, parsed.value),
-  ];
 }
 
 export function normalizeScopeLayer(layer: string): string {

@@ -270,7 +270,7 @@ describe("Weaver server bootstrap", () => {
     expect(disposeCalled).toBe(true);
   });
 
-  it("routes tenant[key=...] writes to equivalent tenant:<id> providers", async () => {
+  it("routes tenant:<id> writes to matching scoped providers", async () => {
     const server = await startWeaverServer({
       port: 0,
       providers: [
@@ -289,7 +289,7 @@ describe("Weaver server bootstrap", () => {
 
     try {
       const writeResponse = await fetch(
-        `http://localhost:${server.port}/v1/config/app/theme?layer=tenant%5Bkey%3Dsurikat%5D`,
+        `http://localhost:${server.port}/v1/config/app/theme?layer=tenant:surikat`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -310,7 +310,7 @@ describe("Weaver server bootstrap", () => {
     }
   });
 
-  it("supports tenant[key=...] writes without predeclared tenant provider", async () => {
+  it("supports tenant:<id> writes without predeclared tenant provider", async () => {
     const server = await startWeaverServer({
       port: 0,
       providers: [
@@ -329,7 +329,7 @@ describe("Weaver server bootstrap", () => {
 
     try {
       const writeResponse = await fetch(
-        `http://localhost:${server.port}/v1/config/app/theme?layer=tenant%5Bkey%3Dsurikat%5D`,
+        `http://localhost:${server.port}/v1/config/app/theme?layer=tenant:surikat`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },

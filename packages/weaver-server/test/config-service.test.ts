@@ -60,6 +60,251 @@ describe("WeaverConfigService", () => {
     expect(deltas.length).toBe(1);
   });
 
+  it("updates revision for dynamic scoped writes", async () => {
+    const scopedEntries = new Map<string, Record<string, unknown>>();
+    const tenantBaseProvider = {
+      id: "tenant-base",
+      layer: "tenant",
+      writable: true as const,
+      async load() {
+        return { entries: {} };
+      },
+      async loadLayer(layer: string) {
+        return { entries: { ...(scopedEntries.get(layer) ?? {}) } };
+      },
+      async write(_key: string, _value: unknown) {
+        return { success: true } as const;
+      },
+      async writeLayer(layer: string, key: string, value: unknown) {
+        const entries = { ...(scopedEntries.get(layer) ?? {}) };
+        entries[key] = value;
+        scopedEntries.set(layer, entries);
+        return { success: true } as const;
+      },
+      async remove(_key: string) {
+        return { success: true } as const;
+      },
+      async removeLayer(layer: string, key: string) {
+        const entries = { ...(scopedEntries.get(layer) ?? {}) };
+        delete entries[key];
+        scopedEntries.set(layer, entries);
+        return { success: true } as const;
+      },
+    };
+    const platformProvider = createInMemoryStorageProvider({
+      id: "platform",
+      layer: "platform",
+      initialEntries: {},
+    });
+    const svc = await createWeaverConfigService({
+      providers: [platformProvider, tenantBaseProvider],
+      environment: "test",
+    });
+
+    const oldRev = svc.revision;
+    const setResult = await svc.set("tenant:surikat", "app.theme", "dark");
+
+    expect(setResult.success).toBe(true);
+    expect(svc.revision).not.toBe(oldRev);
+  });
+
+  it("updates revision for dynamic scoped removes", async () => {
+    const scopedEntries = new Map<string, Record<string, unknown>>();
+    scopedEntries.set("tenant:surikat", { "app.theme": "dark" });
+
+    const tenantBaseProvider = {
+      id: "tenant-base",
+      layer: "tenant",
+      writable: true as const,
+      async load() {
+        return { entries: {} };
+      },
+      async loadLayer(layer: string) {
+        return { entries: { ...(scopedEntries.get(layer) ?? {}) } };
+      },
+      async write(_key: string, _value: unknown) {
+        return { success: true } as const;
+      },
+      async writeLayer(layer: string, key: string, value: unknown) {
+        const entries = { ...(scopedEntries.get(layer) ?? {}) };
+        entries[key] = value;
+        scopedEntries.set(layer, entries);
+        return { success: true } as const;
+      },
+      async remove(_key: string) {
+        return { success: true } as const;
+      },
+      async removeLayer(layer: string, key: string) {
+        const entries = { ...(scopedEntries.get(layer) ?? {}) };
+        delete entries[key];
+        scopedEntries.set(layer, entries);
+        return { success: true } as const;
+      },
+    };
+    const platformProvider = createInMemoryStorageProvider({
+      id: "platform",
+      layer: "platform",
+      initialEntries: {},
+    });
+    const svc = await createWeaverConfigService({
+      providers: [platformProvider, tenantBaseProvider],
+      environment: "test",
+    });
+
+    await svc.set("tenant:surikat", "app.theme", "dark");
+    const revBeforeRemove = svc.revision;
+    const removeResult = await svc.remove("tenant:surikat", "app.theme");
+
+    expect(removeResult.success).toBe(true);
+    expect(svc.revision).not.toBe(revBeforeRemove);
+  });
+
+  it("reports canonical dynamic scoped layers in inspect output", async () => {
+    const scopedEntries = new Map<string, Record<string, unknown>>();
+    const tenantBaseProvider = {
+      id: "tenant-base",
+      layer: "tenant",
+      writable: true as const,
+      async load() {
+        return { entries: {} };
+      },
+      async loadLayer(layer: string) {
+        return { entries: { ...(scopedEntries.get(layer) ?? {}) } };
+      },
+      async write(_key: string, _value: unknown) {
+        return { success: true } as const;
+      },
+      async writeLayer(layer: string, key: string, value: unknown) {
+        const entries = { ...(scopedEntries.get(layer) ?? {}) };
+        entries[key] = value;
+        scopedEntries.set(layer, entries);
+        return { success: true } as const;
+      },
+      async remove(_key: string) {
+        return { success: true } as const;
+      },
+      async removeLayer(layer: string, key: string) {
+        const entries = { ...(scopedEntries.get(layer) ?? {}) };
+        delete entries[key];
+        scopedEntries.set(layer, entries);
+        return { success: true } as const;
+      },
+    };
+    const platformProvider = createInMemoryStorageProvider({
+      id: "platform",
+      layer: "platform",
+      initialEntries: {},
+    });
+    const svc = await createWeaverConfigService({
+      providers: [platformProvider, tenantBaseProvider],
+      environment: "test",
+    });
+
+    await svc.set("tenant:surikat", "app.theme", "dark");
+    const inspection = await svc.inspect("app.theme");
+
+    expect(inspection.layerValues["tenant:surikat"]).toBe("dark");
+    expect(inspection.effectiveLayer).toBe("tenant:surikat");
+  });
+
+  it("uses canonical dynamic scoped layers in resolveAll scopes", async () => {
+    const scopedEntries = new Map<string, Record<string, unknown>>();
+    const tenantBaseProvider = {
+      id: "tenant-base",
+      layer: "tenant",
+      writable: true as const,
+      async load() {
+        return { entries: {} };
+      },
+      async loadLayer(layer: string) {
+        return { entries: { ...(scopedEntries.get(layer) ?? {}) } };
+      },
+      async write(_key: string, _value: unknown) {
+        return { success: true } as const;
+      },
+      async writeLayer(layer: string, key: string, value: unknown) {
+        const entries = { ...(scopedEntries.get(layer) ?? {}) };
+        entries[key] = value;
+        scopedEntries.set(layer, entries);
+        return { success: true } as const;
+      },
+      async remove(_key: string) {
+        return { success: true } as const;
+      },
+      async removeLayer(layer: string, key: string) {
+        const entries = { ...(scopedEntries.get(layer) ?? {}) };
+        delete entries[key];
+        scopedEntries.set(layer, entries);
+        return { success: true } as const;
+      },
+    };
+    const platformProvider = createInMemoryStorageProvider({
+      id: "platform",
+      layer: "platform",
+      initialEntries: {},
+    });
+    const svc = await createWeaverConfigService({
+      providers: [platformProvider, tenantBaseProvider],
+      environment: "test",
+    });
+
+    await svc.set("tenant:surikat", "app.theme", "dark");
+    const snapshot = await svc.resolveAll();
+
+    expect(snapshot.scopes["tenant:surikat"]).toEqual({ app: { theme: "dark" } });
+  });
+
+  it("warms dynamic scope cache from one normalized load", async () => {
+    const loadLayerCalls: string[] = [];
+    const tenantBaseProvider = {
+      id: "tenant-base",
+      layer: "tenant",
+      writable: true as const,
+      async load() {
+        return { entries: {} };
+      },
+      async loadLayer(layer: string) {
+        loadLayerCalls.push(layer);
+        if (layer === "tenant:surikat") {
+          return { entries: { app: { theme: "dark" } } };
+        }
+        return { entries: {} };
+      },
+      async write(_key: string, _value: unknown) {
+        return { success: true } as const;
+      },
+      async writeLayer(_layer: string, _key: string, _value: unknown) {
+        return { success: true } as const;
+      },
+      async remove(_key: string) {
+        return { success: true } as const;
+      },
+      async removeLayer(_layer: string, _key: string) {
+        return { success: true } as const;
+      },
+    };
+    const platformProvider = createInMemoryStorageProvider({
+      id: "platform",
+      layer: "platform",
+      initialEntries: { app: { theme: "light" } },
+    });
+    const svc = await createWeaverConfigService({
+      providers: [platformProvider, tenantBaseProvider],
+      environment: "test",
+    });
+
+    const val = await svc.get("app.theme", {
+      scopePath: [{ scopeId: "tenant", value: "surikat" }],
+    });
+    expect(val).toBe("dark");
+
+    await svc.get("app.theme", {
+      scopePath: [{ scopeId: "tenant", value: "surikat" }],
+    });
+
+    expect(loadLayerCalls).toEqual(["tenant:surikat"]);
+  });
+
   it("rejects write with stale revision", async () => {
     const svc = await makeService({});
     const result = await svc.set("app", "k", "v", {

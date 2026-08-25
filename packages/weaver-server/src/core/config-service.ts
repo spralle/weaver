@@ -22,7 +22,6 @@ import type {
 import { createResolutionPipeline } from "./resolution-pipeline";
 import {
   buildScopePathString,
-  getEquivalentScopeLayers,
   isSameScopeLayer,
   isScopedLayer,
   normalizeScopeLayer,
@@ -135,12 +134,12 @@ export async function createWeaverConfigService(
       if (provider.layer === layer) return provider;
     }
 
+    const parsed = parseScopeLayer(layer);
+    if (!parsed) return undefined;
+
     for (const provider of providers) {
       if (isSameScopeLayer(provider.layer, layer)) return provider;
     }
-
-    const parsed = parseScopeLayer(layer);
-    if (!parsed) return undefined;
 
     return providers.find((provider) => provider.layer === parsed.scopeId);
   }
@@ -149,22 +148,15 @@ export async function createWeaverConfigService(
     if (!scopePath?.length) return;
 
     for (const scope of scopePath) {
-      const equivalentScopeLayers = getEquivalentScopeLayers(
-        `${scope.scopeId}:${scope.value}`,
-      );
+      const normalizedScopeLayer = `${scope.scopeId}:${scope.value}`;
 
       for (const provider of providers) {
         if (!hasScopedLayerIo(provider)) continue;
+        if (provider.layer !== scope.scopeId) continue;
+        if (dynamicScopeEntries.has(normalizedScopeLayer)) continue;
 
-        for (const scopedLayer of equivalentScopeLayers) {
-          const parsedScopedLayer = parseScopeLayer(scopedLayer);
-          if (!parsedScopedLayer) continue;
-          if (provider.layer !== parsedScopedLayer.scopeId) continue;
-          if (dynamicScopeEntries.has(scopedLayer)) continue;
-
-          const data = await provider.loadLayer(scopedLayer);
-          dynamicScopeEntries.set(scopedLayer, data.entries);
-        }
+        const data = await provider.loadLayer(normalizedScopeLayer);
+        dynamicScopeEntries.set(normalizedScopeLayer, data.entries);
       }
     }
   }
@@ -182,24 +174,20 @@ export async function createWeaverConfigService(
   function getScopeState(scopePath: ScopeInstance[]): Record<string, unknown> {
     let merged: Record<string, unknown> = {};
     for (const scope of scopePath) {
-      const equivalentScopeLayers = getEquivalentScopeLayers(
-        `${scope.scopeId}:${scope.value}`,
-      );
-      for (const scopedLayer of equivalentScopeLayers) {
-        for (const provider of providers) {
-          if (
-            provider.layer === scopedLayer ||
-            isSameScopeLayer(provider.layer, scopedLayer)
-          ) {
-            const entries = layerData.get(provider.id) ?? {};
-            merged = deepMerge(merged, entries);
-          }
+      const scopedLayer = `${scope.scopeId}:${scope.value}`;
+      for (const provider of providers) {
+        if (
+          provider.layer === scopedLayer ||
+          isSameScopeLayer(provider.layer, scopedLayer)
+        ) {
+          const entries = layerData.get(provider.id) ?? {};
+          merged = deepMerge(merged, entries);
         }
+      }
 
-        const dynamicEntries = dynamicScopeEntries.get(scopedLayer);
-        if (dynamicEntries) {
-          merged = deepMerge(merged, dynamicEntries);
-        }
+      const dynamicEntries = dynamicScopeEntries.get(scopedLayer);
+      if (dynamicEntries) {
+        merged = deepMerge(merged, dynamicEntries);
       }
     }
     return merged;
@@ -218,8 +206,9 @@ export async function createWeaverConfigService(
 
     for (const [layer, entries] of dynamicScopeEntries) {
       if (!isScopedLayer(layer)) continue;
-      scopes[layer] = {
-        ...(scopes[layer] ?? {}),
+      const normalizedLayer = normalizeScopeLayer(layer);
+      scopes[normalizedLayer] = {
+        ...(scopes[normalizedLayer] ?? {}),
         ...entries,
       };
     }
@@ -235,8 +224,15 @@ export async function createWeaverConfigService(
     return deepMerge(base, getScopeState(scopePath));
   }
 
+  function getRevisionState(): Record<string, unknown> {
+    return {
+      base: getBaseEntries(),
+      scopes: getAllScopes(),
+    };
+  }
+
   function updateRevision(): void {
-    revision = computeRevision(getBaseEntries());
+    revision = computeRevision(getRevisionState());
   }
 
   updateRevision();
@@ -337,9 +333,10 @@ export async function createWeaverConfigService(
       for (const [layer, entries] of dynamicScopeEntries) {
         const value = deepGet(entries, key);
         if (value !== undefined) {
-          layerValues[layer] = value;
+          const normalizedLayer = normalizeScopeLayer(layer);
+          layerValues[normalizedLayer] = value;
           effectiveValue = value;
-          effectiveLayer = layer;
+          effectiveLayer = normalizedLayer;
         }
       }
 
@@ -386,6 +383,7 @@ export async function createWeaverConfigService(
       const parsedLayer = parseScopeLayer(layer);
       const isDynamicScopedLayer =
         parsedLayer !== null && provider.layer === parsedLayer.scopeId;
+      const canonicalLayer = normalizeScopeLayer(layer);
 
       if (typeof value === "string" && value.length > SIZE_WARNING) {
         logger.warn(
@@ -396,11 +394,7 @@ export async function createWeaverConfigService(
       let result: WriteResult;
       if (isDynamicScopedLayer) {
         if (hasScopedLayerIo(provider)) {
-          result = await provider.writeLayer(
-            normalizeScopeLayer(layer),
-            key,
-            value,
-          );
+          result = await provider.writeLayer(canonicalLayer, key, value);
         } else {
           return {
             success: false,
@@ -417,14 +411,11 @@ export async function createWeaverConfigService(
       if (!result.success) return result;
 
       if (isDynamicScopedLayer) {
-        const equivalentScopeLayers = getEquivalentScopeLayers(layer);
-        for (const equivalentLayer of equivalentScopeLayers) {
-          const entries = {
-            ...(dynamicScopeEntries.get(equivalentLayer) ?? {}),
-          };
-          deepSet(entries, key, value);
-          dynamicScopeEntries.set(equivalentLayer, entries);
-        }
+        const entries = {
+          ...(dynamicScopeEntries.get(canonicalLayer) ?? {}),
+        };
+        deepSet(entries, key, value);
+        dynamicScopeEntries.set(canonicalLayer, entries);
       } else {
         const entries = layerData.get(provider.id) ?? {};
         deepSet(entries, key, value);
@@ -483,11 +474,12 @@ export async function createWeaverConfigService(
       const parsedLayer = parseScopeLayer(layer);
       const isDynamicScopedLayer =
         parsedLayer !== null && provider.layer === parsedLayer.scopeId;
+      const canonicalLayer = normalizeScopeLayer(layer);
 
       let result: WriteResult;
       if (isDynamicScopedLayer) {
         if (hasScopedLayerIo(provider)) {
-          result = await provider.removeLayer(normalizeScopeLayer(layer), key);
+          result = await provider.removeLayer(canonicalLayer, key);
         } else {
           return {
             success: false,
@@ -504,14 +496,11 @@ export async function createWeaverConfigService(
       if (!result.success) return result;
 
       if (isDynamicScopedLayer) {
-        const equivalentScopeLayers = getEquivalentScopeLayers(layer);
-        for (const equivalentLayer of equivalentScopeLayers) {
-          const entries = {
-            ...(dynamicScopeEntries.get(equivalentLayer) ?? {}),
-          };
-          deepRemove(entries, key);
-          dynamicScopeEntries.set(equivalentLayer, entries);
-        }
+        const entries = {
+          ...(dynamicScopeEntries.get(canonicalLayer) ?? {}),
+        };
+        deepRemove(entries, key);
+        dynamicScopeEntries.set(canonicalLayer, entries);
       } else {
         const entries = layerData.get(provider.id) ?? {};
         deepRemove(entries, key);
