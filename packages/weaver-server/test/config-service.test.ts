@@ -251,7 +251,9 @@ describe("WeaverConfigService", () => {
     await svc.set("tenant:surikat", "app.theme", "dark");
     const snapshot = await svc.resolveAll();
 
-    expect(snapshot.scopes["tenant:surikat"]).toEqual({ app: { theme: "dark" } });
+    expect(snapshot.scopes["tenant:surikat"]).toEqual({
+      app: { theme: "dark" },
+    });
   });
 
   it("warms dynamic scope cache from one normalized load", async () => {
