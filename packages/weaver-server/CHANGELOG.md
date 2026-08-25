@@ -1,5 +1,19 @@
 # @weaver-conf/weaver-server
 
+## 0.1.2
+
+### Patch Changes
+
+- Add support for tenant layer keys
+
+- Updated dependencies []:
+  - @weaver-conf/storage-providers@0.1.1
+  - @weaver-conf/config-types@0.1.1
+  - @weaver-conf/config-auth@0.1.1
+  - @weaver-conf/config-engine@0.1.1
+  - @weaver-conf/config-runtime@0.1.1
+  - @weaver-conf/transport-scomp@0.1.1
+
 ## 0.1.1
 
 ### Patch Changes

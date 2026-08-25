@@ -1,5 +1,11 @@
 # @weaver-conf/config-types
 
+## 0.1.1
+
+### Patch Changes
+
+- Add support for tenant layer keys
+
 ## 1.0.0
 
 ### Major Changes

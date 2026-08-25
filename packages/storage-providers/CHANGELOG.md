@@ -1,5 +1,15 @@
 # @weaver-conf/storage-providers
 
+## 0.1.1
+
+### Patch Changes
+
+- Add support for tenant layer keys
+
+- Updated dependencies []:
+  - @weaver-conf/config-types@0.1.1
+  - @weaver-conf/config-engine@0.1.1
+
 ## 1.0.0
 
 ### Major Changes

@@ -1,6 +1,6 @@
 {
   "name": "@weaver-conf/config-runtime",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Pure state machine for Weaver configuration resolution",
   "license": "MIT",
   "type": "module",

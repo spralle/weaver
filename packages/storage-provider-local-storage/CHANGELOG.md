@@ -1,5 +1,13 @@
 # @weaver-conf/storage-provider-local-storage
 
+## 0.1.1
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @weaver-conf/config-types@0.1.1
+  - @weaver-conf/config-engine@0.1.1
+
 ## 1.0.0
 
 ### Major Changes
