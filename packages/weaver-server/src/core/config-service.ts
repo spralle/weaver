@@ -20,12 +20,36 @@ import type {
   WriteContext,
 } from "./config-service-types";
 import { createResolutionPipeline } from "./resolution-pipeline";
-import { buildScopePathString, isScopedLayer } from "./scope-utils";
+import {
+  buildScopePathString,
+  getEquivalentScopeLayers,
+  isSameScopeLayer,
+  isScopedLayer,
+  parseScopeLayer,
+} from "./scope-utils";
 
 export type { Unsubscribe } from "./config-service-types";
 export type { WeaverConfigService, WeaverConfigServiceOptions, WriteContext };
 
 const SIZE_WARNING = 1_048_576; // 1MB
+
+interface ScopedLayerProvider {
+  loadLayer(layer: string): Promise<{ entries: Record<string, unknown> }>;
+  writeLayer(layer: string, key: string, value: unknown): Promise<WriteResult>;
+  removeLayer(layer: string, key: string): Promise<WriteResult>;
+}
+
+function hasScopedLayerIo(
+  provider: ConfigurationStorageProvider,
+): provider is ConfigurationStorageProvider & ScopedLayerProvider {
+  return (
+    typeof (provider as Partial<ScopedLayerProvider>).loadLayer ===
+      "function" &&
+    typeof (provider as Partial<ScopedLayerProvider>).writeLayer ===
+      "function" &&
+    typeof (provider as Partial<ScopedLayerProvider>).removeLayer === "function"
+  );
+}
 
 function computeRevision(state: Record<string, unknown>): string {
   const content = JSON.stringify(state);
@@ -44,6 +68,7 @@ export async function createWeaverConfigService(
   const flushDebounceMs = options.flushDebounceMs ?? 500;
 
   const layerData = new Map<string, Record<string, unknown>>();
+  const dynamicScopeEntries = new Map<string, Record<string, unknown>>();
   const degradedProviders: string[] = [];
   let revision = "";
   const deltaHandlers = new Set<(delta: ConfigDelta) => void>();
@@ -102,6 +127,47 @@ export async function createWeaverConfigService(
 
   const providers = activeProviders;
 
+  function resolveProvider(
+    layer: string,
+  ): ConfigurationStorageProvider | undefined {
+    for (const provider of providers) {
+      if (provider.layer === layer) return provider;
+    }
+
+    for (const provider of providers) {
+      if (isSameScopeLayer(provider.layer, layer)) return provider;
+    }
+
+    const parsed = parseScopeLayer(layer);
+    if (!parsed) return undefined;
+
+    return providers.find((provider) => provider.layer === parsed.scopeId);
+  }
+
+  async function warmScopeLayers(scopePath?: ScopeInstance[]): Promise<void> {
+    if (!scopePath?.length) return;
+
+    for (const scope of scopePath) {
+      const equivalentScopeLayers = getEquivalentScopeLayers(
+        `${scope.scopeId}:${scope.value}`,
+      );
+
+      for (const provider of providers) {
+        if (!hasScopedLayerIo(provider)) continue;
+
+        for (const scopedLayer of equivalentScopeLayers) {
+          const parsedScopedLayer = parseScopeLayer(scopedLayer);
+          if (!parsedScopedLayer) continue;
+          if (provider.layer !== parsedScopedLayer.scopeId) continue;
+          if (dynamicScopeEntries.has(scopedLayer)) continue;
+
+          const data = await provider.loadLayer(scopedLayer);
+          dynamicScopeEntries.set(scopedLayer, data.entries);
+        }
+      }
+    }
+  }
+
   function getBaseEntries(): Record<string, unknown> {
     let merged: Record<string, unknown> = {};
     for (const provider of providers) {
@@ -115,11 +181,23 @@ export async function createWeaverConfigService(
   function getScopeState(scopePath: ScopeInstance[]): Record<string, unknown> {
     let merged: Record<string, unknown> = {};
     for (const scope of scopePath) {
-      const layerName = `${scope.scopeId}:${scope.value}`;
-      for (const provider of providers) {
-        if (provider.layer === layerName) {
-          const entries = layerData.get(provider.id) ?? {};
-          merged = deepMerge(merged, entries);
+      const equivalentScopeLayers = getEquivalentScopeLayers(
+        `${scope.scopeId}:${scope.value}`,
+      );
+      for (const scopedLayer of equivalentScopeLayers) {
+        for (const provider of providers) {
+          if (
+            provider.layer === scopedLayer ||
+            isSameScopeLayer(provider.layer, scopedLayer)
+          ) {
+            const entries = layerData.get(provider.id) ?? {};
+            merged = deepMerge(merged, entries);
+          }
+        }
+
+        const dynamicEntries = dynamicScopeEntries.get(scopedLayer);
+        if (dynamicEntries) {
+          merged = deepMerge(merged, dynamicEntries);
         }
       }
     }
@@ -136,6 +214,15 @@ export async function createWeaverConfigService(
         ...entries,
       };
     }
+
+    for (const [layer, entries] of dynamicScopeEntries) {
+      if (!isScopedLayer(layer)) continue;
+      scopes[layer] = {
+        ...(scopes[layer] ?? {}),
+        ...entries,
+      };
+    }
+
     return scopes;
   }
 
@@ -182,6 +269,7 @@ export async function createWeaverConfigService(
     async resolveAll(opts?: {
       scopePath?: ScopeInstance[];
     }): Promise<ConfigSnapshot> {
+      await warmScopeLayers(opts?.scopePath);
       const rawEntries = getBaseEntries();
       const entries = pipeline.resolveEntries(rawEntries);
       const scopes = opts?.scopePath?.length
@@ -204,6 +292,7 @@ export async function createWeaverConfigService(
       key: string,
       opts?: { scopePath?: ScopeInstance[] },
     ): Promise<unknown> {
+      await warmScopeLayers(opts?.scopePath);
       const state = getMergedState(opts?.scopePath);
       const rawValue = deepGet(state, key);
       return pipeline.resolveValue(key, rawValue);
@@ -213,6 +302,7 @@ export async function createWeaverConfigService(
       prefix: string,
       opts?: { scopePath?: ScopeInstance[] },
     ): Promise<Record<string, unknown>> {
+      await warmScopeLayers(opts?.scopePath);
       const state = getMergedState(opts?.scopePath);
       const value = deepGet(state, prefix);
       if (
@@ -243,6 +333,15 @@ export async function createWeaverConfigService(
         }
       }
 
+      for (const [layer, entries] of dynamicScopeEntries) {
+        const value = deepGet(entries, key);
+        if (value !== undefined) {
+          layerValues[layer] = value;
+          effectiveValue = value;
+          effectiveLayer = layer;
+        }
+      }
+
       return { key, effectiveValue, effectiveLayer, layerValues };
     },
 
@@ -263,7 +362,7 @@ export async function createWeaverConfigService(
       const revConflict = checkRevision(opts?.expectedRevision);
       if (revConflict) return revConflict;
 
-      const provider = providers.find((p) => p.layer === layer);
+      const provider = resolveProvider(layer);
       if (!provider) {
         return {
           success: false,
@@ -283,18 +382,49 @@ export async function createWeaverConfigService(
         };
       }
 
+      const parsedLayer = parseScopeLayer(layer);
+      const isDynamicScopedLayer =
+        parsedLayer !== null && provider.layer === parsedLayer.scopeId;
+
       if (typeof value === "string" && value.length > SIZE_WARNING) {
         logger.warn(
           `[weaver] Value for key "${key}" exceeds 1MB (${value.length} bytes)`,
         );
       }
 
-      const result = await provider.write(key, value);
+      let result: WriteResult;
+      if (isDynamicScopedLayer) {
+        if (hasScopedLayerIo(provider)) {
+          result = await provider.writeLayer(layer, key, value);
+        } else {
+          return {
+            success: false,
+            error: {
+              code: "LAYER_NOT_FOUND",
+              message: `Provider for base scope layer "${provider.layer}" does not support scoped writes for "${layer}"`,
+            },
+          };
+        }
+      } else {
+        result = await provider.write(key, value);
+      }
+
       if (!result.success) return result;
 
-      const entries = layerData.get(provider.id) ?? {};
-      deepSet(entries, key, value);
-      layerData.set(provider.id, entries);
+      if (isDynamicScopedLayer) {
+        const equivalentScopeLayers = getEquivalentScopeLayers(layer);
+        for (const equivalentLayer of equivalentScopeLayers) {
+          const entries = {
+            ...(dynamicScopeEntries.get(equivalentLayer) ?? {}),
+          };
+          deepSet(entries, key, value);
+          dynamicScopeEntries.set(equivalentLayer, entries);
+        }
+      } else {
+        const entries = layerData.get(provider.id) ?? {};
+        deepSet(entries, key, value);
+        layerData.set(provider.id, entries);
+      }
       updateRevision();
       pipeline.rebuildMountMap();
       if (pipeline.hasSecretResolver) {
@@ -325,7 +455,7 @@ export async function createWeaverConfigService(
       const revConflict = checkRevision(opts?.expectedRevision);
       if (revConflict) return revConflict;
 
-      const provider = providers.find((p) => p.layer === layer);
+      const provider = resolveProvider(layer);
       if (!provider) {
         return {
           success: false,
@@ -345,12 +475,43 @@ export async function createWeaverConfigService(
         };
       }
 
-      const result = await provider.remove(key);
+      const parsedLayer = parseScopeLayer(layer);
+      const isDynamicScopedLayer =
+        parsedLayer !== null && provider.layer === parsedLayer.scopeId;
+
+      let result: WriteResult;
+      if (isDynamicScopedLayer) {
+        if (hasScopedLayerIo(provider)) {
+          result = await provider.removeLayer(layer, key);
+        } else {
+          return {
+            success: false,
+            error: {
+              code: "LAYER_NOT_FOUND",
+              message: `Provider for base scope layer "${provider.layer}" does not support scoped removes for "${layer}"`,
+            },
+          };
+        }
+      } else {
+        result = await provider.remove(key);
+      }
+
       if (!result.success) return result;
 
-      const entries = layerData.get(provider.id) ?? {};
-      deepRemove(entries, key);
-      layerData.set(provider.id, entries);
+      if (isDynamicScopedLayer) {
+        const equivalentScopeLayers = getEquivalentScopeLayers(layer);
+        for (const equivalentLayer of equivalentScopeLayers) {
+          const entries = {
+            ...(dynamicScopeEntries.get(equivalentLayer) ?? {}),
+          };
+          deepRemove(entries, key);
+          dynamicScopeEntries.set(equivalentLayer, entries);
+        }
+      } else {
+        const entries = layerData.get(provider.id) ?? {};
+        deepRemove(entries, key);
+        layerData.set(provider.id, entries);
+      }
       updateRevision();
       pipeline.rebuildMountMap();
       if (pipeline.hasSecretResolver) {

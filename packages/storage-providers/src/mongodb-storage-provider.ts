@@ -66,10 +66,14 @@ class MongoDBStorageProvider implements ConfigurationStorageProvider {
   }
 
   async load(): Promise<ConfigurationLayerData> {
+    return this.loadLayer(this.layer);
+  }
+
+  async loadLayer(layer: string): Promise<ConfigurationLayerData> {
     let rawDocs: Awaited<ReturnType<ReturnType<Collection["find"]>["toArray"]>>;
     try {
       rawDocs = await this.collection
-        .find({ layer: this.layer, environment: this.environment })
+        .find({ layer, environment: this.environment })
         .maxTimeMS(this.timeoutMs)
         .toArray();
     } catch (err) {
@@ -92,6 +96,14 @@ class MongoDBStorageProvider implements ConfigurationStorageProvider {
   }
 
   async write(key: string, value: unknown): Promise<WriteResult> {
+    return this.writeLayer(this.layer, key, value);
+  }
+
+  async writeLayer(
+    layer: string,
+    key: string,
+    value: unknown,
+  ): Promise<WriteResult> {
     if (!this.writable) {
       return {
         success: false,
@@ -102,7 +114,7 @@ class MongoDBStorageProvider implements ConfigurationStorageProvider {
     const updatedAt = new Date().toISOString();
     try {
       await this.collection.updateOne(
-        { layer: this.layer, environment: this.environment, key },
+        { layer, environment: this.environment, key },
         { $set: { value, updatedAt } },
         { upsert: true, maxTimeMS: this.timeoutMs },
       );
@@ -120,6 +132,10 @@ class MongoDBStorageProvider implements ConfigurationStorageProvider {
   }
 
   async remove(key: string): Promise<WriteResult> {
+    return this.removeLayer(this.layer, key);
+  }
+
+  async removeLayer(layer: string, key: string): Promise<WriteResult> {
     if (!this.writable) {
       return {
         success: false,
@@ -130,7 +146,7 @@ class MongoDBStorageProvider implements ConfigurationStorageProvider {
     try {
       await this.collection.deleteOne(
         {
-          layer: this.layer,
+          layer,
           environment: this.environment,
           key,
         },

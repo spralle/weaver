@@ -3,7 +3,7 @@ import type { WeaverError } from "../types/errors";
 import { createWeaverError } from "../types/errors";
 import type { WeaverConfigService } from "./config-service";
 import type { SchemaRegistry } from "./schema-registry";
-import { parseScopeLayer } from "./scope-utils";
+import { isSameScopeLayer, parseScopeLayer } from "./scope-utils";
 
 export interface ProvisionScopeRequest {
   scopeId: string;
@@ -78,13 +78,18 @@ export function createScopeManager(options: ScopeManagerOptions): ScopeManager {
 
       const scopeLayer = `${scopeId}:${value}`;
       const provider = configService.providers.find(
-        (p) => p.layer === scopeLayer,
+        (p) => p.layer === scopeLayer || isSameScopeLayer(p.layer, scopeLayer),
       );
       if (provider) {
-        await configService.set(scopeLayer, `_weaver.scope.${scopeId}`, value, {
-          environment: "default",
-          actor,
-        });
+        await configService.set(
+          provider.layer,
+          `_weaver.scope.${scopeId}`,
+          value,
+          {
+            environment: "default",
+            actor,
+          },
+        );
       }
 
       if (!activeScopes.has(scopeId)) {
@@ -117,10 +122,17 @@ export function createScopeManager(options: ScopeManagerOptions): ScopeManager {
       }
 
       const scopeLayer = `${scopeId}:${value}`;
-      await configService.remove(scopeLayer, `_weaver.scope.${scopeId}`, {
-        environment: "default",
-        actor,
-      });
+      const provider = configService.providers.find(
+        (p) => p.layer === scopeLayer || isSameScopeLayer(p.layer, scopeLayer),
+      );
+      await configService.remove(
+        provider?.layer ?? scopeLayer,
+        `_weaver.scope.${scopeId}`,
+        {
+          environment: "default",
+          actor,
+        },
+      );
 
       values.delete(value);
       return { success: true, scopeId, value };

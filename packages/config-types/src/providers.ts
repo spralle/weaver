@@ -27,8 +27,11 @@ export interface ConfigurationStorageProvider {
   readonly layer: ConfigurationLayer | string;
   readonly writable: boolean;
   load(): Promise<ConfigurationLayerData>;
+  loadLayer?(layer: string): Promise<ConfigurationLayerData>;
   write(key: string, value: unknown): Promise<WriteResult>;
+  writeLayer?(layer: string, key: string, value: unknown): Promise<WriteResult>;
   remove(key: string): Promise<WriteResult>;
+  removeLayer?(layer: string, key: string): Promise<WriteResult>;
 
   /** Pull latest state from remote source (e.g., git pull). No-op for local-only providers. */
   refresh?(): Promise<void>;

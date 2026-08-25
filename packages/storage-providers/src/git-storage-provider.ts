@@ -66,30 +66,46 @@ class GitStorageProvider implements ConfigurationStorageProvider {
   }
 
   async write(key: string, value: unknown): Promise<WriteResult> {
+    return this.writeLayer(this.layer, key, value);
+  }
+
+  async writeLayer(
+    layer: string,
+    key: string,
+    value: unknown,
+  ): Promise<WriteResult> {
     if (!this.writable) {
       return {
         success: false,
         error: { code: "READONLY", message: "Provider is read-only" },
       };
     }
-    const result = await this.fsp.write(key, value);
+    const result = this.fsp.writeLayer
+      ? await this.fsp.writeLayer(layer, key, value)
+      : await this.fsp.write(key, value);
     if (result.success) {
-      this.dirtyKeys.push(`set ${key}`);
+      this.dirtyKeys.push(`set ${layer}:${key}`);
       this.isDirty = true;
     }
     return result;
   }
 
   async remove(key: string): Promise<WriteResult> {
+    return this.removeLayer(this.layer, key);
+  }
+
+  async removeLayer(layer: string, key: string): Promise<WriteResult> {
     if (!this.writable) {
       return {
         success: false,
         error: { code: "READONLY", message: "Provider is read-only" },
       };
     }
-    const result = await this.fsp.remove(key);
+    const result = this.fsp.removeLayer
+      ? await this.fsp.removeLayer(layer, key)
+      : await this.fsp.remove(key);
     if (result.success) {
-      this.dirtyKeys.push(`remove ${key}`);
+      this.dirtyKeys.push(`remove ${layer}:${key}`);
       this.isDirty = true;
     }
     return result;
