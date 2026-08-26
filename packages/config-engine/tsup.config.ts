@@ -9,8 +9,13 @@ export default defineConfig({
     "src/scope.ts",
     "src/zod-schema-generator.ts",
   ],
-  format: ["esm"],
+  format: ["esm", "cjs"],
   dts: true,
   clean: true,
   outDir: "dist",
+  outExtension({ format }) {
+    return {
+      js: format === "cjs" ? ".cjs" : ".js",
+    };
+  },
 });

@@ -1,6 +1,6 @@
 {
   "name": "@weaver-conf/config-sessions",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Override session provider with expiration, audit logging, and ephemeral storage for Weaver",
   "license": "MIT",
   "repository": {
@@ -22,10 +22,14 @@
     "ephemeral"
   ],
   "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     }
   },
   "files": [

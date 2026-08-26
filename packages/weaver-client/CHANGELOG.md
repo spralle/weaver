@@ -1,5 +1,17 @@
 # @weaver-conf/weaver-client
 
+## 0.1.2
+
+### Patch Changes
+
+- Dual export CJS and ESM.
+
+- Updated dependencies []:
+  - @weaver-conf/config-runtime@0.1.2
+  - @weaver-conf/config-engine@0.1.2
+  - @weaver-conf/config-types@0.1.2
+  - @weaver-conf/config-sync@0.1.2
+
 ## 0.1.1
 
 ### Patch Changes
