@@ -182,6 +182,40 @@ describe("Weaver server CORS", () => {
       await server.close();
     }
   });
+
+  it("echoes a matching configured origin on /v1/events SSE route", async () => {
+    const server = await startWeaverServer({
+      port: 0,
+      corsOrigins: ["http://localhost:3390"],
+      providers: [
+        createInMemoryStorageProvider({
+          id: "test",
+          layer: "platform",
+          initialEntries: { app: { name: "Weaver" } },
+        }),
+      ],
+    });
+
+    try {
+      const response = await fetch(
+        `http://localhost:${server.port}/v1/events`,
+        {
+          headers: {
+            Origin: "http://localhost:3390",
+          },
+        },
+      );
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get("access-control-allow-origin")).toBe(
+        "http://localhost:3390",
+      );
+      expect(response.headers.get("vary")).toBe("Origin");
+      await response.body?.cancel();
+    } finally {
+      await server.close();
+    }
+  });
 });
 
 describe("Weaver server bootstrap", () => {

@@ -1,5 +1,12 @@
 # @weaver-conf/playground
 
+## 0.1.3
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @weaver-conf/weaver-server@0.1.3
+
 ## 0.1.2
 
 ### Patch Changes
