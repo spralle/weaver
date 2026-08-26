@@ -1,6 +1,6 @@
 {
   "name": "@weaver-conf/config-auth",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Role-based access control extension for Weaver configuration via withAuth() composition",
   "license": "MIT",
   "repository": {
@@ -22,10 +22,14 @@
     "access-control"
   ],
   "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     }
   },
   "files": [

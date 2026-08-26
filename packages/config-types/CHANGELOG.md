@@ -1,5 +1,11 @@
 # @weaver-conf/config-types
 
+## 0.1.2
+
+### Patch Changes
+
+- Dual export CJS and ESM.
+
 ## 0.1.1
 
 ### Patch Changes

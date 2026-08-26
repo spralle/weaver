@@ -1,6 +1,6 @@
 {
   "name": "@weaver-conf/config-engine",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Deep merge, layer resolution, key inspection, scope chains, and schema registry for Weaver configuration",
   "license": "MIT",
   "repository": {
@@ -23,10 +23,14 @@
     "layers"
   ],
   "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     }
   },
   "files": [

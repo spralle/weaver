@@ -1,5 +1,19 @@
 # @weaver-conf/weaver-server
 
+## 0.1.4
+
+### Patch Changes
+
+- Dual export CJS and ESM.
+
+- Updated dependencies []:
+  - @weaver-conf/storage-providers@0.1.2
+  - @weaver-conf/transport-scomp@0.1.2
+  - @weaver-conf/config-runtime@0.1.2
+  - @weaver-conf/config-engine@0.1.2
+  - @weaver-conf/config-types@0.1.2
+  - @weaver-conf/config-auth@0.1.2
+
 ## 0.1.3
 
 ### Patch Changes

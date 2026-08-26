@@ -8,8 +8,13 @@ export default defineConfig({
     "src/subpaths/session.ts",
     "src/subpaths/access.ts",
   ],
-  format: ["esm"],
+  format: ["esm", "cjs"],
   dts: true,
   clean: true,
   outDir: "dist",
+  outExtension({ format }) {
+    return {
+      js: format === "cjs" ? ".cjs" : ".js",
+    };
+  },
 });
