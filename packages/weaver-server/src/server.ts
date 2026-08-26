@@ -18,6 +18,7 @@ import type { AuthGate } from "./transport/auth-gate";
 import { createAuthGate } from "./transport/auth-gate";
 import type { RestAdapter, RestRequest } from "./transport/rest-adapter";
 import { createRestAdapter } from "./transport/rest-adapter";
+import { corsHeaders } from "./transport/rest-helpers";
 import type { SSEAdapter } from "./transport/sse-adapter";
 import { createSSEAdapter } from "./transport/sse-adapter";
 import type { SSEMessage } from "./transport/sse-events";
@@ -60,6 +61,7 @@ function createRequestHandler(
   health: HealthEndpoints,
   restAdapter: RestAdapter,
   sseAdapter: SSEAdapter,
+  corsOrigins: string[] | undefined,
   authMiddleware?: AuthMiddleware,
 ) {
   return async function handleRequest(
@@ -86,7 +88,7 @@ function createRequestHandler(
     }
 
     if (url.pathname === "/v1/events" && method === "GET") {
-      await handleSSE(url, req, res, sseAdapter);
+      await handleSSE(url, req, res, sseAdapter, corsOrigins);
       return;
     }
 
@@ -160,6 +162,7 @@ async function handleSSE(
   req: Request,
   res: Response,
   sseAdapter: SSEAdapter,
+  corsOrigins: string[] | undefined,
 ): Promise<void> {
   const clientOptions: Record<string, string> = {};
   const prefix = url.searchParams.get("prefix");
@@ -172,6 +175,12 @@ async function handleSSE(
   const client = await sseAdapter.createClient(clientOptions);
 
   res.status(200);
+  if (corsOrigins?.length) {
+    const headers = corsHeaders(corsOrigins, req.headers.origin);
+    for (const [key, value] of Object.entries(headers)) {
+      res.setHeader(key, value);
+    }
+  }
   res.setHeader("Content-Type", "text/event-stream");
   res.setHeader("Cache-Control", "no-cache");
   res.setHeader("Connection", "keep-alive");
@@ -368,6 +377,7 @@ export async function startWeaverServerInternal(
       health,
       restAdapter,
       sseAdapter,
+      config.corsOrigins,
       authMiddleware,
     );
 

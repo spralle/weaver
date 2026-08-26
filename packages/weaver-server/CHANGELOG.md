@@ -1,5 +1,11 @@
 # @weaver-conf/weaver-server
 
+## 0.1.3
+
+### Patch Changes
+
+- Add CORS headers to /v1/events responses.
+
 ## 0.1.2
 
 ### Patch Changes
