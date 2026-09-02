@@ -5,6 +5,10 @@ import {
   scopeDefinitionSchema,
   scopeInstanceSchema,
 } from "../src/schemas-layers.js";
+import {
+  fragmentSchemaRegistrationRequestSchema,
+  serviceSchemaRegistrationRequestSchema,
+} from "../src/schemas-schema-registration.js";
 
 describe("scopeDefinitionSchema", () => {
   it("accepts valid scope definition", () => {
@@ -91,5 +95,67 @@ describe("configurationLayerDataSchema", () => {
       entries: {},
     });
     expect(result.success).toBe(true);
+  });
+});
+
+describe("schema registration request schemas", () => {
+  it("accepts path-first service registration shape", () => {
+    const result = serviceSchemaRegistrationRequestSchema.safeParse({
+      serviceId: "lynx",
+      environment: "default",
+      owner: { name: "Lynx", contact: "lynx@example.com" },
+      schema: { type: "object" },
+      fragmentSlots: [{ slotPath: "/plugins", accepts: "object" }],
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects service root path, namespace, ownerId, and missing slots", () => {
+    expect(
+      serviceSchemaRegistrationRequestSchema.safeParse({
+        serviceId: "lynx",
+        environment: "default",
+        owner: { name: "Lynx", contact: "lynx@example.com" },
+        schema: { type: "object" },
+        path: "/custom",
+      }).success,
+    ).toBe(false);
+
+    expect(
+      serviceSchemaRegistrationRequestSchema.safeParse({
+        serviceId: "lynx",
+        environment: "default",
+        owner: { name: "Lynx", contact: "lynx@example.com" },
+        schema: { type: "object" },
+        fragmentSlots: [],
+        namespace: "legacy",
+        ownerId: "team-a",
+      }).success,
+    ).toBe(false);
+  });
+
+  it("accepts fragment registration and rejects independent fragment path", () => {
+    const valid = fragmentSchemaRegistrationRequestSchema.safeParse({
+      serviceId: "lynx",
+      providerId: "ghost.settings.panel",
+      slotPath: "/plugins",
+      environment: "default",
+      owner: { name: "Ghost", contact: "ghost@example.com" },
+      schema: { type: "object" },
+    });
+
+    expect(valid.success).toBe(true);
+    expect(
+      fragmentSchemaRegistrationRequestSchema.safeParse({
+        serviceId: "lynx",
+        providerId: "ghost.settings.panel",
+        slotPath: "/plugins",
+        environment: "default",
+        owner: { name: "Ghost", contact: "ghost@example.com" },
+        schema: { type: "object" },
+        path: "/lynx/plugins/ghost.settings.panel",
+      }).success,
+    ).toBe(false);
   });
 });

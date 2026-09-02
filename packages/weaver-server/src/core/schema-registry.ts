@@ -1,23 +1,30 @@
 import {
+  deriveFragmentPath,
+  deriveServicePath,
   detectBreakingChanges,
   schemasEqual,
 } from "@weaver-conf/config-engine";
-import type { ConfigurationPropertySchema } from "@weaver-conf/config-types";
-import { configurationPropertySchemaSchema } from "@weaver-conf/config-types";
+import type {
+  ConfigurationPropertySchema,
+  SchemaRegistrationRequest as PathSchemaRegistrationRequest,
+  SchemaRegistrationMetadata,
+} from "@weaver-conf/config-types";
+import {
+  configurationPropertySchemaSchema,
+  fragmentSchemaRegistrationRequestSchema,
+  serviceSchemaRegistrationRequestSchema,
+} from "@weaver-conf/config-types";
 import type { WeaverError } from "../types/errors";
 import { createWeaverError } from "../types/errors";
 import type { WeaverConfigService } from "./config-service";
 
-export interface SchemaRegistrationRequest {
-  serviceId: string;
-  declaration: unknown;
-  environment: string;
-}
+export type SchemaRegistrationRequest = PathSchemaRegistrationRequest;
 
 export interface SchemaRegistrationResult {
   success: boolean;
   isNewSchema: boolean;
   hasBreakingChanges: boolean;
+  metadata?: SchemaRegistrationMetadata | undefined;
   breakingChanges?: string[];
   error?: WeaverError;
 }
@@ -41,8 +48,9 @@ export interface SchemaRegistry {
 }
 
 interface SchemaEntry {
-  declaration: ConfigurationPropertySchema;
+  schema: ConfigurationPropertySchema;
   environment: string;
+  metadata: SchemaRegistrationMetadata;
 }
 
 type PersistedSchemaRegistry = Record<
@@ -53,13 +61,14 @@ type PersistedSchemaRegistry = Record<
 interface RegistrationEvaluation {
   result: SchemaRegistrationResult;
   entry?: SchemaEntry;
+  key?: string;
 }
 
 const defaultPersistenceLayer = "platform";
-const defaultPersistenceKey = "_weaver.schemas";
+const defaultPersistenceKey = "_weaver.registry.schemas";
 
-function schemaKey(serviceId: string, environment: string): string {
-  return `${serviceId}:${environment}`;
+function schemaKey(path: string, environment: string): string {
+  return `${path}:${environment}`;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -70,57 +79,128 @@ function evaluateRegistration(
   schemas: ReadonlyMap<string, SchemaEntry>,
   request: SchemaRegistrationRequest,
 ): RegistrationEvaluation {
-  const parseResult = configurationPropertySchemaSchema.safeParse(
-    request.declaration,
-  );
-  if (!parseResult.success) {
-    return {
-      result: {
-        success: false,
-        isNewSchema: false,
-        hasBreakingChanges: false,
-        error: createWeaverError(
-          "VALIDATION_ERROR",
-          `Invalid schema declaration: ${parseResult.error.message}`,
-        ),
-      },
-    };
-  }
+  const parsed = parseRegistrationRequest(request);
+  if (!parsed.success) return { result: parsed.result };
 
-  const declaration = parseResult.data;
-  const key = schemaKey(request.serviceId, request.environment);
+  const { schema, environment, metadata, targetPath } = parsed;
+  const key = schemaKey(targetPath, environment);
   const existing = schemas.get(key);
-  return existing
-    ? evaluateExistingRegistration(existing, declaration)
-    : {
-        result: { success: true, isNewSchema: true, hasBreakingChanges: false },
-        entry: { declaration, environment: request.environment },
-      };
+  if (existing) {
+    return { ...evaluateExistingRegistration(existing, schema, metadata), key };
+  }
+  return {
+    result: {
+      success: true,
+      isNewSchema: true,
+      hasBreakingChanges: false,
+      metadata,
+    },
+    entry: { schema, environment, metadata },
+    key,
+  };
 }
 
 function evaluateExistingRegistration(
   existing: SchemaEntry,
-  declaration: ConfigurationPropertySchema,
+  schema: ConfigurationPropertySchema,
+  metadata: SchemaRegistrationMetadata,
 ): RegistrationEvaluation {
-  if (schemasEqual(existing.declaration, declaration)) {
+  if (schemasEqual(existing.schema, schema)) {
     return {
-      result: { success: true, isNewSchema: false, hasBreakingChanges: false },
+      result: {
+        success: true,
+        isNewSchema: false,
+        hasBreakingChanges: false,
+        metadata,
+      },
     };
   }
 
-  const breakingChanges = detectBreakingChanges(
-    existing.declaration,
-    declaration,
-  );
+  const breakingChanges = detectBreakingChanges(existing.schema, schema);
   const result: SchemaRegistrationResult = {
     success: true,
     isNewSchema: false,
     hasBreakingChanges: breakingChanges.length > 0,
+    metadata,
   };
   if (breakingChanges.length > 0) {
     result.breakingChanges = breakingChanges.map((c) => c.message);
   }
-  return { result, entry: { declaration, environment: existing.environment } };
+  return {
+    result,
+    entry: { schema, environment: existing.environment, metadata },
+  };
+}
+
+type ParsedRegistration =
+  | {
+      readonly success: true;
+      readonly schema: ConfigurationPropertySchema;
+      readonly environment: string;
+      readonly metadata: SchemaRegistrationMetadata;
+      readonly targetPath: string;
+    }
+  | { readonly success: false; readonly result: SchemaRegistrationResult };
+
+function parseRegistrationRequest(
+  request: SchemaRegistrationRequest,
+): ParsedRegistration {
+  try {
+    if ("providerId" in request) return parseFragmentRegistration(request);
+    return parseServiceRegistration(request);
+  } catch (error: unknown) {
+    return validationFailure(errorMessage(error));
+  }
+}
+
+function parseServiceRegistration(
+  request: SchemaRegistrationRequest,
+): ParsedRegistration {
+  const parsed = serviceSchemaRegistrationRequestSchema.safeParse(request);
+  if (!parsed.success) return validationFailure(parsed.error.message);
+  const metadata = deriveServicePath(parsed.data.serviceId);
+  return {
+    success: true,
+    schema: parsed.data.schema,
+    environment: parsed.data.environment,
+    metadata: { ...metadata, environment: parsed.data.environment },
+    targetPath: metadata.servicePath,
+  };
+}
+
+function parseFragmentRegistration(
+  request: SchemaRegistrationRequest,
+): ParsedRegistration {
+  const parsed = fragmentSchemaRegistrationRequestSchema.safeParse(request);
+  if (!parsed.success) return validationFailure(parsed.error.message);
+  const metadata = deriveFragmentPath(
+    parsed.data.serviceId,
+    parsed.data.slotPath,
+    parsed.data.providerId,
+  );
+  return {
+    success: true,
+    schema: parsed.data.schema,
+    environment: parsed.data.environment,
+    metadata: { ...metadata, environment: parsed.data.environment },
+    targetPath: metadata.fragmentPath,
+  };
+}
+
+function validationFailure(message: string): ParsedRegistration {
+  return {
+    success: false,
+    result: {
+      success: false,
+      isNewSchema: false,
+      hasBreakingChanges: false,
+      error: createWeaverError("VALIDATION_ERROR", message),
+    },
+  };
+}
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }
 
 function serializeSchemas(
@@ -130,7 +210,7 @@ function serializeSchemas(
   for (const [key, entry] of schemas) {
     const serviceId = key.slice(0, key.length - entry.environment.length - 1);
     persisted[serviceId] = persisted[serviceId] ?? {};
-    persisted[serviceId][entry.environment] = entry.declaration;
+    persisted[serviceId][entry.environment] = entry.schema;
   }
   return persisted;
 }
@@ -141,25 +221,28 @@ function parsePersistedSchemas(raw: unknown): Map<string, SchemaEntry> {
   if (!isRecord(raw))
     throw new Error("Persisted schema registry must be an object");
 
-  for (const [serviceId, environments] of Object.entries(raw)) {
+  for (const [path, environments] of Object.entries(raw)) {
     if (!isRecord(environments)) {
-      throw new Error(`Persisted schemas for "${serviceId}" must be an object`);
+      throw new Error(`Persisted schemas for "${path}" must be an object`);
     }
-    parsePersistedServiceSchemas(schemas, serviceId, environments);
+    parsePersistedServiceSchemas(schemas, path, environments);
   }
   return schemas;
 }
 
 function parsePersistedServiceSchemas(
   schemas: Map<string, SchemaEntry>,
-  serviceId: string,
+  path: string,
   environments: Record<string, unknown>,
 ): void {
-  for (const [environment, declaration] of Object.entries(environments)) {
-    const parsed = configurationPropertySchemaSchema.parse(declaration);
-    schemas.set(schemaKey(serviceId, environment), {
-      declaration: parsed,
+  for (const [environment, schema] of Object.entries(environments)) {
+    const parsed = configurationPropertySchemaSchema.parse(schema);
+    const persistedPath = path.startsWith("/") ? path : `/${path}`;
+    const serviceId = persistedPath.split("/").filter(Boolean)[0] ?? path;
+    schemas.set(schemaKey(persistedPath, environment), {
+      schema: parsed,
       environment,
+      metadata: { serviceId, servicePath: persistedPath, environment },
     });
   }
 }
@@ -169,7 +252,7 @@ function listSchemas(
 ): Record<string, ConfigurationPropertySchema> {
   const result: Record<string, ConfigurationPropertySchema> = {};
   for (const [key, entry] of schemas) {
-    result[key] = entry.declaration;
+    result[key] = entry.schema;
   }
   return result;
 }
@@ -211,10 +294,10 @@ export function createSchemaRegistry(
     async register(
       request: SchemaRegistrationRequest,
     ): Promise<SchemaRegistrationResult> {
-      const { serviceId, environment } = request;
-      const key = schemaKey(serviceId, environment);
       const evaluation = evaluateRegistration(schemas, request);
-      if (evaluation.entry) schemas.set(key, evaluation.entry);
+      if (evaluation.entry && evaluation.key) {
+        schemas.set(evaluation.key, evaluation.entry);
+      }
       return evaluation.result;
     },
 
@@ -222,8 +305,13 @@ export function createSchemaRegistry(
       serviceId: string,
       environment: string,
     ): Promise<unknown | null> {
-      const entry = schemas.get(schemaKey(serviceId, environment));
-      return entry?.declaration ?? null;
+      try {
+        const { servicePath } = deriveServicePath(serviceId);
+        const entry = schemas.get(schemaKey(servicePath, environment));
+        return entry?.schema ?? null;
+      } catch {
+        return null;
+      }
     },
 
     listAll(): Record<string, ConfigurationPropertySchema> {
@@ -245,22 +333,26 @@ export async function createPersistentSchemaRegistry(
     async register(request) {
       const environment = request.environment || defaultEnvironment || "";
       const normalizedRequest = { ...request, environment };
-      const key = schemaKey(request.serviceId, environment);
       const evaluation = evaluateRegistration(schemas, normalizedRequest);
-      if (!evaluation.result.success || !evaluation.entry)
+      if (!evaluation.result.success || !evaluation.entry || !evaluation.key)
         return evaluation.result;
 
       const updatedSchemas = new Map(schemas);
-      updatedSchemas.set(key, evaluation.entry);
+      updatedSchemas.set(evaluation.key, evaluation.entry);
       const persistenceFailure = await persist(updatedSchemas, environment);
       if (persistenceFailure) return persistenceFailure;
-      schemas.set(key, evaluation.entry);
+      schemas.set(evaluation.key, evaluation.entry);
       return evaluation.result;
     },
 
     async getSchema(serviceId, environment) {
-      const entry = schemas.get(schemaKey(serviceId, environment));
-      return entry?.declaration ?? null;
+      try {
+        const { servicePath } = deriveServicePath(serviceId);
+        const entry = schemas.get(schemaKey(servicePath, environment));
+        return entry?.schema ?? null;
+      } catch {
+        return null;
+      }
     },
 
     listAll() {
