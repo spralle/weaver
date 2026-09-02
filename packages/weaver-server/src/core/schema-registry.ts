@@ -17,6 +17,7 @@ import type { WeaverError } from "../types/errors";
 import { createWeaverError } from "../types/errors";
 import { writeInternalConfig } from "./config-service-internal";
 import type { WeaverConfigService, WriteContext } from "./config-service-types";
+import type { SchemaOperationContext } from "./schema-operation-context";
 import {
   parsePersistedRegistry,
   serializeRegistry,
@@ -36,6 +37,7 @@ export type SchemaRegistrationRequest = PathSchemaRegistrationRequest;
 export interface SchemaRegistrationContext {
   readonly subject?: string | undefined;
   readonly actor?: string | undefined;
+  readonly operation?: SchemaOperationContext | undefined;
 }
 
 export interface SchemaRegistrationResult {

@@ -4,6 +4,7 @@ import type {
   WeaverConfig,
 } from "@weaver-conf/config-types";
 import type { Request, Response } from "express";
+import type { AuditService } from "./audit/audit-service";
 import type { AuthContext, AuthMiddleware } from "./auth/auth-middleware";
 import { createAuthMiddleware } from "./auth/auth-middleware";
 import { createJwtValidator } from "./auth/jwt-validator";
@@ -35,6 +36,7 @@ export interface WeaverServerOptions {
   adminRoles?: string[];
   corsOrigins?: string[];
   providers?: ConfigurationStorageProvider[];
+  auditService?: AuditService;
 }
 export interface WeaverServer {
   readonly port: number;
@@ -56,6 +58,7 @@ function resolveOptions(options?: WeaverServerOptions) {
     adminRoles: options?.adminRoles ?? ["admin"],
     corsOrigins: options?.corsOrigins,
     providers: options?.providers,
+    auditService: options?.auditService,
   };
 }
 function createRequestHandler(
@@ -362,6 +365,7 @@ export async function startWeaverServerInternal(
       >;
       corsOrigins?: string[];
       authGate?: AuthGate;
+      auditService?: AuditService;
     } = {
       configService,
       schemaRegistry: await createPersistentSchemaRegistry({
@@ -374,6 +378,9 @@ export async function startWeaverServerInternal(
     }
     if (authGate) {
       restAdapterOptions.authGate = authGate;
+    }
+    if (config.auditService) {
+      restAdapterOptions.auditService = config.auditService;
     }
 
     const restAdapter = createRestAdapter(restAdapterOptions);

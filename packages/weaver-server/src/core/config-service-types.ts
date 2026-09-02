@@ -13,6 +13,7 @@ import type {
   WriteResult,
 } from "@weaver-conf/config-types";
 import type { ConfigDelta, ConfigSnapshot } from "../types/index";
+import type { SchemaOperationContext } from "./schema-operation-context";
 import type { SchemaRegistry } from "./schema-registry";
 
 export type { Unsubscribe } from "@weaver-conf/config-types";
@@ -22,6 +23,7 @@ export interface WriteContext {
   scopePath?: ScopeInstance[];
   actor?: string;
   expectedRevision?: string;
+  schemaOperation?: SchemaOperationContext;
 }
 
 export interface SchemaWriteContext extends WriteContext {
@@ -32,6 +34,7 @@ export interface EffectiveValidationContext {
   schemaRegistry: SchemaRegistry;
   environment?: string;
   scopePath?: ScopeInstance[];
+  schemaOperation?: SchemaOperationContext;
 }
 
 export interface WeaverConfigServiceOptions {

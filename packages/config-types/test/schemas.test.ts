@@ -162,7 +162,7 @@ describe("schema registration request schemas", () => {
     ).toBe(false);
   });
 
-  it("accepts response metadata with owner, provider identity, and audit", () => {
+  it("accepts response metadata with owner and provider identity", () => {
     const result = schemaRegistrationMetadataSchema.safeParse({
       serviceId: "lynx",
       servicePath: "/lynx",
@@ -170,9 +170,22 @@ describe("schema registration request schemas", () => {
       providerId: "lynx",
       owner: { name: "Lynx", contact: "lynx@example.com" },
       schemaVersion: "1.2.3",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("strips legacy subject fields from schema document audit metadata", () => {
+    const result = schemaRegistrationMetadataSchema.safeParse({
+      serviceId: "lynx",
+      servicePath: "/lynx",
+      environment: "default",
+      providerId: "lynx",
+      owner: { name: "Lynx", contact: "lynx@example.com" },
       audit: { subject: "svc:lynx", actor: "api" },
     });
 
     expect(result.success).toBe(true);
+    expect(result.data?.audit).toEqual({ actor: "api" });
   });
 });

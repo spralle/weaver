@@ -47,7 +47,6 @@ describe("SchemaRegistry", () => {
       providerId: "lynx",
       owner: { name: "Lynx", contact: "lynx@example.com" },
       schemaVersion: "1.2.3",
-      audit: { subject: "svc:lynx", actor: "api" },
     });
     expect(await registry.getSchema("lynx", "default")).toEqual({
       type: "object",
@@ -163,7 +162,10 @@ describe("SchemaRegistry", () => {
     const registry = await createPersistentSchemaRegistry({
       configService: persistentConfigService,
     });
-    await registry.register(serviceRegistration(), { actor: "api" });
+    await registry.register(serviceRegistration(), {
+      actor: "api",
+      subject: "svc:lynx",
+    });
 
     expect(
       await persistentConfigService.get("_weaver.registry.schemas"),
@@ -181,7 +183,6 @@ describe("SchemaRegistry", () => {
                 providerId: "lynx",
                 owner: { name: "Lynx", contact: "lynx@example.com" },
                 schemaVersion: "1.2.3",
-                audit: { actor: "api" },
               },
             },
           },
@@ -196,7 +197,6 @@ describe("SchemaRegistry", () => {
               owner: { name: "Lynx", contact: "lynx@example.com" },
               accepts: "object",
               schemaVersion: "1.2.3",
-              audit: { actor: "api" },
             },
           },
         },
@@ -212,5 +212,35 @@ describe("SchemaRegistry", () => {
     expect(Object.keys(hydrated.listAll())).toContain(
       "/lynx/plugins/ghost.settings.panel:default",
     );
+  });
+
+  it("keeps subject out of persisted schema documents", async () => {
+    const persistentConfigService = await createWeaverConfigService({
+      providers: [
+        createInMemoryStorageProvider({
+          id: "platform",
+          layer: "platform",
+          initialEntries: {},
+        }),
+      ],
+      environment: "default",
+    });
+    const registry = await createPersistentSchemaRegistry({
+      configService: persistentConfigService,
+    });
+
+    await registry.register(serviceRegistration(), {
+      subject: "svc:lynx",
+      actor: "api",
+    });
+
+    const persisted = await persistentConfigService.get(
+      "_weaver.registry.schemas",
+    );
+    const serialized = JSON.stringify(persisted);
+    expect(serialized).toContain("owner");
+    expect(serialized).toContain("lynx@example.com");
+    expect(serialized).not.toContain("subject");
+    expect(serialized).not.toContain("ownerId");
   });
 });

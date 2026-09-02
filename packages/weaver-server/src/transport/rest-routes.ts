@@ -2,6 +2,7 @@
 
 import { buildPath } from "@weaver-conf/config-engine";
 import type { WriteResult } from "@weaver-conf/config-types";
+import type { AuditService } from "../audit/audit-service";
 import type { WeaverConfigService, WriteContext } from "../core/config-service";
 import type { SchemaRegistry } from "../core/schema-registry";
 import type { ScopeManager } from "../core/scope-manager";
@@ -23,6 +24,7 @@ export interface RouteFactoryDeps {
   schemaRegistry?: SchemaRegistry | undefined;
   scopeManager?: ScopeManager | undefined;
   authGate?: AuthGate | undefined;
+  auditService?: AuditService | undefined;
 }
 
 function param(params: Record<string, string>, name: string): string {
@@ -94,10 +96,21 @@ function writeErrorResponse(
 }
 
 export function buildRoutes(deps: RouteFactoryDeps): RestRoute[] {
-  const { configService, schemaRegistry, scopeManager, authGate } = deps;
+  const {
+    configService,
+    schemaRegistry,
+    scopeManager,
+    authGate,
+    auditService,
+  } = deps;
 
   return [
-    ...buildSchemaRoutes({ configService, schemaRegistry, authGate }),
+    ...buildSchemaRoutes({
+      configService,
+      schemaRegistry,
+      authGate,
+      auditService,
+    }),
     {
       method: "GET",
       path: "/v1/config",
