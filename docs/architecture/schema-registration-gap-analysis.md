@@ -9,6 +9,7 @@ Weaver should move from key/value-oriented schema registration toward a path-anc
 | Addressing | APIs and docs mix `key`, `namespace`, `prefix`, and `serviceId`; `namespace` often acts like a path prefix. | Use `path` as the canonical term for a config tree location. Remove `namespace` from the target contract. `serviceId` is the root config path, so serviceId `lynx` maps to `/lynx`. |
 | Schema unit | Schemas are mostly registered against fully qualified keys or service-like identifiers. | External services register object schemas at concrete paths such as `/lynx`. |
 | Extension model | Plugin-oriented naming leaks into generic configuration contracts. | Use generic `fragment`; plugin is one fragment provider type. Services declare fragment slots that accept independently registered fragment schemas. |
+| Identity | Registration identity and accountability are not separated; `ownerId` can imply authorization even when usage is closer to declaration source identity. | Use `owner` only for accountable contact metadata, `providerId` for declaration source identity, and authenticated `subject` for authorization. Do not include `ownerId` in the target model. |
 | Writes | HTTP, SCOMP, and clients primarily expose single key/path writes, including dot-key forms. | Writes at registered paths persist object values, not flattened key/value leaves. Dot-key APIs are not part of the target model. |
 | Validation | Client-side validation exists, but server-side full-object validation and transport consistency are incomplete. | Primary enforcement is schema validation of written objects and effective merged objects. Write ownership enforcement is secondary/future. |
 | Layering | Layer writes can behave like sparse key/value overrides, creating ambiguity for nested object schemas. | Prefer partial override objects per layer, plus validation of the effective merged object. |
@@ -26,6 +27,9 @@ Terminology for new contracts:
 - **`namespace`**: Legacy and ambiguous term. Current code often treats it as a path prefix. New contracts should remove it. Transitional adapters may translate it only when explicitly needed for active branch continuity.
 - **`fragment`**: Independently registered schema unit below a service-declared extension point. A plugin is one possible fragment provider type, but the schema model should not be plugin-specific.
 - **Fragment slot / extension point**: A service-declared path that accepts independently registered fragment schemas.
+- **`owner`**: Accountable team/person/contact metadata for follow-up and stewardship. It is not an authorization field.
+- **`providerId`**: Stable identity of the service or fragment provider that declares a schema. For service root registrations, `serviceId` can serve as the provider identity. For fragments, use the fragment provider ID.
+- **`subject`**: Authenticated principal used by credentials and policy when authorizing a registration request. It is distinct from `owner` and `providerId`.
 
 ## Intended Model
 
@@ -85,6 +89,24 @@ Write ownership enforcement is important but secondary. The model should record 
 
 The original design direction is sound in its goals: services should declare configuration contracts, clients should validate, schemas should be available server-side, and Weaver should support layered configuration. Because Weaver is pre-1.0 and not in production, the design should be amended through a breaking cleanup before implementation hardens around legacy terms.
 
+### Identity, Approval, and Registration Lifecycle
+
+The target model should separate accountable ownership, declaration identity, and credential identity:
+
+- Keep `owner` as team/person/contact metadata for accountability and support. It is not an authentication or authorization field.
+- Do not use or keep `ownerId` in the target model. The current concept behaves more like schema declaration source or replacement identity, so the term is misleading.
+- Use `providerId` for the stable identity of the service or fragment provider that declares the schema. For services, the `serviceId` can be the provider identity; for fragments, use the fragment provider ID.
+- Use `subject` or the authenticated principal for current or future registration authorization. It belongs to credentials, policy, request context, and audit metadata rather than accountable ownership.
+
+MVP registration should favor approved bootstrap or CI/deployment registration, not open runtime self-registration:
+
+1. A new service requests or declares its `serviceId`, root path `/<serviceId>`, `owner`, environments, object schema, and fragment slots.
+2. The ARB, platform team, or schema authority approves serviceId uniqueness, path boundaries, reserved path avoidance, schema validity, fragment slots, and owner/contact metadata.
+3. Credentials and policy bind an authenticated `subject` to allowed `serviceId`, `providerId`, path, and environment operations.
+4. CI/deployment performs schema registration. Weaver validates subject authorization, path invariants, schema object shape, fragment slot rules, and records audit metadata.
+5. For fragments, the parent service declares the slot, then the fragment provider registers under that slot with `providerId` and `owner`. Weaver checks that the slot exists, the path is a direct child, no collision exists, the schema is valid, and the subject is authorized.
+6. Future runtime self-registration requires workload identity, policy enforcement, audit, revocation and rotation, schema compatibility checks, and cache invalidation.
+
 ### 1. Replace Namespace-Centric Contracts with Path-Centric Contracts
 
 `namespace` should not be used in new public contracts. It is overloaded: sometimes it means a grouping, sometimes a dot-delimited key prefix, and sometimes a service area. `path` directly describes the config tree location and works for both service roots and fragments.
@@ -127,6 +149,10 @@ Example declaration shape for service `lynx` in the default environment:
   "serviceId": "lynx",
   "path": "/lynx",
   "environment": "default",
+  "owner": {
+    "name": "Lynx Platform",
+    "contact": "lynx-platform@example.com"
+  },
   "schema": { "type": "object" },
   "fragmentSlots": [
     {
@@ -145,6 +171,10 @@ Example fragment registration in the same environment:
   "slotPath": "/lynx/plugins",
   "path": "/lynx/plugins/ghost.settings.panel",
   "environment": "default",
+  "owner": {
+    "name": "Ghost Settings Team",
+    "contact": "ghost-settings@example.com"
+  },
   "schema": { "type": "object" }
 }
 ```
@@ -190,7 +220,7 @@ This is an explicit amendment to a simpler “complete object per layer” desig
 |------------|-------------|-------------------|
 | Registry storage | Store registrations by environment and canonical path. | `getSchema('/lynx/plugins/analytics')` resolves the fragment object schema for that path. |
 | Fragment slots | Store service-declared fragment slots and validate fragment registrations against them. | Unknown slot and duplicate fragment path registrations are rejected. |
-| Metadata | Retain owner/provider metadata for future ownership policy. | Registry can report declaring service, provider, slot path, and environment. |
+| Metadata | Retain `owner`, `providerId`, authenticated subject, and audit metadata for future policy. | Registry can report declaring service, provider, slot path, environment, owner/contact, and registration actor. |
 
 ### Phase 3: Object Write and Validation Pipeline
 
@@ -213,7 +243,7 @@ This is an explicit amendment to a simpler “complete object per layer” desig
 
 | Workstream | Deliverable | Acceptance signal |
 |------------|-------------|-------------------|
-| Ownership policy | Enforce which service or fragment provider may register and write specific paths. | Unauthorized registration/write attempts are rejected. |
+| Ownership policy | Enforce which authenticated subject may register and write specific service or fragment provider paths. | Unauthorized registration/write attempts are rejected. |
 | Delegation | Allow services to delegate fragment slots without transferring root ownership. | Providers can write only their fragment path unless policy grants more. |
 
 ## Proposed Contract Shape
@@ -225,8 +255,14 @@ interface ServiceSchemaRegistration {
   readonly serviceId: string;
   readonly path: string;
   readonly environment: string;
+  readonly owner: RegistrationOwner;
   readonly schema: unknown;
   readonly fragmentSlots?: readonly FragmentSlotDeclaration[];
+}
+
+interface RegistrationOwner {
+  readonly name: string;
+  readonly contact: string;
 }
 
 interface FragmentSlotDeclaration {
@@ -239,11 +275,16 @@ interface FragmentSchemaRegistration {
   readonly slotPath: string;
   readonly path: string;
   readonly environment: string;
+  readonly owner: RegistrationOwner;
   readonly schema: unknown;
+}
+
+interface RegistrationRequestContext {
+  readonly subject: string;
 }
 ```
 
-The package-boundary implementation should replace `unknown` with validated JSON Schema types and corresponding Zod schemas.
+The package-boundary implementation should replace `unknown` with validated JSON Schema types and corresponding Zod schemas. `subject` is shown as request context because authorization identity should come from credentials and policy, not from the schema document. `ownerId` is intentionally absent from the target contract.
 
 ## Open Decisions for ARB
 
@@ -253,7 +294,7 @@ The package-boundary implementation should replace `unknown` with validated JSON
 | Fragment identifier character rules | Permit dots inside one literal path segment so `ghost.settings.panel` is valid below `/lynx/plugins`. |
 | Leaf write compatibility | Do not include leaf writes in the target model. If a named active branch needs temporary support, map unambiguous leaf writes through a transitional adapter. |
 | Schema evolution policy | Treat the pre-1.0 move to path-anchored object schemas as an intentional breaking cleanup. Define post-cleanup evolution checks against path-anchored object schemas. |
-| Ownership enforcement timing | Defer hard enforcement until path registration, slot validation, and object validation are stable. |
+| Ownership enforcement timing | Use approved bootstrap/CI registration for MVP. Defer open runtime self-registration until workload identity, policy, audit, revocation, compatibility checks, and cache invalidation are designed. |
 
 ## Conclusion
 
