@@ -1,0 +1,258 @@
+# Schema Registration Gap Analysis
+
+## Executive Summary
+
+Weaver should move from key/value-oriented schema registration toward a path-anchored object schema model. Weaver is pre-1.0 and not in production, so backwards compatibility should not be a default design constraint. Contracts should make object paths, fragment slots, and validation responsibilities explicit, even when that requires removing legacy namespace and dot-key surfaces.
+
+| Area | AS-IS | TO-BE |
+|------|-------|-------|
+| Addressing | APIs and docs mix `key`, `namespace`, `prefix`, and `serviceId`; `namespace` often acts like a path prefix. | Use `path` as the canonical term for a config tree location. Remove `namespace` from the target contract. `serviceId` is the root config path, so serviceId `lynx` maps to `/lynx`. |
+| Schema unit | Schemas are mostly registered against fully qualified keys or service-like identifiers. | External services register object schemas at concrete paths such as `/lynx`. |
+| Extension model | Plugin-oriented naming leaks into generic configuration contracts. | Use generic `fragment`; plugin is one fragment provider type. Services declare fragment slots that accept independently registered fragment schemas. |
+| Writes | HTTP, SCOMP, and clients primarily expose single key/path writes, including dot-key forms. | Writes at registered paths persist object values, not flattened key/value leaves. Dot-key APIs are not part of the target model. |
+| Validation | Client-side validation exists, but server-side full-object validation and transport consistency are incomplete. | Primary enforcement is schema validation of written objects and effective merged objects. Write ownership enforcement is secondary/future. |
+| Layering | Layer writes can behave like sparse key/value overrides, creating ambiguity for nested object schemas. | Prefer partial override objects per layer, plus validation of the effective merged object. |
+
+Recommended decision: amend the original namespace/key design into a path-first schema registration model with fragment slots. Make this a breaking cleanup by removing legacy `namespace` and dot-key APIs from the target model. If active branches need temporary continuity, keep that support only as explicitly scoped transitional adapters outside the canonical contract.
+
+## Purpose and Terminology
+
+This document is intended for ARB review and implementation planning. It describes the gap between current Weaver behavior and the intended schema registration model, evaluates whether the original design should be amended, and proposes implementation phases.
+
+Terminology for new contracts:
+
+- **`serviceId`**: Stable external service identifier that maps to a root config path. For example, serviceId `lynx` owns `/lynx`.
+- **`path`**: Canonical term for a config tree location, expressed as slash-separated examples in this document such as `/lynx/plugins`.
+- **`namespace`**: Legacy and ambiguous term. Current code often treats it as a path prefix. New contracts should remove it. Transitional adapters may translate it only when explicitly needed for active branch continuity.
+- **`fragment`**: Independently registered schema unit below a service-declared extension point. A plugin is one possible fragment provider type, but the schema model should not be plugin-specific.
+- **Fragment slot / extension point**: A service-declared path that accepts independently registered fragment schemas.
+
+## Intended Model
+
+Weaver stores layered nested JSON objects. A service registers an object schema at a concrete path. Other providers register fragment object schemas below slots declared by that service.
+
+Example ownership shape:
+
+| Path | Declared by | Meaning |
+|------|-------------|---------|
+| `/lynx` | Service `lynx` | Root object for the Lynx service configuration. |
+| `/lynx/plugins` | Service `lynx` | Fragment slot that allows independently registered plugin or non-plugin fragments. |
+| `/lynx/plugins/analytics` | Fragment provider `analytics` | Object schema for the analytics fragment. |
+| `/lynx/plugins/ghost.settings.panel` | Fragment provider `ghost.settings.panel` | Object schema where `ghost.settings.panel` is a literal path segment. |
+
+The literal segment example is intentional: `/lynx/plugins/ghost.settings.panel` means the third segment is exactly `ghost.settings.panel`, not three nested segments. Current dot-path grammar and bracket notation such as `lynx.plugins[ghost.settings.panel]` should not shape the target model. Keep them only in transitional adapters if an active branch cannot move directly to slash paths.
+
+### Object Writes
+
+At registered paths, writes persist object values:
+
+```json
+{
+  "path": "/lynx/plugins/analytics",
+  "layer": "tenant:acme",
+  "value": {
+    "enabled": true,
+    "sampleRate": 0.25
+  }
+}
+```
+
+The write target is the object at `/lynx/plugins/analytics`. Weaver should not require callers to flatten this into leaf writes such as `lynx.plugins.analytics.enabled` and `lynx.plugins.analytics.sampleRate`.
+
+### Enforcement Priority
+
+The near-term enforcement goal is schema validation:
+
+1. Validate written objects at registered paths against their registered object schemas.
+2. Validate effective merged objects after layer resolution, especially when per-layer overrides are partial.
+3. Report schema registration conflicts and fragment-slot violations deterministically.
+
+Write ownership enforcement is important but secondary. The model should record ownership metadata now so future policy can answer questions such as “can this caller write this path?”, but initial delivery should not block on a complete ownership authorization system.
+
+## Current Gaps
+
+| Concern | Current behavior | Gap |
+|---------|------------------|-----|
+| Path terminology | Current code and docs use `key`, `namespace`, `prefix`, and `serviceId` inconsistently. | Contracts do not make the config tree location explicit and stable. |
+| Schema registry anchoring | Client and engine registries largely compose property schemas by fully qualified key or namespace prefix. Server registration persists declarations by `serviceId:environment`. | Registry entries are not fully anchored to concrete object paths or fragment slots. |
+| Fragment model | Existing helper names and comments derive namespace values from plugin IDs. | The model over-specializes around plugins instead of generic fragments. |
+| Server validation | Server registration validates schema declarations, but config writes are not consistently validated as full objects against registered schemas. | Invalid persisted objects can pass through server-side write paths. |
+| Transport consistency | HTTP config routes are key/path-write oriented; SCOMP uses `registerSchema(input.namespace)` and `set(input.key)`; client registration APIs use namespace language. | HTTP, SCOMP, and client contracts expose different concepts for the same registration model. |
+| Persistence shape | Some providers write flattened keys while others can persist nested object values. | Nested object schemas can mismatch provider persistence semantics. |
+| Layer semantics | Sparse overrides are natural for layered config, but object schema validation requires whole-object context. | Weaver needs explicit rules for validating partial per-layer objects and effective merged objects. |
+
+## Design Review and Recommended Amendments
+
+The original design direction is sound in its goals: services should declare configuration contracts, clients should validate, schemas should be available server-side, and Weaver should support layered configuration. Because Weaver is pre-1.0 and not in production, the design should be amended through a breaking cleanup before implementation hardens around legacy terms.
+
+### 1. Replace Namespace-Centric Contracts with Path-Centric Contracts
+
+`namespace` should not be used in new public contracts. It is overloaded: sometimes it means a grouping, sometimes a dot-delimited key prefix, and sometimes a service area. `path` directly describes the config tree location and works for both service roots and fragments.
+
+Cleanup recommendation:
+
+- Remove `namespace` from new HTTP, SCOMP, and client contracts.
+- Normalize all incoming target-model requests to canonical slash `path` values.
+- Remove dot-key registration and write APIs from the target model.
+- Add transitional adapters only when a named active branch requires them, and keep those adapters out of core contract types.
+
+### 2. Register Object Schemas, Not Leaf Property Schemas
+
+Leaf schemas are useful inside an object schema, but the registry unit should be the object at a concrete path. This aligns registration with write and merge semantics.
+
+For `/lynx/plugins/analytics`, the registered schema describes the object stored at that path:
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "enabled": { "type": "boolean" },
+    "sampleRate": { "type": "number", "minimum": 0, "maximum": 1 }
+  },
+  "required": ["enabled"],
+  "additionalProperties": false
+}
+```
+
+This model still allows property-level UI metadata and policy metadata through nested JSON Schema fields or `x-weaver` annotations, but the registry entry remains path-anchored.
+
+### 3. Add First-Class Fragment Slots
+
+Services should explicitly declare which child paths accept independently registered fragments. A fragment registration is valid only if it targets a declared slot and its fragment identifier maps to one literal path segment below that slot.
+
+Example declaration shape for service `lynx`:
+
+```json
+{
+  "serviceId": "lynx",
+  "path": "/lynx",
+  "schema": { "type": "object" },
+  "fragmentSlots": [
+    {
+      "path": "/lynx/plugins",
+      "accepts": "object"
+    }
+  ]
+}
+```
+
+Example fragment registration:
+
+```json
+{
+  "providerId": "ghost.settings.panel",
+  "slotPath": "/lynx/plugins",
+  "path": "/lynx/plugins/ghost.settings.panel",
+  "schema": { "type": "object" }
+}
+```
+
+The registry should reject a fragment registration when the slot does not exist, the target path is not directly under the slot, or another provider already owns the same path.
+
+## Layer Validation Recommendation
+
+Recommended approach: allow partial override objects per layer and validate the effective merged object, while also validating each partial override against a derived partial schema.
+
+Rationale:
+
+- Layered config is most useful when higher layers override only the fields they need.
+- Requiring each layer to contain a complete object would duplicate defaults across layers and make tenant/user overrides brittle.
+- Validating only partial objects would miss invalid effective combinations after merge.
+- Validating both the partial write and the effective object gives fast feedback for local shape errors and correctness for runtime reads.
+
+Expected behavior:
+
+| Write shape | Per-layer validation | Effective validation | Result |
+|-------------|----------------------|----------------------|--------|
+| Complete object at base layer | Validate against full schema. | Validate merged object. | Accepted when both pass. |
+| Partial override object | Validate against partial form of schema: known fields, valid field types, no forbidden properties. | Validate full merged object after applying layer precedence. | Accepted when both pass. |
+| Partial override that removes or nulls required data | Validate the field operation itself. | Reject if merged object violates required constraints. | Rejected with effective-object error. |
+| Unknown fragment path | Reject before value validation. | Not applicable. | Rejected with registration/slot error. |
+
+This is an explicit amendment to a simpler “complete object per layer” design. Complete per-layer objects are easier to validate but do not fit Weaver’s layered override purpose as well as sparse objects.
+
+## Implementation Proposal
+
+### Phase 1: Canonical Path Model and Contract Cleanup
+
+| Workstream | Deliverable | Acceptance signal |
+|------------|-------------|-------------------|
+| Types and schemas | Introduce path-first registration request/result types with Zod schemas at package boundaries. | New contracts use `path`; target contract types do not include `namespace`. |
+| Path normalization | Add one normalization layer for canonical slash paths. | `/lynx/plugins/ghost.settings.panel` round-trips with `ghost.settings.panel` as one literal segment. |
+| Contract removal | Remove or replace namespace and dot-key registration/write APIs in HTTP, SCOMP, and clients. | New examples and public target-model APIs use slash `path` only. |
+| Transitional adapters | Add scoped adapters only for named active branches that cannot switch immediately. | Any adapter normalizes to `path` before core logic and is not required for the target model. |
+
+### Phase 2: Path-Anchored Schema Registry
+
+| Workstream | Deliverable | Acceptance signal |
+|------------|-------------|-------------------|
+| Registry storage | Store registrations by environment and canonical path. | `getSchema('/lynx/plugins/analytics')` resolves the fragment object schema for that path. |
+| Fragment slots | Store service-declared fragment slots and validate fragment registrations against them. | Unknown slot and duplicate fragment path registrations are rejected. |
+| Metadata | Retain owner/provider metadata for future ownership policy. | Registry can report declaring service, provider, slot path, and environment. |
+
+### Phase 3: Object Write and Validation Pipeline
+
+| Workstream | Deliverable | Acceptance signal |
+|------------|-------------|-------------------|
+| Object writes | Add or amend write commands so a registered path accepts an object value. | Writing `/lynx/plugins/analytics` persists one object value. |
+| Partial layer validation | Validate sparse layer objects against a derived partial schema. | Invalid field types and unknown properties are rejected at write time. |
+| Effective validation | Validate merged effective objects after layer resolution. | Required fields and cross-field constraints are enforced on effective config. |
+| Error reporting | Return path-aware validation errors. | Errors identify the registered path and nested object member path. |
+
+### Phase 4: Provider Alignment and Migration
+
+| Workstream | Deliverable | Acceptance signal |
+|------------|-------------|-------------------|
+| Persistence providers | Align filesystem, Git, memory, and session providers on nested object persistence for registered paths. | Providers no longer disagree on whether object writes are flattened or nested. |
+| Existing key writes | Remove leaf-write behavior below registered objects unless a scoped adapter is approved. | Target-model callers use object writes at registered paths. |
+| Client APIs | Replace namespace helpers with path-first APIs. | Examples use `path` and `fragment`; namespace helpers are absent from the target model. |
+
+### Phase 5: Future Ownership Enforcement
+
+| Workstream | Deliverable | Acceptance signal |
+|------------|-------------|-------------------|
+| Ownership policy | Enforce which service or fragment provider may register and write specific paths. | Unauthorized registration/write attempts are rejected. |
+| Delegation | Allow services to delegate fragment slots without transferring root ownership. | Providers can write only their fragment path unless policy grants more. |
+
+## Proposed Contract Shape
+
+Illustrative TypeScript shape for discussion, not a final API commitment:
+
+```typescript
+interface ServiceSchemaRegistration {
+  readonly serviceId: string;
+  readonly path: string;
+  readonly environment: string;
+  readonly schema: unknown;
+  readonly fragmentSlots?: readonly FragmentSlotDeclaration[];
+}
+
+interface FragmentSlotDeclaration {
+  readonly path: string;
+  readonly accepts: "object";
+}
+
+interface FragmentSchemaRegistration {
+  readonly providerId: string;
+  readonly slotPath: string;
+  readonly path: string;
+  readonly environment: string;
+  readonly schema: unknown;
+}
+```
+
+The package-boundary implementation should replace `unknown` with validated JSON Schema types and corresponding Zod schemas.
+
+## Open Decisions for ARB
+
+| Decision | Recommendation |
+|----------|----------------|
+| Canonical external path syntax | Use slash paths in new contracts. Keep dot/bracket parsing only in explicitly scoped transitional adapters, if any. |
+| Fragment identifier character rules | Permit dots inside one literal path segment so `ghost.settings.panel` is valid below `/lynx/plugins`. |
+| Leaf write compatibility | Do not include leaf writes in the target model. If a named active branch needs temporary support, map unambiguous leaf writes through a transitional adapter. |
+| Schema evolution policy | Treat the pre-1.0 move to path-anchored object schemas as an intentional breaking cleanup. Define post-cleanup evolution checks against path-anchored object schemas. |
+| Ownership enforcement timing | Defer hard enforcement until path registration, slot validation, and object validation are stable. |
+
+## Conclusion
+
+Weaver should amend the original schema registration design before expanding implementation. The path-first object schema model is a better fit for layered nested JSON storage, fragment extension points, and server-side validation. Since Weaver is pre-1.0 and not in production, the recommended path is a breaking cleanup: remove `namespace` and dot-key APIs from the target model, and use `path`, `serviceId`, and `fragment` consistently. Transitional adapters are optional implementation scaffolding for active branches, not part of the target contract.
