@@ -112,7 +112,9 @@ export { err, isErr, isOk, ok } from "./result";
 export type {
   FragmentSchemaRegistrationRequest,
   FragmentSlotDeclaration,
+  FragmentSlotRegistrationMetadata,
   RegistrationOwner,
+  SchemaRegistrationAuditMetadata,
   SchemaRegistrationMetadata,
   SchemaRegistrationRequest,
   SchemaRegistrationResponse,
@@ -201,7 +203,9 @@ export {
 export {
   fragmentSchemaRegistrationRequestSchema,
   fragmentSlotDeclarationSchema,
+  fragmentSlotRegistrationMetadataSchema,
   registrationOwnerSchema,
+  schemaRegistrationAuditMetadataSchema,
   schemaRegistrationMetadataSchema,
   schemaRegistrationResponseSchema,
   serviceSchemaRegistrationRequestSchema,

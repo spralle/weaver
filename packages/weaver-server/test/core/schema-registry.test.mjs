@@ -152,8 +152,26 @@ describe("SchemaRegistry", () => {
 
     expect(result.success).toBe(true);
     expect(await configService.get("_weaver.registry.schemas")).toEqual({
-      "/billing": {
-        dev: { type: "object", properties: { enabled: { type: "boolean" } } },
+      environments: {
+        dev: {
+          schemas: {
+            "/billing": {
+              kind: "service",
+              schema: {
+                type: "object",
+                properties: { enabled: { type: "boolean" } },
+              },
+              metadata: {
+                serviceId: "billing",
+                servicePath: "/billing",
+                environment: "dev",
+                providerId: "billing",
+                owner: { name: "billing", contact: "billing@example.com" },
+              },
+            },
+          },
+          slots: {},
+        },
       },
     });
   });
@@ -163,8 +181,26 @@ describe("SchemaRegistry", () => {
       _weaver: {
         registry: {
           schemas: {
-            "/billing": {
-              dev: { type: "object", properties: { limit: { type: "number" } } },
+            environments: {
+              dev: {
+                schemas: {
+                  "/billing": {
+                    kind: "service",
+                    schema: {
+                      type: "object",
+                      properties: { limit: { type: "number" } },
+                    },
+                    metadata: {
+                      serviceId: "billing",
+                      servicePath: "/billing",
+                      environment: "dev",
+                      providerId: "billing",
+                      owner: { name: "billing", contact: "billing@example.com" },
+                    },
+                  },
+                },
+                slots: {},
+              },
             },
           },
         },
@@ -188,7 +224,28 @@ describe("SchemaRegistry", () => {
       providers: [
         createTestProvider("p1", "platform", {
           _weaver: {
-            registry: { schemas: { "/svc": { prod: { type: "string" } } } },
+            registry: {
+              schemas: {
+                environments: {
+                  prod: {
+                    schemas: {
+                      "/svc": {
+                        kind: "service",
+                        schema: { type: "string" },
+                        metadata: {
+                          serviceId: "svc",
+                          servicePath: "/svc",
+                          environment: "prod",
+                          providerId: "svc",
+                          owner: { name: "svc", contact: "svc@example.com" },
+                        },
+                      },
+                    },
+                    slots: {},
+                  },
+                },
+              },
+            },
           },
         }),
       ],

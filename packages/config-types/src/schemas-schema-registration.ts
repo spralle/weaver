@@ -12,11 +12,17 @@ export const fragmentSlotDeclarationSchema = z.strictObject({
   accepts: z.literal("object"),
 });
 
+export const schemaRegistrationAuditMetadataSchema = z.strictObject({
+  subject: z.string().min(1).optional(),
+  actor: z.string().min(1).optional(),
+});
+
 export const serviceSchemaRegistrationRequestSchema = z.strictObject({
   serviceId: z.string().min(1),
   environment: z.string().min(1),
   owner: registrationOwnerSchema,
   schema: configurationPropertySchemaSchema,
+  schemaVersion: z.string().min(1).optional(),
   fragmentSlots: z.array(fragmentSlotDeclarationSchema).readonly(),
 });
 
@@ -27,15 +33,32 @@ export const fragmentSchemaRegistrationRequestSchema = z.strictObject({
   environment: z.string().min(1),
   owner: registrationOwnerSchema,
   schema: configurationPropertySchemaSchema,
+  schemaVersion: z.string().min(1).optional(),
+});
+
+export const fragmentSlotRegistrationMetadataSchema = z.strictObject({
+  serviceId: z.string(),
+  servicePath: z.string(),
+  slotPath: z.string(),
+  canonicalSlotPath: z.string(),
+  environment: z.string(),
+  providerId: z.string(),
+  owner: registrationOwnerSchema,
+  accepts: z.literal("object"),
+  schemaVersion: z.string().optional(),
+  audit: schemaRegistrationAuditMetadataSchema.optional(),
 });
 
 export const schemaRegistrationMetadataSchema = z.strictObject({
   serviceId: z.string(),
   servicePath: z.string(),
   environment: z.string(),
+  providerId: z.string(),
+  owner: registrationOwnerSchema,
+  schemaVersion: z.string().optional(),
   canonicalSlotPath: z.string().optional(),
-  providerId: z.string().optional(),
   fragmentPath: z.string().optional(),
+  audit: schemaRegistrationAuditMetadataSchema.optional(),
 });
 
 export const schemaRegistrationResponseSchema = z.strictObject({

@@ -13,12 +13,18 @@ export interface FragmentSlotDeclaration {
   readonly accepts: "object";
 }
 
+export interface SchemaRegistrationAuditMetadata {
+  readonly subject?: string | undefined;
+  readonly actor?: string | undefined;
+}
+
 /** Path-first service schema registration request. */
 export interface ServiceSchemaRegistrationRequest {
   readonly serviceId: string;
   readonly environment: string;
   readonly owner: RegistrationOwner;
   readonly schema: ConfigurationPropertySchema;
+  readonly schemaVersion?: string | undefined;
   readonly fragmentSlots: ReadonlyArray<FragmentSlotDeclaration>;
 }
 
@@ -30,6 +36,20 @@ export interface FragmentSchemaRegistrationRequest {
   readonly environment: string;
   readonly owner: RegistrationOwner;
   readonly schema: ConfigurationPropertySchema;
+  readonly schemaVersion?: string | undefined;
+}
+
+export interface FragmentSlotRegistrationMetadata {
+  readonly serviceId: string;
+  readonly servicePath: string;
+  readonly slotPath: string;
+  readonly canonicalSlotPath: string;
+  readonly environment: string;
+  readonly providerId: string;
+  readonly owner: RegistrationOwner;
+  readonly accepts: "object";
+  readonly schemaVersion?: string | undefined;
+  readonly audit?: SchemaRegistrationAuditMetadata | undefined;
 }
 
 export type SchemaRegistrationRequest =
@@ -41,9 +61,12 @@ export interface SchemaRegistrationMetadata {
   readonly serviceId: string;
   readonly servicePath: string;
   readonly environment: string;
+  readonly providerId: string;
+  readonly owner: RegistrationOwner;
+  readonly schemaVersion?: string | undefined;
   readonly canonicalSlotPath?: string | undefined;
-  readonly providerId?: string | undefined;
   readonly fragmentPath?: string | undefined;
+  readonly audit?: SchemaRegistrationAuditMetadata | undefined;
 }
 
 /** Result returned by path-first schema registration endpoints. */

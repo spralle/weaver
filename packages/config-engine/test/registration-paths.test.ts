@@ -15,11 +15,8 @@ describe("schema registration paths", () => {
     });
   });
 
-  it("resolves service-relative and canonical slot paths", () => {
+  it("resolves service-relative slot paths under the service root", () => {
     expect(deriveCanonicalSlotPath("lynx", "/plugins")).toBe("/lynx/plugins");
-    expect(deriveCanonicalSlotPath("lynx", "/lynx/plugins")).toBe(
-      "/lynx/plugins",
-    );
   });
 
   it("derives fragment path from canonical slot path and providerId", () => {
@@ -37,7 +34,9 @@ describe("schema registration paths", () => {
   it("rejects invalid serviceId, providerId, and slot paths", () => {
     expect(() => deriveServicePath("_weaver")).toThrow();
     expect(() => deriveFragmentPath("lynx", "/plugins", "bad/id")).toThrow();
+    expect(() => deriveFragmentPath("lynx", "/plugins", " bad")).toThrow();
     expect(() => deriveCanonicalSlotPath("lynx", "plugins")).toThrow();
+    expect(() => deriveCanonicalSlotPath("lynx", "/lynx/plugins")).toThrow();
     expect(() => deriveCanonicalSlotPath("lynx", "/_weaver")).toThrow();
   });
 

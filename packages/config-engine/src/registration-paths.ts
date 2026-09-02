@@ -3,7 +3,7 @@ import { createWeaverError } from "@weaver-conf/config-types";
 export const WEAVER_INTERNAL_ROOT = "/_weaver";
 
 const SERVICE_ID_PATTERN = /^[a-z][a-z0-9-]*$/;
-const FORBIDDEN_PROVIDER_CHARS = new Set(["/", "\\"]);
+const PROVIDER_ID_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
 export interface DerivedServicePath {
   readonly serviceId: string;
@@ -73,10 +73,13 @@ export function deriveCanonicalSlotPath(
   if (normalizedSlotPath === "/") {
     throw createWeaverError("VALIDATION_ERROR", "slotPath must not be root");
   }
-  const segments = normalizedSlotPath.slice(1).split("/");
-
-  if (segments[0] === serviceId)
-    return validateCanonicalSlot(servicePath, normalizedSlotPath);
+  const [firstSegment] = normalizedSlotPath.slice(1).split("/");
+  if (firstSegment === serviceId) {
+    throw createWeaverError(
+      "VALIDATION_ERROR",
+      `slotPath "${normalizedSlotPath}" must be service-relative`,
+    );
+  }
   return `${servicePath}${normalizedSlotPath}`;
 }
 
@@ -94,22 +97,6 @@ export function deriveFragmentPath(
   return { ...service, providerId, canonicalSlotPath, fragmentPath };
 }
 
-function validateCanonicalSlot(servicePath: string, slotPath: string): string {
-  if (slotPath === servicePath) {
-    throw createWeaverError(
-      "VALIDATION_ERROR",
-      `Slot path "${slotPath}" must be below service path "${servicePath}"`,
-    );
-  }
-  if (!slotPath.startsWith(`${servicePath}/`)) {
-    throw createWeaverError(
-      "VALIDATION_ERROR",
-      `Slot path "${slotPath}" must resolve below service path "${servicePath}"`,
-    );
-  }
-  return slotPath;
-}
-
 function validateServiceId(serviceId: string): void {
   if (!SERVICE_ID_PATTERN.test(serviceId)) {
     throw createWeaverError(
@@ -120,15 +107,10 @@ function validateServiceId(serviceId: string): void {
 }
 
 function validateProviderId(providerId: string): void {
-  if (providerId.trim().length === 0) {
-    throw createWeaverError("VALIDATION_ERROR", "providerId must not be empty");
-  }
-  for (const ch of providerId) {
-    if (FORBIDDEN_PROVIDER_CHARS.has(ch)) {
-      throw createWeaverError(
-        "VALIDATION_ERROR",
-        `providerId "${providerId}" must be one path segment`,
-      );
-    }
+  if (!PROVIDER_ID_PATTERN.test(providerId)) {
+    throw createWeaverError(
+      "VALIDATION_ERROR",
+      `providerId "${providerId}" must be one path segment`,
+    );
   }
 }

@@ -7,6 +7,7 @@ import {
 } from "../src/schemas-layers.js";
 import {
   fragmentSchemaRegistrationRequestSchema,
+  schemaRegistrationMetadataSchema,
   serviceSchemaRegistrationRequestSchema,
 } from "../src/schemas-schema-registration.js";
 
@@ -105,6 +106,7 @@ describe("schema registration request schemas", () => {
       environment: "default",
       owner: { name: "Lynx", contact: "lynx@example.com" },
       schema: { type: "object" },
+      schemaVersion: "1.2.3",
       fragmentSlots: [{ slotPath: "/plugins", accepts: "object" }],
     });
 
@@ -143,6 +145,7 @@ describe("schema registration request schemas", () => {
       environment: "default",
       owner: { name: "Ghost", contact: "ghost@example.com" },
       schema: { type: "object" },
+      schemaVersion: "0.4.0",
     });
 
     expect(valid.success).toBe(true);
@@ -157,5 +160,19 @@ describe("schema registration request schemas", () => {
         path: "/lynx/plugins/ghost.settings.panel",
       }).success,
     ).toBe(false);
+  });
+
+  it("accepts response metadata with owner, provider identity, and audit", () => {
+    const result = schemaRegistrationMetadataSchema.safeParse({
+      serviceId: "lynx",
+      servicePath: "/lynx",
+      environment: "default",
+      providerId: "lynx",
+      owner: { name: "Lynx", contact: "lynx@example.com" },
+      schemaVersion: "1.2.3",
+      audit: { subject: "svc:lynx", actor: "api" },
+    });
+
+    expect(result.success).toBe(true);
   });
 });
