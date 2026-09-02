@@ -9,6 +9,7 @@ import { createAuthMiddleware } from "./auth/auth-middleware";
 import { createJwtValidator } from "./auth/jwt-validator";
 import { resolveServerBootstrap } from "./bootstrap/server-bootstrap";
 import { createWeaverConfigService } from "./core/config-service";
+import { createPersistentSchemaRegistry } from "./core/schema-registry";
 import type { HealthEndpoints } from "./health";
 import { createHealthEndpoints } from "./health";
 import { type HttpServer, startHttpServer } from "./http-server";
@@ -356,10 +357,17 @@ export async function startWeaverServerInternal(
 
     const restAdapterOptions: {
       configService: typeof configService;
+      schemaRegistry: Awaited<
+        ReturnType<typeof createPersistentSchemaRegistry>
+      >;
       corsOrigins?: string[];
       authGate?: AuthGate;
     } = {
       configService,
+      schemaRegistry: await createPersistentSchemaRegistry({
+        configService,
+        environment: config.environment,
+      }),
     };
     if (config.corsOrigins) {
       restAdapterOptions.corsOrigins = config.corsOrigins;

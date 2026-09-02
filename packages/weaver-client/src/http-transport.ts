@@ -1,5 +1,14 @@
 import type { ScopeDefinition, ScopeInstance } from "@weaver-conf/config-types";
 import { formatScopePath } from "@weaver-conf/config-types";
+import {
+  fetchRegisteredSchemas,
+  patchRegisteredPath as patchRegisteredPathRequest,
+  postFragmentSchemaRegistration,
+  postSchemaRegistration,
+  postServiceSchemaRegistration,
+  putRegisteredObject,
+  validateRegisteredEffective as validateRegisteredEffectiveRequest,
+} from "./http-registered-transport";
 import { fetchWithRetry, type RetryOptions } from "./http-retry";
 import { createSSEConnection } from "./sse-connection";
 import type { WeaverTransport, WriteOptions, WriteResult } from "./transport";
@@ -146,6 +155,15 @@ export function createHttpTransport(
     }
     return json.data;
   }
+
+  const registeredContext = {
+    baseUrl,
+    fetchFn,
+    buildHeaders,
+    buildScopeQuery,
+    queryString,
+    request,
+  };
 
   return {
     get lastCheckpoint() {
@@ -308,6 +326,34 @@ export function createHttpTransport(
         `/v1/scopes/${encodeURIComponent(scopeId)}`,
       );
       return result.values;
+    },
+
+    async fetchSchemas() {
+      return fetchRegisteredSchemas(registeredContext);
+    },
+
+    async registerSchema(requestBody) {
+      return postSchemaRegistration(registeredContext, requestBody);
+    },
+
+    async registerServiceSchema(requestBody) {
+      return postServiceSchemaRegistration(registeredContext, requestBody);
+    },
+
+    async registerFragmentSchema(requestBody) {
+      return postFragmentSchemaRegistration(registeredContext, requestBody);
+    },
+
+    async setRegisteredObject(anchorPath, value, opts?) {
+      return putRegisteredObject(registeredContext, anchorPath, value, opts);
+    },
+
+    async patchRegisteredPath(path, value, opts?) {
+      return patchRegisteredPathRequest(registeredContext, path, value, opts);
+    },
+
+    async validateRegisteredEffective(options) {
+      return validateRegisteredEffectiveRequest(registeredContext, options);
     },
 
     async close(): Promise<void> {
