@@ -24,9 +24,10 @@ Terminology for new contracts:
 
 - **`serviceId`**: Stable external service identifier that maps to a derived root config path. For example, serviceId `lynx` maps to `/lynx`.
 - **`path`**: Canonical term for a config tree location, expressed as slash-separated examples in this document such as `/lynx/plugins`. Request paths may be derived; response and metadata paths must show the derived canonical value.
+- **Service-relative slot path**: A slash path under the derived service root, such as `/plugins` for service `lynx`. It is not global-root-relative; Weaver resolves it to canonical path `/lynx/plugins` in metadata and responses.
 - **`namespace`**: Legacy and ambiguous term. Current code often treats it as a path prefix. New contracts should remove it. Transitional adapters may translate it only when explicitly needed for active branch continuity.
 - **`fragment`**: Independently registered schema unit below a service-declared extension point. A plugin is one possible fragment provider type, but the schema model should not be plugin-specific.
-- **Fragment slot / extension point**: A service-declared path, relative or canonical, that accepts independently registered fragment schemas.
+- **Fragment slot / extension point**: A service-declared service-relative or canonical path that accepts independently registered fragment schemas.
 - **`owner`**: Accountable team/person/contact metadata for follow-up and stewardship. It is not an authorization field.
 - **`providerId`**: Stable identity of the service or fragment provider that declares a schema. For service root registrations, `serviceId` can serve as the provider identity. For fragments, use the fragment provider ID.
 - **`subject`**: Authenticated principal used by credentials and policy when authorizing a registration request. It is distinct from `owner` and `providerId`.
@@ -143,7 +144,7 @@ This model still allows property-level UI metadata and policy metadata through n
 
 ### 3. Add First-Class Fragment Slots
 
-Services should explicitly declare which child paths accept independently registered fragments. Slot declarations may use a path relative to the derived service root, such as `/plugins`. A fragment registration is valid only if it targets a declared slot and its `providerId` maps to one literal path segment below that slot.
+Services should explicitly declare which child paths accept independently registered fragments. Slot declarations may use a service-relative slot path, such as `/plugins` for service `lynx`, or the canonical slot path `/lynx/plugins`. A fragment registration is valid only if it targets a declared slot and its `providerId` maps to one literal path segment below that slot.
 
 Example declaration shape for service `lynx` in the default environment:
 
@@ -186,12 +187,14 @@ The registry should reject a fragment registration when the slot does not exist 
 Path invariants for persisted registration metadata and responses:
 
 - The derived service path is `/${serviceId}`.
-- A relative slot declaration is resolved against the service path, so service `lynx` slot `/plugins` records canonical slot path `/lynx/plugins`.
-- The derived fragment path is `${slotPath}/${providerId}` where `slotPath` is the canonical slot path recorded in metadata, so provider `ghost.settings.panel` records `/lynx/plugins/ghost.settings.panel`.
+- Request `slotPath` may be a service-relative slot path such as `/plugins` or the canonical slot path `/lynx/plugins`; both resolve against service `lynx` to canonical metadata path `/lynx/plugins`.
+- The derived fragment path is `${canonicalSlotPath}/${providerId}`, so provider `ghost.settings.panel` records `/lynx/plugins/ghost.settings.panel`.
 
 ## Layer Validation Recommendation
 
 Recommended approach: allow partial override objects per layer, validate each partial override against a derived partial schema, and validate completeness on the baseline or effective object for the target environment and scope before fetch, deploy, or runtime use.
+
+This still permits schema validation on writes without requiring every layer to contain a complete base/core object. Validation is two-tiered: write and patch inputs are checked immediately against a partial or member schema for the registered anchor, catching invalid field types and unknown properties; then Weaver validates completeness of the effective object when it can construct the target environment/scope effective config, especially before fetch, deploy, or runtime use. If no defaults, base object, or effective context exists, a partial write cannot by itself prove required fields are satisfied; it can only prove the patch is schema-compatible.
 
 Rationale:
 
@@ -301,7 +304,7 @@ interface RegistrationRequestContext {
 }
 ```
 
-Request contracts derive paths instead of accepting independently settable `path` fields. `slotPath` in a request may be relative to the derived service path; metadata records canonical paths. Invariants: `servicePath` is `/${serviceId}`, and `fragmentPath` is `${slotPath}/${providerId}` when `slotPath` is the canonical slot path in metadata.
+Request contracts derive paths instead of accepting independently settable `path` fields. `slotPath` in a request may be a service-relative slot path such as `/plugins` or the canonical slot path; metadata records canonical paths. Invariants: `servicePath` is `/${serviceId}`, `canonicalSlotPath` is resolved under that service path, and `fragmentPath` is `${canonicalSlotPath}/${providerId}`.
 
 The package-boundary implementation should replace `unknown` with validated JSON Schema types and corresponding Zod schemas. `subject` is shown as request context because authorization identity should come from credentials and policy, not from the schema document. `ownerId` is intentionally absent from the target contract.
 
