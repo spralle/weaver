@@ -1,3 +1,4 @@
+import { buildPath } from "@weaver-conf/config-engine";
 import type { WriteResult } from "@weaver-conf/config-types";
 import type {
   EffectiveValidationContext,
@@ -80,6 +81,44 @@ function extractExpectedRevision(req: RestRequest): string | undefined {
   return ifMatch.replace(/^"|"$/g, "");
 }
 
+const schemaRegistryAdminKey = "_weaver.registry.schemas";
+
+function storageKeyFromCanonicalPath(path: string): string {
+  return buildPath(path.slice(1).split("/"));
+}
+
+function gateRead(
+  req: RestRequest,
+  deps: SchemaRouteDeps,
+  key: string,
+): RestResponse | null {
+  if (!deps.authGate) return null;
+  if (!req.authContext) return authContextRequired(deps.configService);
+  const accessCtx = deps.authGate.toAccessContext(req.authContext);
+  return deps.authGate.gateRead(accessCtx, key, req.schemaMap?.get(key));
+}
+
+function gateWrite(
+  req: RestRequest,
+  deps: SchemaRouteDeps,
+  layer: string,
+  key: string,
+): RestResponse | null {
+  if (!deps.authGate) return null;
+  if (!req.authContext) return authContextRequired(deps.configService);
+  const accessCtx = deps.authGate.toAccessContext(req.authContext);
+  return deps.authGate.gateWrite(
+    accessCtx,
+    layer,
+    key,
+    req.schemaMap?.get(key),
+  );
+}
+
+function authContextRequired(configService: WeaverConfigService): RestResponse {
+  return v1Error(configService, "UNAUTHORIZED", "Authentication required");
+}
+
 function writeContext(req: RestRequest): WriteContext {
   const expectedRevision = extractExpectedRevision(req);
   const environment = req.query.env;
@@ -128,8 +167,10 @@ function listSchemasRoute(deps: SchemaRouteDeps): RestRoute {
   return {
     method: "GET",
     path: "/v1/admin/schemas",
-    async handler() {
+    async handler(req) {
       if (!schemaRegistry) return unavailable(configService);
+      const denied = gateRead(req, deps, schemaRegistryAdminKey);
+      if (denied) return denied;
       return v1Response(configService, 200, {
         schemas: schemaRegistry.listAll(),
       });
@@ -144,6 +185,8 @@ function registerServiceRoute(deps: SchemaRouteDeps): RestRoute {
     path: "/v1/admin/schemas/services",
     async handler(req) {
       if (!schemaRegistry) return unavailable(configService);
+      const denied = gateWrite(req, deps, "admin", schemaRegistryAdminKey);
+      if (denied) return denied;
       const body = serviceSchemaRegistrationBodySchema.parse(req.body);
       const result = await schemaRegistry.register(
         body,
@@ -162,6 +205,8 @@ function registerFragmentRoute(deps: SchemaRouteDeps): RestRoute {
     path: "/v1/admin/schemas/fragments",
     async handler(req) {
       if (!schemaRegistry) return unavailable(configService);
+      const denied = gateWrite(req, deps, "admin", schemaRegistryAdminKey);
+      if (denied) return denied;
       const body = fragmentSchemaRegistrationBodySchema.parse(req.body);
       const result = await schemaRegistry.register(
         body,
@@ -180,10 +225,15 @@ function setRegisteredObjectRoute(deps: SchemaRouteDeps): RestRoute {
     path: "/v1/registered/objects/*anchorPath",
     async handler(req) {
       if (!schemaRegistry) return unavailable(configService);
+      const layer = req.query.layer ?? "platform";
+      const anchorPath = canonicalRoutePath(req.params, "anchorPath");
+      const key = storageKeyFromCanonicalPath(anchorPath);
+      const denied = gateWrite(req, deps, layer, key);
+      if (denied) return denied;
       const body = registeredObjectWriteBodySchema.parse(req.body);
       const result = await configService.setRegisteredObject(
-        req.query.layer ?? "platform",
-        canonicalRoutePath(req.params, "anchorPath"),
+        layer,
+        anchorPath,
         body.value,
         { ...writeContext(req), schemaRegistry },
       );
@@ -206,10 +256,15 @@ function patchRegisteredPathRoute(deps: SchemaRouteDeps): RestRoute {
     path: "/v1/registered/paths/*path",
     async handler(req) {
       if (!schemaRegistry) return unavailable(configService);
+      const layer = req.query.layer ?? "platform";
+      const path = canonicalRoutePath(req.params, "path");
+      const key = storageKeyFromCanonicalPath(path);
+      const denied = gateWrite(req, deps, layer, key);
+      if (denied) return denied;
       const body = registeredPathPatchBodySchema.parse(req.body);
       const result = await configService.patchRegisteredPath(
-        req.query.layer ?? "platform",
-        canonicalRoutePath(req.params, "path"),
+        layer,
+        path,
         body.value,
         { ...writeContext(req), schemaRegistry },
       );
@@ -232,8 +287,12 @@ function validateRegisteredEffectiveRoute(deps: SchemaRouteDeps): RestRoute {
     path: "/v1/registered/effective/*anchorPath",
     async handler(req) {
       if (!schemaRegistry) return unavailable(configService);
+      const anchorPath = canonicalRoutePath(req.params, "anchorPath");
+      const key = storageKeyFromCanonicalPath(anchorPath);
+      const denied = gateRead(req, deps, key);
+      if (denied) return denied;
       const validation = await configService.validateRegisteredEffective(
-        canonicalRoutePath(req.params, "anchorPath"),
+        anchorPath,
         effectiveValidationContext(req, schemaRegistry),
       );
       return v1Response(
