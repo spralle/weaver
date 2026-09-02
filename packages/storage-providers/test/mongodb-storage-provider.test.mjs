@@ -30,6 +30,20 @@ function createMockCollection() {
       );
       if (idx >= 0) docs.splice(idx, 1);
     },
+    async deleteMany(filter) {
+      for (let index = docs.length - 1; index >= 0; index -= 1) {
+        const doc = docs[index];
+        const keys = filter.$or?.map((clause) => clause.key) ?? [filter.key];
+        const keyMatches = keys.some((keyFilter) => {
+          if (keyFilter === undefined) return true;
+          if (typeof keyFilter === "string") return doc.key === keyFilter;
+          return new RegExp(keyFilter.$regex).test(doc.key);
+        });
+        if (doc.layer === filter.layer && doc.environment === filter.environment && keyMatches) {
+          docs.splice(index, 1);
+        }
+      }
+    },
   };
 }
 
@@ -70,6 +84,65 @@ test("write() upserts document", async () => {
   await provider.write("theme", "dark");
   expect(col.docs.length).toBe(1);
   expect(col.docs[0].value).toBe("dark");
+});
+
+test("write() canonicalizes nested paths into a root object document", async () => {
+  const col = createMockCollection();
+  const provider = createMongoDBStorageProvider({
+    id: "mongo-user",
+    layer: "user",
+    collection: col,
+    environment: "prod",
+  });
+
+  await provider.write("billing.plan", "pro");
+  await provider.write("billing.limits.seats", 10);
+
+  expect(col.docs).toHaveLength(1);
+  expect(col.docs[0].key).toBe("billing");
+  expect(col.docs[0].value).toEqual({ plan: "pro", limits: { seats: 10 } });
+  expect((await provider.load()).entries.billing).toEqual({
+    plan: "pro",
+    limits: { seats: 10 },
+  });
+});
+
+test("load() hydrates legacy dotted documents as nested objects", async () => {
+  const col = createMockCollection();
+  col.docs.push(
+    { layer: "user", environment: "prod", key: "billing.plan", value: "pro", updatedAt: "2024-01-01" },
+    { layer: "user", environment: "prod", key: "billing.limits.seats", value: 10, updatedAt: "2024-01-02" },
+  );
+
+  const provider = createMongoDBStorageProvider({
+    id: "mongo-user",
+    layer: "user",
+    collection: col,
+    environment: "prod",
+  });
+
+  expect((await provider.load()).entries.billing).toEqual({
+    plan: "pro",
+    limits: { seats: 10 },
+  });
+});
+
+test("remove() updates MongoDB root object document for nested paths", async () => {
+  const col = createMockCollection();
+  const provider = createMongoDBStorageProvider({
+    id: "mongo-user",
+    layer: "user",
+    collection: col,
+    environment: "prod",
+  });
+
+  await provider.write("billing", { plan: "pro", limits: { seats: 10 } });
+  const result = await provider.remove("billing.limits.seats");
+
+  expect(result.success).toBe(true);
+  expect(col.docs).toHaveLength(1);
+  expect(col.docs[0].key).toBe("billing");
+  expect(col.docs[0].value).toEqual({ plan: "pro", limits: {} });
 });
 
 test("remove() deletes document", async () => {

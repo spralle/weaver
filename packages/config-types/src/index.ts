@@ -61,6 +61,9 @@ export type {
   EmergencyOverrideRecord,
   PromotionRequest,
   PromotionStatus,
+  SchemaAuditAction,
+  SchemaDomainAuditEntry,
+  SchemaOperationAuditMetadata,
   SecretDomainAuditEntry,
   SessionDomainAuditEntry,
   SinkDomainAuditEntry,
@@ -105,9 +108,36 @@ export type {
   WriteError,
   WriteResult,
 } from "./providers";
+export type {
+  RegisteredEffectiveValidationRequest,
+  RegisteredEffectiveValidationResponse,
+  RegisteredObjectWriteRequest,
+  RegisteredObjectWriteResponse,
+  RegisteredPathPatchRequest,
+  RegisteredPathPatchResponse,
+  RegisteredWriteOptions,
+} from "./registered-operations";
 // result.ts — Discriminated Result<T,E> union for fallible operations
 export type { Result } from "./result";
 export { err, isErr, isOk, ok } from "./result";
+// schema-registration.ts — Path-first schema registration contracts
+export type {
+  FragmentSchemaRegistrationRequest,
+  FragmentSlotDeclaration,
+  FragmentSlotRegistrationMetadata,
+  RegistrationOwner,
+  SchemaRegistrationAuditMetadata,
+  SchemaRegistrationMetadata,
+  SchemaRegistrationRequest,
+  SchemaRegistrationResponse,
+  ServiceSchemaRegistrationRequest,
+} from "./schema-registration";
+export type {
+  SchemaValidationError,
+  SchemaValidationErrorCode,
+  SchemaValidationPathSegment,
+  SchemaValidationResult,
+} from "./schema-validation";
 // schemas-access.ts — Zod schemas for access context and write policy types
 export {
   configurationAccessContextSchema,
@@ -166,6 +196,9 @@ export {
   emergencyOverrideRecordSchema,
   promotionRequestSchema,
   promotionStatusSchema,
+  schemaAuditActionSchema,
+  schemaDomainAuditEntrySchema,
+  schemaOperationAuditMetadataSchema,
   secretDomainAuditEntrySchema,
   sessionDomainAuditEntrySchema,
   sinkDomainAuditEntrySchema,
@@ -187,6 +220,31 @@ export {
   syncStatusSyncingSchema,
   writeResultSchema,
 } from "./schemas-providers";
+export {
+  registeredEffectiveValidationRequestSchema,
+  registeredEffectiveValidationResponseSchema,
+  registeredObjectWriteRequestSchema,
+  registeredObjectWriteResponseSchema,
+  registeredPathPatchRequestSchema,
+  registeredPathPatchResponseSchema,
+} from "./schemas-registered-operations";
+// schemas-schema-registration.ts — Zod schemas for path-first schema registration contracts
+export {
+  fragmentSchemaRegistrationRequestSchema,
+  fragmentSlotDeclarationSchema,
+  fragmentSlotRegistrationMetadataSchema,
+  registrationOwnerSchema,
+  schemaRegistrationAuditMetadataSchema,
+  schemaRegistrationMetadataSchema,
+  schemaRegistrationResponseSchema,
+  serviceSchemaRegistrationRequestSchema,
+} from "./schemas-schema-registration";
+export {
+  schemaValidationErrorCodeSchema,
+  schemaValidationErrorSchema,
+  schemaValidationPathSegmentSchema,
+  schemaValidationResultSchema,
+} from "./schemas-schema-validation";
 // schemas-session.ts — Zod schemas for session types
 export {
   godModeSessionSchema,

@@ -1,8 +1,14 @@
 // MongoDBStorageProvider — native MongoDB driver for user/device config layers
 
 import {
+  buildPath,
+  cloneValue,
   consoleLogger,
+  deepGet,
+  deepRemove,
+  deepSet,
   extractErrorMessage,
+  parsePath,
   type WeaverLogger,
 } from "@weaver-conf/config-engine";
 import type {
@@ -89,8 +95,8 @@ class MongoDBStorageProvider implements ConfigurationStorageProvider {
     const docs = z.array(configDocumentSchema).parse(rawDocs);
 
     const entries: Record<string, unknown> = {};
-    for (const doc of docs) {
-      entries[doc.key] = doc.value;
+    for (const doc of sortConfigDocuments(docs)) {
+      deepSet(entries, doc.key, cloneValue(doc.value));
     }
     return { entries };
   }
@@ -111,13 +117,15 @@ class MongoDBStorageProvider implements ConfigurationStorageProvider {
       };
     }
 
-    const updatedAt = new Date().toISOString();
     try {
-      await this.collection.updateOne(
-        { layer, environment: this.environment, key },
-        { $set: { value, updatedAt } },
-        { upsert: true, maxTimeMS: this.timeoutMs },
+      const { key: rootKey, value: rootValue } = await this.toRootDocument(
+        layer,
+        key,
+        value,
       );
+
+      await this.upsertRootDocument(layer, rootKey, rootValue);
+      await this.deleteDescendantDocuments(layer, rootKey);
     } catch (err) {
       const message = extractErrorMessage(err);
       return {
@@ -144,14 +152,7 @@ class MongoDBStorageProvider implements ConfigurationStorageProvider {
     }
 
     try {
-      await this.collection.deleteOne(
-        {
-          layer,
-          environment: this.environment,
-          key,
-        },
-        { maxTimeMS: this.timeoutMs },
-      );
+      await this.removeNestedPath(layer, key);
     } catch (err) {
       const message = extractErrorMessage(err);
       return {
@@ -215,6 +216,121 @@ class MongoDBStorageProvider implements ConfigurationStorageProvider {
       }
     };
   }
+
+  private async toRootDocument(
+    layer: string,
+    key: string,
+    value: unknown,
+  ): Promise<{ key: string; value: unknown }> {
+    const segments = parsePath(key);
+    const root = getRootSegment(segments);
+    const rootKey = buildPath([root]);
+    const tail = segments.slice(1);
+
+    if (tail.length === 0) {
+      return { key: rootKey, value };
+    }
+
+    const entries = (await this.loadLayer(layer)).entries;
+    const existingRoot = deepGet(entries, rootKey);
+    const rootValue = isRecord(existingRoot) ? existingRoot : {};
+    deepSet(rootValue, buildPath(tail), value);
+
+    return { key: rootKey, value: rootValue };
+  }
+
+  private async removeNestedPath(layer: string, key: string): Promise<void> {
+    const segments = parsePath(key);
+    const root = getRootSegment(segments);
+    const rootKey = buildPath([root]);
+    const tail = segments.slice(1);
+
+    if (tail.length === 0) {
+      await this.deletePathAndDescendants(layer, rootKey);
+      return;
+    }
+
+    const entries = (await this.loadLayer(layer)).entries;
+    const existingRoot = deepGet(entries, rootKey);
+    if (!isRecord(existingRoot)) {
+      await this.deletePathAndDescendants(layer, buildPath(segments));
+      return;
+    }
+
+    deepRemove(existingRoot, buildPath(tail));
+    await this.upsertRootDocument(layer, rootKey, existingRoot);
+    await this.deleteDescendantDocuments(layer, rootKey);
+  }
+
+  private async upsertRootDocument(
+    layer: string,
+    key: string,
+    value: unknown,
+  ): Promise<void> {
+    await this.collection.updateOne(
+      { layer, environment: this.environment, key },
+      { $set: { value, updatedAt: new Date().toISOString() } },
+      { upsert: true, maxTimeMS: this.timeoutMs },
+    );
+  }
+
+  private async deleteDescendantDocuments(
+    layer: string,
+    key: string,
+  ): Promise<void> {
+    await this.collection.deleteMany(
+      {
+        layer,
+        environment: this.environment,
+        key: { $regex: descendantKeyPattern(key) },
+      },
+      { maxTimeMS: this.timeoutMs },
+    );
+  }
+
+  private async deletePathAndDescendants(
+    layer: string,
+    key: string,
+  ): Promise<void> {
+    await this.collection.deleteMany(
+      {
+        layer,
+        environment: this.environment,
+        $or: [{ key }, { key: { $regex: descendantKeyPattern(key) } }],
+      },
+      { maxTimeMS: this.timeoutMs },
+    );
+  }
+}
+
+function getRootSegment(segments: readonly string[]): string {
+  const root = segments[0];
+  if (root === undefined) {
+    throw new Error("Path must not be empty");
+  }
+  return root;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function sortConfigDocuments(
+  docs: readonly ConfigDocument[],
+): ConfigDocument[] {
+  return [...docs].sort((left, right) => {
+    const dateOrder = left.updatedAt.localeCompare(right.updatedAt);
+    if (dateOrder !== 0) return dateOrder;
+    return parsePath(left.key).length - parsePath(right.key).length;
+  });
+}
+
+function descendantKeyPattern(key: string): string {
+  return `^${escapeRegex(key)}\\.`;
+}
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 /** Creates a MongoDB-backed storage provider instance. */

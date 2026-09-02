@@ -52,12 +52,51 @@ describe("createWeaverScompService", () => {
     const expected = [
       "resolveAll", "get", "getNamespace", "inspect", "set", "setMany",
       "remove", "listScopes", "listScopeValues", "fetchSchemas",
-      "registerSchema", "subscribe",
+      "registerSchema", "setRegisteredObject", "patchRegisteredPath",
+      "validateRegisteredEffective", "subscribe",
     ];
     for (const name of expected) {
       expect(routes.includes(route(name))).toBeTruthy();
     }
     expect(routes.length).toBe(expected.length);
+  });
+
+  test("registered operations preserve canonical metadata and anchor objects", async () => {
+    const provider = createTestProvider("p1", "platform", {});
+    const svc = await createWeaverConfigService({ providers: [provider], environment: "default" });
+    const service = createWeaverScompService(buildScompDeps(svc));
+    const schema = {
+      type: "object",
+      properties: {
+        db: {
+          type: "object",
+          properties: { host: { type: "string" }, port: { type: "integer" } },
+          required: ["host", "port"],
+        },
+      },
+      required: ["db"],
+    };
+    const registered = await service.router[route("registerSchema")].handler({
+      serviceId: "checkout",
+      environment: "default",
+      owner: { name: "Checkout", contact: "checkout@example.com" },
+      schema,
+      fragmentSlots: [],
+    });
+    expect(registered.metadata.servicePath).toBe("/checkout");
+
+    await service.router[route("setRegisteredObject")].handler({
+      anchorPath: "/checkout",
+      value: { db: { host: "localhost", port: 5432 } },
+      layer: "platform",
+    });
+    await service.router[route("patchRegisteredPath")].handler({
+      path: "/checkout/db/host",
+      value: "db.internal",
+      layer: "platform",
+    });
+    const value = await svc.get("checkout");
+    expect(value).toEqual({ db: { host: "db.internal", port: 5432 } });
   });
 
   test("resolveAll handler returns snapshot", async () => {

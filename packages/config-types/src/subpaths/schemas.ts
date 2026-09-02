@@ -45,6 +45,9 @@ export {
   emergencyOverrideRecordSchema,
   promotionRequestSchema,
   promotionStatusSchema,
+  schemaAuditActionSchema,
+  schemaDomainAuditEntrySchema,
+  schemaOperationAuditMetadataSchema,
   secretDomainAuditEntrySchema,
   sessionDomainAuditEntrySchema,
   sinkDomainAuditEntrySchema,
@@ -64,6 +67,30 @@ export {
   syncStatusSyncingSchema,
   writeResultSchema,
 } from "../schemas-providers";
+export {
+  registeredEffectiveValidationRequestSchema,
+  registeredEffectiveValidationResponseSchema,
+  registeredObjectWriteRequestSchema,
+  registeredObjectWriteResponseSchema,
+  registeredPathPatchRequestSchema,
+  registeredPathPatchResponseSchema,
+} from "../schemas-registered-operations";
+export {
+  fragmentSchemaRegistrationRequestSchema,
+  fragmentSlotDeclarationSchema,
+  fragmentSlotRegistrationMetadataSchema,
+  registrationOwnerSchema,
+  schemaRegistrationAuditMetadataSchema,
+  schemaRegistrationMetadataSchema,
+  schemaRegistrationResponseSchema,
+  serviceSchemaRegistrationRequestSchema,
+} from "../schemas-schema-registration";
+export {
+  schemaValidationErrorCodeSchema,
+  schemaValidationErrorSchema,
+  schemaValidationPathSegmentSchema,
+  schemaValidationResultSchema,
+} from "../schemas-schema-validation";
 export {
   godModeSessionSchema,
   overrideSessionSchema,

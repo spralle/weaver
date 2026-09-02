@@ -1,6 +1,24 @@
+import { createInMemoryStorageProvider } from "@weaver-conf/storage-providers";
 import type { WeaverConfigService } from "../core/config-service";
+import { createWeaverConfigService } from "../core/config-service";
+import { createSchemaRegistry } from "../core/schema-registry";
 import type { ScopeManager } from "../core/scope-manager";
 import { createRestAdapter } from "./rest-adapter";
+
+const settingsSchema = {
+  type: "object" as const,
+  properties: {
+    db: {
+      type: "object" as const,
+      properties: {
+        host: { type: "string" as const },
+        port: { type: "integer" as const },
+      },
+      required: ["host", "port"],
+    },
+  },
+  required: ["db"],
+};
 
 function mockConfigService(): WeaverConfigService {
   return {
@@ -131,5 +149,192 @@ describe("REST body validation", () => {
       headers: {},
     });
     expect(res.status).toBe(201);
+  });
+
+  it("rejects legacy schema registration fields", async () => {
+    const configService = mockConfigService();
+    const adapter = createRestAdapter({
+      configService,
+      schemaRegistry: createSchemaRegistry({ configService }),
+    });
+    const res = await adapter.handleRequest(
+      "POST",
+      "/v1/admin/schemas/services",
+      {
+        params: {},
+        query: {},
+        body: {
+          serviceId: "checkout",
+          environment: "default",
+          owner: { name: "Checkout", contact: "checkout@example.com" },
+          schema: settingsSchema,
+          fragmentSlots: [],
+          namespace: "checkout",
+          ownerId: "legacy-owner",
+          path: "/custom/path",
+        },
+        headers: {},
+      },
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("returns canonical registration metadata", async () => {
+    const configService = mockConfigService();
+    const adapter = createRestAdapter({
+      configService,
+      schemaRegistry: createSchemaRegistry({ configService }),
+    });
+    const res = await adapter.handleRequest(
+      "POST",
+      "/v1/admin/schemas/services",
+      {
+        params: {},
+        query: {},
+        body: {
+          serviceId: "checkout",
+          environment: "default",
+          owner: { name: "Checkout", contact: "checkout@example.com" },
+          schema: settingsSchema,
+          fragmentSlots: [{ slotPath: "/plugins", accepts: "object" }],
+        },
+        headers: {},
+      },
+    );
+    expect(res.status).toBe(201);
+    const body = res.body as {
+      data: { metadata: { servicePath: string; providerId: string } };
+    };
+    expect(body.data.metadata.servicePath).toBe("/checkout");
+    expect(body.data.metadata.providerId).toBe("checkout");
+  });
+
+  it("preserves registered patch writes as nested anchor objects", async () => {
+    const provider = createInMemoryStorageProvider({
+      id: "platform",
+      layer: "platform",
+      initialEntries: {},
+    });
+    const configService = await createWeaverConfigService({
+      providers: [provider],
+      environment: "default",
+    });
+    const schemaRegistry = createSchemaRegistry({ configService });
+    const adapter = createRestAdapter({ configService, schemaRegistry });
+    await schemaRegistry.register({
+      serviceId: "checkout",
+      environment: "default",
+      owner: { name: "Checkout", contact: "checkout@example.com" },
+      schema: settingsSchema,
+      fragmentSlots: [],
+    });
+
+    const write = await adapter.handleRequest(
+      "PUT",
+      "/v1/registered/objects/checkout",
+      {
+        params: {},
+        query: { layer: "platform" },
+        body: { value: { db: { host: "localhost", port: 5432 } } },
+        headers: {},
+      },
+    );
+    expect(write.status).toBe(200);
+
+    const patch = await adapter.handleRequest(
+      "PATCH",
+      "/v1/registered/paths/checkout/db/host",
+      {
+        params: {},
+        query: { layer: "platform" },
+        body: { value: "db.internal" },
+        headers: {},
+      },
+    );
+    expect(patch.status).toBe(200);
+    expect(await configService.get("checkout")).toEqual({
+      db: { host: "db.internal", port: 5432 },
+    });
+  });
+
+  it("preserves protected _weaver write rejection for registered writes", async () => {
+    const provider = createInMemoryStorageProvider({
+      id: "platform",
+      layer: "platform",
+      initialEntries: {},
+    });
+    const configService = await createWeaverConfigService({
+      providers: [provider],
+      environment: "default",
+    });
+    const adapter = createRestAdapter({
+      configService,
+      schemaRegistry: createSchemaRegistry({ configService }),
+    });
+    const res = await adapter.handleRequest(
+      "PUT",
+      "/v1/registered/objects/_weaver/registry/schemas",
+      {
+        params: {},
+        query: { layer: "platform" },
+        body: { value: {} },
+        headers: {},
+      },
+    );
+    expect(res.status).toBe(400);
+    const body = res.body as { error: { message: string } };
+    expect(body.error.message).toContain("reserved");
+  });
+
+  it("returns validation errors for registered patches and effective validation", async () => {
+    const provider = createInMemoryStorageProvider({
+      id: "platform",
+      layer: "platform",
+      initialEntries: {},
+    });
+    const configService = await createWeaverConfigService({
+      providers: [provider],
+      environment: "default",
+    });
+    const schemaRegistry = createSchemaRegistry({ configService });
+    const adapter = createRestAdapter({ configService, schemaRegistry });
+    await schemaRegistry.register({
+      serviceId: "checkout",
+      environment: "default",
+      owner: { name: "Checkout", contact: "checkout@example.com" },
+      schema: settingsSchema,
+      fragmentSlots: [],
+    });
+
+    const patch = await adapter.handleRequest(
+      "PATCH",
+      "/v1/registered/paths/checkout/db/port",
+      {
+        params: {},
+        query: { layer: "platform" },
+        body: { value: "not-a-port" },
+        headers: {},
+      },
+    );
+    expect(patch.status).toBe(400);
+    await configService.set(
+      "platform",
+      "checkout",
+      {},
+      { environment: "default" },
+    );
+
+    const effective = await adapter.handleRequest(
+      "GET",
+      "/v1/registered/effective/checkout",
+      { params: {}, query: {}, headers: {} },
+    );
+    expect(effective.status).toBe(422);
+    const body = effective.body as {
+      data: { errors: Array<{ code: string }> };
+    };
+    expect(
+      body.data.errors.some((error) => error.code === "missing-required"),
+    ).toBe(true);
   });
 });

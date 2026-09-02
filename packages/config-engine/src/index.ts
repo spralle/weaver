@@ -20,8 +20,21 @@ export type { ResolvedConfiguration } from "./layers";
 export { deepMerge } from "./merge";
 // namespace.ts — Namespace utilities
 // path.ts — Bracket-aware path parsing
-export { buildPath } from "./path";
+export { buildPath, parsePath } from "./path";
 export { clearRegexCache, getCachedRegex, isSafePattern } from "./regex-cache";
+export type {
+  DerivedFragmentPath,
+  DerivedServicePath,
+} from "./registration-paths";
+export {
+  assertPublicConfigPath,
+  deriveCanonicalSlotPath,
+  deriveFragmentPath,
+  deriveServicePath,
+  isWeaverInternalPath,
+  normalizeConfigPath,
+  WEAVER_INTERNAL_ROOT,
+} from "./registration-paths";
 // schema-diff.ts — Schema comparison utilities
 export type { BreakingChange } from "./schema-diff";
 export {
@@ -42,6 +55,24 @@ export type {
   UnregisterSchemaResult,
 } from "./schema-registry";
 export { createSchemaRegistry } from "./schema-registry";
+export type {
+  SchemaValidationError,
+  SchemaValidationErrorCode,
+  SchemaValidationOptions,
+  SchemaValidationPathSegment,
+  SchemaValidationResult,
+} from "./schema-validation";
+export {
+  validateConfigurationPatch,
+  validateEffectiveConfiguration,
+  validatePartialConfiguration,
+} from "./schema-validation";
+export {
+  schemaValidationErrorCodeSchema,
+  schemaValidationErrorSchema,
+  schemaValidationPathSegmentSchema,
+  schemaValidationResultSchema,
+} from "./schema-validation-schemas";
 // scope.ts — Scope chain builder
 export type { BuildScopeChainResult, ScopeChainEntry } from "./scope";
 // utils — shared utilities (formerly @weaver-conf/storage-provider-core)

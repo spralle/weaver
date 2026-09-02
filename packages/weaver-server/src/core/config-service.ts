@@ -14,11 +14,20 @@ import type {
   WriteResult,
 } from "@weaver-conf/config-types";
 import type { ConfigDelta, ConfigSnapshot } from "../types/index";
+import { registerInternalConfigAccess } from "./config-service-internal";
+import {
+  prepareRegisteredObjectWrite,
+  prepareRegisteredPatchWrite,
+  validateRegisteredEffectiveConfiguration,
+} from "./config-service-schema-writes";
 import type {
+  EffectiveValidationContext,
+  SchemaWriteContext,
   WeaverConfigService,
   WeaverConfigServiceOptions,
   WriteContext,
 } from "./config-service-types";
+import { protectedConfigMutationError } from "./protected-config-paths";
 import { createResolutionPipeline } from "./resolution-pipeline";
 import {
   buildScopePathString,
@@ -29,9 +38,20 @@ import {
 } from "./scope-utils";
 
 export type { Unsubscribe } from "./config-service-types";
-export type { WeaverConfigService, WeaverConfigServiceOptions, WriteContext };
+export type {
+  EffectiveValidationContext,
+  SchemaWriteContext,
+  WeaverConfigService,
+  WeaverConfigServiceOptions,
+  WriteContext,
+};
 
 const SIZE_WARNING = 1_048_576; // 1MB
+const internalWriteToken: unique symbol = Symbol("weaver.internalWrite");
+
+type InternalWriteContext = WriteContext & {
+  readonly [internalWriteToken]?: true;
+};
 
 interface ScopedLayerProvider {
   loadLayer(layer: string): Promise<{ entries: Record<string, unknown> }>;
@@ -108,6 +128,14 @@ export async function createWeaverConfigService(
       };
     }
     return null;
+  }
+
+  function isInternalWrite(opts?: InternalWriteContext): boolean {
+    return opts?.[internalWriteToken] === true;
+  }
+
+  function withInternalWrite(opts?: WriteContext): InternalWriteContext {
+    return { ...opts, [internalWriteToken]: true };
   }
 
   const activeProviders: ConfigurationStorageProvider[] = [];
@@ -222,6 +250,28 @@ export async function createWeaverConfigService(
     const base = getBaseEntries();
     if (!scopePath?.length) return base;
     return deepMerge(base, getScopeState(scopePath));
+  }
+
+  async function getLayerValue(layer: string, key: string): Promise<unknown> {
+    const provider = resolveProvider(layer);
+    if (!provider) return undefined;
+
+    const parsedLayer = parseScopeLayer(layer);
+    const isDynamicScopedLayer =
+      parsedLayer !== null && provider.layer === parsedLayer.scopeId;
+    const canonicalLayer = normalizeScopeLayer(layer);
+    if (
+      isDynamicScopedLayer &&
+      hasScopedLayerIo(provider) &&
+      !dynamicScopeEntries.has(canonicalLayer)
+    ) {
+      const data = await provider.loadLayer(canonicalLayer);
+      dynamicScopeEntries.set(canonicalLayer, data.entries);
+    }
+    const entries = isDynamicScopedLayer
+      ? dynamicScopeEntries.get(canonicalLayer)
+      : layerData.get(provider.id);
+    return deepGet(entries ?? {}, key);
   }
 
   function getRevisionState(): Record<string, unknown> {
@@ -357,6 +407,11 @@ export async function createWeaverConfigService(
       value: unknown,
       opts?: WriteContext,
     ): Promise<WriteResult> {
+      if (!isInternalWrite(opts)) {
+        const protectedError = protectedConfigMutationError(key);
+        if (protectedError) return protectedError;
+      }
+
       const revConflict = checkRevision(opts?.expectedRevision);
       if (revConflict) return revConflict;
 
@@ -448,6 +503,11 @@ export async function createWeaverConfigService(
       key: string,
       opts?: WriteContext,
     ): Promise<WriteResult> {
+      if (!isInternalWrite(opts)) {
+        const protectedError = protectedConfigMutationError(key);
+        if (protectedError) return protectedError;
+      }
+
       const revConflict = checkRevision(opts?.expectedRevision);
       if (revConflict) return revConflict;
 
@@ -572,6 +632,13 @@ export async function createWeaverConfigService(
       entries: Record<string, unknown>,
       opts?: WriteContext,
     ): Promise<WriteResult> {
+      if (!isInternalWrite(opts)) {
+        for (const key of Object.keys(entries)) {
+          const protectedError = protectedConfigMutationError(key);
+          if (protectedError) return protectedError;
+        }
+      }
+
       return service.batch(async () => {
         for (const [key, value] of Object.entries(entries)) {
           const result = await service.set(layer, key, value, opts);
@@ -580,7 +647,75 @@ export async function createWeaverConfigService(
         return { success: true, revision };
       });
     },
+
+    async setRegisteredObject(
+      layer: string,
+      path: string,
+      value: unknown,
+      opts: SchemaWriteContext,
+    ): Promise<WriteResult> {
+      if (!isInternalWrite(opts)) {
+        const protectedError = protectedConfigMutationError(path);
+        if (protectedError) return protectedError;
+      }
+
+      const revConflict = checkRevision(opts.expectedRevision);
+      if (revConflict) return revConflict;
+
+      const prepared = await prepareRegisteredObjectWrite(
+        path,
+        value,
+        opts,
+        environment,
+      );
+      if (!prepared.success) return prepared.result;
+      return service.set(layer, prepared.key, prepared.value, opts);
+    },
+
+    async patchRegisteredPath(
+      layer: string,
+      path: string,
+      value: unknown,
+      opts: SchemaWriteContext,
+    ): Promise<WriteResult> {
+      if (!isInternalWrite(opts)) {
+        const protectedError = protectedConfigMutationError(path);
+        if (protectedError) return protectedError;
+      }
+
+      const revConflict = checkRevision(opts.expectedRevision);
+      if (revConflict) return revConflict;
+
+      const prepared = await prepareRegisteredPatchWrite(
+        path,
+        value,
+        opts,
+        environment,
+        (key) => getLayerValue(layer, key),
+      );
+      if (!prepared.success) return prepared.result;
+      return service.set(layer, prepared.key, prepared.value, opts);
+    },
+
+    async validateRegisteredEffective(path, opts) {
+      const getOptions = opts.scopePath
+        ? { scopePath: opts.scopePath }
+        : undefined;
+      return validateRegisteredEffectiveConfiguration(
+        path,
+        opts,
+        environment,
+        (key) => service.get(key, getOptions),
+      );
+    },
   };
+
+  registerInternalConfigAccess(service, {
+    write: (layer, key, value, opts) =>
+      service.set(layer, key, value, withInternalWrite(opts)),
+    remove: (layer, key, opts) =>
+      service.remove(layer, key, withInternalWrite(opts)),
+  });
 
   return service;
 }

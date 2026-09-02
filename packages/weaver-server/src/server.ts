@@ -4,11 +4,13 @@ import type {
   WeaverConfig,
 } from "@weaver-conf/config-types";
 import type { Request, Response } from "express";
+import type { AuditService } from "./audit/audit-service";
 import type { AuthContext, AuthMiddleware } from "./auth/auth-middleware";
 import { createAuthMiddleware } from "./auth/auth-middleware";
 import { createJwtValidator } from "./auth/jwt-validator";
 import { resolveServerBootstrap } from "./bootstrap/server-bootstrap";
 import { createWeaverConfigService } from "./core/config-service";
+import { createPersistentSchemaRegistry } from "./core/schema-registry";
 import type { HealthEndpoints } from "./health";
 import { createHealthEndpoints } from "./health";
 import { type HttpServer, startHttpServer } from "./http-server";
@@ -34,6 +36,7 @@ export interface WeaverServerOptions {
   adminRoles?: string[];
   corsOrigins?: string[];
   providers?: ConfigurationStorageProvider[];
+  auditService?: AuditService;
 }
 export interface WeaverServer {
   readonly port: number;
@@ -55,6 +58,7 @@ function resolveOptions(options?: WeaverServerOptions) {
     adminRoles: options?.adminRoles ?? ["admin"],
     corsOrigins: options?.corsOrigins,
     providers: options?.providers,
+    auditService: options?.auditService,
   };
 }
 function createRequestHandler(
@@ -356,16 +360,27 @@ export async function startWeaverServerInternal(
 
     const restAdapterOptions: {
       configService: typeof configService;
+      schemaRegistry: Awaited<
+        ReturnType<typeof createPersistentSchemaRegistry>
+      >;
       corsOrigins?: string[];
       authGate?: AuthGate;
+      auditService?: AuditService;
     } = {
       configService,
+      schemaRegistry: await createPersistentSchemaRegistry({
+        configService,
+        environment: config.environment,
+      }),
     };
     if (config.corsOrigins) {
       restAdapterOptions.corsOrigins = config.corsOrigins;
     }
     if (authGate) {
       restAdapterOptions.authGate = authGate;
+    }
+    if (config.auditService) {
+      restAdapterOptions.auditService = config.auditService;
     }
 
     const restAdapter = createRestAdapter(restAdapterOptions);
