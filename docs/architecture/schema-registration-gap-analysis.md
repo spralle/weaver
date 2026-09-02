@@ -120,12 +120,13 @@ This model still allows property-level UI metadata and policy metadata through n
 
 Services should explicitly declare which child paths accept independently registered fragments. A fragment registration is valid only if it targets a declared slot and its fragment identifier maps to one literal path segment below that slot.
 
-Example declaration shape for service `lynx`:
+Example declaration shape for service `lynx` in the default environment:
 
 ```json
 {
   "serviceId": "lynx",
   "path": "/lynx",
+  "environment": "default",
   "schema": { "type": "object" },
   "fragmentSlots": [
     {
@@ -136,13 +137,14 @@ Example declaration shape for service `lynx`:
 }
 ```
 
-Example fragment registration:
+Example fragment registration in the same environment:
 
 ```json
 {
   "providerId": "ghost.settings.panel",
   "slotPath": "/lynx/plugins",
   "path": "/lynx/plugins/ghost.settings.panel",
+  "environment": "default",
   "schema": { "type": "object" }
 }
 ```
